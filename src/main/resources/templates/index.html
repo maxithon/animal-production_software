@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Animal Production System</title>
+      <link rel="stylesheet" type="text/css" media="all" th:href="@{/css/styles.css}"/>
+</head>
+<body>
+<div class="background">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>Welcome Back</h1>
+                <p>Animal Production Management System</p>
+            </div>
+
+            <form th:action="@{/login}" method="post" class="login-form">
+                <!-- Error message display -->
+                <div th:if="${param.error}" class="alert alert-error">
+                    <span>Invalid email or password</span>
+                </div>
+
+                <!-- Logout message display -->
+                <div th:if="${param.logout}" class="alert alert-success">
+                    <span>You have been logged out successfully</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            required
+                            autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password">
+                </div>
+
+                <div class="form-options">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember-me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn-login">Sign In</button>
+
+                <div class="register-link">
+                    <p>Don't have an account? <a th:href="@{/register}">Register here</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
