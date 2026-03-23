@@ -1,10 +1,338 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Animal Production System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #1a5f7a;
+            --primary-light: #2e8b9e;
+            --sidebar-width: 270px;
+            --header-height: 65px;
+            --accent-color: #28a745;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            overflow-x: hidden;
+            background: #f8f9fb;
+        }
+
+        .top-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            height: var(--header-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1030;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.3rem;
+            margin-right: 15px;
+            transition: all 0.3s;
+        }
+        .menu-toggle:hover { background: rgba(255,255,255,0.2); }
+
+        .top-header .logo { font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+        .top-header .logo i { font-size: 1.6rem; }
+
+        .header-actions { display: flex; align-items: center; gap: 20px; }
+
+        .notification-btn {
+            position: relative;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            width: 40px; height: 40px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .notification-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px; right: -5px;
+            background: #ff4444;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .user-section { display: flex; align-items: center; gap: 15px; }
+
+        .user-avatar {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+        }
+
+        .user-info { display: flex; flex-direction: column; }
+        .user-name { font-size: 0.95rem; font-weight: 600; }
+        .user-role { font-size: 0.75rem; opacity: 0.85; }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.9rem; font-weight: 500;
+        }
+        .logout-btn:hover { background: rgba(255,255,255,0.25); color: white; }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: var(--header-height); left: 0;
+            width: 100%;
+            height: calc(100vh - var(--header-height));
+            background: rgba(0,0,0,0.5);
+            z-index: 998;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        .sidebar {
+            position: fixed;
+            top: var(--header-height); left: 0;
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: #ffffff;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.08);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: #f1f3f5; }
+        .sidebar::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+
+        .sidebar-menu { padding: 20px 0; }
+        .menu-item { margin-bottom: 3px; }
+
+        .menu-header {
+            padding: 13px 20px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: space-between;
+            color: #2d3748;
+            font-weight: 500;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.95rem;
+        }
+        .menu-header:hover { background: #f0f2f5; border-left-color: var(--primary-light); color: var(--primary-color); }
+        .menu-header.active { background: #e0f7fa; color: var(--primary-color); border-left-color: var(--primary-light); font-weight: 600; }
+        .menu-header i { margin-right: 12px; width: 22px; text-align: center; }
+        .menu-header .arrow { transition: transform 0.3s; font-size: 0.85rem; }
+        .menu-header.active .arrow { transform: rotate(90deg); }
+
+        .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; background: #f8f9fa; }
+        .submenu.open { max-height: 600px; }
+
+        .submenu-item {
+            padding: 11px 20px 11px 54px;
+            display: block;
+            color: #4a5568;
+            text-decoration: none;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+        }
+        .submenu-item:hover { background: #e9ecef; color: var(--primary-color); border-left-color: var(--accent-color); padding-left: 56px; }
+        .submenu-item i { margin-right: 10px; }
+
+        .submenu-item.manage-users { color: #dc3545; font-weight: 500; }
+        .submenu-item.manage-users:hover { background: #fff5f5; border-left-color: #dc3545; color: #c82333; }
+
+        .main-content {
+            margin-top: var(--header-height);
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: margin-left 0.3s;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(26, 95, 122, 0.3);
+        }
+        .welcome-section h2 { font-size: 1.75rem; margin-bottom: 10px; font-weight: 700; }
+        .welcome-section p { font-size: 1rem; opacity: 0.95; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+
+        .info-card {
+            background: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            transition: all 0.3s; border-left: 4px solid;
+        }
+        .info-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+        .info-card.primary { border-left-color: #1a5f7a; }
+        .info-card.success { border-left-color: #28a745; }
+        .info-card.warning { border-left-color: #ffc107; }
+        .info-card .stat-icon { font-size: 2.2rem; margin-bottom: 15px; }
+        .info-card.primary .stat-icon { color: #1a5f7a; }
+        .info-card.success .stat-icon { color: #28a745; }
+        .info-card.warning .stat-icon { color: #ffc107; }
+        .info-card h3 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+        .info-card p { color: #6c757d; font-size: 0.9rem; margin-bottom: 0; }
+
+        .analytics-section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #f0f2f5; }
+        .section-header h4 { font-size: 1.3rem; font-weight: 700; color: #1a202c; display: flex; align-items: center; gap: 12px; margin: 0; }
+
+        .powerbi-container {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+            border-radius: 10px; padding: 60px 30px; text-align: center;
+            border: 2px dashed #26c6da; min-height: 400px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .powerbi-container i { font-size: 5rem; color: #00838f; margin-bottom: 25px; }
+        .powerbi-container h5 { color: #006064; font-weight: 700; margin-bottom: 15px; font-size: 1.4rem; }
+        .powerbi-container p { color: #00695c; font-size: 1rem; max-width: 600px; line-height: 1.6; }
+
+        .dashboard-footer { background: white; border-radius: 12px; padding: 20px 30px; margin-top: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); text-align: center; }
+        .dashboard-footer p { margin: 0; color: #6c757d; font-size: 0.9rem; }
+        .dashboard-footer .links { margin-top: 10px; }
+        .dashboard-footer .links a { color: var(--primary-color); text-decoration: none; margin: 0 15px; font-size: 0.9rem; }
+        .dashboard-footer .links a:hover { text-decoration: underline; }
+
+        .content-frame { width: 100%; min-height: calc(100vh - 140px); border: none; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+
+        @media (max-width: 992px) { .user-info { display: none; } }
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px 15px; }
+            .top-header .logo span { display: none; }
+            .logout-btn span { display: none; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .powerbi-container { min-height: 300px; padding: 40px 20px; }
+            .powerbi-container i { font-size: 3.5rem; }
+        }
+    </style>
 </head>
 <body>
-$END$
-</body>
-</html>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<header class="top-header">
+    <div style="display: flex; align-items: center;">
+        <button class="menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
+        <div class="logo">
+            <i class="bi bi-clipboard-data"></i>
+            <span>Animal Production System</span>
+        </div>
+    </div>
+    <div class="header-actions">
+        <button class="notification-btn" onclick="alert('Notifications: 3 new updates')">
+            <i class="bi bi-bell-fill"></i>
+            <span class="notification-badge">3</span>
+        </button>
+        <div class="user-section">
+            <div class="user-avatar"><i class="bi bi-person-fill"></i></div>
+            <div class="user-info">
+                <div class="user-name" sec:authentication="name">User</div>
+                <div class="user-role">Regular User</div>
+            </div>
+            <form th:action="@{/logout}" method="post" style="display: inline;">
+                <button type="submit" class="logout-btn">
+                    <i class="bi bi-box-arrow-right"></i>
+                    <span>Logout</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-menu">
+        <!-- Dashboard -->
+        <div class="menu-item">
+            <div class="menu-header active" onclick="showDashboard()">
+                <span><i class="bi bi-speedometer2"></i> Dashboard</span>
+            </div>
+        </div>
+
+        <!-- Representatives -->
+        <div class="menu-item">
+            <div class="menu-header" onclick="toggleSubmenu('representatives')">
+                <span><i class="bi bi-person-badge"></i> Representatives</span>
+                <i class="bi bi-chevron-right arrow"></i>
+            </div>
+            <div class="submenu" id="submenu-representatives">
+                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-person-plus-fill"></i> Register Representative
+                </a>
+                <a th:href="@{/uhagarariye/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-list-ul"></i> View All Representatives
+                </a>
+            </div>
+        </div>
+
+        <!-- Beneficiaries -->
+        <div class="menu-item">
+            <div class="menu-header" onclick="toggleSubmenu('beneficiaries')">
+                <span><i class="bi bi-person-check"></i> Beneficiaries</span>
+                <i class="bi bi-chevron-right arrow"></i>
+            </div>
+            <div class="submenu" id="submenu-beneficiaries">
+                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-person-plus"></i> Register Beneficiary
+                </a>
+                <a th:href="@{/abaragizwa/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-list-ul"></i> View All Beneficiaries
+                </a>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="menu-item">
+            <div class="menu-header" onclick="toggleSubmenu('settings')">
+                <span><i class="bi bi-gear"></i> Settings</span>
+                <i class="bi bi-chevron-right arrow"></i>
+            </div>
+            <div class="submenu" id="submenu-settings">
+                <a th:href="@{/settings/profile}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-person-circle"></i> My Profile
+                </a>
+                <a th:href="@{/settings/change-password}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-key"></i> Change Password
+                </a>
+                <a th:href="@{/settings/notifications}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                    <i class="bi bi-bell"></i> Notification Settings
+                </a>

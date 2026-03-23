@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Edit Death Record</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>body{background:#f8f9fa;padding:20px;}.edit-card{background:white;border-radius:12px;padding:30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}</style>
+</head>
+<body>
+<div class="container"><div class="row justify-content-center"><div class="col-lg-7">
+    <div class="edit-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="bi bi-pencil-square"></i> Edit Death Record</h3>
+            <a href="/livestock/deaths" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        </div>
+        <form th:action="@{/livestock/deaths/update/{id}(id=${death.id})}" th:object="${death}" method="post">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Animal (Tag) *</label>
+                <select class="form-select" th:field="*{livestockIdValue}" required>
+                    <option value="">Select animal...</option>
+                    <option th:each="ls : ${livestockList}" th:value="${ls.id}"
+                            th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"
+                            th:selected="${ls.id.toString() == death.livestockIdValue}"></option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Death Date *</label>
+                <input type="date" class="form-control" th:field="*{deathDate}" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label fw-semibold">Cause of Death</label>
+                <input type="text" class="form-control" th:field="*{causeOfDeath}" placeholder="e.g. Disease, Injury, Natural...">
+            </div>
+            <div class="d-flex justify-content-end gap-2">
+                <a href="/livestock/deaths" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </form>
+    </div>
+</div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

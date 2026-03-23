@@ -20,6 +20,27 @@
         .modal-header { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); color: white; }
         .form-label { font-weight: 500; color: #333; }
         .search-section { margin-bottom: 25px; }
+        .btn-self-disabled {
+            background: #e9ecef; border: 1px solid #ced4da; color: #6c757d;
+            cursor: not-allowed; font-size: 0.875rem; padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem; display: inline-block;
+        }
+        /* User avatar in table */
+        .table-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #dee2e6;
+        }
+        .table-avatar-initial {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
+            color: white;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+            border: 2px solid #dee2e6;
+        }
     </style>
 </head>
 <body>
@@ -29,26 +50,30 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h3><i class="bi bi-people-fill"></i> Manage Users</h3>
-                <p class="text-muted mb-0">View, enable/disable, and manage user accounts</p>
+                <p class="text-muted mb-0">View, register, enable/disable, and manage user accounts</p>
             </div>
-            <a th:href="@{/settings/profile}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Settings
-            </a>
+            <div class="d-flex gap-2">
+                <!-- ⭐ NEW: Register New User button -->
+                <a th:href="@{/settings/manage-users/register}" class="btn btn-primary">
+                    <i class="bi bi-person-plus-fill"></i> Register New User
+                </a>
+                <a th:href="@{/settings/profile}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Settings
+                </a>
+            </div>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success / Error Messages -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-
-        <!-- Error Message -->
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
             <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Search Section -->
+        <!-- Search -->
         <div class="search-section">
             <div class="input-group">
                 <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -62,6 +87,7 @@
                 <thead class="table-light">
                 <tr>
                     <th>#</th>
+                    <th>Photo</th>
                     <th>Email Address</th>
                     <th>User Type</th>
                     <th>Registration Date</th>
@@ -71,7 +97,7 @@
                 </thead>
                 <tbody>
                 <tr th:if="${users.empty}" class="text-center">
-                    <td colspan="6" class="py-4 text-muted">
+                    <td colspan="7" class="py-4 text-muted">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No users found</p>
                     </td>
@@ -79,7 +105,18 @@
                 <tr th:each="user, iterStat : ${users}" class="user-row">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
+                        <!-- Show photo if exists, otherwise show initial -->
+                        <img th:if="${user.photoUrl != null}"
+                             th:src="${user.photoUrl}"
+                             class="table-avatar"
+                             alt="Profile Photo">
+                        <span th:if="${user.photoUrl == null}"
+                              class="table-avatar-initial"
+                              th:text="${user.email.substring(0,1).toUpperCase()}">U</span>
+                    </td>
+                    <td>
                         <strong th:text="${user.email}">user@example.com</strong>
+                        <span th:if="${user.email == currentUserEmail}" class="badge bg-primary ms-1">You</span>
                     </td>
                     <td>
                         <span class="badge bg-info" th:text="${user.userTypeId.userTypeName}">User Type</span>
@@ -94,9 +131,18 @@
                         </span>
                     </td>
                     <td>
-                        <!-- Toggle Status Button -->
-                        <form th:action="@{/settings/manage-users/toggle-status/{id}(id=${user.userId})}" method="post" style="display: inline;">
-                            <button type="submit" class="btn btn-sm" 
+                        <!-- Own account: greyed-out, no delete -->
+                        <span th:if="${user.email == currentUserEmail}"
+                              class="btn-self-disabled"
+                              title="You cannot disable your own account">
+                            <i class="bi bi-toggle-on"></i> Disable
+                        </span>
+
+                        <!-- Other accounts: toggle -->
+                        <form th:if="${user.email != currentUserEmail}"
+                              th:action="@{/settings/manage-users/toggle-status/{id}(id=${user.userId})}"
+                              method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-sm"
                                     th:classappend="${user.active ? 'btn-warning' : 'btn-success'}"
                                     th:title="${user.active ? 'Disable User' : 'Enable User'}"
                                     onclick="return confirm('Are you sure?')">
@@ -105,31 +151,33 @@
                             </button>
                         </form>
 
-                        <!-- Edit Button -->
+                        <!-- Edit -->
                         <a th:href="@{/settings/manage-users/edit/{id}(id=${user.userId})}"
-                           class="btn btn-sm btn-edit"
-                           title="Edit User">
+                           class="btn btn-sm btn-edit" title="Edit User">
                             <i class="bi bi-pencil"></i>
                         </a>
 
-                        <!-- Delete Button (with modal confirmation) -->
-                        <button type="button" class="btn btn-sm btn-delete"
+                        <!-- Delete (hidden for own account) -->
+                        <button th:if="${user.email != currentUserEmail}"
+                                type="button" class="btn btn-sm btn-delete"
                                 data-bs-toggle="modal"
                                 th:data-bs-target="'#deleteModal' + ${user.userId}"
                                 title="Delete User">
                             <i class="bi bi-trash"></i>
                         </button>
 
-                        <!-- Delete Confirmation Modal -->
-                        <div class="modal fade" th:id="'deleteModal' + ${user.userId}" tabindex="-1">
+                        <!-- Delete Modal -->
+                        <div th:if="${user.email != currentUserEmail}"
+                             class="modal fade" th:id="'deleteModal' + ${user.userId}" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
                                         <h5 class="modal-title">Confirm Delete User</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        Are you sure you want to delete <strong th:text="${user.email}">user@example.com</strong>?
+                                        Are you sure you want to delete
+                                        <strong th:text="${user.email}">user@example.com</strong>?
                                         <br><small class="text-danger">This action cannot be undone.</small>
                                     </div>
                                     <div class="modal-footer">
@@ -151,23 +199,17 @@
 
         <!-- Summary Stats -->
         <div class="row mt-4 pt-4 border-top">
-            <div class="col-md-4">
-                <div class="text-center">
-                    <h5 class="text-muted">Total Users</h5>
-                    <h3 th:text="${users.size()}">0</h3>
-                </div>
+            <div class="col-md-4 text-center">
+                <h5 class="text-muted">Total Users</h5>
+                <h3 th:text="${users.size()}">0</h3>
             </div>
-            <div class="col-md-4">
-                <div class="text-center">
-                    <h5 class="text-muted">Active Users</h5>
-                    <h3 th:text="${users.stream().filter(u -> u.isActive()).count()}">0</h3>
-                </div>
+            <div class="col-md-4 text-center">
+                <h5 class="text-muted">Active Users</h5>
+                <h3 th:text="${activeUserCount}">0</h3>
             </div>
-            <div class="col-md-4">
-                <div class="text-center">
-                    <h5 class="text-muted">Inactive Users</h5>
-                    <h3 th:text="${users.stream().filter(u -> !u.isActive()).count()}">0</h3>
-                </div>
+            <div class="col-md-4 text-center">
+                <h5 class="text-muted">Inactive Users</h5>
+                <h3 th:text="${users.size() - activeUserCount}">0</h3>
             </div>
         </div>
     </div>
@@ -175,18 +217,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Search functionality
     document.getElementById('searchInput').addEventListener('keyup', function() {
         const searchValue = this.value.toLowerCase();
-        const tableRows = document.querySelectorAll('#usersTable tbody tr');
-
-        tableRows.forEach(row => {
-            if (row.querySelector('td[colspan]')) {
-                // Skip "no users found" row
-                return;
-            }
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchValue) ? '' : 'none';
+        document.querySelectorAll('#usersTable tbody tr').forEach(row => {
+            if (row.querySelector('td[colspan]')) return;
+            row.style.display = row.textContent.toLowerCase().includes(searchValue) ? '' : 'none';
         });
     });
 </script>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sick Livestock Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sick-bg:#fef3c7; --sick-border:#fde68a; --sick-text:#92400e;
+            --critical-bg:#fee2e2; --critical-border:#fca5a5; --critical-text:#991b1b;
+            --recovering-bg:#f0fdf4; --recovering-border:#bbf7d0; --recovering-text:#166534;
+            --recovered-bg:#e0f2fe; --recovered-border:#bae6fd; --recovered-text:#0369a1;
+        }
+        body { background:#f0f2f5; font-family:'DM Sans',sans-serif; padding:0; margin:0; }
+
+        /* ── TOP BANNER ── */
+        .report-banner {
+            background:linear-gradient(135deg,#1a2535 0%,#1a5f7a 60%,#2e8b9e 100%);
+            padding:32px 40px 28px; color:white;
+        }
+        .report-banner h2 { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; margin:0 0 4px; }
+        .report-banner .sub { font-size:.88rem; opacity:.75; }
+        .print-btn { background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.35); color:white; border-radius:8px; padding:6px 16px; font-size:.83rem; font-weight:600; cursor:pointer; }
+        .print-btn:hover { background:rgba(255,255,255,.25); color:white; }
+
+        .report-body { padding:28px 32px; max-width:1400px; margin:0 auto; }
+
+        /* ── FILTER CARD ── */
+        .filter-card { background:white; border-radius:12px; padding:18px 24px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:24px; }
+
+        /* ── KPI STRIP ── */
+        .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:24px; }
+        .kpi { background:white; border-radius:12px; padding:18px 20px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-top:4px solid transparent; }
+        .kpi.k-total     { border-color:#64748b; }
+        .kpi.k-sick      { border-color:#f59e0b; }
+        .kpi.k-critical  { border-color:#ef4444; }
+        .kpi.k-recovering{ border-color:#10b981; }
+        .kpi.k-recovered { border-color:#0ea5e9; }
+        .kpi.k-cost      { border-color:#8b5cf6; }
+        .kpi .kpi-num  { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; line-height:1; }
+        .kpi .kpi-lbl  { font-size:.73rem; font-weight:600; color:#64748b; margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+        .kpi .kpi-icon { font-size:1.4rem; margin-bottom:6px; }
+
+        /* ── CHARTS ROW ── */
+        /* FIX 1: Give chart cards explicit height so canvas is never zero-height */
+        .chart-card { background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+        .chart-card h6 { font-weight:700; font-size:.82rem; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin-bottom:14px; }
+        /* FIX 2: Explicit wrapper height forces Chart.js to render even with zero data */
+        .chart-wrapper { position:relative; height:220px; width:100%; }
+
+        /* ── SECTION HEADER ── */
+        .sec-head { display:flex; align-items:center; gap:10px; margin:28px 0 16px; }
+        .sec-head .sec-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .sec-head h5 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:800; margin:0; color:#1a2535; }
+        .sec-head .sec-count { background:#f1f5f9; border:1.5px solid #e2e8f0; border-radius:20px; padding:2px 10px; font-size:.75rem; font-weight:700; color:#475569; }
+
+        /* ── JOURNEY TABLE ── */
+        .journey-card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; margin-bottom:24px; }
+        .journey-card .jc-header { padding:14px 20px; background:#f8fafc; border-bottom:1.5px solid #e2e8f0; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .jc-tag { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; color:#1a2535; }
+        .jc-category { background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; border-radius:20px; padding:2px 10px; font-size:.72rem; font-weight:700; }
+        .jc-days { font-size:.75rem; color:#64748b; margin-left:auto; }
+        .jc-cost { font-size:.8rem; font-weight:700; color:#7c3aed; }
+
+        /* Progress journey bar */
+        .journey-progress { display:flex; align-items:center; padding:14px 20px 10px; gap:0; flex-wrap:wrap; }
+        .jp-step {
+            display:flex; align-items:center; gap:7px;
+            padding:6px 14px; border-radius:22px; font-size:.73rem; font-weight:700;
+            border:2px solid transparent; opacity:.28; transition:all .2s; position:relative;
+        }
+        .jp-step.reached { opacity:1; }
+        .jp-step.current { opacity:1; box-shadow:0 0 0 4px rgba(0,0,0,.08); transform:scale(1.06); }
+        .jp-step.sick-s       { background:var(--sick-bg);       color:var(--sick-text);       border-color:var(--sick-border); }
+        .jp-step.critical-s   { background:var(--critical-bg);   color:var(--critical-text);   border-color:var(--critical-border); }
+        .jp-step.recovering-s { background:var(--recovering-bg); color:var(--recovering-text); border-color:var(--recovering-border); }
+        .jp-step.recovered-s  { background:var(--recovered-bg);  color:var(--recovered-text);  border-color:var(--recovered-border); }
+        .jp-connector { width:28px; height:2px; background:#e2e8f0; flex-shrink:0; }
+        .jp-connector.reached { background:linear-gradient(90deg,#10b981,#0ea5e9); }
+        .jp-step-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; }
+        .jp-time { font-size:.62rem; color:#94a3b8; font-weight:500; white-space:nowrap; }
+
+        /* History inside card */
+        .jc-history { padding:0 20px 16px; }
+        .jc-tl { position:relative; padding-left:18px; }
+        .jc-tl::before { content:''; position:absolute; left:5px; top:6px; bottom:6px; width:2px; background:#e2e8f0; border-radius:2px; }
+        .jc-tl-row { position:relative; display:flex; align-items:flex-start; gap:12px; padding:8px 0 8px 10px; border-bottom:1px dashed #f0f2f5; }
+        .jc-tl-row:last-child { border-bottom:none; }
+        .jc-tl-row::before { content:''; position:absolute; left:-13px; top:14px; width:9px; height:9px; border-radius:50%; border:2px solid white; box-shadow:0 0 0 1px #e2e8f0; }
+        .jc-tl-row.s-sick::before       { background:#f59e0b; }
+        .jc-tl-row.s-critical::before   { background:#ef4444; }
+        .jc-tl-row.s-recovering::before { background:#10b981; }
+        .jc-tl-row.s-recovered::before  { background:#0ea5e9; }
+        .tl-status-col { min-width:110px; }
+        .tl-notes-col { font-size:.78rem; color:#64748b; flex:1; }
+        .tl-meta-col { font-size:.7rem; color:#94a3b8; white-space:nowrap; text-align:right; min-width:120px; }
+
+        /* ── BADGES ── */
+        .badge-sick       { display:inline-flex;align-items:center;gap:4px;background:var(--sick-bg);color:var(--sick-text);border:1px solid var(--sick-border);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700; }
+        .badge-critical   { display:inline-flex;align-items:center;gap:4px;background:var(--critical-bg);color:var(--critical-text);border:1px solid var(--critical-border);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700; }
+        .badge-recovering { display:inline-flex;align-items:center;gap:4px;background:var(--recovering-bg);color:var(--recovering-text);border:1px solid var(--recovering-border);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700; }
+        .badge-recovered  { display:inline-flex;align-items:center;gap:4px;background:var(--recovered-bg);color:var(--recovered-text);border:1px solid var(--recovered-border);border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700; }
+        .sev-mild        { background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700; }
+        .sev-moderate    { background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700; }
+        .sev-severe      { background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700; }
+        .sev-lifethreat  { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700; }
+
+        /* ── FULL LOG TABLE ── */
+        .log-table th { font-size:.73rem; text-transform:uppercase; letter-spacing:.05em; color:#64748b; font-weight:700; }
+        .log-table td { font-size:.82rem; vertical-align:middle; padding:8px 12px; }
+
+        /* ── RECOVERY INSIGHT ── */
+        .insight-row { display:flex; align-items:center; gap:10px; padding:10px 14px; background:#f8fafc; border-radius:8px; margin-bottom:8px; border-left:3px solid #10b981; }
+        .insight-row .ins-num { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:#065f46; min-width:50px; }
+        .insight-row .ins-lbl { font-size:.78rem; color:#374151; }
+
+        /* ── EMPTY STATE ── */
+        .empty-state { text-align:center; padding:32px; color:#94a3b8; }
+        .empty-state i { font-size:2rem; display:block; margin-bottom:8px; }
+
+        /* ── PRINT ── */
+        @media print {
+            body { background:white; }
+            .report-banner { background:#1a2535 !important; -webkit-print-color-adjust:exact; }
+            .filter-card, .print-btn { display:none !important; }
+            .journey-card, .chart-card, .kpi { box-shadow:none !important; border:1px solid #e2e8f0 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP BANNER -->
+<div class="report-banner">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3" style="max-width:1400px;margin:0 auto;">
+        <div>
+            <h2><i class="bi bi-bar-chart-fill me-2"></i>Sick Livestock Report</h2>
+            <div class="sub">
+                Full treatment journey · Sick → Critical → Recovering → Recovered ·
+                Period: <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong>
+                to <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="/livestock/sick" class="print-btn text-decoration-none"><i class="bi bi-arrow-left me-1"></i> Back</a>
+            <button class="print-btn" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print / PDF</button>
+        </div>
+    </div>
+</div>
+
+<div class="report-body">
+
+    <!-- DATE FILTER -->
+    <div class="filter-card">
+        <form method="get" action="/livestock/sick/report" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">From Date</label>
+                <input type="date" name="from" class="form-control form-control-sm"
+                       th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">To Date</label>
+                <input type="date" name="to" class="form-control form-control-sm"
+                       th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-warning btn-sm text-white fw-bold w-100">
+                    <i class="bi bi-funnel me-1"></i> Apply Filter
+                </button>
+            </div>
+            <div class="col-md-4 d-flex gap-2 flex-wrap">
+                <a th:href="@{/livestock/sick/report(from=${#temporals.format(#temporals.createToday().withDayOfMonth(1),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday(),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-month me-1"></i>This Month</a>
+                <a th:href="@{/livestock/sick/report(from=${#temporals.format(#temporals.createToday().withDayOfYear(1),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday(),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-year me-1"></i>This Year</a>
+                <a th:href="@{/livestock/sick/report(from=${#temporals.format(#temporals.createToday().minusDays(30),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday(),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history me-1"></i>Last 30 Days</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPI STRIP -->
+    <div class="kpi-strip">
+        <div class="kpi k-total">
+            <div class="kpi-icon text-secondary"><i class="bi bi-list-ul"></i></div>
+            <div class="kpi-num text-secondary" th:text="${allHistory != null ? allHistory.size() : 0}">0</div>
+            <div class="kpi-lbl">Total Events (Period)</div>
+        </div>
+        <div class="kpi k-sick">
+            <div class="kpi-icon text-warning"><i class="bi bi-bandaid-fill"></i></div>
+            <div class="kpi-num text-warning" th:text="${sickCases != null ? sickCases.size() : 0}">0</div>
+            <div class="kpi-lbl">New Sick Cases</div>
+        </div>
+        <div class="kpi k-critical">
+            <div class="kpi-icon text-danger"><i class="bi bi-exclamation-circle-fill"></i></div>
+            <div class="kpi-num text-danger" th:text="${criticalCases != null ? criticalCases.size() : 0}">0</div>
+            <div class="kpi-lbl">Went Critical</div>
+        </div>
+        <div class="kpi k-recovering">
+            <div class="kpi-icon" style="color:#10b981"><i class="bi bi-arrow-up-circle-fill"></i></div>
+            <div class="kpi-num" style="color:#10b981" th:text="${recoveringCases != null ? recoveringCases.size() : 0}">0</div>
+            <div class="kpi-lbl">Recovering</div>
+        </div>
+        <div class="kpi k-recovered">
+            <div class="kpi-icon text-primary"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="kpi-num text-primary" th:text="${recoveredCases != null ? recoveredCases.size() : 0}">0</div>
+            <div class="kpi-lbl">Recovered</div>
+        </div>
+        <div class="kpi k-cost">
+            <div class="kpi-icon" style="color:#8b5cf6"><i class="bi bi-cash-stack"></i></div>
+            <div class="kpi-num" style="color:#8b5cf6;font-size:1.3rem;" id="kpiCostNum">—</div>
+            <div class="kpi-lbl">Total Cost (RWF)</div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         CHARTS ROW  — 3 columns
+         FIX: wrap every canvas in .chart-wrapper
+              so Chart.js always gets a non-zero
+              bounding box even with zero data.
+    ══════════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+
+        <!-- Doughnut — period status breakdown -->
+        <div class="col-md-5">
+            <div class="chart-card h-100">
+                <h6><i class="bi bi-pie-chart-fill me-2 text-warning"></i>Status Breakdown (Period)</h6>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bar — year summary -->
+        <div class="col-md-4">
+            <div class="chart-card h-100">
+                <h6><i class="bi bi-bar-chart me-2 text-primary"></i>Year Summary</h6>
+                <div class="chart-wrapper">
+                    <canvas id="yearChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recovery insights panel -->
+        <div class="col-md-3">
+            <div class="chart-card h-100 d-flex flex-column justify-content-between">
+                <h6><i class="bi bi-lightbulb-fill me-2 text-success"></i>Recovery Insights</h6>
+                <div>
+                    <div class="insight-row">
+                        <div class="ins-num" th:text="${yearSick}">0</div>
+                        <div class="ins-lbl">Animals got sick this year</div>
+                    </div>
+                    <div class="insight-row" style="border-color:#ef4444;">
+                        <div class="ins-num text-danger" th:text="${yearCritical}">0</div>
+                        <div class="ins-lbl">Escalated to critical this year</div>
+                    </div>
+                    <div class="insight-row" style="border-color:#0ea5e9;">
+                        <div class="ins-num text-primary" th:text="${yearRecovered}">0</div>
+                        <div class="ins-lbl">Successfully recovered this year</div>
+                    </div>
+                    <div class="insight-row mt-2" style="border-color:#8b5cf6;background:#faf5ff;">
+                        <div class="ins-num" style="color:#7c3aed;" id="recoveryRate">—%</div>
+                        <div class="ins-lbl">Recovery rate (recovered / sick)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         SECTION 1: ANIMAL JOURNEY CARDS
+    ═══════════════════════════════════════════════════ -->
+    <div class="sec-head">
+        <div class="sec-icon" style="background:#fef3c7;color:#92400e;"><i class="bi bi-activity"></i></div>
+        <h5>Full Treatment Journey per Animal</h5>
+        <span class="sec-count" th:text="${sickRecords != null ? sickRecords.size() : 0} + ' animals'">0 animals</span>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${sickRecords == null or sickRecords.empty}" class="journey-card">
+        <div class="empty-state">
+            <i class="bi bi-emoji-smile text-success"></i>
+            <strong>No sick animals in this period.</strong>
+            <p class="mb-0 small">Great news — all livestock appear healthy!</p>
+        </div>
+    </div>
+
+    <!-- One card per animal episode -->
+    <div th:each="s : ${sickRecords}" class="journey-card">
+
+        <!-- Card Header -->
+        <div class="jc-header">
+            <span class="jc-tag">
+                <i class="bi bi-tag-fill me-1 text-muted" style="font-size:.8rem;"></i>
+                <span th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></span>
+            </span>
+            <span th:if="${s.livestock?.livestockCategory != null}" class="jc-category"
+                  th:text="${s.livestock.livestockCategory.name}"></span>
+            <span th:if="${s.livestock?.gender == 'MALE'}"   class="badge bg-primary"   style="font-size:.65rem;"><i class="bi bi-gender-male"></i> Male</span>
+            <span th:if="${s.livestock?.gender == 'FEMALE'}" class="badge bg-danger"    style="font-size:.65rem;"><i class="bi bi-gender-female"></i> Female</span>
+
+            <span th:if="${s.status != null and s.status.name() == 'SICK'}"       class="badge-sick ms-1"><i class="bi bi-bandaid-fill"></i> Sick</span>
+            <span th:if="${s.status != null and s.status.name() == 'CRITICAL'}"   class="badge-critical ms-1"><i class="bi bi-exclamation-circle-fill"></i> Critical</span>
+            <span th:if="${s.status != null and s.status.name() == 'RECOVERING'}" class="badge-recovering ms-1"><i class="bi bi-arrow-up-circle-fill"></i> Recovering</span>
+            <span th:if="${s.status != null and s.status.name() == 'RECOVERED'}"  class="badge-recovered ms-1"><i class="bi bi-check-circle-fill"></i> Recovered</span>
+
+            <div class="jc-days ms-auto d-flex gap-3 align-items-center flex-wrap">
+                <span th:if="${s.vetName != null and s.vetName != ''}">
+                    <i class="bi bi-person-badge text-success me-1"></i>
+                    <span th:text="${s.vetName}"></span>
+                </span>
+                <span th:if="${s.reportedDate != null}">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    Reported: <span th:text="${#temporals.format(s.reportedDate,'dd MMM yyyy')}"></span>
+                </span>
+                <span th:if="${s.recoveryDate != null}" class="text-success fw-semibold">
+                    <i class="bi bi-check2-all me-1"></i>
+                    Recovered: <span th:text="${#temporals.format(s.recoveryDate,'dd MMM yyyy')}"></span>
+                </span>
+                <span th:if="${s.treatmentCost != null}" class="jc-cost">
+                    <i class="bi bi-cash-stack me-1"></i>
+                    <span th:text="${#numbers.formatDecimal(s.treatmentCost,1,'COMMA',0,'POINT')}"></span> RWF
+                </span>
+            </div>
+        </div>
+
+        <!-- PROGRESS JOURNEY BAR -->
+        <div class="journey-progress">
+
+            <div class="jp-step-wrap">
+                <div class="jp-step sick-s reached"
+                     th:classappend="${s.status != null and s.status.name() == 'SICK'} ? ' current' : ''">
+                    <i class="bi bi-bandaid-fill"></i> Sick
+                </div>
+                <span class="jp-time" th:if="${s.reportedDate != null}"
+                      th:text="${#temporals.format(s.reportedDate,'dd MMM')}"></span>
+            </div>
+
+            <div class="jp-connector"
+                 th:classappend="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'CRITICAL']) > 0} ? 'reached' : ''">
+            </div>
+
+            <div class="jp-step-wrap">
+                <div class="jp-step critical-s"
+                     th:classappend="${(s.history != null and #lists.size(s.history.?[status != null and status.name() == 'CRITICAL']) > 0) ? 'reached' : ''} + ${(s.status != null and s.status.name() == 'CRITICAL') ? ' current' : ''}">
+                    <i class="bi bi-exclamation-circle-fill"></i> Critical
+                </div>
+                <span class="jp-time"
+                      th:if="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'CRITICAL']) > 0}"
+                      th:text="${#temporals.format(s.history.?[status != null and status.name() == 'CRITICAL'][0].changedAt,'dd MMM')}">
+                </span>
+            </div>
+
+            <div class="jp-connector"
+                 th:classappend="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'RECOVERING']) > 0} ? 'reached' : ''">
+            </div>
+
+            <div class="jp-step-wrap">
+                <div class="jp-step recovering-s"
+                     th:classappend="${(s.history != null and #lists.size(s.history.?[status != null and status.name() == 'RECOVERING']) > 0) ? 'reached' : ''} + ${(s.status != null and s.status.name() == 'RECOVERING') ? ' current' : ''}">
+                    <i class="bi bi-arrow-up-circle-fill"></i> Recovering
+                </div>
+                <span class="jp-time"
+                      th:if="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'RECOVERING']) > 0}"
+                      th:text="${#temporals.format(s.history.?[status != null and status.name() == 'RECOVERING'][0].changedAt,'dd MMM')}">
+                </span>
+            </div>
+
+            <div class="jp-connector"
+                 th:classappend="${s.status != null and s.status.name() == 'RECOVERED'} ? 'reached' : ''">
+            </div>
+
+            <div class="jp-step-wrap">
+                <div class="jp-step recovered-s"
+                     th:classappend="${s.status != null and s.status.name() == 'RECOVERED'} ? 'reached current' : ''">
+                    <i class="bi bi-check-circle-fill"></i> Recovered
+                </div>
+                <span class="jp-time" th:if="${s.recoveryDate != null}"
+                      th:text="${#temporals.format(s.recoveryDate,'dd MMM')}"></span>
+            </div>
+
+            <div th:if="${s.status != null and s.status.name() == 'RECOVERED' and s.reportedDate != null and s.recoveryDate != null}"
+                 class="ms-3 px-3 py-1 rounded-pill d-inline-flex align-items-center gap-2"
+                 style="background:#f0fdf4;border:1.5px solid #bbf7d0;font-size:.75rem;font-weight:700;color:#065f46;">
+                <i class="bi bi-stopwatch-fill"></i>
+                <span th:text="${s.recoveryDate.toEpochDay() - s.reportedDate.toEpochDay()} + ' days to recover'"></span>
+            </div>
+        </div>
+
+        <!-- DIAGNOSIS / TREATMENT SUMMARY ROW -->
+        <div th:if="${s.symptoms != null or s.diagnosis != null or s.temperature != null or s.treatmentNotes != null}"
+             class="px-4 pb-3 pt-0 d-flex gap-4 flex-wrap" style="font-size:.8rem;">
+            <span th:if="${s.symptoms != null and s.symptoms != ''}">
+                <i class="bi bi-clipboard2-pulse text-warning me-1"></i>
+                <strong>Symptoms:</strong> <span th:text="${s.symptoms}"></span>
+            </span>
+            <span th:if="${s.diagnosis != null and s.diagnosis != ''}">
+                <i class="bi bi-clipboard-check me-1" style="color:#7c3aed;"></i>
+                <strong>Diagnosis:</strong> <span th:text="${s.diagnosis}"></span>
+            </span>
+            <span th:if="${s.temperature != null}">
+                <i class="bi bi-thermometer-half text-danger me-1"></i>
+                <strong>Temp:</strong> <span th:text="${s.temperature} + '°C'"></span>
+            </span>
+            <span th:if="${s.treatmentNotes != null and s.treatmentNotes != ''}">
+                <i class="bi bi-capsule text-success me-1"></i>
+                <strong>Treatment:</strong> <span th:text="${s.treatmentNotes}"></span>
+            </span>
+            <span th:if="${s.severityLevel != null}">
+                <span th:if="${s.severityLevel.name() == 'MILD'}"             class="sev-mild">Mild</span>
+                <span th:if="${s.severityLevel.name() == 'MODERATE'}"         class="sev-moderate">Moderate</span>
+                <span th:if="${s.severityLevel.name() == 'SEVERE'}"           class="sev-severe">Severe</span>
+                <span th:if="${s.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat">Life-Threatening</span>
+            </span>
+        </div>
+
+        <!-- STATUS CHANGE HISTORY -->
+        <div class="jc-history" th:if="${s.history != null and !s.history.empty}">
+            <div class="text-muted mb-2" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;">
+                <i class="bi bi-clock-history me-1"></i> Status Change Log
+                (<span th:text="${s.history.size()}"></span> entries)
+            </div>
+            <div class="jc-tl">
+                <div th:each="h : ${s.history}"
+                     class="jc-tl-row"
+                     th:classappend="${h.status != null and h.status.name() == 'SICK'} ? ' s-sick' : (${h.status != null and h.status.name() == 'CRITICAL'} ? ' s-critical' : (${h.status != null and h.status.name() == 'RECOVERING'} ? ' s-recovering' : (${h.status != null and h.status.name() == 'RECOVERED'} ? ' s-recovered' : '')))">
+
+                    <div class="tl-status-col">
+                        <span th:if="${h.status != null and h.status.name() == 'SICK'}"       class="badge-sick"      ><i class="bi bi-bandaid-fill"></i> Sick</span>
+                        <span th:if="${h.status != null and h.status.name() == 'CRITICAL'}"   class="badge-critical"  ><i class="bi bi-exclamation-circle-fill"></i> Critical</span>
+                        <span th:if="${h.status != null and h.status.name() == 'RECOVERING'}" class="badge-recovering"><i class="bi bi-arrow-up-circle-fill"></i> Recovering</span>
+                        <span th:if="${h.status != null and h.status.name() == 'RECOVERED'}"  class="badge-recovered" ><i class="bi bi-check-circle-fill"></i> Recovered</span>
+                        <div class="mt-1" th:if="${h.severityLevel != null}">
+                            <span th:if="${h.severityLevel.name() == 'MILD'}"             class="sev-mild">Mild</span>
+                            <span th:if="${h.severityLevel.name() == 'MODERATE'}"         class="sev-moderate">Moderate</span>
+                            <span th:if="${h.severityLevel.name() == 'SEVERE'}"           class="sev-severe">Severe</span>
+                            <span th:if="${h.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat">Life-Threat</span>
+                        </div>
+                    </div>
+
+                    <div class="tl-notes-col">
+                        <span th:if="${h.notes != null and h.notes != ''}" th:text="${h.notes}"></span>
+                        <em th:if="${h.notes == null or h.notes == ''}" class="text-muted">No notes</em>
+                    </div>
+
+                    <div class="tl-meta-col">
+                        <div th:text="${#temporals.format(h.changedAt,'dd-MM-yyyy HH:mm')}"></div>
+                        <div th:if="${h.changedBy != null and h.changedBy != ''}"
+                             class="mt-1"
+                             th:text="'by ' + ${h.changedBy}"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div th:if="${s.history == null or s.history.empty}" class="px-4 pb-3" style="font-size:.78rem;color:#94a3b8;">
+            <i class="bi bi-hourglass-split me-1"></i> No status history recorded for this episode.
+        </div>
+
+    </div><!-- end th:each sickRecords -->
+
+
+    <!-- ═══════════════════════════════════════════════════
+         SECTION 2: FULL HISTORY LOG
+    ═══════════════════════════════════════════════════ -->
+    <div class="sec-head mt-4">
+        <div class="sec-icon" style="background:#f1f5f9;color:#475569;"><i class="bi bi-journal-text"></i></div>
+        <h5>Full Event Log</h5>
+        <span class="sec-count" th:text="${allHistory != null ? allHistory.size() : 0} + ' events'">0 events</span>
+    </div>
+
+    <div class="journey-card">
+        <div class="table-responsive">
+            <table class="table log-table mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Animal Tag</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Severity</th>
+                    <th>Changed At</th>
+                    <th>Notes</th>
+                    <th>Changed By</th>
+                    <th>Timeline</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${allHistory == null or allHistory.empty}">
+                    <td colspan="9" class="text-center text-muted py-4">No history records in this period.</td>
+                </tr>
+                <tr th:each="h, i : ${allHistory}">
+                    <td class="text-muted" th:text="${i.count}"></td>
+                    <td><strong th:text="${h.livestockSick.livestock != null ? h.livestockSick.livestock.tagNumber : '—'}"></strong></td>
+                    <td>
+                        <span th:if="${h.livestockSick.livestock?.livestockCategory != null}"
+                              class="badge bg-info text-dark small"
+                              th:text="${h.livestockSick.livestock.livestockCategory.name}"></span>
+                    </td>
+                    <td>
+                        <span th:if="${h.status.name() == 'SICK'}"       class="badge-sick"      ><i class="bi bi-bandaid-fill"></i> Sick</span>
+                        <span th:if="${h.status.name() == 'CRITICAL'}"   class="badge-critical"  ><i class="bi bi-exclamation-circle-fill"></i> Critical</span>
+                        <span th:if="${h.status.name() == 'RECOVERING'}" class="badge-recovering"><i class="bi bi-arrow-up-circle-fill"></i> Recovering</span>
+                        <span th:if="${h.status.name() == 'RECOVERED'}"  class="badge-recovered" ><i class="bi bi-check-circle-fill"></i> Recovered</span>
+                    </td>
+                    <td>
+                        <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'MILD'}"             class="sev-mild">Mild</span>
+                        <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'MODERATE'}"         class="sev-moderate">Moderate</span>
+                        <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'SEVERE'}"           class="sev-severe">Severe</span>
+                        <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat">Life-Threat</span>
+                        <span th:if="${h.severityLevel == null}" class="text-muted">—</span>
+                    </td>
+                    <td class="text-muted" th:text="${#temporals.format(h.changedAt,'dd-MM-yyyy HH:mm')}"></td>
+                    <td class="text-muted" th:text="${h.notes != null ? h.notes : '—'}"></td>
+                    <td class="text-muted" th:text="${h.changedBy != null ? h.changedBy : 'system'}"></td>
+                    <td>
+                        <a th:href="@{/livestock/sick/history/{id}(id=${h.livestockSick.id})}"
+                           class="btn btn-outline-secondary btn-sm py-0 px-2" title="Full timeline" style="font-size:.7rem;">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-muted mt-4 mb-2" style="font-size:.75rem;">
+        <i class="bi bi-shield-check me-1 text-success"></i>
+        Report generated on <span th:text="${#temporals.format(#temporals.createNow(),'dd MMM yyyy HH:mm')}"></span>
+        · Livestock Management System
+    </div>
+
+</div><!-- end report-body -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+        /* ── 1. Pull counts from Thymeleaf ── */
+        var nSick       = /*[[${sickCases       != null ? sickCases.size()       : 0}]]*/ 0;
+        var nCritical   = /*[[${criticalCases   != null ? criticalCases.size()   : 0}]]*/ 0;
+        var nRecovering = /*[[${recoveringCases != null ? recoveringCases.size() : 0}]]*/ 0;
+        var nRecovered  = /*[[${recoveredCases  != null ? recoveredCases.size()  : 0}]]*/ 0;
+        var yrSick      = /*[[${yearSick      != null ? yearSick      : 0}]]*/ 0;
+        var yrCritical  = /*[[${yearCritical  != null ? yearCritical  : 0}]]*/ 0;
+        var yrRecovered = /*[[${yearRecovered != null ? yearRecovered : 0}]]*/ 0;
+
+        /* ── 2. Recovery rate ── */
+        var rateEl = document.getElementById('recoveryRate');
+        if (rateEl) {
+            rateEl.textContent = yrSick > 0
+                ? Math.round((yrRecovered / yrSick) * 100) + '%'
+                : 'N/A';
+        }
+
+        /* ── 3. Total cost: sum visible .jc-cost spans ── */
+        var totalCost = 0;
+        document.querySelectorAll('.jc-cost').forEach(function(el) {
+            var n = parseInt(el.textContent.replace(/[^0-9]/g, ''), 10);
+            if (!isNaN(n)) totalCost += n;
+        });
+        var costEl = document.getElementById('kpiCostNum');
+        if (costEl) costEl.textContent = totalCost > 0 ? totalCost.toLocaleString() : '0';
+
+        /* ── 4. Shared Chart.js defaults ── */
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+        Chart.defaults.color       = '#64748b';
+
+        /* ── 5. Doughnut — status breakdown (period) ── */
+        (function() {
+            var ctx = document.getElementById('statusChart');
+            if (!ctx) return;
+
+            /* FIX: if ALL values are zero Chart.js renders nothing —
+               show a neutral placeholder segment instead             */
+            var total = nSick + nCritical + nRecovering + nRecovered;
+            var data, labels, colors, borders;
+
+            if (total === 0) {
+                data    = [1];
+                labels  = ['No data'];
+                colors  = ['#e2e8f0'];
+                borders = ['#e2e8f0'];
+            } else {
+                data    = [nSick, nCritical, nRecovering, nRecovered];
+                labels  = ['Sick', 'Critical', 'Recovering', 'Recovered'];
+                colors  = ['#f59e0b', '#ef4444', '#10b981', '#0ea5e9'];
+                borders = ['#ffffff', '#ffffff', '#ffffff', '#ffffff'];
+            }
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: borders,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,   /* FIX: lets the .chart-wrapper height drive size */
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 11 }, padding: 12, usePointStyle: true }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    if (total === 0) return ' No data in selected period';
+                                    return ' ' + ctx.label + ': ' + ctx.parsed;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        })();
+
+        /* ── 6. Bar — year summary ── */
+        (function() {
+            var ctx = document.getElementById('yearChart');
+            if (!ctx) return;
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sick', 'Critical', 'Recovered'],
+                    datasets: [{
+                        label: 'This Year',
+                        data: [yrSick, yrCritical, yrRecovered],
+                        backgroundColor: ['#fef3c7', '#fee2e2', '#e0f2fe'],
+                        borderColor:     ['#f59e0b', '#ef4444', '#0ea5e9'],
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,   /* FIX: same — let wrapper control height */
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, precision: 0, font: { size: 11 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            ticks: { font: { size: 12 } },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        })();
+
+    /*]]>*/
+</script>
+</body>
+</html>

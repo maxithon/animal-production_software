@@ -1,10 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .edit-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-label {
+            font-weight: 500;
+            color: #333;
+        }
+        .btn-update {
+            background: linear-gradient(135deg, #002244 0%, #004488 100%);
+            border: none;
+            color: white;
+        }
+        .btn-update:hover {
+            background: linear-gradient(135deg, #004488 0%, #0066cc 100%);
+        }
+    </style>
 </head>
 <body>
-$END$
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="edit-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3><i class="bi bi-pencil-square"></i> Edit User</h3>
+                    <a th:href="@{/users/list}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+
+                <!-- Error Message -->
+                <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <form th:action="@{/users/update/{id}(id=${user.userId})}"
+                      th:object="${user}"
+                      method="post">
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="bi bi-envelope"></i> Email Address
+                        </label>
+                        <input
+                                type="email"
+                                class="form-control"
+                                id="email"
+                                th:field="*{email}"
+                                required>
+                    </div>
+
+                    <!-- Password (Optional) -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="bi bi-lock"></i> New Password (leave empty to keep current)
+                        </label>
+                        <input
+                                type="password"
+                                class="form-control"
+                                id="password"
+                                th:field="*{password}"
+                                placeholder="Enter new password or leave empty"
+                                minlength="6">
+                        <div class="form-text">Only fill this if you want to change the password</div>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="mb-3">
+                        <label for="confirmPassword" class="form-label">
+                            <i class="bi bi-lock-fill"></i> Confirm New Password
+                        </label>
+                        <input
+                                type="password"
+                                class="form-control"
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                placeholder="Re-enter new password">
+                    </div>
+
+                    <!-- User Type -->
+                    <div class="mb-3">
+                        <label for="userType" class="form-label">
+                            <i class="bi bi-person-badge"></i> User Type
+                        </label>
+                        <select
+                                class="form-select"
+                                id="userType"
+                                th:field="*{userTypeIdValue}"
+                                required>
+                            <option value="">Select user type...</option>
+                            <option
+                                    th:each="type : ${getAllTypes}"
+                                    th:value="${type.userTypeId}"
+                                    th:text="${type.userTypeName}"
+                                    th:selected="${type.userTypeId == user.userTypeId.userTypeId}">
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- Active Status -->
+                    <div class="mb-3 form-check form-switch">
+                        <input
+                                class="form-check-input"
+                                type="checkbox"
+                                id="active"
+                                th:field="*{active}">
+                        <label class="form-check-label" for="active">
+                            <i class="bi bi-toggle-on"></i> Active User
+                        </label>
+                    </div>
+
+                    <!-- Hidden fields -->
+                    <input type="hidden" th:field="*{userId}">
+                    <input type="hidden" th:field="*{registrationDate}">
+
+                    <!-- Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a th:href="@{/users/list}" class="btn btn-secondary me-2">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-update">
+                            <i class="bi bi-check-circle"></i> Update User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Password Validation Script -->
+<script>
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Only validate if password is being changed
+        if (password && password !== confirmPassword) {
+            e.preventDefault();
+            alert('Passwords do not match!');
+            document.getElementById('confirmPassword').classList.add('is-invalid');
+        }
+    });
+
+    // Clear validation on input
+    document.getElementById('confirmPassword').addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+    });
+</script>
 </body>
 </html>

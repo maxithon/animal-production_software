@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<!--
+=======================================================================
+  LIVESTOCK ABORTIONS REPORT — ADD-IN FOR admin-dashboard.html
+  Follows the exact same pattern as treatments-report-section.html
+=======================================================================
+  STEP 1 — CSS        : Copy <style id="ABORTIONS_CSS_COPY_THIS_BLOCK"> into <style>
+  STEP 2 — SIDEBAR    : Replace / add sidebar link (see snippet below)
+  STEP 3 — HTML VIEW  : Paste div#abortion-report-view after END TREATMENT REPORT VIEW
+  STEP 4 — JAVASCRIPT : Paste <script> block at bottom of page
+  STEP 5 — CONTROLLER : Add these model attributes in your controller:
+                          - abortionList          : List<LivestockAbortion>
+                          - totalAbortions        : Long
+                          - totalAnimalsAffected  : Long
+                          - mostAffectedAnimalTag : String
+                          - abortionsThisMonth    : Long
+=======================================================================
+-->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ABORTIONS CSS — paste inside <style> in admin-dashboard.html
+════════════════════════════════════════════════════════════════════ -->
+<style id="ABORTIONS_CSS_COPY_THIS_BLOCK">
+
+/* ── Sidebar link ── */
+.submenu-item.abortion-report { color: #dc2626; font-weight: 500; }
+.submenu-item.abortion-report:hover { background: #fff5f5; border-left-color: #dc2626; color: #991b1b; }
+
+/* ════ ABORTION REPORT VIEW ════════════════════════════════════ */
+#abortion-report-view { padding: 30px; overflow-y: auto; display: none; }
+
+/* ─────────────────────────────────────────────────────────────
+   SUMMARY CARDS — born-sold style
+   White bg · coloured left border · icon on left · number + label stacked on right
+───────────────────────────────────────────────────────────── */
+.ab-summary-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.ab-sum-card {
+    background: white;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ab-sum-card.c1 { border-left-color: #dc2626; }   /* red    – total abortions      */
+.ab-sum-card.c2 { border-left-color: #f59e0b; }   /* amber  – animals affected     */
+.ab-sum-card.c3 { border-left-color: #8b5cf6; }   /* purple – most affected animal */
+.ab-sum-card.c4 { border-left-color: #0ea5e9; }   /* sky    – this month           */
+
+.ab-sum-card .ab-icon    { font-size: 1.8rem; flex-shrink: 0; }
+.ab-sum-card.c1 .ab-icon { color: #dc2626; }
+.ab-sum-card.c2 .ab-icon { color: #f59e0b; }
+.ab-sum-card.c3 .ab-icon { color: #8b5cf6; }
+.ab-sum-card.c4 .ab-icon { color: #0ea5e9; }
+
+.ab-sum-card .ab-text { display: flex; flex-direction: column; }
+
+.ab-sum-card .ab-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1a202c;
+}
+.ab-sum-card.c3 .ab-num {
+    font-size: 1.1rem;
+    word-break: break-all;
+}
+.ab-sum-card .ab-lbl {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 3px;
+}
+
+/* ── Tab panels ── */
+.ab-tab-panel { display: none; }
+.ab-tab-panel.active { display: block; }
+
+/* ── Abortion table ── */
+.ab-table { width: 100%; border-collapse: collapse; }
+.ab-table thead th {
+    background: #f8f9fb;
+    padding: 10px 14px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
+}
+.ab-table tbody td {
+    padding: 10px 14px;
+    font-size: 0.87rem;
+    color: #374151;
+    border-bottom: 1px solid #f0f2f5;
+    vertical-align: middle;
+}
+.ab-table tbody tr:hover { background: #fff5f5; }
+
+/* ── Badges ── */
+.bdg-abortion  { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+.bdg-expected  { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+.bdg-past      { display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;color:#374151;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+.bdg-today     { display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+
+/* ── Row highlights ── */
+.row-upcoming-birth td { background: #fffbeb; }
+.row-past-birth     td { background: #f9fafb; }
+
+/* ── Category group cards ── */
+.cat-group-card { border: 2px solid #fee2e2; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+.cat-group-header {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white; padding: 12px 18px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.cat-group-header .cgh-name { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.cat-group-header .cgh-meta { display: flex; gap: 16px; font-size: 0.8rem; opacity: 0.9; }
+.cat-group-header .cgh-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* ── Search box ── */
+.ab-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+.ab-search-wrap .si { position: absolute; left: 14px; color: #94a3b8; pointer-events: none; }
+.ab-search-input {
+    width: 100%; padding: 12px 44px 12px 42px;
+    border: 2px solid #e2e8f0; border-radius: 10px;
+    font-size: 0.95rem; color: #1a202c; outline: none;
+    transition: border-color 0.2s; background: #fafcff;
+}
+.ab-search-input:focus { border-color: #dc2626; background: white; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+.ab-clear-btn { position: absolute; right: 12px; background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 1.1rem; padding: 0; transition: color 0.2s; }
+.ab-clear-btn:hover { color: #64748b; }
+
+/* ── Empty state ── */
+.ab-empty { text-align: center; padding: 48px 20px; color: #94a3b8; }
+.ab-empty i { font-size: 2.8rem; display: block; margin-bottom: 12px; }
+
+/* ── Upcoming expected births explainer banner ── */
+.upcoming-births-explainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 16px 18px;
+    background: #fafcff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+}
+.upcoming-births-explainer-title {
+    width: 100%;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+.ubex-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1 1 200px;
+    background: white;
+    border-radius: 8px;
+    padding: 12px 14px;
+    border-left: 3px solid;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.ubex-item.upcoming { border-left-color: #f59e0b; }
+.ubex-item.past     { border-left-color: #6b7280; }
+.ubex-item.today    { border-left-color: #10b981; }
+.ubex-item.none     { border-left-color: #94a3b8; }
+.ubex-item .ubex-icon { font-size: 1.4rem; margin-top: 1px; flex-shrink: 0; }
+.ubex-item.upcoming .ubex-icon { color: #f59e0b; }
+.ubex-item.past     .ubex-icon { color: #6b7280; }
+.ubex-item.today    .ubex-icon { color: #10b981; }
+.ubex-item.none     .ubex-icon { color: #94a3b8; }
+.ubex-item .ubex-label { font-weight: 700; font-size: 0.85rem; color: #1a202c; display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.ubex-item .ubex-desc { font-size: 0.78rem; color: #64748b; line-height: 1.45; }
+.ubex-row-swatch { display: inline-block; width: 30px; height: 10px; border-radius: 3px; vertical-align: middle; }
+.ubex-row-swatch.upcoming { background: #fffbeb; }
+.ubex-row-swatch.past     { background: #f9fafb; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    #abortion-report-view { padding: 20px 15px; }
+    .ab-summary-row { grid-template-columns: 1fr 1fr; }
+    .ab-table { font-size: 0.8rem; }
+    .ubex-item { flex: 1 1 100%; }
+}
+@media (max-width: 480px) {
+    .ab-summary-row { grid-template-columns: 1fr; }
+}
+</style>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     SIDEBAR LINK — add inside your Reports submenu
+════════════════════════════════════════════════════════════════════ -->
+<!--
+<a href="#" class="submenu-item abortion-report" id="abortionReportLink"
+   onclick="showAbortionReport(event, this)">
+    <i class="bi bi-heartbreak-fill"></i> Abortion Report
+</a>
+-->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ABORTIONS REPORT VIEW
+     Paste AFTER closing </div> of END TREATMENT REPORT VIEW
+     and BEFORE <div id="iframe-view">
+════════════════════════════════════════════════════════════════════ -->
+<div id="abortion-report-view">
+
+    <!-- Page header -->
+    <div class="report-page-header">
+        <h3><i class="bi bi-heartbreak-fill" style="color:#dc2626;"></i> Livestock Abortions Report</h3>
+        <button class="btn-back-dash" onclick="showDashboard(document.getElementById('dashMenuHeader'))">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SUMMARY CARDS — born-sold style
+         .ab-sum-card > .ab-icon  +  .ab-text > (.ab-num + .ab-lbl)
+    ═══════════════════════════════════════════════════════════════ -->
+    <div class="ab-summary-row">
+
+        <div class="ab-sum-card c1">
+            <div class="ab-icon"><i class="bi bi-heartbreak-fill"></i></div>
+            <div class="ab-text">
+                <div class="ab-num" th:text="${totalAbortions != null ? totalAbortions : 0}">0</div>
+                <div class="ab-lbl">Total Abortions</div>
+            </div>
+        </div>
+
+        <div class="ab-sum-card c2">
+            <div class="ab-icon"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+            <div class="ab-text">
+                <div class="ab-num" th:text="${totalAnimalsAffected != null ? totalAnimalsAffected : 0}">0</div>
+                <div class="ab-lbl">Animals Affected</div>
+            </div>
+        </div>
+
+        <div class="ab-sum-card c3">
+            <div class="ab-icon"><i class="bi bi-award-fill"></i></div>
+            <div class="ab-text">
+                <div class="ab-num"
+                     th:text="${mostAffectedAnimalTag != null ? mostAffectedAnimalTag : '—'}">—</div>
+                <div class="ab-lbl">Most Affected Animal</div>
+            </div>
+        </div>
+
+        <div class="ab-sum-card c4">
+            <div class="ab-icon"><i class="bi bi-calendar-month-fill"></i></div>
+            <div class="ab-text">
+                <div class="ab-num" th:text="${abortionsThisMonth != null ? abortionsThisMonth : 0}">0</div>
+                <div class="ab-lbl">Abortions This Month</div>
+            </div>
+        </div>
+
+    </div><!-- /ab-summary-row -->
+
+
+    <!-- ── Report Section ── -->
+    <div class="report-section">
+        <div class="report-section-header">
+            <h4><i class="bi bi-table"></i> Report Data</h4>
+            <div class="report-tabs">
+                <button class="report-tab active" onclick="abSwitchTab('all', this)">
+                    <i class="bi bi-grid-3x3-gap-fill"></i> All Abortions
+                </button>
+                <button class="report-tab" onclick="abSwitchTab('search', this)">
+                    <i class="bi bi-search"></i> Search by Tag
+                </button>
+                <button class="report-tab" onclick="abSwitchTab('category', this)">
+                    <i class="bi bi-tag-fill"></i> By Category
+                </button>
+                <button class="report-tab" onclick="abSwitchTab('upcoming', this)">
+                    <i class="bi bi-calendar-check"></i> Expected Births
+                </button>
+                <a th:href="@{/livestock/abortions}" class="report-tab" style="text-decoration:none;"
+                   onclick="navigateTo(event, this)">
+                    <i class="bi bi-box-arrow-up-right"></i> Full List
+                </a>
+            </div>
+        </div>
+
+        <!-- Export Bar -->
+        <div class="export-bar">
+            <span class="export-label"><i class="bi bi-download"></i> Export:</span>
+            <button class="btn-export pdf"   onclick="abExportPDF()"><i class="bi bi-file-pdf-fill"></i> PDF</button>
+            <button class="btn-export excel" onclick="abExportExcel()"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button>
+            <button class="btn-export print" onclick="abPrint()"><i class="bi bi-printer-fill"></i> Print</button>
+            <span class="export-info" id="abExportInfo">Showing all abortion records</span>
+        </div>
+
+
+        <!-- ══ TAB: ALL ABORTIONS ═══════════════════════════════ -->
+        <div id="ab-tab-all" class="ab-tab-panel active">
+            <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                <i class="bi bi-heartbreak"></i>
+                <p>No abortion records found yet.</p>
+            </div>
+            <div th:if="${abortionList != null and !abortionList.empty}" class="table-responsive">
+                <table class="ab-table" id="abTableAll">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Animal Tag</th>
+                            <th>Category</th>
+                            <th>Abortion Date</th>
+                            <th>Pregnancy #</th>
+                            <th>Expected Birth</th>
+                            <th>Birth Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="a, i : ${abortionList}"
+                            th:classappend="${a.expectedBirthDate != null and !#temporals.createToday().isAfter(a.expectedBirthDate)} ? 'row-upcoming-birth' : (${a.expectedBirthDate != null} ? 'row-past-birth' : '')">
+                            <td th:text="${i.count}">1</td>
+                            <td>
+                                <span class="bdg-abortion"><i class="bi bi-heartbreak-fill"></i></span>
+                                <strong class="ms-1" th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}">TAG-001</strong>
+                            </td>
+                            <td>
+                                <span th:if="${a.livestock?.livestockCategory != null}"
+                                      class="badge bg-info text-white"
+                                      th:text="${a.livestock.livestockCategory.name}">Cat</span>
+                                <span th:if="${a.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${a.abortionDate != null ? #temporals.format(a.abortionDate,'dd-MM-yyyy') : '—'}">—</td>
+                            <td>
+                                <span th:if="${a.pregnancyNumber != null}" th:text="${a.pregnancyNumber}">—</span>
+                                <span th:if="${a.pregnancyNumber == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${a.expectedBirthDate != null}"
+                                      th:text="${#temporals.format(a.expectedBirthDate,'dd-MM-yyyy')}">—</span>
+                                <span th:if="${a.expectedBirthDate == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <!-- Expected birth upcoming -->
+                                <span th:if="${a.expectedBirthDate != null and !#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                      class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                <!-- Expected birth passed -->
+                                <span th:if="${a.expectedBirthDate != null and #temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                      class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span>
+                                <!-- No expected birth -->
+                                <span th:if="${a.expectedBirthDate == null}"
+                                      class="text-muted" style="font-size:0.82rem;">—</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- ══ TAB: SEARCH BY ANIMAL TAG ═══════════════════════ -->
+        <div id="ab-tab-search" class="ab-tab-panel">
+            <div class="ab-search-wrap">
+                <i class="bi bi-search si"></i>
+                <input type="text" id="abSearchInput" class="ab-search-input"
+                       placeholder="Type animal tag (e.g. TAG-001)..."
+                       oninput="abFilterByTag(this.value)">
+                <button class="ab-clear-btn" onclick="abClearSearch()" title="Clear">
+                    <i class="bi bi-x-circle-fill"></i>
+                </button>
+            </div>
+            <div class="search-hint" style="margin-bottom:16px;">Start typing a tag number to filter abortion records</div>
+            <div id="abSearchResults">
+                <div class="search-placeholder">
+                    <i class="bi bi-search"></i>
+                    <p>Enter an animal tag number to see its abortion history</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ══ TAB: GROUP BY CATEGORY ══════════════════════════ -->
+        <div id="ab-tab-category" class="ab-tab-panel">
+            <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                <i class="bi bi-tag"></i>
+                <p>No abortion records to group.</p>
+            </div>
+            <!--
+              Grouped by JS (abBuildCategoryGroups) at runtime —
+              reads abTableAll rows and regroups by category column.
+            -->
+            <div id="abCatGroupContainer">
+                <div class="ab-empty">
+                    <i class="bi bi-tag"></i>
+                    <p>Switch to this tab to load category groups.</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ══ TAB: UPCOMING EXPECTED BIRTHS ══════════════════ -->
+        <div id="ab-tab-upcoming" class="ab-tab-panel">
+
+            <!-- Explainer banner -->
+            <div class="upcoming-births-explainer">
+                <div class="upcoming-births-explainer-title">
+                    <i class="bi bi-info-circle me-1"></i> How to read this table
+                </div>
+                <div class="ubex-item upcoming">
+                    <div class="ubex-icon"><i class="bi bi-clock-fill"></i></div>
+                    <div>
+                        <div class="ubex-label"><span class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span></div>
+                        <div class="ubex-desc">The expected birth date is <strong>still in the future</strong>.
+                            Monitor the animal closely as the date approaches.<br>
+                            <span class="ubex-row-swatch upcoming"></span>
+                            <em style="font-size:0.73rem;color:#94a3b8;"> Row highlighted in yellow</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="ubex-item past">
+                    <div class="ubex-icon"><i class="bi bi-calendar-x-fill"></i></div>
+                    <div>
+                        <div class="ubex-label"><span class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span></div>
+                        <div class="ubex-desc">The expected birth date has <strong>already passed</strong>.
+                            No new birth was recorded — verify with your vet if needed.<br>
+                            <span class="ubex-row-swatch past"></span>
+                            <em style="font-size:0.73rem;color:#94a3b8;"> Row in light gray</em>
+                        </div>
+                    </div>
+                </div>
+                <div class="ubex-item today">
+                    <div class="ubex-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <div>
+                        <div class="ubex-label"><span class="bdg-today"><i class="bi bi-check-circle-fill"></i> Today</span></div>
+                        <div class="ubex-desc">The expected birth date is <strong>today</strong>.
+                            Be ready — check the animal now.
+                        </div>
+                    </div>
+                </div>
+                <div class="ubex-item none">
+                    <div class="ubex-icon"><i class="bi bi-dash-circle-fill"></i></div>
+                    <div>
+                        <div class="ubex-label">Days Until / Since</div>
+                        <div class="ubex-desc">Shows how many days remain until the expected birth date,
+                            or how many days have passed since it was due.
+                            Calculated automatically from today's date.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming births table -->
+            <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                <i class="bi bi-calendar-check"></i>
+                <p>No abortion records found.</p>
+            </div>
+            <div th:if="${abortionList != null and !abortionList.empty}" class="table-responsive">
+                <table class="ab-table" id="abTableUpcoming">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Animal Tag</th>
+                            <th>Category</th>
+                            <th>Abortion Date</th>
+                            <th>Pregnancy #</th>
+                            <th>Expected Birth</th>
+                            <th>Days Until / Since</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <th:block th:each="a, i : ${abortionList}">
+                            <tr th:if="${a.expectedBirthDate != null}"
+                                th:classappend="${!#temporals.createToday().isAfter(a.expectedBirthDate)} ? 'row-upcoming-birth' : 'row-past-birth'">
+                                <td th:text="${i.count}">1</td>
+                                <td><strong th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}">TAG-001</strong></td>
+                                <td>
+                                    <span th:if="${a.livestock?.livestockCategory != null}"
+                                          class="badge bg-info text-white"
+                                          th:text="${a.livestock.livestockCategory.name}">Cat</span>
+                                    <span th:if="${a.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${a.abortionDate != null ? #temporals.format(a.abortionDate,'dd-MM-yyyy') : '—'}">—</td>
+                                <td>
+                                    <span th:if="${a.pregnancyNumber != null}" th:text="${a.pregnancyNumber}">—</span>
+                                    <span th:if="${a.pregnancyNumber == null}" class="text-muted">—</span>
+                                </td>
+                                <td><strong th:text="${#temporals.format(a.expectedBirthDate,'dd-MM-yyyy')}">—</strong></td>
+                                <td class="ab-days-cell" th:attr="data-expected=${a.expectedBirthDate}">—</td>
+                                <td>
+                                    <span th:if="${!#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                          class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                    <span th:if="${#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                          class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span>
+                                </td>
+                            </tr>
+                        </th:block>
+                        <tr id="abUpcomingEmptyRow" style="display:none;">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-calendar-check me-2 text-success"></i>No expected birth dates recorded.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div><!-- /ab-tab-upcoming -->
+
+    </div><!-- /report-section -->
+</div>
+<!-- ===== END ABORTION REPORT VIEW ===== -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ABORTIONS JAVASCRIPT — paste inside <script> at bottom of page
+════════════════════════════════════════════════════════════════════ -->
+<script id="ABORTIONS_JS_COPY_THIS_BLOCK">
+
+/* ── Show abortion report view ── */
+function showAbortionReport(event, el) {
+    event.preventDefault();
+    showView('abortion-report');
+    document.querySelectorAll('.submenu-item').forEach(function(i) { i.classList.remove('active-item'); });
+    el.classList.add('active-item');
+    abSwitchTab('all', document.querySelector('#abortion-report-view .report-tab'));
+    abCalcDays();
+    closeSidebarOnMobile();
+}
+
+/* ── Extend showView to handle abortion-report ──
+   NOTE: if you already patched showView for treatment-report,
+   just add the abortion-report line inside that same function
+   instead of wrapping again.
+── */
+(function () {
+    var _orig = showView;
+    showView = function (which) {
+        document.getElementById('dashboard-view').style.display         = (which === 'dashboard')         ? 'block' : 'none';
+        document.getElementById('report-view').style.display            = (which === 'report')            ? 'block' : 'none';
+        document.getElementById('treatment-report-view') &&
+            (document.getElementById('treatment-report-view').style.display  = (which === 'treatment-report')  ? 'block' : 'none');
+        document.getElementById('abortion-report-view').style.display   = (which === 'abortion-report')   ? 'block' : 'none';
+        document.getElementById('iframe-view').style.display            = (which === 'iframe')            ? 'block' : 'none';
+    };
+})();
+
+/* ── Switch tabs ── */
+function abSwitchTab(tab, btn) {
+    document.querySelectorAll('.ab-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('#abortion-report-view .report-tab').forEach(function(b) { b.classList.remove('active'); });
+    var panel = document.getElementById('ab-tab-' + tab);
+    if (panel) panel.classList.add('active');
+    if (btn)   btn.classList.add('active');
+    var labels = {
+        all:      'Showing all abortion records',
+        search:   'Search by animal tag',
+        category: 'Grouped by category',
+        upcoming: 'Expected birth dates'
+    };
+    var infoEl = document.getElementById('abExportInfo');
+    if (infoEl) infoEl.textContent = labels[tab] || '';
+    if (tab === 'category') abBuildCategoryGroups();
+    if (tab === 'upcoming') abCheckUpcomingEmpty();
+}
+
+/* ── Calculate days until expected birth / days since ── */
+function abCalcDays() {
+    var today = new Date(); today.setHours(0,0,0,0);
+    document.querySelectorAll('.ab-days-cell').forEach(function(cell) {
+        var raw = cell.getAttribute('data-expected');
+        if (!raw) { cell.textContent = '—'; return; }
+        var exp  = new Date(raw); exp.setHours(0,0,0,0);
+        var diff = Math.round((exp - today) / (1000 * 60 * 60 * 24));
+        if (diff < 0) {
+            cell.innerHTML = '<span style="color:#6b7280;font-weight:700;">' + Math.abs(diff) + ' days ago</span>';
+        } else if (diff === 0) {
+            cell.innerHTML = '<span style="color:#059669;font-weight:700;">Today!</span>';
+        } else {
+            cell.innerHTML = '<span style="color:#d97706;font-weight:600;">In ' + diff + ' day' + (diff !== 1 ? 's' : '') + '</span>';
+        }
+    });
+}
+document.addEventListener('DOMContentLoaded', abCalcDays);
+
+/* ── Check if upcoming table is empty ── */
+function abCheckUpcomingEmpty() {
+    var rows = document.querySelectorAll('#abTableUpcoming tbody tr:not(#abUpcomingEmptyRow)');
+    var visible = Array.from(rows).filter(function(r) { return r.style.display !== 'none'; });
+    var emptyRow = document.getElementById('abUpcomingEmptyRow');
+    if (emptyRow) emptyRow.style.display = (visible.length === 0) ? '' : 'none';
+}
+
+/* ── Search by tag ── */
+function abFilterByTag(query) {
+    var resultsDiv = document.getElementById('abSearchResults');
+    var infoEl     = document.getElementById('abExportInfo');
+    query = (query || '').trim().toUpperCase();
+    if (!query) {
+        resultsDiv.innerHTML = '<div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its abortion history</p></div>';
+        if (infoEl) infoEl.textContent = 'Search by animal tag';
+        return;
+    }
+    var rows = document.querySelectorAll('#abTableAll tbody tr');
+    var matches = [];
+    rows.forEach(function(row) {
+        var tagEl = row.querySelector('td:nth-child(2) strong');
+        if (tagEl && tagEl.textContent.toUpperCase().includes(query)) matches.push(row);
+    });
+    if (matches.length === 0) {
+        resultsDiv.innerHTML = '<div class="no-results-msg"><i class="bi bi-search me-2"></i>No abortion records found for tag <strong>' + query + '</strong></div>';
+        if (infoEl) infoEl.textContent = 'No results for: ' + query;
+        return;
+    }
+    if (infoEl) infoEl.textContent = matches.length + ' record(s) for: ' + query;
+    var html = '<table class="ab-table"><thead><tr>'
+        + '<th>#</th><th>Animal Tag</th><th>Category</th><th>Abortion Date</th>'
+        + '<th>Pregnancy #</th><th>Expected Birth</th><th>Birth Status</th>'
+        + '</tr></thead><tbody>';
+    matches.forEach(function(row, idx) {
+        var cells = row.querySelectorAll('td');
+        html += '<tr class="' + row.className + '"><td>' + (idx + 1) + '</td>';
+        for (var i = 1; i < cells.length; i++) html += '<td>' + cells[i].innerHTML + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    resultsDiv.innerHTML = html;
+}
+
+function abClearSearch() {
+    document.getElementById('abSearchInput').value = '';
+    abFilterByTag('');
+}
+
+/* ── Build category groups from table data ── */
+function abBuildCategoryGroups() {
+    var container = document.getElementById('abCatGroupContainer');
+    var rows = document.querySelectorAll('#abTableAll tbody tr');
+    var groups = {};
+
+    rows.forEach(function(row) {
+        var cells = row.querySelectorAll('td');
+        if (!cells[2]) return;
+        var cat = cells[2].textContent.trim() || 'Uncategorised';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(row);
+    });
+
+    var keys = Object.keys(groups);
+    if (keys.length === 0) {
+        container.innerHTML = '<div class="ab-empty"><i class="bi bi-tag"></i><p>No category data available.</p></div>';
+        return;
+    }
+    keys.sort(function(a, b) { return groups[b].length - groups[a].length; });
+
+    var html = '';
+    keys.forEach(function(cat) {
+        var recs = groups[cat];
+        html += '<div class="cat-group-card"><div class="cat-group-header">'
+            + '<div class="cgh-name"><i class="bi bi-tag-fill"></i> ' + cat + '</div>'
+            + '<div class="cgh-meta"><span><i class="bi bi-list-check"></i> '
+            + recs.length + ' abortion' + (recs.length !== 1 ? 's' : '') + '</span></div>'
+            + '</div>'
+            + '<div class="table-responsive"><table class="ab-table"><thead><tr>'
+            + '<th>#</th><th>Animal Tag</th><th>Abortion Date</th>'
+            + '<th>Pregnancy #</th><th>Expected Birth</th><th>Birth Status</th>'
+            + '</tr></thead><tbody>';
+        recs.forEach(function(row, idx) {
+            var c = row.querySelectorAll('td');
+            html += '<tr class="' + row.className + '">'
+                + '<td>' + (idx + 1) + '</td>'
+                + '<td>' + (c[1] ? c[1].innerHTML : '—') + '</td>'
+                + '<td>' + (c[3] ? c[3].textContent.trim() : '—') + '</td>'
+                + '<td>' + (c[4] ? c[4].textContent.trim() : '—') + '</td>'
+                + '<td>' + (c[5] ? c[5].textContent.trim() : '—') + '</td>'
+                + '<td>' + (c[6] ? c[6].innerHTML : '—') + '</td>'
+                + '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+    });
+    container.innerHTML = html;
+}
+
+/* ══ EXPORT FUNCTIONS ══════════════════════════════════════════ */
+function abGetActiveTab() {
+    var tabs = ['all','search','category','upcoming'];
+    for (var i = 0; i < tabs.length; i++) {
+        var p = document.getElementById('ab-tab-' + tabs[i]);
+        if (p && p.classList.contains('active')) return tabs[i];
+    }
+    return 'all';
+}
+
+function abFormatDate() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function abDownloadCSV(csv, filename) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function abGetTableCSV(tableId, title) {
+    var table = document.getElementById(tableId);
+    if (!table) return null;
+    var csv = 'Animal Production System - ' + title + '\nGenerated: ' + new Date().toLocaleString() + '\n\n';
+    var headers = [];
+    table.querySelectorAll('thead th').forEach(function(th) {
+        var t = th.textContent.trim(); if (t) headers.push('"' + t + '"');
+    });
+    csv += headers.join(',') + '\n';
+    table.querySelectorAll('tbody tr').forEach(function(row) {
+        if (row.id === 'abUpcomingEmptyRow') return;
+        var cols = [];
+        row.querySelectorAll('td').forEach(function(td) {
+            cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+        });
+        if (cols.length) csv += cols.join(',') + '\n';
+    });
+    return csv;
+}
+
+function abExportExcel() {
+    var tab = abGetActiveTab(), csv = '', filename = '';
+    if (tab === 'all' || tab === 'category') {
+        csv = abGetTableCSV('abTableAll', 'All Abortions');
+        filename = 'All_Abortions_' + abFormatDate() + '.csv';
+    } else if (tab === 'upcoming') {
+        csv = abGetTableCSV('abTableUpcoming', 'Expected Births');
+        filename = 'Expected_Births_' + abFormatDate() + '.csv';
+    } else if (tab === 'search') {
+        var query = (document.getElementById('abSearchInput').value || '').trim().toUpperCase();
+        var rows  = document.querySelectorAll('#abSearchResults tbody tr');
+        csv = 'Animal Production System - Abortion Search: ' + (query||'all') + '\nGenerated: ' + new Date().toLocaleString() + '\n\n'
+            + '"#","Animal Tag","Category","Abortion Date","Pregnancy #","Expected Birth","Birth Status"\n';
+        rows.forEach(function(row, idx) {
+            var cols = ['"' + (idx+1) + '"'];
+            row.querySelectorAll('td').forEach(function(td, i) {
+                if (i > 0) cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+            });
+            if (cols.length > 1) csv += cols.join(',') + '\n';
+        });
+        filename = 'Abortion_Search_' + (query||'all') + '_' + abFormatDate() + '.csv';
+    }
+    if (csv) abDownloadCSV(csv, filename);
+}
+
+function abExportPDF() {
+    var tab   = abGetActiveTab();
+    var title = {all:'All Abortions',search:'Abortion Search',category:'Abortions by Category',upcoming:'Expected Births'}[tab] || 'Abortions Report';
+    var date  = new Date().toLocaleString();
+    var printArea = document.getElementById('print-area');
+    if (tab === 'search') {
+        var query   = document.getElementById('abSearchInput').value || '(all)';
+        var results = document.getElementById('abSearchResults').cloneNode(true);
+        results.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
+        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Abortion Search</h3><p>Search: ' + query + ' | Generated: ' + date + '</p></div>' + results.outerHTML;
+    } else if (tab === 'category') {
+        var cont = document.getElementById('abCatGroupContainer').cloneNode(true);
+        cont.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
+        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Abortions by Category</h3><p>Generated: ' + date + '</p></div>' + cont.outerHTML;
+    } else {
+        var tableId = (tab === 'upcoming') ? 'abTableUpcoming' : 'abTableAll';
+        var table   = document.getElementById(tableId);
+        if (!table) return;
+        var clone = table.cloneNode(true);
+        clone.querySelectorAll('#abUpcomingEmptyRow').forEach(function(el) { el.remove(); });
+        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — ' + title + '</h3><p>Generated: ' + date + ' | Records: ' + clone.querySelectorAll('tbody tr').length + '</p></div>' + clone.outerHTML;
+    }
+    window.print();
+}
+
+function abPrint() { abExportPDF(); }
+
+</script>

@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sick Livestock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background:#f8f9fb; padding:20px; font-family:'DM Sans',sans-serif; }
+        .page-card { background:white; border-radius:14px; padding:30px; box-shadow:0 2px 12px rgba(0,0,0,0.08); }
+
+        /* ── Add Form ── */
+        .add-form-section { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:10px; padding:20px; margin-bottom:25px; }
+        .add-form-section h5 { color:#92400e; font-weight:700; }
+        .form-collapse-btn { background:none; border:none; color:#92400e; font-weight:700; font-size:.9rem; padding:0; cursor:pointer; display:flex; align-items:center; gap:6px; }
+        .form-collapse-btn .arrow { transition:transform .25s; }
+
+        /* ── Summary pills ── */
+        .summary-strip { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .sum-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:20px; font-size:.8rem; font-weight:600; border:1.5px solid; }
+        .sum-pill.total      { background:#f1f5f9; color:#1e293b; border-color:#cbd5e0; }
+        .sum-pill.sick       { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+        .sum-pill.critical   { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+        .sum-pill.recovering { background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+        .sum-pill.recovered  { background:#e0f2fe; color:#0369a1; border-color:#bae6fd; }
+        .sum-pill.cost       { background:#f5f3ff; color:#6d28d9; border-color:#ddd6fe; }
+
+        /* ── Status badges ── */
+        .badge-sick       { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:700; }
+        .badge-critical   { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:700; }
+        .badge-recovering { display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:700; }
+        .badge-recovered  { display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;border-radius:20px;padding:3px 10px;font-size:.75rem;font-weight:700; }
+
+        /* ── Severity badges ── */
+        .sev-mild        { display:inline-flex;align-items:center;gap:3px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0;border-radius:12px;padding:2px 8px;font-size:.7rem;font-weight:700; }
+        .sev-moderate    { display:inline-flex;align-items:center;gap:3px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:12px;padding:2px 8px;font-size:.7rem;font-weight:700; }
+        .sev-severe      { display:inline-flex;align-items:center;gap:3px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;border-radius:12px;padding:2px 8px;font-size:.7rem;font-weight:700; }
+        .sev-lifethreat  { display:inline-flex;align-items:center;gap:3px;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;border-radius:12px;padding:2px 8px;font-size:.7rem;font-weight:700; }
+
+        /* ── Table ── */
+        .table th { font-weight:700; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:#64748b; }
+        .table tbody tr { border-bottom:1px solid #f0f2f5; }
+        .table tbody tr td { vertical-align:middle; padding:10px 12px; font-size:.87rem; }
+        .row-critical   td { background:#fff5f5; }
+        .row-recovering td { background:#f0fdf4; }
+        .row-recovered  td { background:#f0f9ff; }
+        .table tbody tr:hover td { background:#fffbeb !important; }
+        .history-row td { background:#fafafa !important; padding:0 !important; }
+        .history-row:hover td { background:#fafafa !important; }
+
+        /* ── Chips ── */
+        .symptom-chip { display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #e2e8f0;padding:3px 10px;border-radius:20px;font-size:.78rem;color:#475569;font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+        .vet-chip     { display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 9px;border-radius:20px;font-size:.75rem;color:#166534;font-weight:500; }
+        .temp-chip    { display:inline-flex;align-items:center;gap:4px;background:#fff7ed;border:1px solid #fed7aa;padding:3px 9px;border-radius:20px;font-size:.75rem;color:#c2410c;font-weight:600; }
+        .days-pill    { font-size:.72rem; color:#64748b; font-weight:500; }
+        .overdue-warn { font-size:.68rem; color:#dc2626; font-weight:700; display:inline-flex; align-items:center; gap:3px; }
+
+        /* ── Search ── */
+        .search-wrap { position:relative; }
+        .search-wrap .bi-search { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8; }
+        .search-input { padding-left:36px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:.88rem; }
+        .search-input:focus { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.1); outline:none; }
+
+        /* ── Quick-status buttons ── */
+        .btn-quick-recovering { background:#f0fdf4; border:1px solid #bbf7d0; color:#166634; font-size:.7rem; padding:2px 8px; border-radius:20px; font-weight:700; cursor:pointer; text-decoration:none; }
+        .btn-quick-recovering:hover { background:#bbf7d0; color:#166634; }
+        .btn-quick-critical   { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; font-size:.7rem; padding:2px 8px; border-radius:20px; font-weight:700; cursor:pointer; text-decoration:none; }
+        .btn-quick-critical:hover { background:#fca5a5; color:#991b1b; }
+        .btn-quick-recovered  { background:#e0f2fe; border:1px solid #bae6fd; color:#0369a1; font-size:.7rem; padding:2px 8px; border-radius:20px; font-weight:700; cursor:pointer; text-decoration:none; }
+        .btn-quick-recovered:hover { background:#bae6fd; color:#0369a1; }
+
+        /* ══════════════════════════════════════════════
+           INLINE HISTORY TIMELINE
+        ══════════════════════════════════════════════ */
+        .btn-history-toggle {
+            display:inline-flex; align-items:center; gap:5px;
+            background:#f1f5f9; border:1.5px solid #e2e8f0;
+            color:#475569; font-size:.72rem; font-weight:700;
+            padding:3px 9px; border-radius:20px; cursor:pointer;
+            transition:all .2s; white-space:nowrap;
+        }
+        .btn-history-toggle:hover { background:#e2e8f0; border-color:#cbd5e0; color:#1e293b; }
+        .btn-history-toggle.active { background:#1a5f7a; border-color:#1a5f7a; color:white; }
+        .btn-history-toggle .hist-count {
+            display:inline-flex; align-items:center; justify-content:center;
+            width:18px; height:18px; border-radius:50%;
+            background:rgba(0,0,0,.12); font-size:.65rem; font-weight:800;
+        }
+
+        .history-panel {
+            overflow:hidden;
+            transition:max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s ease;
+            max-height:0; opacity:0;
+        }
+        .history-panel.open { max-height:600px; opacity:1; }
+        .history-panel-inner {
+            padding:14px 18px 18px 18px;
+            border-top:2px solid #e2e8f0;
+            background:linear-gradient(180deg,#f8fafc 0%,#ffffff 100%);
+        }
+
+        .hist-header {
+            display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:12px; flex-wrap:wrap; gap:8px;
+        }
+        .hist-header-left {
+            display:flex; align-items:center; gap:8px;
+            font-family:'Syne',sans-serif; font-size:.82rem; font-weight:800;
+            color:#1a2535; letter-spacing:-.01em;
+        }
+        .hist-header-left .hist-icon {
+            width:24px; height:24px;
+            background:linear-gradient(135deg,#1a5f7a,#2e8b9e);
+            border-radius:6px; display:flex; align-items:center; justify-content:center;
+            color:white; font-size:.7rem;
+        }
+        .hist-link-btn {
+            font-size:.75rem; color:#1a5f7a; font-weight:600;
+            text-decoration:none; display:inline-flex; align-items:center; gap:4px;
+        }
+        .hist-link-btn:hover { color:#2e8b9e; text-decoration:underline; }
+
+        /* Step-by-step progress bar */
+        .status-progress {
+            display:flex; align-items:center; gap:0;
+            margin-bottom:16px; flex-wrap:wrap;
+        }
+        .status-step {
+            display:flex; align-items:center; gap:6px;
+            padding:5px 12px; border-radius:20px; font-size:.72rem; font-weight:700;
+            border:2px solid transparent; position:relative;
+            opacity:.35; transition:all .2s;
+        }
+        .status-step.reached { opacity:1; }
+        .status-step.current { opacity:1; box-shadow:0 0 0 3px rgba(0,0,0,.08); transform:scale(1.05); }
+        .status-step.sick-step       { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+        .status-step.critical-step   { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+        .status-step.recovering-step { background:#f0fdf4; color:#166534; border-color:#bbf7d0; }
+        .status-step.recovered-step  { background:#e0f2fe; color:#0369a1; border-color:#bae6fd; }
+        .status-connector {
+            width:24px; height:2px; background:#e2e8f0; flex-shrink:0;
+        }
+        .status-connector.reached { background:linear-gradient(90deg,#10b981,#0ea5e9); }
+
+        /* Timeline entries */
+        .timeline-list { position:relative; padding-left:20px; }
+        .timeline-list::before {
+            content:''; position:absolute; left:6px; top:6px; bottom:6px;
+            width:2px; background:linear-gradient(180deg,#e2e8f0,#f0f2f5);
+            border-radius:2px;
+        }
+        .timeline-entry {
+            position:relative; margin-bottom:10px;
+            padding:10px 12px 10px 16px;
+            background:white; border-radius:8px;
+            border:1.5px solid #f0f2f5;
+            box-shadow:0 1px 4px rgba(0,0,0,.04);
+            transition:border-color .15s;
+        }
+        .timeline-entry:last-child { margin-bottom:0; }
+        .timeline-entry:hover { border-color:#cbd5e0; }
+        .timeline-entry::before {
+            content:''; position:absolute;
+            left:-17px; top:50%; transform:translateY(-50%);
+            width:10px; height:10px; border-radius:50%;
+            border:2px solid white;
+            box-shadow:0 0 0 1px #e2e8f0;
+        }
+        .timeline-entry.t-sick::before        { background:#f59e0b; box-shadow:0 0 0 1px #fde68a; }
+        .timeline-entry.t-critical::before    { background:#ef4444; box-shadow:0 0 0 1px #fca5a5; }
+        .timeline-entry.t-recovering::before  { background:#10b981; box-shadow:0 0 0 1px #bbf7d0; }
+        .timeline-entry.t-recovered::before   { background:#0ea5e9; box-shadow:0 0 0 1px #bae6fd; }
+        .timeline-entry.t-first { border-left:3px solid #f59e0b; }
+        .timeline-entry.t-latest { border-left:3px solid #1a5f7a; }
+
+        .tl-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+        .tl-label { font-size:.65rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; padding:1px 7px; border-radius:10px; }
+        .tl-label.lbl-initial { background:#fef3c7; color:#92400e; }
+        .tl-label.lbl-latest  { background:#e0f2fe; color:#0369a1; }
+        .tl-time { font-size:.7rem; color:#94a3b8; margin-left:auto; white-space:nowrap; }
+        .tl-by   { font-size:.7rem; color:#64748b; display:inline-flex; align-items:center; gap:3px; }
+        .tl-by-chip { display:inline-flex; align-items:center; gap:3px; background:#f1f5f9; border:1px solid #e2e8f0; padding:1px 7px; border-radius:10px; font-size:.68rem; color:#475569; font-weight:500; }
+        .tl-notes { font-size:.76rem; color:#64748b; line-height:1.45; margin-top:4px; }
+        .tl-notes em { color:#94a3b8; }
+
+        .no-history { text-align:center; padding:18px 12px; color:#94a3b8; font-size:.82rem; }
+        .no-history i { font-size:1.6rem; display:block; margin-bottom:6px; }
+
+        .recovery-footer { margin-top:12px; padding:8px 12px; background:#f0fdf4; border-radius:8px; border-left:3px solid #10b981; font-size:.77rem; color:#065f46; display:flex; align-items:center; gap:8px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid"><div class="page-card">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="mb-1"><i class="bi bi-bandaid-fill text-warning me-2"></i>Sick Livestock</h3>
+            <p class="text-muted mb-0 small">Track animals that are currently sick or under veterinary observation</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/livestock/sick/report" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-bar-chart-fill me-1"></i> Reports
+            </a>
+            <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Livestock
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Summary strip -->
+    <div class="summary-strip">
+        <span class="sum-pill total"><i class="bi bi-list-ul"></i> Total: <strong th:text="${sickRecords != null ? sickRecords.size() : 0}">0</strong></span>
+        <span class="sum-pill sick"><i class="bi bi-bandaid-fill"></i> Sick: <strong id="countSick">0</strong></span>
+        <span class="sum-pill critical"><i class="bi bi-exclamation-circle-fill"></i> Critical: <strong id="countCritical">0</strong></span>
+        <span class="sum-pill recovering"><i class="bi bi-arrow-up-circle-fill"></i> Recovering: <strong id="countRecovering">0</strong></span>
+        <span class="sum-pill recovered"><i class="bi bi-check-circle-fill"></i> Recovered: <strong id="countRecovered">0</strong></span>
+        <span class="sum-pill cost"><i class="bi bi-cash-stack"></i> Total Cost: <strong id="totalCostDisplay">0 RWF</strong></span>
+    </div>
+
+    <!-- Add form (collapsible) -->
+    <div class="add-form-section">
+        <button class="form-collapse-btn" type="button" data-bs-toggle="collapse" data-bs-target="#addFormBody" aria-expanded="true">
+            <i class="bi bi-plus-circle"></i> Record Sick Animal
+            <i class="bi bi-chevron-down arrow"></i>
+        </button>
+        <div class="collapse show mt-3" id="addFormBody">
+            <form th:action="@{/livestock/sick/new}" th:object="${sickRecord}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Animal (Tag) *</label>
+                        <select class="form-select form-select-sm" th:field="*{livestockIdValue}" required>
+                            <option value="">Select animal...</option>
+                            <option th:each="ls : ${livestockList}"
+                                    th:value="${ls.id}"
+                                    th:text="${ls.tagNumber
+                                        + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')
+                                        + ' [' + (ls.status != null ? ls.status : 'ACTIVE') + ']'}">
+                            </option>
+                        </select>
+                        <div class="form-text text-muted small"><i class="bi bi-info-circle me-1"></i>Dead &amp; sold animals excluded.</div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Date Reported *</label>
+                        <input type="date" class="form-control form-control-sm" th:field="*{reportedDate}" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Status *</label>
+                        <select class="form-select form-select-sm" th:field="*{status}" required>
+                            <option value="SICK">Sick</option>
+                            <option value="CRITICAL">Critical</option>
+                            <option value="RECOVERING">Recovering</option>
+                            <option value="RECOVERED">Recovered</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Severity Level</label>
+                        <select class="form-select form-select-sm" th:field="*{severityLevel}">
+                            <option value="">— select —</option>
+                            <option value="MILD">Mild</option>
+                            <option value="MODERATE">Moderate</option>
+                            <option value="SEVERE">Severe</option>
+                            <option value="LIFE_THREATENING">Life-Threatening</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Recovery Date</label>
+                        <input type="date" class="form-control form-control-sm" th:field="*{recoveryDate}">
+                    </div>
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Symptoms / Illness</label>
+                        <input type="text" class="form-control form-control-sm" th:field="*{symptoms}" placeholder="e.g. Fever, limping...">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small">Diagnosis</label>
+                        <input type="text" class="form-control form-control-sm" th:field="*{diagnosis}" placeholder="e.g. Foot-and-mouth disease...">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Temperature (°C)</label>
+                        <input type="number" step="0.1" min="30" max="45" class="form-control form-control-sm" th:field="*{temperature}" placeholder="e.g. 39.5">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Attending Vet</label>
+                        <input type="text" class="form-control form-control-sm" th:field="*{vetName}" placeholder="e.g. Dr. Mukamana">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold small">Treatment Cost (RWF)</label>
+                        <input type="number" step="1" min="0" class="form-control form-control-sm" th:field="*{treatmentCost}" placeholder="0">
+                    </div>
+                </div>
+                <div class="row g-3 mt-1 align-items-end">
+                    <div class="col-md-10">
+                        <label class="form-label fw-semibold small">Treatment Notes / Medication</label>
+                        <input type="text" class="form-control form-control-sm" th:field="*{treatmentNotes}" placeholder="Medication given, dosage, next steps...">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-warning w-100 text-white fw-bold btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i> Add Record
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search & filter row -->
+    <div class="row mb-3 align-items-center">
+        <div class="col-md-5">
+            <div class="search-wrap">
+                <i class="bi bi-search"></i>
+                <input type="text" class="form-control search-input" id="searchInput"
+                       placeholder="Search by tag, symptoms, diagnosis, vet, status...">
+            </div>
+        </div>
+        <div class="col-md-7 d-flex gap-2 justify-content-md-end mt-2 mt-md-0 flex-wrap">
+            <select class="form-select form-select-sm w-auto" id="filterStatus" onchange="applyFilters()">
+                <option value="">All Statuses</option>
+                <option value="SICK">Sick</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="RECOVERING">Recovering</option>
+                <option value="RECOVERED">Recovered</option>
+            </select>
+            <select class="form-select form-select-sm w-auto" id="filterSeverity" onchange="applyFilters()">
+                <option value="">All Severities</option>
+                <option value="MILD">Mild</option>
+                <option value="MODERATE">Moderate</option>
+                <option value="SEVERE">Severe</option>
+                <option value="LIFE_THREATENING">Life-Threatening</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle" id="sickTable">
+            <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Animal Tag</th>
+                <th>Category</th>
+                <th>Reported</th>
+                <th>Duration</th>
+                <th>Symptoms / Diagnosis</th>
+                <th>Temp °C</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Vet</th>
+                <th>Cost (RWF)</th>
+                <th>Recovery Date</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <!-- Empty state -->
+            <tr th:if="${sickRecords == null or sickRecords.empty}">
+                <td colspan="13" class="text-center text-muted py-5">
+                    <i class="bi bi-emoji-smile fs-1 text-success d-block mb-2"></i>
+                    <strong>No sick animals recorded</strong>
+                    <p class="mb-0 small">All livestock appear to be healthy!</p>
+                </td>
+            </tr>
+
+            <!-- Data rows -->
+            <th:block th:each="s, i : ${sickRecords}">
+
+                <!-- Main data row -->
+                <tr th:classappend="${s.status != null and s.status.name() == 'CRITICAL'} ? 'row-critical' : (${s.status != null and s.status.name() == 'RECOVERING'} ? 'row-recovering' : (${s.status != null and s.status.name() == 'RECOVERED'} ? 'row-recovered' : ''))">
+
+                    <td class="text-muted small" th:text="${i.count}"></td>
+
+                    <!-- Animal Tag -->
+                    <td>
+                        <strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></strong>
+                        <div th:if="${s.livestock?.gender != null}" class="mt-1">
+                            <span th:if="${s.livestock.gender == 'MALE'}"   class="badge bg-primary" style="font-size:.62rem;"><i class="bi bi-gender-male"></i> M</span>
+                            <span th:if="${s.livestock.gender == 'FEMALE'}" class="badge bg-danger"  style="font-size:.62rem;"><i class="bi bi-gender-female"></i> F</span>
+                        </div>
+                    </td>
+
+                    <!-- Category -->
+                    <td>
+                        <span th:if="${s.livestock?.livestockCategory != null}" class="badge bg-info text-dark small" th:text="${s.livestock.livestockCategory.name}"></span>
+                        <span th:if="${s.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Reported Date -->
+                    <td th:text="${s.reportedDate != null ? #temporals.format(s.reportedDate,'dd-MM-yyyy') : '—'}"></td>
+
+                    <!-- Duration -->
+                    <td>
+                        <span th:if="${s.reportedDate != null and s.status != null and s.status.name() != 'RECOVERED'}"
+                              class="days-pill"
+                              th:text="${#temporals.createToday().toEpochDay() - s.reportedDate.toEpochDay()} + ' day(s)'">
+                        </span>
+                        <span th:if="${s.reportedDate != null
+                                      and s.status != null
+                                      and s.status.name() != 'RECOVERED'
+                                      and (#temporals.createToday().toEpochDay() - s.reportedDate.toEpochDay()) > 7}"
+                              class="overdue-warn d-block mt-1">
+                            <i class="bi bi-exclamation-triangle-fill"></i> &gt;7 days
+                        </span>
+                        <span th:if="${s.recoveryDate != null and s.status != null and s.status.name() == 'RECOVERED'}"
+                              class="days-pill text-success"
+                              th:text="${s.recoveryDate.toEpochDay() - s.reportedDate.toEpochDay()} + ' day(s) to recover'">
+                        </span>
+                        <span th:if="${s.reportedDate == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Symptoms / Diagnosis -->
+                    <td style="max-width:200px;">
+                        <span th:if="${s.symptoms != null and s.symptoms != ''}" class="symptom-chip d-block mb-1">
+                            <i class="bi bi-clipboard2-pulse text-muted"></i>
+                            <span th:text="${s.symptoms}"></span>
+                        </span>
+                        <span th:if="${s.diagnosis != null and s.diagnosis != ''}" style="font-size:.75rem;color:#7c3aed;font-style:italic;">
+                            <i class="bi bi-clipboard-check me-1"></i><span th:text="${s.diagnosis}"></span>
+                        </span>
+                        <span th:if="${(s.symptoms == null or s.symptoms == '') and (s.diagnosis == null or s.diagnosis == '')}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Temperature -->
+                    <td>
+                        <span th:if="${s.temperature != null}" class="temp-chip">
+                            <i class="bi bi-thermometer-half"></i>
+                            <span th:text="${s.temperature} + '°C'"></span>
+                        </span>
+                        <span th:if="${s.temperature == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Severity -->
+                    <td>
+                        <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'MILD'}"             class="sev-mild"><i class="bi bi-circle-fill"></i> Mild</span>
+                        <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'MODERATE'}"         class="sev-moderate"><i class="bi bi-circle-fill"></i> Moderate</span>
+                        <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'SEVERE'}"           class="sev-severe"><i class="bi bi-exclamation-circle-fill"></i> Severe</span>
+                        <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat"><i class="bi bi-exclamation-triangle-fill"></i> Life-Threat</span>
+                        <span th:if="${s.severityLevel == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Status + quick-change buttons -->
+                    <td>
+                        <span th:if="${s.status != null and s.status.name() == 'SICK'}"       class="badge-sick"><i class="bi bi-bandaid-fill"></i> Sick</span>
+                        <span th:if="${s.status != null and s.status.name() == 'CRITICAL'}"   class="badge-critical"><i class="bi bi-exclamation-circle-fill"></i> Critical</span>
+                        <span th:if="${s.status != null and s.status.name() == 'RECOVERING'}" class="badge-recovering"><i class="bi bi-arrow-up-circle-fill"></i> Recovering</span>
+                        <span th:if="${s.status != null and s.status.name() == 'RECOVERED'}"  class="badge-recovered"><i class="bi bi-check-circle-fill"></i> Recovered</span>
+                        <span th:if="${s.status == null}" class="text-muted">—</span>
+                        <div class="mt-1 d-flex gap-1 flex-wrap">
+                            <a th:if="${s.status != null and s.status.name() == 'SICK'}"
+                               th:href="@{/livestock/sick/quick-status/{id}(id=${s.id},status='CRITICAL')}"
+                               class="btn-quick-critical" onclick="return confirm('Mark this animal as CRITICAL?')">↑ Critical</a>
+                            <a th:if="${s.status != null and (s.status.name() == 'SICK' or s.status.name() == 'CRITICAL')}"
+                               th:href="@{/livestock/sick/quick-status/{id}(id=${s.id},status='RECOVERING')}"
+                               class="btn-quick-recovering" onclick="return confirm('Mark this animal as RECOVERING?')">↑ Recovering</a>
+                            <a th:if="${s.status != null and s.status.name() == 'RECOVERING'}"
+                               th:href="@{/livestock/sick/quick-status/{id}(id=${s.id},status='RECOVERED')}"
+                               class="btn-quick-recovered" onclick="return confirm('Mark as RECOVERED? Recovery date will be set to today.')">✓ Recovered</a>
+                        </div>
+                    </td>
+
+                    <!-- Vet -->
+                    <td>
+                        <span th:if="${s.vetName != null and s.vetName != ''}" class="vet-chip">
+                            <i class="bi bi-person-badge"></i><span th:text="${s.vetName}"></span>
+                        </span>
+                        <span th:if="${s.vetName == null or s.vetName == ''}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Cost -->
+                    <td>
+                        <span th:if="${s.treatmentCost != null}" class="fw-semibold" style="color:#7c3aed;" th:text="${#numbers.formatDecimal(s.treatmentCost,1,'COMMA',0,'POINT')}"></span>
+                        <span th:if="${s.treatmentCost == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Recovery Date -->
+                    <td>
+                        <span th:if="${s.recoveryDate != null}" th:text="${#temporals.format(s.recoveryDate,'dd-MM-yyyy')}"></span>
+                        <span th:if="${s.recoveryDate == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Actions -->
+                    <td>
+                        <div class="d-flex gap-1 flex-wrap">
+                            <!-- ✅ FIXED: removed th:onclick, use data-sick-id + onclick="toggleHistory(this.dataset.sickId)" -->
+                            <button type="button"
+                                    th:id="'btn-hist-' + ${s.id}"
+                                    th:data-sick-id="${s.id}"
+                                    onclick="toggleHistory(this.dataset.sickId)"
+                                    class="btn-history-toggle"
+                                    th:title="${s.history != null and !s.history.empty} ? 'View status history (' + ${s.history.size()} + ' entries)' : 'No history yet'">
+                                <i class="bi bi-clock-history"></i>
+                                History
+                                <span class="hist-count"
+                                      th:text="${s.history != null ? s.history.size() : 0}">0</span>
+                            </button>
+                            <!-- Edit -->
+                            <a th:href="@{/livestock/sick/edit/{id}(id=${s.id})}"
+                               class="btn btn-sm btn-warning" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <!-- Delete -->
+                            <button class="btn btn-sm btn-danger" title="Delete"
+                                    data-bs-toggle="modal" th:data-bs-target="'#delSick' + ${s.id}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+
+                        <!-- Delete modal -->
+                        <div class="modal fade" th:id="'delSick' + ${s.id}" tabindex="-1">
+                            <div class="modal-dialog"><div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-1"></i> Confirm Delete</h5>
+                                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Delete sick record for <strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'this animal'}"></strong>?</p>
+                                    <div class="alert alert-warning py-2 small mb-0">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                        <strong>Note:</strong> This will also delete all status history for this episode and restore the animal to <strong>ACTIVE</strong>.
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                    <form th:action="@{/livestock/sick/delete/{id}(id=${s.id})}" method="post" class="d-inline">
+                                        <button class="btn btn-danger btn-sm"><i class="bi bi-trash me-1"></i> Delete</button>
+                                    </form>
+                                </div>
+                            </div></div>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- HISTORY TIMELINE ROW -->
+                <tr class="history-row" th:id="'hist-row-' + ${s.id}">
+                    <td colspan="13">
+                        <div class="history-panel" th:id="'hist-panel-' + ${s.id}">
+                            <div class="history-panel-inner">
+
+                                <!-- Header -->
+                                <div class="hist-header">
+                                    <div class="hist-header-left">
+                                        <span class="hist-icon"><i class="bi bi-clock-history"></i></span>
+                                        Status History —
+                                        <span th:text="${s.livestock != null ? s.livestock.tagNumber : 'Animal'}"></span>
+                                    </div>
+                                    <a th:href="@{/livestock/sick/history/{id}(id=${s.id})}"
+                                       class="hist-link-btn">
+                                        <i class="bi bi-box-arrow-up-right"></i> Full timeline page
+                                    </a>
+                                </div>
+
+                                <!-- PROGRESS BAR -->
+                                <div class="status-progress">
+
+                                    <!-- SICK step — always reached -->
+                                    <div th:classappend="'reached' + (${s.status != null and s.status.name() == 'SICK'} ? ' current' : '')"
+                                         class="status-step sick-step">
+                                        <i class="bi bi-bandaid-fill"></i> Sick
+                                    </div>
+
+                                    <!-- connector SICK→CRITICAL -->
+                                    <div class="status-connector"
+                                         th:classappend="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'CRITICAL']) > 0} ? 'reached' : ''">
+                                    </div>
+
+                                    <!-- CRITICAL step -->
+                                    <div class="status-step critical-step"
+                                         th:classappend="${(s.history != null and #lists.size(s.history.?[status != null and status.name() == 'CRITICAL']) > 0) ? 'reached' : ''} + ${(s.status != null and s.status.name() == 'CRITICAL') ? ' current' : ''}">
+                                        <i class="bi bi-exclamation-circle-fill"></i> Critical
+                                    </div>
+
+                                    <!-- connector CRITICAL→RECOVERING -->
+                                    <div class="status-connector"
+                                         th:classappend="${s.history != null and #lists.size(s.history.?[status != null and status.name() == 'RECOVERING']) > 0} ? 'reached' : ''">
+                                    </div>
+
+                                    <!-- RECOVERING step -->
+                                    <div class="status-step recovering-step"
+                                         th:classappend="${(s.history != null and #lists.size(s.history.?[status != null and status.name() == 'RECOVERING']) > 0) ? 'reached' : ''} + ${(s.status != null and s.status.name() == 'RECOVERING') ? ' current' : ''}">
+                                        <i class="bi bi-arrow-up-circle-fill"></i> Recovering
+                                    </div>
+
+                                    <!-- connector RECOVERING→RECOVERED -->
+                                    <div class="status-connector"
+                                         th:classappend="${s.status != null and s.status.name() == 'RECOVERED'} ? 'reached' : ''">
+                                    </div>
+
+                                    <!-- RECOVERED step -->
+                                    <div class="status-step recovered-step"
+                                         th:classappend="${s.status != null and s.status.name() == 'RECOVERED'} ? 'reached current' : ''">
+                                        <i class="bi bi-check-circle-fill"></i> Recovered
+                                    </div>
+                                </div>
+
+                                <!-- TIMELINE ENTRIES -->
+                                <div th:if="${s.history == null or s.history.empty}" class="no-history">
+                                    <i class="bi bi-hourglass-split"></i>
+                                    No status changes logged yet.<br>
+                                    <span style="font-size:.75rem;">History is recorded automatically whenever you update or quick-change the status.</span>
+                                </div>
+
+                                <div th:if="${s.history != null and !s.history.empty}" class="timeline-list">
+                                    <div th:each="h, hi : ${s.history}"
+                                         class="timeline-entry"
+                                         th:classappend="${(h.status != null and h.status.name() == 'SICK') ? ' t-sick' : ''} + ${(h.status != null and h.status.name() == 'CRITICAL') ? ' t-critical' : ''} + ${(h.status != null and h.status.name() == 'RECOVERING') ? ' t-recovering' : ''} + ${(h.status != null and h.status.name() == 'RECOVERED') ? ' t-recovered' : ''} + ${hi.first ? ' t-first' : ''} + ${hi.last ? ' t-latest' : ''}">
+
+                                        <div class="tl-top">
+                                            <span th:if="${hi.first}"             class="tl-label lbl-initial">Initial</span>
+                                            <span th:if="${hi.last and !hi.first}" class="tl-label lbl-latest">Latest</span>
+
+                                            <span th:if="${h.status != null and h.status.name() == 'SICK'}"       class="badge-sick"       style="font-size:.68rem;padding:2px 8px;"><i class="bi bi-bandaid-fill"></i> Sick</span>
+                                            <span th:if="${h.status != null and h.status.name() == 'CRITICAL'}"   class="badge-critical"   style="font-size:.68rem;padding:2px 8px;"><i class="bi bi-exclamation-circle-fill"></i> Critical</span>
+                                            <span th:if="${h.status != null and h.status.name() == 'RECOVERING'}" class="badge-recovering" style="font-size:.68rem;padding:2px 8px;"><i class="bi bi-arrow-up-circle-fill"></i> Recovering</span>
+                                            <span th:if="${h.status != null and h.status.name() == 'RECOVERED'}"  class="badge-recovered"  style="font-size:.68rem;padding:2px 8px;"><i class="bi bi-check-circle-fill"></i> Recovered</span>
+
+                                            <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'MILD'}"             class="sev-mild"       style="font-size:.65rem;">Mild</span>
+                                            <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'MODERATE'}"         class="sev-moderate"   style="font-size:.65rem;">Moderate</span>
+                                            <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'SEVERE'}"           class="sev-severe"     style="font-size:.65rem;">Severe</span>
+                                            <span th:if="${h.severityLevel != null and h.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat" style="font-size:.65rem;">Life-Threat</span>
+
+                                            <span th:if="${h.changedBy != null and h.changedBy != ''}" class="tl-by-chip">
+                                                <i class="bi bi-person"></i><span th:text="${h.changedBy}"></span>
+                                            </span>
+
+                                            <span class="tl-time" th:text="${#temporals.format(h.changedAt,'dd-MM-yyyy HH:mm')}"></span>
+                                        </div>
+
+                                        <div th:if="${h.notes != null and h.notes != ''}" class="tl-notes">
+                                            <i class="bi bi-chat-left-text me-1" style="color:#94a3b8;"></i>
+                                            <span th:text="${h.notes}"></span>
+                                        </div>
+                                        <div th:if="${h.notes == null or h.notes == ''}" class="tl-notes">
+                                            <em>No notes recorded</em>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recovery time footer -->
+                                <div th:if="${s.status != null and s.status.name() == 'RECOVERED' and s.reportedDate != null and s.recoveryDate != null}"
+                                     class="recovery-footer">
+                                    <i class="bi bi-check2-all"></i>
+                                    <span>Recovered in
+                                        <strong th:text="${s.recoveryDate.toEpochDay() - s.reportedDate.toEpochDay()}"></strong>
+                                        day(s) — reported <span th:text="${#temporals.format(s.reportedDate,'dd MMM yyyy')}"></span>,
+                                        recovered <span th:text="${#temporals.format(s.recoveryDate,'dd MMM yyyy')}"></span>
+                                    </span>
+                                </div>
+
+                            </div><!-- end panel-inner -->
+                        </div><!-- end history-panel -->
+                    </td>
+                </tr>
+                <!-- END HISTORY ROW -->
+
+            </th:block>
+            </tbody>
+        </table>
+    </div>
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+    /* Count summary pills */
+    document.addEventListener('DOMContentLoaded', function () {
+        var s = 0, c = 0, rec = 0, recov = 0, totalCost = 0;
+        document.querySelectorAll('#sickTable tbody tr:not(.history-row)').forEach(function(r) {
+            if (r.querySelector('.badge-sick'))       s++;
+            if (r.querySelector('.badge-critical'))   c++;
+            if (r.querySelector('.badge-recovering')) rec++;
+            if (r.querySelector('.badge-recovered'))  recov++;
+            var costCells = r.querySelectorAll('td');
+            if (costCells[10]) {
+                var raw = costCells[10].textContent.replace(/[^0-9.]/g, '');
+                var num = parseFloat(raw);
+                if (!isNaN(num)) totalCost += num;
+            }
+        });
+        document.getElementById('countSick').textContent       = s;
+        document.getElementById('countCritical').textContent   = c;
+        document.getElementById('countRecovering').textContent = rec;
+        document.getElementById('countRecovered').textContent  = recov;
+        document.getElementById('totalCostDisplay').textContent = totalCost.toLocaleString() + ' RWF';
+    });
+
+    /* Search + filter (skip history rows) */
+    document.getElementById('searchInput').addEventListener('keyup', applyFilters);
+
+    function applyFilters() {
+        var search   = document.getElementById('searchInput').value.toLowerCase();
+        var status   = document.getElementById('filterStatus').value.toLowerCase();
+        var severity = document.getElementById('filterSeverity').value.toLowerCase();
+
+        document.querySelectorAll('#sickTable tbody tr:not(.history-row)').forEach(function(r) {
+            var text         = r.textContent.toLowerCase();
+            var rowStatus    = r.querySelector('.badge-sick, .badge-critical, .badge-recovering, .badge-recovered');
+            var rowStatusTxt = rowStatus ? rowStatus.textContent.toLowerCase() : '';
+            var sevBadge     = r.querySelector('.sev-mild, .sev-moderate, .sev-severe, .sev-lifethreat');
+            var rowSevTxt    = sevBadge ? sevBadge.textContent.toLowerCase() : '';
+            var matchSearch   = !search   || text.includes(search);
+            var matchStatus   = !status   || rowStatusTxt.includes(status);
+            var matchSeverity = !severity || rowSevTxt.includes(severity.replace('_', ' '));
+            var show = matchSearch && matchStatus && matchSeverity;
+            r.style.display = show ? '' : 'none';
+
+            var sickId = r.querySelector('[id^="btn-hist-"]');
+            if (sickId) {
+                var id = sickId.id.replace('btn-hist-', '');
+                var histRow = document.getElementById('hist-row-' + id);
+                if (histRow) {
+                    if (!show) {
+                        var panel = document.getElementById('hist-panel-' + id);
+                        if (panel) { panel.classList.remove('open'); panel.style.maxHeight = '0'; panel.style.opacity = '0'; }
+                        var btn = document.getElementById('btn-hist-' + id);
+                        if (btn) btn.classList.remove('active');
+                        histRow.style.display = 'none';
+                    } else {
+                        histRow.style.display = '';
+                    }
+                }
+            }
+        });
+    }
+
+    /* Collapse arrow toggle */
+    var addFormBody = document.getElementById('addFormBody');
+    if (addFormBody) {
+        addFormBody.addEventListener('hide.bs.collapse', function () {
+            var arrow = document.querySelector('.form-collapse-btn .arrow');
+            if (arrow) arrow.style.transform = 'rotate(-90deg)';
+        });
+        addFormBody.addEventListener('show.bs.collapse', function () {
+            var arrow = document.querySelector('.form-collapse-btn .arrow');
+            if (arrow) arrow.style.transform = '';
+        });
+    }
+
+    /* HISTORY TOGGLE FUNCTION */
+    function toggleHistory(sickId) {
+        var panel  = document.getElementById('hist-panel-' + sickId);
+        var btn    = document.getElementById('btn-hist-'   + sickId);
+        if (!panel || !btn) return;
+
+        var isOpen = panel.classList.contains('open');
+
+        if (isOpen) {
+            panel.style.maxHeight = panel.scrollHeight + 'px';
+            requestAnimationFrame(function() {
+                panel.style.maxHeight = '0';
+                panel.style.opacity   = '0';
+            });
+            panel.classList.remove('open');
+            btn.classList.remove('active');
+        } else {
+            panel.classList.add('open');
+            btn.classList.add('active');
+            panel.style.maxHeight = panel.scrollHeight + 'px';
+            panel.style.opacity   = '1';
+            panel.addEventListener('transitionend', function handler() {
+                if (panel.classList.contains('open')) panel.style.maxHeight = 'none';
+                panel.removeEventListener('transitionend', handler);
+            });
+        }
+    }
+</script>
+</body>
+</html>

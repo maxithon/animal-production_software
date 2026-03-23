@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Birth Record</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; margin: 0 24px; }
+        .section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #6c757d; letter-spacing: .05em; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-pencil-square text-warning me-2"></i>Edit Birth Record</h4>
+        <small class="text-muted" th:if="${birth.birthDate != null}"
+               th:text="'Birth date: ' + ${#temporals.format(birth.birthDate, 'dd-MM-yyyy')}"></small>
+    </div>
+    <a href="/livestock/births/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Births
+    </a>
+</div>
+
+<div class="form-card">
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <form th:action="@{/livestock/births/update/{id}(id=${birth.id})}" th:object="${birth}" method="post">
+
+        <div class="section-label">Mother Animal</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Mother Animal (Tag) *</label>
+                <select class="form-select" th:field="*{livestockIdValue}" required>
+                    <option value="">Select mother animal...</option>
+                    <option th:each="ls : ${livestockList}"
+                            th:value="${ls.id}"
+                            th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '') + ' [' + (ls.gender != null ? ls.gender : 'Unknown') + ']'}"
+                            th:selected="${ls.id.toString() == birth.livestockIdValue}">
+                    </option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-label">Birth Details</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Birth Date *</label>
+                <input type="date" class="form-control" th:field="*{birthDate}" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold">Number of Offspring</label>
+                <input type="number" class="form-control" th:field="*{offspringCount}" min="1">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Offspring Gender</label>
+                <select class="form-select" th:field="*{offspringGender}">
+                    <option value="">Mixed / Unknown</option>
+                    <option value="MALE">Male</option>
+                    <option value="FEMALE">Female</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section-label">Follow-up Dates</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Weaning Date</label>
+                <input type="date" class="form-control" th:field="*{weaningDate}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Next Breeding Date</label>
+                <input type="date" class="form-control" th:field="*{nextBreedingDate}">
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-8">
+                <label class="form-label fw-semibold">Notes</label>
+                <textarea class="form-control" th:field="*{notes}" rows="2"></textarea>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+                <i class="bi bi-check-circle me-1"></i> Update Birth Record
+            </button>
+            <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
+               class="btn btn-outline-success">
+                <i class="bi bi-link-45deg me-1"></i> Manage Children
+            </a>
+            <a href="/livestock/births/list" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

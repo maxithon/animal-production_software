@@ -30,12 +30,14 @@ public class Users {
     @JoinColumn(name="userTypeId", referencedColumnName = "userTypeId")
     private UsersType userTypeId;
 
+    // ⭐ NEW: profile photo path
+    private String photoUrl;
+
     @Transient
     private String userTypeIdValue;
 
     // Constructors
-    public Users() {
-    }
+    public Users() {}
 
     public Users(UUID userId, String email, String password, boolean isActive, Date registrationDate, UsersType userTypeId) {
         this.userId = userId;
@@ -47,73 +49,39 @@ public class Users {
     }
 
     // Getters and Setters
-    public UUID getUserId() {
-        return userId;
-    }
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public boolean isActive() { return isActive; }
+    public void setActive(boolean active) { isActive = active; }
 
-    public String getPassword() {
-        return password;
-    }
+    public Date getRegistrationDate() { return registrationDate; }
+    public void setRegistrationDate(Date registrationDate) { this.registrationDate = registrationDate; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public UsersType getUserTypeId() { return userTypeId; }
+    public void setUserTypeId(UsersType userTypeId) { this.userTypeId = userTypeId; }
 
-    public boolean isActive() {
-        return isActive;
-    }
+    public String getPhotoUrl() { return photoUrl; }
+    public void setPhotoUrl(String photoUrl) { this.photoUrl = photoUrl; }
 
-    public void setActive(boolean active) {
-        isActive = active;
-    }
-
-    public Date getRegistrationDate() {
-        return registrationDate;
-    }
-
-    public void setRegistrationDate(Date registrationDate) {
-        this.registrationDate = registrationDate;
-    }
-
-    public UsersType getUserTypeId() {
-        return userTypeId;
-    }
-
-    public void setUserTypeId(UsersType userTypeId) {
-        this.userTypeId = userTypeId;
-    }
-
-    // FIXED: Helper methods for form binding
-    public String getUserTypeIdValue() {
-        return userTypeIdValue;
-    }
-
-    public void setUserTypeIdValue(String userTypeIdValue) {
-        this.userTypeIdValue = userTypeIdValue;
-    }
+    public String getUserTypeIdValue() { return userTypeIdValue; }
+    public void setUserTypeIdValue(String userTypeIdValue) { this.userTypeIdValue = userTypeIdValue; }
 
     @Override
     public String toString() {
         return "Users{" +
                 "userId=" + userId +
                 ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
                 ", isActive=" + isActive +
                 ", registrationDate=" + registrationDate +
                 ", userTypeId=" + userTypeId +
-                ", userTypeIdValue='" + userTypeIdValue + '\'' +
+                ", photoUrl='" + photoUrl + '\'' +
                 '}';
     }
 }

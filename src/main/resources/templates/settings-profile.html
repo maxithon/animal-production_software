@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Settings</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .settings-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #e9ecef; }
+        .profile-avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 2.5rem; border: 3px solid #e0f7fa; }
+        .profile-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .info-group { margin-bottom: 20px; }
+        .info-label { font-weight: 600; color: #666; font-size: 0.9rem; }
+        .info-value { font-size: 1.1rem; color: #333; }
+        .action-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-edit { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
+        .btn-edit:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; text-decoration: none; }
+        .admin-section { background: #e7f3ff; border-left: 4px solid #1a5f7a; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .admin-section h5 { color: #1a5f7a; margin-bottom: 15px; }
+        .badge-admin { background: #1a5f7a; color: white; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="settings-card">
+                <!-- Header with Photo -->
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <!-- Display photo if user has one, otherwise show initials -->
+                        <!-- Note: Users table doesn't have photo field, so we use initials -->
+                        <span th:text="${user.email.substring(0, 1).toUpperCase()}">U</span>
+                    </div>
+                    <div>
+                        <h3 class="mb-0" th:text="${user.email}">user@example.com</h3>
+                        <p class="text-muted mb-2">
+                            <span th:if="${isSuperAdmin}" class="badge badge-admin">Super Admin</span>
+                            <span th:if="${!isSuperAdmin}" class="badge bg-secondary" th:text="${user.userTypeId.userTypeName}">User</span>
+                        </p>
+                        <small class="text-muted">User ID: <span th:text="${user.userId}"></span></small>
+                    </div>
+                </div>
+
+                <!-- Profile Information -->
+                <h5 class="mb-4 text-primary"><i class="bi bi-person-circle"></i> Profile Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value" th:text="${user.email}">user@example.com</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <div class="info-label">User Type</div>
+                            <div class="info-value" th:text="${user.userTypeId.userTypeName}">Admin</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <div class="info-label">Registration Date</div>
+                            <div class="info-value" th:text="${#dates.format(user.registrationDate, 'dd-MM-yyyy')}">01-01-2025</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <div class="info-label">Account Status</div>
+                            <div class="info-value">
+                                <span th:if="${user.active}" class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> Active
+                                </span>
+                                <span th:if="${!user.active}" class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Inactive
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Security Section -->
+                <div class="mt-4 pt-4 border-top">
+                    <h5 class="mb-4 text-primary"><i class="bi bi-shield-lock"></i> Account Security</h5>
+                    <div class="alert alert-info" role="alert">
+                        <i class="bi bi-info-circle"></i> Keep your account secure by regularly updating your password and notification settings.
+                    </div>
+                </div>
+
+                <!-- Super Admin Section -->
+                <div th:if="${isSuperAdmin}" class="admin-section">
+                    <h5><i class="bi bi-shield-lock"></i> Super Admin Controls</h5>
+                    <p class="mb-3">As a super admin, you have access to user management features. You can:</p>
+                    <ul class="mb-0">
+                        <li>View all registered users</li>
+                        <li>Enable or disable user accounts</li>
+                        <li>Edit user information</li>
+                        <li>Delete user accounts</li>
+                    </ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons mt-4 pt-4 border-top">
+                    <a th:href="@{/user/dashboard}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Dashboard
+                    </a>
+                    <a th:href="@{/settings/change-password}" class="btn btn-warning">
+                        <i class="bi bi-key"></i> Change Password
+                    </a>
+                    <a th:href="@{/settings/notifications}" class="btn btn-info">
+                        <i class="bi bi-bell"></i> Notification Settings
+                    </a>
+                    <!-- Manage Users Button (Super Admin Only) -->
+                    <a th:if="${isSuperAdmin}" th:href="@{/settings/manage-users}" class="btn btn-danger" target="contentFrame" onclick="loadContent(event)">
+                        <i class="bi bi-people-fill"></i> Manage Users
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Function to load content in iframe (for dashboard)
+    function loadContent(event) {
+        if (event.target.closest('[target="contentFrame"]')) {
+            // This will be handled by dashboard iframe
+        }
+    }
+</script>
+</body>
+</html>

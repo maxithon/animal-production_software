@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>Livestock Sales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f8f9fa; padding: 20px; font-family: 'DM Sans', sans-serif; }
+        .page-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        /* ── Add form section ── */
+        .add-form-section {
+            background: #fff8e1; border-left: 4px solid #ffc107;
+            border-radius: 10px; padding: 20px; margin-bottom: 25px;
+        }
+
+        /* ── Buyer card inside the form ── */
+        .buyer-card {
+            background: #f0f9ff; border: 1.5px solid #bae6fd;
+            border-radius: 10px; padding: 16px 20px; margin-top: 16px;
+        }
+        .buyer-card-title {
+            font-size: 0.82rem; font-weight: 700; color: #0369a1;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+        }
+
+        /* ── Table buyer cell ── */
+        .buyer-cell { min-width: 160px; }
+        .buyer-row  { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; line-height: 1.4; }
+        .buyer-icon { font-size: 0.75rem; flex-shrink: 0; color: #64748b; }
+        .buyer-none { color: #94a3b8; font-style: italic; font-size: 0.78rem; }
+    </style>
+</head>
+<body>
+<div class="container-fluid"><div class="page-card">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3><i class="bi bi-currency-dollar text-warning"></i> Livestock Sales</h3>
+            <p class="text-muted mb-0">Record and manage sale transactions</p>
+        </div>
+        <a href="/livestock/list" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Livestock
+        </a>
+    </div>
+
+    <!-- Alerts -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- ══ Add Sale Form ══════════════════════════════════════════════ -->
+    <div class="add-form-section">
+        <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Sale</h5>
+        <form th:action="@{/livestock/sales/new}" th:object="${sale}" method="post">
+
+            <!-- Row 1: Animal, Date, Price, Location, Reason -->
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Animal (Tag) *</label>
+                    <select class="form-select" th:field="*{livestockIdValue}" required>
+                        <option value="">Select animal...</option>
+                        <option th:each="ls : ${livestockList}" th:value="${ls.id}"
+                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"></option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Sale Date *</label>
+                    <input type="date" class="form-control" th:field="*{saleDate}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Sale Price (RWF)</label>
+                    <input type="number" class="form-control" th:field="*{salePrice}" min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Sale Location</label>
+                    <input type="text" class="form-control" th:field="*{saleLocation}" placeholder="Location...">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Reason</label>
+                    <select class="form-select" th:field="*{saleReason}">
+                        <option value="">Select reason...</option>
+                        <option value="COMMERCIAL">Commercial</option>
+                        <option value="EMERGENCY">Emergency</option>
+                        <option value="OVERSTOCKING">Overstocking</option>
+                        <option value="LOW_PERFORMANCE">Low Performance</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+            </div>
+
+
+
+            <!-- Submit -->
+            <div class="mt-3 d-flex justify-content-end">
+                <button type="submit" class="btn btn-warning px-4">
+                    <i class="bi bi-plus-circle me-1"></i> Record Sale
+                </button>
+            </div>
+        </form>
+    </div>
+    <!-- ══ End Add Sale Form ══════════════════════════════════════════ -->
+
+    <!-- ══ Sales Table ════════════════════════════════════════════════ -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Animal Tag</th>
+                <th>Category</th>
+                <th>Sale Date</th>
+                <th>Price (RWF)</th>
+                <th>Location</th>
+                <th>Reason</th>
+
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s, i : ${sales}">
+                <td th:text="${i.count}"></td>
+                <td><strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></strong></td>
+                <td>
+                    <span th:if="${s.livestock?.livestockCategory != null}"
+                          class="badge bg-info"
+                          th:text="${s.livestock.livestockCategory.name}"></span>
+                </td>
+                <td th:text="${#temporals.format(s.saleDate, 'dd-MM-yyyy')}"></td>
+                <td>
+                    <span th:if="${s.salePrice != null}"
+                          class="fw-semibold text-success"
+                          th:text="${#numbers.formatDecimal(s.salePrice, 1, 'COMMA', 0, 'POINT')}"></span>
+                    <span th:if="${s.salePrice == null}" class="text-muted">—</span>
+                </td>
+                <td th:text="${s.saleLocation != null ? s.saleLocation : '—'}"></td>
+                <td>
+                    <span th:if="${s.saleReason != null}"
+                          class="badge bg-warning text-dark"
+                          th:text="${s.saleReason}"></span>
+                    <span th:if="${s.saleReason == null}" class="text-muted">—</span>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                    <a th:href="@{/livestock/sales/edit/{id}(id=${s.id})}"
+                       class="btn btn-sm btn-warning" title="Edit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <button class="btn btn-sm btn-danger"
+                            data-bs-toggle="modal"
+                            th:data-bs-target="'#del' + ${s.id}"
+                            title="Delete">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <!-- Delete modal -->
+                    <div class="modal fade" th:id="'del' + ${s.id}" tabindex="-1">
+                        <div class="modal-dialog"><div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Delete</h5>
+                                <button class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                Delete sale record for
+                                <strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'this animal'}"></strong>?
+                                <br><small class="text-danger">The animal's status will be restored to ACTIVE.</small>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form th:action="@{/livestock/sales/delete/{id}(id=${s.id})}" method="post" class="d-inline">
+                                    <button class="btn btn-danger">Delete</button>
+                                </form>
+                            </div>
+                        </div></div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- ══ End Sales Table ════════════════════════════════════════════ -->
+
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

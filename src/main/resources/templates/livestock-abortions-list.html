@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livestock Abortions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .page-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .add-form-section { background: #fff5f5; border-left: 4px solid #dc3545; border-radius: 10px; padding: 20px; margin-bottom: 25px; }
+        .form-label { font-weight: 500; }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="page-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3><i class="bi bi-heartbreak text-danger"></i> Livestock Abortions</h3>
+                <p class="text-muted mb-0">Record and manage livestock abortion events</p>
+            </div>
+            <a href="/livestock/list" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Livestock</a>
+        </div>
+
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Add Form -->
+        <div class="add-form-section">
+            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Abortion</h5>
+            <form th:action="@{/livestock/abortions/new}" th:object="${abortion}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Animal (Tag) *</label>
+                        <select class="form-select" th:field="*{livestockIdValue}" required>
+                            <option value="">Select animal...</option>
+                            <option th:each="ls : ${livestockList}"
+                                    th:value="${ls.id}"
+                                    th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Abortion Date *</label>
+                        <input type="date" class="form-control" th:field="*{abortionDate}" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Pregnancy # </label>
+                        <input type="number" class="form-control" th:field="*{pregnancyNumber}" min="1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Expected Birth Date</label>
+                        <input type="date" class="form-control" th:field="*{expectedBirthDate}">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="bi bi-plus-circle"></i> Add
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Animal Tag</th>
+                    <th>Category</th>
+                    <th>Abortion Date</th>
+                    <th>Pregnancy #</th>
+                    <th>Expected Birth</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${abortions == null or abortions.empty}">
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-2"></i><p class="mt-2">No abortion records yet</p>
+                    </td>
+                </tr>
+                <tr th:each="a, i : ${abortions}">
+                    <td th:text="${i.count}"></td>
+                    <td><strong th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}"></strong></td>
+                    <td><span th:if="${a.livestock?.livestockCategory != null}" class="badge bg-info"
+                              th:text="${a.livestock.livestockCategory.name}"></span></td>
+                    <td th:text="${#temporals.format(a.abortionDate, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${a.pregnancyNumber != null ? a.pregnancyNumber : '—'}"></td>
+                    <td>
+                        <span th:if="${a.expectedBirthDate != null}" th:text="${#temporals.format(a.expectedBirthDate, 'dd-MM-yyyy')}"></span>
+                        <span th:if="${a.expectedBirthDate == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/livestock/abortions/edit/{id}(id=${a.id})}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" th:data-bs-target="'#del'+${a.id}"><i class="bi bi-trash"></i></button>
+                        <div class="modal fade" th:id="'del'+${a.id}" tabindex="-1">
+                            <div class="modal-dialog"><div class="modal-content">
+                                <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">Delete this abortion record?</div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <form th:action="@{/livestock/abortions/delete/{id}(id=${a.id})}" method="post" class="d-inline">
+                                        <button class="btn btn-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </div></div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
