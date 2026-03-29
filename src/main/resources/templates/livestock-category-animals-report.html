@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animals by Category - Animal Production System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-color: #0ea5e9; --primary-dark: #0284c7; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f8f9fb; padding:20px; }
+
+        /* ── Header ── */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color:white; padding:30px; border-radius:12px; margin-bottom:24px;
+            box-shadow:0 4px 20px rgba(14,165,233,0.3);
+        }
+        .page-header h1 { font-size:1.8rem; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:12px; }
+        .page-header p  { font-size:1rem; opacity:0.95; margin:0; }
+        .btn-back {
+            background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.3);
+            color:white; padding:8px 18px; border-radius:8px; text-decoration:none;
+            display:inline-flex; align-items:center; gap:6px; font-size:0.9rem; font-weight:500; transition:all 0.3s;
+        }
+        .btn-back:hover { background:rgba(255,255,255,0.25); color:white; }
+
+        /* ── Filter card ── */
+        .filter-card { background:white; border-radius:12px; padding:25px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+        .filter-card h3 { font-size:1.1rem; font-weight:700; margin-bottom:20px; color:#1a202c; display:flex; align-items:center; gap:8px; }
+        .category-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:15px; }
+        .category-btn {
+            padding:15px; border:2px solid #e2e8f0; border-radius:10px; background:white;
+            cursor:pointer; transition:all 0.3s; text-align:center; text-decoration:none;
+            color:#374151; font-weight:600; display:flex; flex-direction:column; align-items:center; gap:8px;
+        }
+        .category-btn:hover { border-color:var(--primary-color); background:#f0f9ff; color:var(--primary-color); transform:translateY(-2px); box-shadow:0 4px 12px rgba(14,165,233,0.2); }
+        .category-btn.active { border-color:var(--primary-color); background:var(--primary-color); color:white; }
+        .category-btn i { font-size:1.5rem; }
+        .category-btn .count { font-size:0.75rem; opacity:0.8; }
+
+        /* ── Stat cards ── */
+        .stats-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:15px; margin-bottom:24px; }
+        .stat-card { background:white; border-radius:12px; padding:18px 20px; box-shadow:0 2px 10px rgba(0,0,0,0.07); border-left:4px solid #e2e8f0; }
+        .stat-card.c-total  { border-left-color:#0ea5e9; }
+        .stat-card.c-active { border-left-color:#10b981; }
+        .stat-card.c-sold   { border-left-color:#3b82f6; }
+        .stat-card.c-born   { border-left-color:#8b5cf6; }
+        .stat-card.c-treat  { border-left-color:#f59e0b; }
+        .stat-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+        .stat-value { font-size:2rem; font-weight:800; line-height:1; font-family:'Syne',sans-serif; }
+        .stat-card.c-total  .stat-value { color:#0ea5e9; }
+        .stat-card.c-active .stat-value { color:#10b981; }
+        .stat-card.c-sold   .stat-value { color:#3b82f6; }
+        .stat-card.c-born   .stat-value { color:#8b5cf6; }
+        .stat-card.c-treat  .stat-value { color:#f59e0b; }
+        .stat-sub { font-size:0.75rem; color:#94a3b8; margin-top:4px; }
+
+        /* ── Business panel ── */
+        .biz-panel { border-radius:12px; padding:24px; margin-bottom:24px; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+        .biz-panel.gain    { background:linear-gradient(135deg,#ecfdf5,#d1fae5); border:1.5px solid #6ee7b7; }
+        .biz-panel.loss    { background:linear-gradient(135deg,#fff1f2,#fee2e2); border:1.5px solid #fca5a5; }
+        .biz-panel.neutral { background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1.5px solid #e2e8f0; }
+        .biz-title { font-size:1rem; font-weight:700; color:#1a202c; display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+        .verdict-badge { display:inline-flex; align-items:center; gap:7px; padding:8px 20px; border-radius:30px; font-weight:800; font-size:0.95rem; font-family:'Syne',sans-serif; }
+        .verdict-gain    { background:#10b981; color:white; box-shadow:0 3px 10px rgba(16,185,129,0.4); }
+        .verdict-loss    { background:#ef4444; color:white; box-shadow:0 3px 10px rgba(239,68,68,0.4); }
+        .verdict-neutral { background:#64748b; color:white; }
+        .biz-note { font-size:0.82rem; color:#64748b; margin-bottom:14px; padding:10px 14px; background:rgba(255,255,255,0.6); border-radius:8px; line-height:1.6; }
+        .fin-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:12px; }
+        .fin-item { background:rgba(255,255,255,0.75); border-radius:10px; padding:14px 16px; backdrop-filter:blur(4px); }
+        .fin-item.net { border:2px solid #e2e8f0; background:rgba(255,255,255,0.92); }
+        .fin-label { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-bottom:5px; }
+        .fin-value { font-size:1.05rem; font-weight:800; color:#1a202c; }
+        .fin-value.green  { color:#059669; }
+        .fin-value.red    { color:#dc2626; }
+        .fin-value.blue   { color:#2563eb; }
+        .fin-value.purple { color:#7c3aed; }
+        .fin-note  { font-size:0.71rem; color:#94a3b8; margin-top:3px; }
+
+        /* ── Download bar ── */
+        .download-bar { display:flex; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:wrap; }
+        .download-bar-label { font-weight:700; color:#374151; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
+        .btn-dl { display:inline-flex; align-items:center; gap:8px; padding:10px 20px; border-radius:9px; font-size:0.88rem; font-weight:700; border:none; cursor:pointer; transition:all 0.25s; text-decoration:none; }
+        .btn-dl:hover { transform:translateY(-2px); }
+        .btn-pdf   { background:#ef4444; color:white; }
+        .btn-pdf:hover   { background:#dc2626; color:white; box-shadow:0 4px 14px rgba(239,68,68,0.45); }
+        .btn-excel { background:#10b981; color:white; }
+        .btn-excel:hover { background:#059669; color:white; box-shadow:0 4px 14px rgba(16,185,129,0.45); }
+        .btn-print { background:#6366f1; color:white; }
+        .btn-print:hover { background:#4f46e5; color:white; box-shadow:0 4px 14px rgba(99,102,241,0.45); }
+
+        /* ── Results card ── */
+        .results-card { background:white; border-radius:12px; padding:25px; box-shadow:0 2px 10px rgba(0,0,0,0.08); }
+        .results-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:15px; }
+        .results-header h3 { font-size:1.2rem; font-weight:700; color:#1a202c; margin:0; }
+        .results-count { background:#dbeafe; color:#1e40af; padding:6px 14px; border-radius:20px; font-size:0.85rem; font-weight:700; }
+
+        /* ── Animals table ── */
+        .animals-table { width:100%; border-collapse:collapse; }
+        .animals-table thead th { background:#f8f9fb; padding:12px 15px; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; border-bottom:2px solid #e2e8f0; white-space:nowrap; text-align:left; }
+        .animals-table tbody td { padding:11px 15px; font-size:0.88rem; color:#374151; border-bottom:1px solid #f0f2f5; vertical-align:middle; }
+        .animals-table tbody tr:hover { background:#f0f9ff; }
+
+        .badge-status { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:0.74rem; font-weight:700; }
+        .badge-active   { background:#d1fae5; color:#065f46; }
+        .badge-sold     { background:#dbeafe; color:#1e40af; }
+        .badge-dead     { background:#fee2e2; color:#991b1b; }
+        .badge-sick     { background:#fef3c7; color:#92400e; }
+        .badge-pregnant { background:#f3e8ff; color:#6d28d9; }
+        .badge-male   { background:#dbeafe; color:#1d4ed8; padding:3px 10px; border-radius:20px; font-size:0.74rem; font-weight:700; }
+        .badge-female { background:#fce7f3; color:#be185d; padding:3px 10px; border-radius:20px; font-size:0.74rem; font-weight:700; }
+        .born-pill  { display:inline-flex; align-items:center; gap:4px; background:#ede9fe; color:#6d28d9; padding:2px 9px; border-radius:20px; font-size:0.7rem; font-weight:700; margin-top:3px; }
+        .treat-pill { display:inline-flex; align-items:center; gap:4px; background:#fef3c7; color:#92400e; padding:2px 9px; border-radius:20px; font-size:0.74rem; font-weight:700; }
+
+        .empty-state { text-align:center; padding:60px 20px; color:#94a3b8; }
+        .empty-state i { font-size:3rem; display:block; margin-bottom:15px; }
+
+        /* ── Print ── */
+        @media print {
+            body { background:white; padding:0; }
+            .page-header { background:#0ea5e9 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; border-radius:0; }
+            .filter-card, .download-bar, .btn-back { display:none !important; }
+            .biz-panel { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+            .results-card { box-shadow:none; }
+            @page { margin:12mm; size:A4 landscape; }
+        }
+        @media (max-width:768px) {
+            .category-grid { grid-template-columns:repeat(2,1fr); }
+            .stats-row     { grid-template-columns:repeat(2,1fr); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══ PAGE HEADER ══════════════════════════════════════════════ -->
+<div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;">
+        <div>
+            <h1><i class="bi bi-bar-chart-line-fill"></i> Animals by Category</h1>
+            <p>Select a category to view animals, key statistics, and business performance</p>
+        </div>
+        <a href="/admin/dashboard" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ══ CATEGORY SELECTOR ════════════════════════════════════════ -->
+<div class="filter-card">
+    <h3><i class="bi bi-funnel-fill"></i> Select Category</h3>
+    <div class="category-grid">
+        <a th:each="cat : ${categories}"
+           th:href="@{'/livestock/category-animals-report/' + ${cat.id}}"
+           th:class="'category-btn ' + ${selectedCategory != null && selectedCategory.id == cat.id ? 'active' : ''}">
+            <i class="bi bi-tag-fill"></i>
+            <span th:text="${cat.name}">Category Name</span>
+            <span class="count" th:text="${cat.livestockCount} + ' animals'">0 animals</span>
+        </a>
+    </div>
+</div>
+
+<!-- ══ ALL CONTENT BELOW SHOWN ONLY WHEN A CATEGORY IS SELECTED ══ -->
+<div th:if="${selectedCategory != null}">
+
+    <!-- ── 5 Stat Cards ── -->
+    <div class="stats-row">
+        <div class="stat-card c-total">
+            <div class="stat-label"><i class="bi bi-grid-3x3-gap-fill"></i> Total Animals</div>
+            <div class="stat-value" th:text="${animals.size()}">0</div>
+            <div class="stat-sub">in this category</div>
+        </div>
+        <div class="stat-card c-active">
+            <div class="stat-label"><i class="bi bi-check-circle-fill"></i> Active</div>
+            <div class="stat-value" th:text="${activeCount}">0</div>
+            <div class="stat-sub">currently on farm</div>
+        </div>
+        <div class="stat-card c-sold">
+            <div class="stat-label"><i class="bi bi-bag-check-fill"></i> Sold</div>
+            <div class="stat-value" th:text="${soldCount}">0</div>
+            <div class="stat-sub">animals sold</div>
+        </div>
+        <div class="stat-card c-born">
+            <div class="stat-label"><i class="bi bi-stars"></i> Born on Farm</div>
+            <div class="stat-value" th:text="${totalBornCount}">0</div>
+            <div class="stat-sub" th:text="${totalOffspringCount} + ' total offspring'">0 offspring</div>
+        </div>
+        <div class="stat-card c-treat">
+            <div class="stat-label"><i class="bi bi-capsule-pill"></i> Treatments</div>
+            <div class="stat-value" th:text="${treatmentCount}">0</div>
+            <div class="stat-sub" th:text="${#numbers.formatDecimal(totalTreatmentCost,1,'COMMA',0,'POINT')} + ' RWF cost'">0 RWF</div>
+        </div>
+    </div>
+
+    <!-- ── Business Gain / Loss Panel ── -->
+    <div th:class="'biz-panel ' + ${businessStatus}">
+        <div class="biz-title">
+            <i class="bi bi-graph-up-arrow"></i>
+            <strong>Business Performance Analysis</strong>
+            <span th:if="${businessStatus == 'gain'}"    class="verdict-badge verdict-gain ms-auto"><i class="bi bi-trending-up"></i> IN GAIN</span>
+            <span th:if="${businessStatus == 'loss'}"    class="verdict-badge verdict-loss ms-auto"><i class="bi bi-trending-down"></i> IN LOSS</span>
+            <span th:if="${businessStatus == 'neutral'}" class="verdict-badge verdict-neutral ms-auto"><i class="bi bi-dash-circle"></i> BREAK EVEN</span>
+        </div>
+        <div class="biz-note">
+            <strong>How it is calculated:</strong>
+            Income = Sale Revenue + Active Stock Value + Estimated Born Animal Value.
+            Expenses = Total Treatment Costs. &nbsp;|&nbsp; Net Position = Income − Expenses.
+        </div>
+        <div class="fin-grid">
+            <div class="fin-item">
+                <div class="fin-label"><i class="bi bi-cash-stack"></i> Sale Revenue</div>
+                <div class="fin-value green" th:text="${#numbers.formatDecimal(totalSaleRevenue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note" th:text="${soldCount} + ' animals sold'"></div>
+            </div>
+            <div class="fin-item">
+                <div class="fin-label"><i class="bi bi-gem"></i> Active Stock Value</div>
+                <div class="fin-value blue" th:text="${#numbers.formatDecimal(activeStockValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note" th:text="${activeCount} + ' active animals'"></div>
+            </div>
+            <div class="fin-item">
+                <div class="fin-label"><i class="bi bi-stars"></i> Born Animal Value</div>
+                <div class="fin-value purple" th:text="${#numbers.formatDecimal(bornAnimalValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note" th:text="${totalOffspringCount} + ' offspring (estimated)'"></div>
+            </div>
+            <div class="fin-item">
+                <div class="fin-label"><i class="bi bi-capsule-pill"></i> Treatment Costs</div>
+                <div class="fin-value red" th:text="'− ' + ${#numbers.formatDecimal(totalTreatmentCost,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note" th:text="${treatmentCount} + ' treatments recorded'"></div>
+            </div>
+            <div class="fin-item">
+                <div class="fin-label"><i class="bi bi-plus-slash-minus"></i> Total Income</div>
+                <div class="fin-value green" th:text="${#numbers.formatDecimal(totalIncome,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note">sales + stock value + born value</div>
+            </div>
+            <div class="fin-item net">
+                <div class="fin-label"><i class="bi bi-calculator"></i> Net Position</div>
+                <div class="fin-value"
+                     th:classappend="${netPosition >= 0} ? ' green' : ' red'"
+                     th:text="${netPosition >= 0 ? '+' : ''} + ${#numbers.formatDecimal(netPosition,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
+                <div class="fin-note">income minus expenses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Download / Print ── -->
+    <div class="download-bar">
+        <span class="download-bar-label"><i class="bi bi-download"></i> Download Report:</span>
+        <a th:href="@{'/livestock/category-animals-report/' + ${selectedCategory.id} + '/download/pdf'}"   class="btn-dl btn-pdf"><i class="bi bi-file-earmark-pdf-fill"></i> PDF Report</a>
+        <a th:href="@{'/livestock/category-animals-report/' + ${selectedCategory.id} + '/download/excel'}" class="btn-dl btn-excel"><i class="bi bi-file-earmark-excel-fill"></i> Excel Report</a>
+        <button onclick="window.print()" class="btn-dl btn-print"><i class="bi bi-printer-fill"></i> Print</button>
+    </div>
+
+    <!-- ── Animals Table ── -->
+    <div class="results-card">
+        <div class="results-header">
+            <h3>
+                <i class="bi bi-tag-fill" style="color:var(--primary-color);"></i>
+                <span th:text="${selectedCategory.name}">Category Name</span>
+            </h3>
+            <span class="results-count">
+                <i class="bi bi-box2-heart-fill"></i>
+                <span th:text="${animals.size()} + ' Animals'">0 Animals</span>
+            </span>
+        </div>
+
+        <div th:if="${animals != null and !animals.empty}" style="overflow-x:auto;">
+            <table class="animals-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tag Number</th>
+                    <th>Gender</th>
+                    <th>Status</th>
+                    <th>Date Received</th>
+                    <th>Current Value</th>
+                    <th>Sale Price</th>
+                    <th>Born on Farm</th>
+                    <th>Treatments</th>
+                    <th>Location</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal, i : ${animals}">
+                    <td th:text="${i.count}">1</td>
+                    <td>
+                        <strong th:text="${animal.tagNumber}">TAG-001</strong>
+                        <div th:if="${animalBirthMap != null and animalBirthMap.containsKey(animal.id)}">
+                            <span class="born-pill"><i class="bi bi-stars"></i> Born on Farm</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:if="${animal.gender == 'MALE'}"   class="badge-male"><i class="bi bi-gender-male"></i> Male</span>
+                        <span th:if="${animal.gender == 'FEMALE'}" class="badge-female"><i class="bi bi-gender-female"></i> Female</span>
+                        <span th:if="${animal.gender == null}"     class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.status == 'ACTIVE'}"   class="badge-status badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                        <span th:if="${animal.status == 'SOLD'}"     class="badge-status badge-sold"><i class="bi bi-bag-check-fill"></i> Sold</span>
+                        <span th:if="${animal.status == 'DEAD'}"     class="badge-status badge-dead"><i class="bi bi-x-circle-fill"></i> Dead</span>
+                        <span th:if="${animal.status == 'SICK'}"     class="badge-status badge-sick"><i class="bi bi-bandaid-fill"></i> Sick</span>
+                        <span th:if="${animal.status == 'PREGNANT'}" class="badge-status badge-pregnant"><i class="bi bi-heart-fill"></i> Pregnant</span>
+                    </td>
+                    <td th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived,'dd-MM-yyyy') : '—'}">—</td>
+                    <td>
+                        <span th:if="${animal.currentValue != null}" th:text="${#numbers.formatDecimal(animal.currentValue,1,'COMMA',0,'POINT')} + ' RWF'"></span>
+                        <span th:if="${animal.currentValue == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${animalSaleMap != null and animalSaleMap.containsKey(animal.id)}"
+                              style="color:#059669;font-weight:700;"
+                              th:text="${#numbers.formatDecimal(animalSaleMap[animal.id],1,'COMMA',0,'POINT')} + ' RWF'"></span>
+                        <span th:if="${animalSaleMap == null or !animalSaleMap.containsKey(animal.id)}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${animalBirthMap != null and animalBirthMap.containsKey(animal.id)}"
+                              style="color:#7c3aed;font-weight:600;">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span th:text="${#temporals.format(animalBirthMap[animal.id],'dd-MM-yyyy')}"></span>
+                        </span>
+                        <span th:if="${animalBirthMap == null or !animalBirthMap.containsKey(animal.id)}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${animalTreatCountMap != null and animalTreatCountMap.containsKey(animal.id)}" class="treat-pill">
+                            <i class="bi bi-capsule-pill"></i>
+                            <span th:text="${animalTreatCountMap[animal.id]}"></span>x
+                        </span>
+                        <span th:if="${animalTreatCountMap == null or !animalTreatCountMap.containsKey(animal.id)}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.location != null}" th:text="${animal.location.name}">—</span>
+                        <span th:if="${animal.location == null}" class="text-muted">—</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${animals == null or animals.empty}" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h3>No Animals Found</h3>
+            <p>This category doesn't have any animals yet.</p>
+        </div>
+    </div>
+
+</div><!-- end selected category section -->
+
+<!-- ══ No category chosen yet ══ -->
+<div th:if="${selectedCategory == null}" class="empty-state">
+    <i class="bi bi-hand-index-thumb"></i>
+    <h3>Select a Category</h3>
+    <p>Choose a category above to view its animals, statistics, and business analysis.</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -162,6 +162,54 @@
         .sum-pill.born       { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
         .sum-pill.treatments { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
         .sum-pill.abortions  { background: #fff1f2; color: #be123c; border-color: #fda4af; }
+
+        /* ── QR / Print additions ── */
+        .qr-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: 7px;
+            border: 1.5px solid #e2e8f0; background: #f8f9fb;
+            color: #475569; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.18s; text-decoration: none;
+        }
+        .qr-btn:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; transform: translateY(-1px); }
+        .qr-btn.print-btn:hover { background: #0f766e; border-color: #0f766e; color: white; }
+
+        /* Checkbox column */
+        .check-col { width: 36px; text-align: center; }
+        .row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #1a5f7a; }
+
+        /* Bulk actions bar */
+        .bulk-bar {
+            display: none;
+            align-items: center; gap: 12px;
+            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
+            border-radius: 10px; padding: 10px 18px;
+            margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .bulk-bar.visible { display: flex; }
+        .bulk-bar-text { color: white; font-weight: 700; font-size: 0.88rem; }
+        .bulk-bar-count {
+            background: rgba(255,255,255,0.2); color: white;
+            padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
+        }
+        .btn-bulk {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+            border: none; cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-bulk.teal  { background: white; color: #1a5f7a; }
+        .btn-bulk.teal:hover  { background: #e0f7fa; color: #155e75; }
+        .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-bulk.clear:hover { background: rgba(255,255,255,0.25); }
+
+        /* Print-all button style */
+        .btn-print-all {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600;
+            border: 1.5px solid #0f766e; background: #f0fdfa; color: #0f766e;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn-print-all:hover { background: #0f766e; color: white; transform: translateY(-1px); }
     </style>
 </head>
 <body>
@@ -174,9 +222,18 @@
                 <h3><i class="bi bi-grid-fill text-success"></i> Livestock</h3>
                 <p class="text-muted mb-0">All registered livestock animals</p>
             </div>
-            <a th:href="@{/livestock/register}" class="btn btn-primary">
-                <i class="bi bi-plus-circle-fill"></i> Register Livestock
-            </a>
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <!-- Print All Ear Tags -->
+                <a href="/livestock/qr/eartags/print-all"
+                   class="btn-print-all"
+                   target="_blank"
+                   title="Print ear tags for all animals">
+                    <i class="bi bi-printer-fill"></i> Print All Ear Tags
+                </a>
+                <a th:href="@{/livestock/register}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle-fill"></i> Register Livestock
+                </a>
+            </div>
         </div>
 
         <!-- ── Alerts ── -->
@@ -215,7 +272,6 @@
                 <i class="bi bi-stars"></i>
                 Born on Farm: <strong th:text="${totalBornOnFarm != null ? totalBornOnFarm : 0}">0</strong>
             </span>
-            <!-- ★ Treatments + Abortions — now wired from controller -->
             <span class="sum-pill treatments">
                 <i class="bi bi-capsule-pill"></i>
                 Treatments: <strong th:text="${totalTreatments != null ? totalTreatments : 0}">0</strong>
@@ -224,6 +280,22 @@
                 <i class="bi bi-heartbreak-fill"></i>
                 Abortions: <strong th:text="${totalAbortions != null ? totalAbortions : 0}">0</strong>
             </span>
+        </div>
+
+        <!-- ── Bulk actions bar (shown when checkboxes selected) ── -->
+        <div class="bulk-bar" id="bulkBar">
+            <span class="bi bi-check2-square" style="color:white;font-size:1.1rem;"></span>
+            <span class="bulk-bar-text">Selected:</span>
+            <span class="bulk-bar-count" id="selectedCount">0</span>
+            <button class="btn-bulk teal" onclick="printSelected()">
+                <i class="bi bi-printer-fill"></i> Print Ear Tags
+            </button>
+            <button class="btn-bulk teal" onclick="viewQRSelected()">
+                <i class="bi bi-qr-code"></i> View QR Codes
+            </button>
+            <button class="btn-bulk clear" onclick="clearSelection()">
+                <i class="bi bi-x-lg"></i> Clear
+            </button>
         </div>
 
         <!-- ── Search + Filter ── -->
@@ -253,7 +325,6 @@
                     <button class="filter-btn" onclick="filterByStatus('BORN', this)">
                         <i class="bi bi-stars me-1"></i>Born on Farm
                     </button>
-                    <!-- ★ NEW filter buttons -->
                     <button class="filter-btn" onclick="filterByStatus('TREATED', this)">
                         <i class="bi bi-capsule-pill me-1"></i>Treated
                     </button>
@@ -269,6 +340,11 @@
             <table class="table table-hover align-middle" id="dataTable">
                 <thead class="table-light">
                 <tr>
+                    <!-- Checkbox select-all -->
+                    <th class="check-col">
+                        <input type="checkbox" class="row-checkbox" id="selectAll"
+                               title="Select all visible" onchange="toggleSelectAll(this)">
+                    </th>
                     <th>#</th>
                     <th>Photo</th>
                     <th>Tag Number</th>
@@ -278,6 +354,7 @@
                     <th>Beneficiary</th>
                     <th>Location</th>
                     <th>Status</th>
+                    <th>Current Value</th>
                     <th>Birth, Health &amp; Sale</th>
                     <th>Actions</th>
                 </tr>
@@ -286,7 +363,7 @@
 
                 <!-- Empty state -->
                 <tr th:if="${livestockList == null or livestockList.empty}">
-                    <td colspan="11" class="text-center text-muted py-4">
+                    <td colspan="13" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No livestock registered yet</p>
                     </td>
@@ -298,8 +375,16 @@
                         data-status=${item.status},
                         data-born=${birthMap != null and birthMap.containsKey(item.id)} ? 'true' : 'false',
                         data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false',
-                        data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false'
+                        data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false',
+                        data-id=${item.id}
                     ">
+
+                    <!-- Checkbox -->
+                    <td class="check-col">
+                        <input type="checkbox" class="row-checkbox animal-check"
+                               th:value="${item.id}"
+                               onchange="updateBulkBar()">
+                    </td>
 
                     <!-- # -->
                     <td th:text="${currentPage != null ? (currentPage * pageSize) + iterStat.count : iterStat.count}">1</td>
@@ -396,6 +481,19 @@
                         </span>
                     </td>
 
+                    <!-- Current Value -->
+                    <td>
+                        <span th:if="${item.currentValue != null}"
+                              style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px;font-size:0.8rem;font-weight:700;color:#15803d;">
+                            <i class="bi bi-gem"></i>
+                            <span th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
+                        </span>
+                        <span th:if="${item.currentValue == null}"
+                              style="color:#94a3b8;font-style:italic;font-size:0.78rem;">
+                            Not set
+                        </span>
+                    </td>
+
                     <!-- ══ Birth, Health & Sale column ══ -->
                     <td class="lifecycle-cell">
 
@@ -417,7 +515,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. HEALTH EVENTS section header — only shown if any health event exists -->
+                        <!-- 2. HEALTH section header -->
                         <div th:if="${
                             (treatmentMap != null and treatmentMap.containsKey(item.id))
                             or (abortionMap != null and abortionMap.containsKey(item.id))
@@ -428,8 +526,7 @@
                             </span>
                         </div>
 
-                        <!-- TREATMENTS
-                             ★ Field: .medication  (entity has no "diagnosis" field) -->
+                        <!-- TREATMENTS -->
                         <div th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}">
                             <div class="lc-row">
                                 <i class="bi bi-capsule-pill lc-icon" style="color:#7c3aed;"></i>
@@ -451,8 +548,7 @@
                             </div>
                         </div>
 
-                        <!-- ABORTIONS
-                             ★ Field: .pregnancyNumber  (entity has no "cause" field) -->
+                        <!-- ABORTIONS -->
                         <div th:if="${abortionMap != null and abortionMap.containsKey(item.id)}">
                             <div class="lc-row">
                                 <i class="bi bi-heartbreak-fill lc-icon" style="color:#be123c;"></i>
@@ -474,7 +570,7 @@
                             </div>
                         </div>
 
-                        <!-- No health events at all -->
+                        <!-- No health events -->
                         <div th:if="${
                             (treatmentMap == null or !treatmentMap.containsKey(item.id))
                             and (abortionMap == null or !abortionMap.containsKey(item.id))
@@ -530,26 +626,47 @@
                     </td>
                     <!-- ══ END Birth, Health & Sale column ══ -->
 
-                    <!-- Actions -->
+                    <!-- ══ Actions column ══ -->
                     <td class="table-actions">
+                        <!-- View -->
                         <a th:href="@{/livestock/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View">
                             <i class="bi bi-eye"></i>
                         </a>
+                        <!-- Edit -->
                         <a th:href="@{/livestock/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <!-- Record Sale -->
                         <a th:if="${item.status == 'ACTIVE' or item.status == 'SICK'}"
                            th:href="@{/livestock/sales}"
                            class="btn btn-sm btn-success" title="Record Sale">
                             <i class="bi bi-cash-stack"></i>
                         </a>
+                        <!-- Family Tree -->
                         <a th:if="${birthMap != null and birthMap.containsKey(item.id)}"
                            th:href="@{/livestock/births/family/{id}(id=${item.id})}"
                            class="btn btn-sm btn-outline-info" title="View Family Tree">
                             <i class="bi bi-diagram-3"></i>
                         </a>
+
+                        <!-- ★ QR Code / Ear Tag button -->
+                        <a th:href="@{/livestock/qr/eartag/{id}(id=${item.id})}"
+                           class="qr-btn"
+                           title="View QR Code &amp; Ear Tag">
+                            <i class="bi bi-qr-code"></i>
+                        </a>
+
+                        <!-- ★ Print Ear Tag button -->
+                        <a th:href="@{/livestock/qr/eartags/print(ids=${item.id})}"
+                           class="qr-btn print-btn"
+                           title="Print Ear Tag"
+                           target="_blank">
+                            <i class="bi bi-printer-fill"></i>
+                        </a>
+
+                        <!-- Delete -->
                         <button type="button" class="btn btn-sm btn-danger"
                                 data-bs-toggle="modal"
                                 th:data-bs-target="'#deleteModal' + ${item.id}"
@@ -582,6 +699,8 @@
                             </div>
                         </div>
                     </td>
+                    <!-- ══ END Actions ══ -->
+
                 </tr>
                 </tbody>
             </table>
@@ -699,17 +818,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    /* ── Page size ── */
     function changePageSize(size) {
         window.location.href = '/livestock/list?page=0&size=' + size;
     }
 
+    /* ── Text search ── */
     document.getElementById('searchInput').addEventListener('keyup', function () {
         const v = this.value.toLowerCase();
         document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
             row.style.display = row.textContent.toLowerCase().includes(v) ? '' : 'none';
         });
+        updateBulkBar();
     });
 
+    /* ── Status filter ── */
     function filterByStatus(status, btn) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
@@ -727,6 +850,87 @@
                 row.style.display = row.getAttribute('data-status') === status ? '' : 'none';
             }
         });
+
+        // Uncheck hidden rows
+        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
+            if (row.style.display === 'none') {
+                const cb = row.querySelector('.animal-check');
+                if (cb) cb.checked = false;
+            }
+        });
+        updateBulkBar();
+    }
+
+    /* ── Select all checkbox ── */
+    function toggleSelectAll(masterCb) {
+        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
+            if (row.style.display !== 'none') {
+                const cb = row.querySelector('.animal-check');
+                if (cb) cb.checked = masterCb.checked;
+            }
+        });
+        updateBulkBar();
+    }
+
+    /* ── Update bulk action bar ── */
+    function updateBulkBar() {
+        const checked = document.querySelectorAll('.animal-check:checked');
+        const bar     = document.getElementById('bulkBar');
+        const count   = document.getElementById('selectedCount');
+        count.textContent = checked.length;
+        bar.classList.toggle('visible', checked.length > 0);
+
+        // Sync master checkbox state
+        const masterCb     = document.getElementById('selectAll');
+        const allVisible   = Array.from(document.querySelectorAll('#dataTable tbody tr[data-status]'))
+                                  .filter(r => r.style.display !== 'none');
+        const allChecked   = allVisible.every(r => {
+            const cb = r.querySelector('.animal-check');
+            return cb && cb.checked;
+        });
+        masterCb.checked       = allChecked && allVisible.length > 0;
+        masterCb.indeterminate = checked.length > 0 && !allChecked;
+    }
+
+    /* ── Clear selection ── */
+    function clearSelection() {
+        document.querySelectorAll('.animal-check').forEach(cb => cb.checked = false);
+        document.getElementById('selectAll').checked       = false;
+        document.getElementById('selectAll').indeterminate = false;
+        updateBulkBar();
+    }
+
+    /* ── Get selected IDs ── */
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.animal-check:checked'))
+                    .map(cb => cb.value);
+    }
+
+    /* ── Print selected ear tags ── */
+    function printSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+            alert('Please select at least one animal first.');
+            return;
+        }
+        const url = '/livestock/qr/eartags/print?' + ids.map(id => 'ids=' + id).join('&');
+        window.open(url, '_blank');
+    }
+
+    /* ── View QR codes for selected (opens first animal's tag page) ── */
+    function viewQRSelected() {
+        const ids = getSelectedIds();
+        if (ids.length === 0) {
+            alert('Please select at least one animal first.');
+            return;
+        }
+        if (ids.length === 1) {
+            window.open('/livestock/qr/eartag/' + ids[0], '_blank');
+        } else {
+            // Multiple: open print page (shows all QR codes)
+            const url = '/livestock/qr/eartags/print?' + ids.map(id => 'ids=' + id).join('&');
+            window.open(url, '_blank');
+        }
     }
 </script>
 </body>

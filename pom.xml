@@ -92,6 +92,45 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <!-- Apache POI — generates the .xlsx Excel file -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
+        <!-- OpenPDF — generates the PDF file (free, no licence issues) -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.30</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.30</version>
+        </dependency>
+
+        <!-- Apache POI — For Excel (.xlsx) generation -->
+        <!-- Used by SupervisorReportController for Excel generation -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
     </dependencies>
 
     <build>

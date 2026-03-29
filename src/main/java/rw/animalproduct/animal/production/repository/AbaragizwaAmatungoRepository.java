@@ -51,4 +51,12 @@ public interface AbaragizwaAmatungoRepository extends JpaRepository<AbaragizwaAm
                                                           Pageable pageable);
 
     Page<AbaragizwaAmatungo> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName, Pageable pageable);
+
+    @Query("""
+    SELECT a.uhagarariyeAborora.id, COUNT(a)
+    FROM AbaragizwaAmatungo a
+    WHERE a.uhagarariyeAborora IS NOT NULL
+    GROUP BY a.uhagarariyeAborora.id
+""")
+    List<Object[]> countByEachSupervisor();
 }

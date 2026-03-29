@@ -1,0 +1,68 @@
+Daily reports
+Monthly reports
+Yearly reports
+Production summary
+
+
+A.System Configuration
+
+System-wide settings.
+
+Activities
+Configure system settings
+Manage backup
+Restore database
+Audit logs
+Manage notification settings
+Manage farm locations
+
+
+
+B. Sales User
+
+This user manages animal sales.
+Activities
+View available livestock
+Record sales
+Print receipts
+Register customers
+Generate sales report
+On Supervisor Report
+
+
+Track payments
+
+
+C. Farm Manager
+
+This is a supervisory user.
+
+Activities
+View dashboard
+View production reports
+Approve sales
+Monitor staff performance
+View animal statistics
+View alerts
+View death rates
+View profit reports
+
+
+
+D. RECOMMENDED ROLES FOR YOUR SYSTEM
+
+Instead of only Admin + User, I strongly recommend:
+
+ROLE_ADMIN
+ROLE_MANAGER
+ROLE_DATA_ENTRY
+ROLE_VET
+ROLE_SALES
+
+
+
+
+
+
+--__________________________________________----
+

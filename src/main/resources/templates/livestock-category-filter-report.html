@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Filter Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0ea5e9;
+            --primary-dark: #0284c7;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #f8f9fb;
+            padding: 20px;
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(14,165,233,0.3);
+        }
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .filter-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-select {
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(14,165,233,0.1);
+        }
+
+        .btn-filter {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-filter:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14,165,233,0.4);
+        }
+        .btn-reset {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-reset:hover {
+            background: #e2e8f0;
+        }
+
+        /* Results area */
+        .results-area {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            min-height: 300px;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .results-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .results-count {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .animals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .animal-card {
+            background: #f8f9fb;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px;
+            transition: all 0.3s;
+        }
+        .animal-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(14,165,233,0.15);
+            transform: translateY(-2px);
+        }
+        .animal-card .tag {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .animal-card .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .animal-card .info-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+        .animal-card .info-value {
+            color: #1a202c;
+            font-weight: 500;
+        }
+
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-active { background: #d1fae5; color: #065f46; }
+        .badge-sold { background: #dbeafe; color: #1e40af; }
+        .badge-dead { background: #fee2e2; color: #991b1b; }
+        .badge-sick { background: #fef3c7; color: #92400e; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1><i class="bi bi-funnel-fill"></i> Category Filter Report</h1>
+    <p>Select a category to view all animals in that category</p>
+</div>
+
+<!-- Filter Card -->
+<div class="filter-card">
+    <h3><i class="bi bi-sliders"></i> Filter Options</h3>
+    <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label" style="font-weight: 600; color: #475569; margin-bottom: 8px;">
+                <i class="bi bi-tag-fill"></i> Select Category
+            </label>
+            <select class="form-select" id="categorySelect">
+                <option value="">-- Choose a category --</option>
+                <option th:each="cat : ${categories}"
+                        th:value="${cat.id}"
+                        th:text="${cat.name + ' (' + cat.livestockCount + ' animals)'}">
+                    Category Name
+                </option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" style="font-weight: 600; color: #475569; margin-bottom: 8px;">
+                <i class="bi bi-funnel"></i> Status Filter
+            </label>
+            <select class="form-select" id="statusSelect">
+                <option value="">All Statuses</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SOLD">Sold</option>
+                <option value="DEAD">Dead</option>
+                <option value="SICK">Sick</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button class="btn-filter w-100" onclick="loadAnimals()">
+                <i class="bi bi-search"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Results Area -->
+<div class="results-area" id="resultsArea">
+    <div class="empty-state">
+        <i class="bi bi-funnel"></i>
+        <h3>Select a Category</h3>
+        <p>Choose a category from the dropdown above to view animals</p>
+    </div>
+</div>
+
+<script>
+    function loadAnimals() {
+        const categoryId = document.getElementById('categorySelect').value;
+        const status = document.getElementById('statusSelect').value;
+        const resultsArea = document.getElementById('resultsArea');
+
+        if (!categoryId) {
+            resultsArea.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-exclamation-triangle" style="color: #f59e0b;"></i>
+                    <h3>No Category Selected</h3>
+                    <p>Please select a category first</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Show loading
+        resultsArea.innerHTML = `
+            <div class="loading">
+                <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>
+                <p style="margin-top: 15px; color: #64748b;">Loading animals...</p>
+            </div>
+        `;
+
+        // Build URL with filters
+        let url = `/livestock/category/${categoryId}/animals-all`;
+        if (status) {
+            url += `?status=${status}`;
+        }
+
+        // Fetch animals
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                renderAnimals(data);
+            })
+            .catch(error => {
+                resultsArea.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-exclamation-circle" style="color: #ef4444;"></i>
+                        <h3>Error Loading Data</h3>
+                        <p>Please try again later</p>
+                    </div>
+                `;
+            });
+    }
+
+    function renderAnimals(animals) {
+        const resultsArea = document.getElementById('resultsArea');
+
+        if (!animals || animals.length === 0) {
+            resultsArea.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h3>No Animals Found</h3>
+                    <p>No animals match the selected filters</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `
+            <div class="results-header">
+                <h3><i class="bi bi-list-ul"></i> Results</h3>
+                <span class="results-count">${animals.length} animal${animals.length !== 1 ? 's' : ''} found</span>
+            </div>
+            <div class="animals-grid">
+        `;
+
+        animals.forEach(animal => {
+            const statusClass = animal.status ? animal.status.toLowerCase() : 'active';
+            html += `
+                <div class="animal-card">
+                    <div class="tag">
+                        <i class="bi bi-tag-fill" style="color: var(--primary-color);"></i>
+                        ${animal.tagNumber}
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gender:</span>
+                        <span class="info-value">${animal.gender || '—'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status:</span>
+                        <span class="badge-status badge-${statusClass}">
+                            ${animal.status || 'ACTIVE'}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date Received:</span>
+                        <span class="info-value">${animal.dateReceived || '—'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Value:</span>
+                        <span class="info-value">${animal.currentValue ? animal.currentValue.toLocaleString() + ' RWF' : '—'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value">${animal.locationName || '—'}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        resultsArea.innerHTML = html;
+    }
+
+    // Auto-load if category is pre-selected (e.g., from URL parameter)
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('categoryId');
+        if (categoryId) {
+            document.getElementById('categorySelect').value = categoryId;
+            loadAnimals();
+        }
+    });
+</script>
+
+</body>
+</html>

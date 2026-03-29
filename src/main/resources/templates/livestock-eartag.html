@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Ear Tag — ' + ${animal.tagNumber}">Ear Tag</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f1f5f9; font-family: 'Space Grotesk', sans-serif; padding: 30px 20px; }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Preview card ─────────────────────────────── */
+        .preview-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.08);
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+        .preview-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+
+        /* ── The ear tag itself ───────────────────────── */
+        .ear-tag-preview {
+            width: 320px;
+            margin: 0 auto;
+            border: 2.5px solid #1a5f7a;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(26,95,122,.2);
+        }
+
+        .tag-header {
+            background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .tag-header.status-sold     { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .tag-header.status-dead     { background: linear-gradient(135deg, #475569, #334155); }
+        .tag-header.status-sick     { background: linear-gradient(135deg, #d97706, #b45309); }
+        .tag-header.status-pregnant { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+
+        .tag-number {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: white;
+            letter-spacing: 0.06em;
+        }
+        .status-pill {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: rgba(255,255,255,.9);
+            background: rgba(255,255,255,.2);
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .tag-body {
+            display: flex;
+            padding: 14px 16px 10px;
+            gap: 14px;
+            background: white;
+        }
+        .tag-info { flex: 1; }
+        .info-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .info-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #1a5f7a;
+            min-width: 55px;
+        }
+        .info-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .info-value.big { font-size: 1rem; font-weight: 800; }
+
+        .tag-qr {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .tag-qr img {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            image-rendering: pixelated;
+        }
+        .qr-label {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .tag-footer {
+            background: #f8fafc;
+            border-top: 1.5px solid #e2e8f0;
+            padding: 7px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .footer-brand {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #1a5f7a;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+        .footer-id {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.6rem;
+            color: #94a3b8;
+        }
+
+        /* Punch hole */
+        .punch-hole {
+            position: absolute;
+            top: 50%;
+            left: -8px;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            border: 2px dashed #1a5f7a;
+        }
+
+        /* ── Info section ─────────────────────────────── */
+        .info-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+        .info-section h5 {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .detail-item {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            border-left: 3px solid #1a5f7a;
+        }
+        .detail-item .dl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 4px; }
+        .detail-item .dv { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
+
+        /* ── QR data section ──────────────────────────── */
+        .qr-data-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.06);
+            max-width: 600px;
+            margin: 0 auto 24px;
+        }
+        .qr-raw {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.78rem;
+            background: #f1f5f9;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            white-space: pre-wrap;
+            color: #334155;
+            line-height: 1.7;
+        }
+
+        /* ── Action buttons ───────────────────────────── */
+        .actions-section {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-action {
+            flex: 1;
+            min-width: 140px;
+            padding: 13px 20px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn-action.primary { background: #1a5f7a; color: white; }
+        .btn-action.primary:hover { background: #155e75; transform: translateY(-2px); color: white; }
+        .btn-action.success { background: #059669; color: white; }
+        .btn-action.success:hover { background: #047857; transform: translateY(-2px); color: white; }
+        .btn-action.secondary { background: #f1f5f9; color: #475569; border: 1.5px solid #e2e8f0; }
+        .btn-action.secondary:hover { background: #e2e8f0; color: #1e293b; }
+        .btn-action.purple { background: #7c3aed; color: white; }
+        .btn-action.purple:hover { background: #6d28d9; color: white; }
+
+        @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { background: white; padding: 20px; }
+            .page-header, .actions-section, .info-section, .qr-data-section, .preview-title { display: none !important; }
+            .preview-card { box-shadow: none; padding: 0; margin: 0; max-width: none; }
+            .ear-tag-preview { width: 260px; margin: 40px auto 0; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div class="page-title">
+        🏷️ Ear Tag — <span th:text="${animal.tagNumber}" style="color:#1a5f7a;">TAG-001</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a th:href="@{/livestock/view/{id}(id=${animal.id})}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Back to Animal
+        </a>
+        <a th:href="@{/livestock/qr/eartags/print?ids={id}(id=${animal.id})}" class="btn btn-primary btn-sm">
+            <i class="bi bi-printer-fill"></i> Print Tag
+        </a>
+    </div>
+</div>
+
+<!-- ── Tag Preview ── -->
+<div class="preview-card">
+    <div class="preview-title">🔍 Tag Preview</div>
+
+    <div class="ear-tag-preview">
+
+        <!-- Punch hole -->
+        <div class="punch-hole"></div>
+
+        <!-- Header -->
+        <div class="tag-header"
+             th:classappend="${animal.status == 'SOLD'}     ? ' status-sold'     :
+                             (${animal.status == 'DEAD'}     ? ' status-dead'     :
+                             (${animal.status == 'SICK'}     ? ' status-sick'     :
+                             (${animal.status == 'PREGNANT'} ? ' status-pregnant' : '')))">
+            <span class="tag-number" th:text="${animal.tagNumber}">TAG-001</span>
+            <span class="status-pill" th:text="${animal.status}">ACTIVE</span>
+        </div>
+
+        <!-- Body -->
+        <div class="tag-body">
+            <div class="tag-info">
+                <div class="info-row">
+                    <span class="info-label">Type</span>
+                    <span class="info-value big"
+                          th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : 'N/A'}">Cattle</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Gender</span>
+                    <span class="info-value" th:text="${animal.gender != null ? animal.gender : 'Unknown'}">FEMALE</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Owner</span>
+                    <span class="info-value"
+                          th:text="${animal.abaragizwaAmatungo != null ?
+                            animal.abaragizwaAmatungo.firstName + ' ' + animal.abaragizwaAmatungo.lastName :
+                            'Unassigned'}">John Doe</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Location</span>
+                    <span class="info-value"
+                          th:text="${animal.location != null ? animal.location.name : 'N/A'}">Sector A</span>
+                </div>
+                <div class="info-row" th:if="${animal.dateReceived != null}">
+                    <span class="info-label">Received</span>
+                    <span class="info-value"
+                          th:text="${#temporals.format(animal.dateReceived, 'dd/MM/yyyy')}">01/01/2024</span>
+                </div>
+            </div>
+
+            <div class="tag-qr">
+                <img th:src="@{/livestock/qr/image/{id}(id=${animal.id}, size=150)}"
+                     alt="QR Code">
+                <span class="qr-label">Scan for<br>full record</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="tag-footer">
+            <span class="footer-brand">🐄 Animal Production System</span>
+            <span class="footer-id"
+                  th:text="${#strings.substring(animal.id.toString(), 0, 8) + '...'}">abc12345</span>
+        </div>
+
+    </div>
+</div>
+
+<!-- ── Animal Details ── -->
+<div class="info-section">
+    <h5><i class="bi bi-info-circle-fill"></i> Animal Information</h5>
+    <div class="detail-grid">
+        <div class="detail-item">
+            <div class="dl">Tag Number</div>
+            <div class="dv" th:text="${animal.tagNumber}">TAG-001</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Category</div>
+            <div class="dv" th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : 'N/A'}">Cattle</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Gender</div>
+            <div class="dv" th:text="${animal.gender != null ? animal.gender : 'Unknown'}">Female</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Status</div>
+            <div class="dv" th:text="${animal.status}">Active</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Beneficiary</div>
+            <div class="dv" th:text="${animal.abaragizwaAmatungo != null ?
+                animal.abaragizwaAmatungo.firstName + ' ' + animal.abaragizwaAmatungo.lastName :
+                'Unassigned'}">John Doe</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Location</div>
+            <div class="dv" th:text="${animal.location != null ? animal.location.name : 'N/A'}">Sector A</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Date Received</div>
+            <div class="dv" th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived, 'dd MMM yyyy') : '—'}">01 Jan 2024</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Current Value</div>
+            <div class="dv" th:text="${animal.currentValue != null ? #numbers.formatDecimal(animal.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF' : 'Not set'}">50,000 RWF</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── QR Content ── -->
+<div class="qr-data-section">
+    <h5><i class="bi bi-qr-code"></i> QR Code Data Encoded</h5>
+    <pre class="qr-raw" th:text="${qrContent}">QR data...</pre>
+</div>
+
+<!-- ── Actions ── -->
+<div class="actions-section">
+    <a th:href="@{/livestock/qr/eartags/print?ids={id}(id=${animal.id})}"
+       class="btn-action primary">
+        🖨️ Print This Tag
+    </a>
+    <a href="/livestock/qr/eartags/print-all"
+       class="btn-action success">
+        🏷️ Print All Tags
+    </a>
+    <a th:href="@{/livestock/qr/image/{id}(id=${animal.id}, size=300)}"
+       download="qr-code.png"
+       class="btn-action purple">
+        ⬇️ Download QR PNG
+    </a>
+    <a th:href="@{/livestock/view/{id}(id=${animal.id})}"
+       class="btn-action secondary">
+        ← Back to Animal
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

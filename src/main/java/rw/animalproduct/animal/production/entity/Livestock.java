@@ -66,6 +66,9 @@ public class Livestock {
     @Column(name = "acquisition_method")
     private String acquisitionMethod;
 
+    @Column(name = "sold_price")
+    private BigDecimal soldPrice;
+
     // ── Status field ─────────────────────────────────────────────────
     // columnDefinition keeps DB and Java in sync.
     // The CHECK constraint is enforced by PostgreSQL (see SQL migration).
@@ -180,6 +183,14 @@ public class Livestock {
 
     public String getAbaragizwaAmatungoIdValue() { return abaragizwaAmatungoIdValue; }
     public void setAbaragizwaAmatungoIdValue(String v) { this.abaragizwaAmatungoIdValue = v; }
+
+    public BigDecimal getSoldPrice() {
+        return soldPrice;
+    }
+
+    public void setSoldPrice(BigDecimal soldPrice) {
+        this.soldPrice = soldPrice;
+    }
 
     @Override
     public String toString() {

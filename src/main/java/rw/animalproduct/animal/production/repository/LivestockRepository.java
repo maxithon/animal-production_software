@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import rw.animalproduct.animal.production.entity.Livestock;
+import rw.animalproduct.animal.production.entity.LivestockSick;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,12 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     List<Livestock> findByStatus(String status);
 
     List<Livestock> findByLivestockCategoryId(UUID categoryId);
+
+    // Existing method may not work depending on your entity mapping
+    List<Livestock> findByLivestockCategory_Id(UUID categoryId);
+
+    // Pagination version if needed
+    Page<Livestock> findByLivestockCategory_Id(UUID categoryId, Pageable pageable);
 
     List<Livestock> findByAbaragizwaAmatungoId(UUID abaragizwaId);
 
@@ -63,4 +70,8 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     Page<Livestock> findByLivestockCategoryId(UUID categoryId, Pageable pageable);
 
     Page<Livestock> findByTagNumberContaining(String tagNumber, Pageable pageable);
+
+    @Query("SELECT s FROM LivestockSick s WHERE s.livestock.id IN :animalIds")
+    List<LivestockSick> findByLivestockIds(@Param("animalIds") List<UUID> animalIds);
+
 }

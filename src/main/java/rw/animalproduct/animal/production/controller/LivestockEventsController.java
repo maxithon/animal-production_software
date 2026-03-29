@@ -11,12 +11,22 @@ import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSickRepository;
 import rw.animalproduct.animal.production.services.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import java.util.HashMap;
+import java.util.Map;
+
 
 @Controller
 @RequestMapping("/livestock")
@@ -431,7 +441,7 @@ public class LivestockEventsController {
     }
 
     // =========================================================================
-    // SICK REPORT  —  GET /livestock/sick/report
+    // SICK REPORT
     // =========================================================================
 
     @GetMapping("/sick/report")
@@ -440,7 +450,6 @@ public class LivestockEventsController {
             @RequestParam(value = "to",   required = false) String toStr,
             Model model) {
 
-        // ── Parse / default dates ──────────────────────────────────────
         LocalDate fromDate = (fromStr != null && !fromStr.isBlank())
                 ? LocalDate.parse(fromStr)
                 : LocalDate.now().withDayOfMonth(1);
@@ -454,11 +463,9 @@ public class LivestockEventsController {
 
         int year = fromDate.getYear();
 
-        // ── All history events in the selected period ──────────────────
         List<LivestockSickHistory> allHistory =
                 sickService.getHistoryInRange(fromDt, toDt);
 
-        // ── Split by status ────────────────────────────────────────────
         List<LivestockSickHistory> sickCases =
                 sickService.getSickCasesInRange(fromDt, toDt);
 
@@ -468,21 +475,17 @@ public class LivestockEventsController {
         List<LivestockSickHistory> recoveredCases =
                 sickService.getRecoveredCasesInRange(fromDt, toDt);
 
-        // ── Recovering: derived from allHistory ────────────────────────
         List<LivestockSickHistory> recoveringCases = allHistory.stream()
                 .filter(h -> h.getStatus() == LivestockSick.SickStatus.RECOVERING)
                 .collect(Collectors.toList());
 
-        // ── Sick episodes with full history (journey cards section) ────
         List<LivestockSick> sickRecords =
                 sickRepository.findByReportedDateBetweenWithHistory(fromDate, toDate);
 
-        // ── Year totals ────────────────────────────────────────────────
         long yearSick      = sickService.countSickByYear(year);
         long yearCritical  = sickService.countCriticalByYear(year);
         long yearRecovered = sickService.countRecoveredByYear(year);
 
-        // ── Push all to model ──────────────────────────────────────────
         model.addAttribute("fromDate",        fromDate);
         model.addAttribute("toDate",          toDate);
         model.addAttribute("allHistory",      allHistory);
@@ -496,5 +499,330 @@ public class LivestockEventsController {
         model.addAttribute("yearRecovered",   yearRecovered);
 
         return "livestock-sick-report";
+    }
+
+    // =========================================================================
+    // CATEGORY REPORT
+    // =========================================================================
+
+    @GetMapping("/category-report")
+    public String categoryReport(Model model) {
+
+        List<LivestockCategory> allCategories = livestockRepository.findAll().stream()
+                .map(Livestock::getLivestockCategory)
+                .filter(cat -> cat != null)
+                .distinct()
+                .collect(Collectors.toList());
+
+        model.addAttribute("totalCategories", (long) allCategories.size());
+
+        long totalActiveLivestock = livestockRepository.findAll().stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
+        model.addAttribute("totalActiveLivestock", totalActiveLivestock);
+
+        String largestCategoryName = "—";
+        long largestCount = 0;
+
+        for (LivestockCategory cat : allCategories) {
+            long count = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .count();
+            if (count > largestCount) {
+                largestCount = count;
+                largestCategoryName = cat.getName();
+            }
+        }
+        model.addAttribute("largestCategoryName", largestCategoryName);
+
+        long totalAnimals = livestockRepository.count();
+        long avgAnimalsPerCategory = allCategories.isEmpty() ? 0 : totalAnimals / allCategories.size();
+        model.addAttribute("avgAnimalsPerCategory", avgAnimalsPerCategory);
+
+        List<CategoryData> categoryDataList = new ArrayList<>();
+
+        for (LivestockCategory category : allCategories) {
+            CategoryData data = new CategoryData();
+            data.categoryName = category.getName();
+            data.categoryCode = category.getCode();
+
+            List<Livestock> categoryLivestock = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(category.getId()))
+                    .collect(Collectors.toList());
+
+            data.livestockList  = categoryLivestock;
+            data.totalCount     = categoryLivestock.size();
+            data.activeCount    = categoryLivestock.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
+            data.soldCount      = categoryLivestock.stream().filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count();
+            data.deadCount      = categoryLivestock.stream().filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus())).count();
+            data.sickCount      = categoryLivestock.stream().filter(l -> Livestock.STATUS_SICK.equals(l.getStatus())).count();
+            data.pregnantCount  = categoryLivestock.stream().filter(l -> Livestock.STATUS_PREGNANT.equals(l.getStatus())).count();
+            data.maleCount      = categoryLivestock.stream().filter(l -> "MALE".equals(l.getGender())).count();
+            data.femaleCount    = categoryLivestock.stream().filter(l -> "FEMALE".equals(l.getGender())).count();
+            data.totalValue     = categoryLivestock.stream()
+                    .filter(l -> l.getCurrentValue() != null)
+                    .map(Livestock::getCurrentValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            categoryDataList.add(data);
+        }
+
+        categoryDataList.sort((a, b) -> Long.compare(b.totalCount, a.totalCount));
+        model.addAttribute("categoryStatsList", categoryDataList);
+
+        return "livestock-category-report";
+    }
+
+    // =========================================================================
+    // CATEGORY ANIMALS REPORT
+    // =========================================================================
+
+    @GetMapping("/category-animals-report")
+    public String categoryAnimalsReport(Model model) {
+        List<LivestockCategory> allCategories = livestockRepository.findAll().stream()
+                .map(Livestock::getLivestockCategory)
+                .filter(cat -> cat != null)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<CategoryWithCount> categoriesWithCount = new ArrayList<>();
+        for (LivestockCategory cat : allCategories) {
+            long count = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .count();
+            categoriesWithCount.add(new CategoryWithCount(cat, count));
+        }
+
+        model.addAttribute("categories",       categoriesWithCount);
+        model.addAttribute("selectedCategory", null);
+        model.addAttribute("animals",          new ArrayList<>());
+
+        return "livestock-category-animals-report";
+    }
+
+    @GetMapping("/category-animals-report/{categoryId}")
+    public String categoryAnimalsReportByCategory(@PathVariable UUID categoryId, Model model) {
+
+        // ── Categories list (for the selector) ────────────────────────
+        List<LivestockCategory> allCategories = livestockRepository.findAll().stream()
+                .map(Livestock::getLivestockCategory)
+                .filter(cat -> cat != null)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<CategoryWithCount> categoriesWithCount = new ArrayList<>();
+        for (LivestockCategory cat : allCategories) {
+            long count = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .count();
+            categoriesWithCount.add(new CategoryWithCount(cat, count));
+        }
+
+        // ── Selected category & its animals ───────────────────────────
+        LivestockCategory selectedCategory = allCategories.stream()
+                .filter(cat -> cat.getId().equals(categoryId))
+                .findFirst()
+                .orElse(null);
+
+        List<Livestock> animals = livestockRepository.findAll().stream()
+                .filter(l -> l.getLivestockCategory() != null
+                        && l.getLivestockCategory().getId().equals(categoryId))
+                .collect(Collectors.toList());
+
+        List<UUID> animalIds = animals.stream()
+                .map(Livestock::getId)
+                .collect(Collectors.toList());
+
+        // ── Basic counts ───────────────────────────────────────────────
+        long activeCount = animals.stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
+        long soldCount = animals.stream()
+                .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count();
+
+        // ── Sale revenue + per-animal sale map ────────────────────────
+        // Uses LivestockSale.getSalePrice()
+        List<LivestockSale> allSales = saleService.getAll();
+        Map<UUID, BigDecimal> animalSaleMap = new HashMap<>();
+        for (LivestockSale sale : allSales) {
+            if (sale.getLivestock() != null
+                    && animalIds.contains(sale.getLivestock().getId())
+                    && sale.getSalePrice() != null) {
+                UUID aid = sale.getLivestock().getId();
+                animalSaleMap.merge(aid, sale.getSalePrice(), BigDecimal::add);
+            }
+        }
+        BigDecimal totalSaleRevenue = animalSaleMap.values().stream()
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ── Active stock value ─────────────────────────────────────────
+        BigDecimal activeStockValue = animals.stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ── Treatments + per-animal count map ────────────────────────
+        // Uses LivestockTreatment.getTreatmentCost()
+        List<LivestockTreatment> allTreatments = treatmentService.getAll();
+        Map<UUID, Integer> animalTreatCountMap = new HashMap<>();
+        BigDecimal totalTreatmentCost = BigDecimal.ZERO;
+        for (LivestockTreatment t : allTreatments) {
+            if (t.getLivestock() != null
+                    && animalIds.contains(t.getLivestock().getId())) {
+                UUID aid = t.getLivestock().getId();
+                animalTreatCountMap.merge(aid, 1, Integer::sum);
+                if (t.getTreatmentCost() != null) {
+                    totalTreatmentCost = totalTreatmentCost.add(t.getTreatmentCost());
+                }
+            }
+        }
+        long treatmentCount = animalTreatCountMap.values().stream()
+                .mapToLong(Integer::longValue).sum();
+
+        // ── Born-on-farm: animals whose mother is set (self-join) ─────
+        // Uses Livestock.getMother() — an animal born on farm has a mother record
+        // Uses Livestock.getLastBirthDate() as the birth date to show in the table
+        Map<UUID, LocalDate> animalBirthMap = new HashMap<>();
+        for (Livestock animal : animals) {
+            if (animal.getMother() != null) {
+                // Use the mother's lastBirthDate as the birth date of this offspring,
+                // or dateReceived as a fallback
+                LocalDate birthDate = animal.getMother().getLastBirthDate() != null
+                        ? animal.getMother().getLastBirthDate()
+                        : animal.getDateReceived();
+                animalBirthMap.put(animal.getId(), birthDate);
+            }
+        }
+        long totalBornCount = animalBirthMap.size();
+
+        // ── Total offspring: sum offspringCount of mothers in this category ──
+        // offspringCount on a mother = how many children she has produced
+        long totalOffspringCount = animals.stream()
+                .filter(l -> l.getOffspringCount() != null)
+                .mapToLong(Livestock::getOffspringCount)
+                .sum();
+
+        // ── Born animal value: current value of born-on-farm animals ──
+        BigDecimal bornAnimalValue = animals.stream()
+                .filter(l -> animalBirthMap.containsKey(l.getId()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ── Business analysis ──────────────────────────────────────────
+        BigDecimal totalIncome  = totalSaleRevenue.add(activeStockValue).add(bornAnimalValue);
+        BigDecimal netPosition  = totalIncome.subtract(totalTreatmentCost);
+
+        String businessStatus;
+        if      (netPosition.compareTo(BigDecimal.ZERO) > 0) businessStatus = "gain";
+        else if (netPosition.compareTo(BigDecimal.ZERO) < 0) businessStatus = "loss";
+        else                                                  businessStatus = "neutral";
+
+        // ── Push everything to model ───────────────────────────────────
+        model.addAttribute("categories",          categoriesWithCount);
+        model.addAttribute("selectedCategory",    selectedCategory);
+        model.addAttribute("animals",             animals);
+
+        model.addAttribute("activeCount",         activeCount);
+        model.addAttribute("soldCount",           soldCount);
+        model.addAttribute("treatmentCount",      treatmentCount);
+        model.addAttribute("totalBornCount",      totalBornCount);
+        model.addAttribute("totalOffspringCount", totalOffspringCount);
+
+        model.addAttribute("totalSaleRevenue",    totalSaleRevenue);
+        model.addAttribute("activeStockValue",    activeStockValue);
+        model.addAttribute("bornAnimalValue",     bornAnimalValue);
+        model.addAttribute("totalTreatmentCost",  totalTreatmentCost);
+        model.addAttribute("totalIncome",         totalIncome);
+        model.addAttribute("netPosition",         netPosition);
+        model.addAttribute("businessStatus",      businessStatus);
+
+        model.addAttribute("animalSaleMap",       animalSaleMap);
+        model.addAttribute("animalBirthMap",      animalBirthMap);
+        model.addAttribute("animalTreatCountMap", animalTreatCountMap);
+
+        return "livestock-category-animals-report";
+    }
+
+    // =========================================================================
+    // AJAX — animals by category
+    // =========================================================================
+
+    @GetMapping("/category/{categoryId}/animals-all")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getAnimalsByCategory(
+            @PathVariable UUID categoryId) {
+
+        List<Livestock> animals = livestockRepository.findAll().stream()
+                .filter(l -> l.getLivestockCategory() != null
+                        && l.getLivestockCategory().getId().equals(categoryId))
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> result = animals.stream().map(animal -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id",           animal.getId());
+            map.put("tagNumber",    animal.getTagNumber());
+            map.put("gender",       animal.getGender());
+            map.put("status",       animal.getStatus());
+            map.put("dateReceived", animal.getDateReceived() != null
+                    ? animal.getDateReceived().toString() : null);
+            map.put("currentValue", animal.getCurrentValue());
+            map.put("locationName", animal.getLocation() != null
+                    ? animal.getLocation().getName() : null);
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
+
+    // =========================================================================
+    // INNER CLASSES
+    // =========================================================================
+
+    public static class CategoryData {
+        public String categoryName;
+        public String categoryCode;
+        public long totalCount;
+        public long activeCount;
+        public long soldCount;
+        public long deadCount;
+        public long sickCount;
+        public long pregnantCount;
+        public long maleCount;
+        public long femaleCount;
+        public BigDecimal totalValue = BigDecimal.ZERO;
+        public List<Livestock> livestockList = new ArrayList<>();
+
+        public String getCategoryName()         { return categoryName; }
+        public String getCategoryCode()         { return categoryCode; }
+        public long getTotalCount()             { return totalCount; }
+        public long getActiveCount()            { return activeCount; }
+        public long getSoldCount()              { return soldCount; }
+        public long getDeadCount()              { return deadCount; }
+        public long getSickCount()              { return sickCount; }
+        public long getPregnantCount()          { return pregnantCount; }
+        public long getMaleCount()              { return maleCount; }
+        public long getFemaleCount()            { return femaleCount; }
+        public BigDecimal getTotalValue()       { return totalValue; }
+        public List<Livestock> getLivestockList(){ return livestockList; }
+    }
+
+    public static class CategoryWithCount {
+        private final LivestockCategory category;
+        private final long livestockCount;
+
+        public CategoryWithCount(LivestockCategory category, long livestockCount) {
+            this.category       = category;
+            this.livestockCount = livestockCount;
+        }
+
+        public UUID getId()                     { return category.getId(); }
+        public String getName()                 { return category.getName(); }
+        public String getCode()                 { return category.getCode(); }
+        public long getLivestockCount()         { return livestockCount; }
+        public List<Livestock> getLivestock()   { return category.getLivestockList(); }
     }
 }
