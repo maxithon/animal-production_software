@@ -1,52 +1,343 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Edit Treatment Record</title>
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Treatment</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>body{background:#f8f9fa;padding:20px;}.edit-card{background:white;border-radius:12px;padding:30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}</style>
+    <style>
+        body { background: #f0f4f8; font-family: 'Segoe UI', sans-serif; }
+        .page-header {
+            background: white; border-bottom: 2px solid #e2e8f0;
+            padding: 18px 32px; margin-bottom: 28px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .page-header h4 { margin: 0; font-weight: 700; color: #1a202c; }
+        .content-card {
+            background: white; border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            padding: 32px 36px; max-width: 900px; margin: 0 auto 40px;
+        }
+        .section-title {
+            font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .08em; color: #718096;
+            border-bottom: 2px solid #edf2f7; padding-bottom: 6px;
+            margin-bottom: 18px; margin-top: 12px;
+        }
+        .form-label { font-weight: 600; font-size: 0.875rem; color: #2d3748; margin-bottom: 4px; }
+        .form-control, .form-select {
+            border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66,153,225,.15);
+        }
+
+        /* ── Vet live-search widget ── */
+        .vet-search-wrapper { position: relative; }
+        #vetDropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #fff; border: 1.5px solid #4299e1; border-top: none;
+            border-radius: 0 0 8px 8px; z-index: 1055; max-height: 220px;
+            overflow-y: auto; display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .vet-item {
+            padding: 9px 14px; cursor: pointer; font-size: 0.88rem;
+            border-bottom: 1px solid #f0f4f8; transition: background .12s;
+        }
+        .vet-item:last-child { border-bottom: none; }
+        .vet-item:hover, .vet-item.active { background: #ebf4ff; }
+        .vet-item .vet-name { font-weight: 600; color: #2d3748; }
+        .vet-item .vet-meta { font-size: 0.77rem; color: #718096; }
+        .vet-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ebf4ff; border: 1px solid #bee3f8;
+            border-radius: 20px; padding: 4px 10px 4px 12px;
+            font-size: 0.85rem; color: #2b6cb0; font-weight: 600;
+            margin-top: 6px;
+        }
+        .vet-chip .remove-vet { cursor: pointer; color: #63b3ed; font-size: 1rem; line-height: 1; }
+        .vet-chip .remove-vet:hover { color: #c53030; }
+        .vet-no-results { padding: 9px 14px; color: #a0aec0; font-size: 0.85rem; }
+    </style>
 </head>
 <body>
-<div class="container"><div class="row justify-content-center"><div class="col-lg-8">
-    <div class="edit-card">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="bi bi-pencil-square"></i> Edit Treatment Record</h3>
-            <a href="/livestock/treatments" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
-        </div>
-        <form th:action="@{/livestock/treatments/update/{id}(id=${treatment.id})}" th:object="${treatment}" method="post">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Sick Animal (Tag) *</label>
-                    <select class="form-select" th:field="*{livestockIdValue}" required>
-                        <option value="">Select animal...</option>
-                        <option th:each="ls : ${livestockList}" th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"
-                                th:selected="${ls.id.toString() == treatment.livestockIdValue}"></option>
+
+<div class="page-header">
+    <div>
+        <h4><i class="bi bi-pencil-square text-warning me-2"></i>Edit Treatment Record</h4>
+        <small class="text-muted">Update treatment details</small>
+    </div>
+    <a th:href="@{/livestock/treatments}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Treatments
+    </a>
+</div>
+
+<div class="container-fluid px-4">
+    <div class="content-card">
+        <form th:action="@{/livestock/treatments/update/{id}(id=${treatment.id})}"
+              th:object="${treatment}" method="post">
+
+            <!-- ── Animal & Medication ── -->
+            <p class="section-title"><i class="bi bi-tag me-1"></i> Animal &amp; Medication</p>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">Animal <span class="text-danger">*</span></label>
+                    <select th:field="*{livestockIdValue}" class="form-select" required>
+                        <option value="">— Select Animal —</option>
+                        <option th:each="ls : ${livestockList}"
+                                th:value="${ls.id}"
+                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' · ' + ls.livestockCategory.name : '')}">
+                        </option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Treatment Date *</label>
-                    <input type="date" class="form-control" th:field="*{treatmentDate}" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Medication</label>
-                    <input type="text" class="form-control" th:field="*{medication}" placeholder="Drug / vaccine name...">
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label fw-semibold">Treatment Cost (RWF)</label>
-                    <input type="number" class="form-control" th:field="*{treatmentCost}" min="0" step="0.01">
-                </div>
-                <div class="col-md-3 mb-4">
-                    <label class="form-label fw-semibold">Next Treatment Date</label>
-                    <input type="date" class="form-control" th:field="*{nextTreatmentDate}">
+                <div class="col-md-6">
+                    <label class="form-label">Medication</label>
+                    <select th:field="*{medicationIdValue}" class="form-select">
+                        <option value="">— Select Medication —</option>
+                        <option th:each="med : ${medicationList}"
+                                th:value="${med.id}"
+                                th:text="${med.name}">
+                        </option>
+                    </select>
                 </div>
             </div>
-            <div class="d-flex justify-content-end gap-2">
-                <a href="/livestock/treatments" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Update</button>
+
+            <!-- ── Treatment Details ── -->
+            <p class="section-title"><i class="bi bi-calendar3 me-1"></i> Treatment Details</p>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Treatment Date <span class="text-danger">*</span></label>
+                    <input th:field="*{treatmentDate}" type="date" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Next Treatment Date</label>
+                    <input th:field="*{nextTreatmentDate}" type="date" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select th:field="*{treatmentType}" class="form-select">
+                        <option value="">— Select —</option>
+                        <option value="CURATIVE">Curative</option>
+                        <option value="PREVENTIVE">Preventive</option>
+                        <option value="VACCINATION">Vaccination</option>
+                        <option value="DEWORMING">Deworming</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select th:field="*{treatmentStatus}" class="form-select">
+                        <option value="ONGOING">Ongoing</option>
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="FAILED">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Dosage</label>
+                    <input th:field="*{dosage}" type="text" class="form-control" placeholder="e.g. 5">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Dosage Unit</label>
+                    <select th:field="*{dosageUnit}" class="form-select">
+                        <option value="">—</option>
+                        <option th:each="unit : ${T(rw.animalproduct.animal.production.entity.Medication.DosageUnit).values()}"
+                                th:value="${unit}"
+                                th:text="${unit.name()}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Frequency</label>
+                    <select th:field="*{frequency}" class="form-select">
+                        <option value="">—</option>
+                        <option value="ONCE_DAILY">Once daily</option>
+                        <option value="TWICE_DAILY">Twice daily</option>
+                        <option value="THREE_TIMES_DAILY">Three times daily</option>
+                        <option value="EVERY_OTHER_DAY">Every other day</option>
+                        <option value="WEEKLY">Weekly</option>
+                        <option value="BIWEEKLY">Bi-weekly</option>
+                        <option value="AS_NEEDED">As needed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Duration</label>
+                    <input th:field="*{treatmentDuration}" type="text" class="form-control" placeholder="e.g. 7 days">
+                </div>
+            </div>
+
+            <!-- ── Cost & Payment ── -->
+            <p class="section-title"><i class="bi bi-cash-coin me-1"></i> Cost &amp; Payment</p>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Treatment Cost (RWF)</label>
+                    <input th:field="*{treatmentCost}" type="number" step="0.01" class="form-control" placeholder="0.00">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Paid?</label>
+                    <select th:field="*{isPaid}" class="form-select">
+                        <option value="false">No</option>
+                        <option value="true">Yes</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Payment Date</label>
+                    <input th:field="*{paymentDate}" type="date" class="form-control">
+                </div>
+            </div>
+
+            <!-- ── Veterinarian ── -->
+            <p class="section-title"><i class="bi bi-person-badge me-1"></i> Veterinarian</p>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Attending Veterinarian
+                        <a href="/veterinarians" target="_blank"
+                           class="btn btn-sm btn-outline-primary ms-1 py-0 px-2"
+                           title="Manage veterinarians">
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+                    </label>
+
+                    <!-- Hidden field submitted with the form -->
+                    <input type="hidden" name="veterinarianIdValue" id="vetIdField"
+                           th:value="${treatment.veterinarianIdValue}">
+
+                    <div class="vet-search-wrapper">
+                        <input type="text" id="vetSearchInput" class="form-control"
+                               placeholder="Search by name or license…" autocomplete="off">
+                        <div id="vetDropdown"></div>
+                    </div>
+
+                    <!-- Chip shows existing vet on page load -->
+                    <div id="vetChipArea"></div>
+                </div>
+            </div>
+
+            <!-- ── Notes ── -->
+            <p class="section-title"><i class="bi bi-journal-text me-1"></i> Notes</p>
+            <div class="mb-4">
+                <textarea th:field="*{description}" class="form-control" rows="3"
+                          placeholder="Observations, notes…"></textarea>
+            </div>
+
+            <!-- ── Actions ── -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-save me-1"></i> Update Treatment
+                </button>
+                <a th:href="@{/livestock/treatments}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
     </div>
-</div></div></div>
+</div>
+
+<!-- Pre-populate existing vet from server -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const EXISTING_VET_ID   = /*[[${treatment.veterinarian != null ? treatment.veterinarian.id : ''}]]*/ '';
+    const EXISTING_VET_NAME = /*[[${treatment.veterinarian != null ? treatment.veterinarian.fullName : ''}]]*/ '';
+    const EXISTING_VET_LIC  = /*[[${treatment.veterinarian != null ? treatment.veterinarian.licenseNumber : ''}]]*/ '';
+    /*]]>*/
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        const searchInput = document.getElementById('vetSearchInput');
+        const dropdown    = document.getElementById('vetDropdown');
+        const vetIdField  = document.getElementById('vetIdField');
+        const chipArea    = document.getElementById('vetChipArea');
+
+        let debounceTimer;
+
+        // ── Pre-populate existing vet ────────────────────────────────────────────
+        if (EXISTING_VET_ID && EXISTING_VET_NAME) {
+            renderChip({ id: EXISTING_VET_ID, fullName: EXISTING_VET_NAME, licenseNumber: EXISTING_VET_LIC });
+        }
+
+        // ── Search ───────────────────────────────────────────────────────────────
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const q = this.value.trim();
+            if (q.length < 1) { hideDropdown(); return; }
+            debounceTimer = setTimeout(() => fetchVets(q), 250);
+        });
+
+        searchInput.addEventListener('focus', function () {
+            if (this.value.trim().length >= 1) fetchVets(this.value.trim());
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.vet-search-wrapper')) hideDropdown();
+        });
+
+        function fetchVets(q) {
+            fetch('/veterinarians/search?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(renderDropdown)
+                .catch(() => hideDropdown());
+        }
+
+        function renderDropdown(vets) {
+            dropdown.innerHTML = '';
+
+            if (!vets || vets.length === 0) {
+                dropdown.innerHTML = `
+                    <div class="vet-no-results">
+                        No veterinarians found.
+                        <a href="/veterinarians" target="_blank" class="ms-1">
+                            <i class="bi bi-plus-circle me-1"></i>Add veterinarian
+                        </a>
+                    </div>`;
+            } else {
+                vets.forEach(v => {
+                    const item = document.createElement('div');
+                    item.className = 'vet-item';
+                    item.innerHTML = `
+                        <div class="vet-name">${v.fullName}</div>
+                        <div class="vet-meta">
+                            ${v.licenseNumber ? 'Lic: ' + v.licenseNumber : ''}
+                            ${v.specialization ? ' · ' + v.specialization : ''}
+                            ${v.phone ? ' · ' + v.phone : ''}
+                        </div>`;
+                    item.addEventListener('click', () => selectVet(v));
+                    dropdown.appendChild(item);
+                });
+            }
+
+            dropdown.style.display = 'block';
+        }
+
+        function selectVet(v) {
+            vetIdField.value   = v.id;
+            searchInput.value  = '';
+            hideDropdown();
+            renderChip(v);
+        }
+
+        function renderChip(v) {
+            chipArea.innerHTML = `
+                <div class="vet-chip">
+                    <i class="bi bi-person-badge"></i>
+                    ${v.fullName}
+                    ${v.licenseNumber ? '<span class="text-muted fw-normal ms-1">(Lic: ' + v.licenseNumber + ')</span>' : ''}
+                    <span class="remove-vet" title="Remove" onclick="clearVet()">×</span>
+                </div>`;
+        }
+
+        window.clearVet = function () {
+            vetIdField.value   = '';
+            chipArea.innerHTML = '';
+            searchInput.value  = '';
+        };
+
+        function hideDropdown() {
+            dropdown.style.display = 'none';
+            dropdown.innerHTML = '';
+        }
+    })();
+</script>
 </body>
 </html>

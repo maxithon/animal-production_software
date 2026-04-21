@@ -33,14 +33,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Add Form -->
+        <!-- Add Form - FIXED: Use separate fields instead of th:object -->
         <div class="add-form-section">
             <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Abortion</h5>
-            <form th:action="@{/livestock/abortions/new}" th:object="${abortion}" method="post">
+            <form th:action="@{/livestock/abortions/new}" method="post">
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Animal (Tag) *</label>
-                        <select class="form-select" th:field="*{livestockIdValue}" required>
+                        <select class="form-select" name="livestockId" required>
                             <option value="">Select animal...</option>
                             <option th:each="ls : ${livestockList}"
                                     th:value="${ls.id}"
@@ -50,15 +50,15 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Abortion Date *</label>
-                        <input type="date" class="form-control" th:field="*{abortionDate}" required>
+                        <input type="date" class="form-control" name="abortionDate" required>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Pregnancy # </label>
-                        <input type="number" class="form-control" th:field="*{pregnancyNumber}" min="1">
+                        <input type="number" class="form-control" name="pregnancyNumber" min="1">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Expected Birth Date</label>
-                        <input type="date" class="form-control" th:field="*{expectedBirthDate}">
+                        <input type="date" class="form-control" name="expectedBirthDate">
                     </div>
                     <div class="col-md-1 d-flex align-items-end">
                         <button type="submit" class="btn btn-danger w-100">
@@ -89,12 +89,15 @@
                         <i class="bi bi-inbox fs-2"></i><p class="mt-2">No abortion records yet</p>
                     </td>
                 </tr>
-                <tr th:each="a, i : ${abortions}">
-                    <td th:text="${i.count}"></td>
+                <tr th:each="a, iStat : ${abortions}">
+                    <td th:text="${iStat.count}">1</td>
                     <td><strong th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}"></strong></td>
-                    <td><span th:if="${a.livestock?.livestockCategory != null}" class="badge bg-info"
-                              th:text="${a.livestock.livestockCategory.name}"></span></td>
-                    <td th:text="${#temporals.format(a.abortionDate, 'dd-MM-yyyy')}"></td>
+                    <td>
+                        <span th:if="${a.livestock != null and a.livestock.livestockCategory != null}" class="badge bg-info"
+                              th:text="${a.livestock.livestockCategory.name}"></span>
+                        <span th:if="${a.livestock == null or a.livestock.livestockCategory == null}" class="badge bg-secondary">N/A</span>
+                    </td>
+                    <td th:text="${a.abortionDate != null ? #temporals.format(a.abortionDate, 'dd-MM-yyyy') : '—'}"></td>
                     <td th:text="${a.pregnancyNumber != null ? a.pregnancyNumber : '—'}"></td>
                     <td>
                         <span th:if="${a.expectedBirthDate != null}" th:text="${#temporals.format(a.expectedBirthDate, 'dd-MM-yyyy')}"></span>

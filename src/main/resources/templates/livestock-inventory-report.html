@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Livestock Inventory Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #1a202c; }
+        .stat-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clipboard-data text-primary"></i> Livestock Inventory Report</h2>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="/livestock/inventory-report" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${allCategories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Location</label>
+                    <select name="location" class="form-select">
+                        <option value="">All Locations</option>
+                        <option th:each="loc : ${allLocations}"
+                                th:value="${loc.id}"
+                                th:text="${loc.name}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="SICK">Sick</option>
+                        <option value="PREGNANT">Pregnant</option>
+                        <option value="DEAD">Dead</option>
+                        <option value="SOLD">Sold</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Animals</div>
+                <div class="stat-value text-primary" th:text="${totalAnimals}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Active</div>
+                <div class="stat-value text-success" th:text="${activeCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Sick</div>
+                <div class="stat-value text-warning" th:text="${sickCount}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Value</div>
+                <div class="stat-value text-info" th:text="${#numbers.formatDecimal(totalValue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- By Category -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-grid"></i> By Category</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-4" th:each="entry : ${byCategory}">
+                    <div class="p-3 bg-light rounded">
+                        <strong th:text="${entry.key}">Category</strong>:
+                        <span class="badge bg-primary" th:text="${entry.value}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- By Location -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-geo-alt"></i> By Location</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-4" th:each="entry : ${byLocation}">
+                    <div class="p-3 bg-light rounded">
+                        <strong th:text="${entry.key}">Location</strong>:
+                        <span class="badge bg-success" th:text="${entry.value}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-table"></i> All Animals</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                    <tr>
+                        <th>Tag Number</th>
+                        <th>Category</th>
+                        <th>Gender</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Date Received</th>
+                        <th>Current Value</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="animal : ${livestock}">
+                        <td>
+                            <a th:href="@{/livestock/animal-detail/{id}(id=${animal.id})}"
+                               class="text-decoration-none fw-bold">
+                                <span th:text="${animal.tagNumber}">TAG001</span>
+                            </a>
+                        </td>
+                        <td th:text="${animal.livestockCategory?.name ?: 'N/A'}">Cow</td>
+                        <td>
+                                    <span class="badge"
+                                          th:classappend="${animal.gender == 'MALE'} ? 'bg-primary' : 'bg-danger'"
+                                          th:text="${animal.gender}">MALE</span>
+                        </td>
+                        <td>
+                                    <span class="badge"
+                                          th:classappend="${animal.status == 'ACTIVE'} ? 'bg-success' :
+                                                         (${animal.status == 'SICK'} ? 'bg-warning' :
+                                                         (${animal.status == 'DEAD'} ? 'bg-dark' : 'bg-secondary'))"
+                                          th:text="${animal.status}">ACTIVE</span>
+                        </td>
+                        <td th:text="${animal.location?.name ?: 'N/A'}">Farm A</td>
+                        <td th:text="${#temporals.format(animal.dateReceived, 'yyyy-MM-dd')}">2024-01-01</td>
+                        <td class="fw-bold" th:text="${#numbers.formatDecimal(animal.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">50,000 RWF</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -90,4 +90,31 @@ public interface LivestockSickHistoryRepository extends JpaRepository<LivestockS
     // ── By status ────────────────────────────────────────────────────
 
     List<LivestockSickHistory> findByStatusOrderByChangedAtDesc(LivestockSick.SickStatus status);
+
+
+    // Add these methods to your existing LivestockSickHistoryRepository.java
+
+    // ========== ADDITIONAL ENHANCEMENTS ==========
+
+    /**
+     * Get all history for dashboard (limited)
+     */
+    @Query("SELECT h FROM LivestockSickHistory h ORDER BY h.changedAt DESC")
+    List<LivestockSickHistory> findTop100ByOrderByChangedAtDesc(org.springframework.data.domain.Pageable pageable);
+
+    /**
+     * Get weekly trend of sick cases
+     */
+    @Query("SELECT WEEK(h.changedAt), COUNT(h) FROM LivestockSickHistory h " +
+            "WHERE YEAR(h.changedAt) = :year AND h.status = 'SICK' " +
+            "GROUP BY WEEK(h.changedAt) ORDER BY WEEK(h.changedAt)")
+    List<Object[]> getWeeklySickTrend(@Param("year") int year);
+
+    /**
+     * Get monthly trend
+     */
+    @Query("SELECT MONTH(h.changedAt), COUNT(h) FROM LivestockSickHistory h " +
+            "WHERE YEAR(h.changedAt) = :year AND h.status = 'SICK' " +
+            "GROUP BY MONTH(h.changedAt) ORDER BY MONTH(h.changedAt)")
+    List<Object[]> getMonthlySickTrend(@Param("year") int year);
 }

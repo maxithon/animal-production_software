@@ -2,10 +2,10 @@
 <!--
   supervisor-report.html
   Updated to show:
+  - Dead animals count added
+  - Sick Cost removed (only Treatment Cost remains)
   - Current value of available animals
   - Sold animal amounts
-  - Available animal count
-  - All cost calculations on printout
 -->
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -39,11 +39,11 @@
         .kpi { background:white; border-radius:12px; padding:17px 19px; box-shadow:0 2px 10px rgba(0,0,0,.07); border-left:4px solid; }
         .kpi.c1{border-left-color:#1a5f7a;} .kpi.c2{border-left-color:#10b981;} .kpi.c3{border-left-color:#8b5cf6;}
         .kpi.c4{border-left-color:#f59e0b;} .kpi.c5{border-left-color:#ef4444;} .kpi.c6{border-left-color:#0ea5e9;}
-        .kpi.c7{border-left-color:#3b82f6;} .kpi.c8{border-left-color:#22c55e;}
+        .kpi.c7{border-left-color:#3b82f6;} .kpi.c8{border-left-color:#22c55e;} .kpi.c9{border-left-color:#6b7280;}
         .kpi-num { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; line-height:1; }
         .kpi.c1 .kpi-num{color:#1a5f7a;} .kpi.c2 .kpi-num{color:#10b981;} .kpi.c3 .kpi-num{color:#8b5cf6;}
         .kpi.c4 .kpi-num{color:#f59e0b;} .kpi.c5 .kpi-num{color:#ef4444;} .kpi.c6 .kpi-num{color:#0ea5e9;}
-        .kpi.c7 .kpi-num{color:#3b82f6;} .kpi.c8 .kpi-num{color:#22c55e;}
+        .kpi.c7 .kpi-num{color:#3b82f6;} .kpi.c8 .kpi-num{color:#22c55e;} .kpi.c9 .kpi-num{color:#6b7280;}
         .kpi-lbl { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#64748b; margin-top:5px; }
         .kpi-sub { font-size:.68rem; color:#94a3b8; margin-top:2px; }
 
@@ -143,7 +143,6 @@
             font-size:.72rem; font-weight:700; color:#475569; }
 
         /* ── Cost pill for table cells ── */
-        .cost-pill-sick  { display:inline-block; background:#fee2e2; color:#991b1b; border-radius:6px; padding:1px 7px; font-size:.7rem; font-weight:700; }
         .cost-pill-treat { display:inline-block; background:#fef3c7; color:#92400e; border-radius:6px; padding:1px 7px; font-size:.7rem; font-weight:700; }
         .cost-pill-total { display:inline-block; background:#ede9fe; color:#4c1d95; border-radius:6px; padding:1px 7px; font-size:.72rem; font-weight:800; }
         .value-pill { display:inline-block; background:#dcfce7; color:#166534; border-radius:6px; padding:1px 7px; font-size:.7rem; font-weight:700; }
@@ -226,6 +225,11 @@
         <div class="kpi-lbl"><i class="bi bi-bag-check-fill"></i> Sold</div>
         <div class="kpi-sub">Yagurishijwe</div>
     </div>
+    <div class="kpi c9" th:if="${supTotalDead != null}">
+        <div class="kpi-num" th:text="${supTotalDead}">0</div>
+        <div class="kpi-lbl"><i class="bi bi-x-circle-fill"></i> Dead</div>
+        <div class="kpi-sub">Yapfuye</div>
+    </div>
     <div class="kpi c3" th:if="${supTotalCurrentValue != null}">
         <div class="kpi-num" th:text="${#numbers.formatDecimal(supTotalCurrentValue / 1000,1,'COMMA',0,'POINT')} + 'K'">0K</div>
         <div class="kpi-lbl"><i class="bi bi-currency-exchange"></i> Current Value</div>
@@ -262,7 +266,7 @@
         <div class="kpi-lbl"><i class="bi bi-bag-check-fill"></i> Sold</div>
         <div class="kpi-sub">Yagurishijwe</div>
     </div>
-    <div class="kpi c8" th:if="${deadAnimals != null and supTotalAnimals == null}">
+    <div class="kpi c9" th:if="${deadAnimals != null and supTotalAnimals == null}">
         <div class="kpi-num" th:text="${deadAnimals}">0</div>
         <div class="kpi-lbl"><i class="bi bi-x-circle-fill"></i> Dead</div>
         <div class="kpi-sub">Yapfuye</div>
@@ -272,7 +276,7 @@
         <div class="kpi-lbl"><i class="bi bi-currency-exchange"></i> Current Value</div>
         <div class="kpi-sub">Agaciro (RWF)</div>
     </div>
-    <div class="kpi c9" th:if="${soldAmount != null and supTotalAnimals == null}">
+    <div class="kpi c8" th:if="${soldAmount != null and supTotalAnimals == null}">
         <div class="kpi-num" th:text="${#numbers.formatDecimal(soldAmount / 1000,1,'COMMA',0,'POINT')} + 'K'">0K</div>
         <div class="kpi-lbl"><i class="bi bi-cash-stack"></i> Sold Amount</div>
         <div class="kpi-sub">Yaguze (RWF)</div>
@@ -396,9 +400,8 @@
                 <strong>Uko IGICIRO gibarwa / How VALUES are calculated:</strong><br>
                 <strong>Agaciro (Current Value)</strong> = Amafaranga y'amatungo akiriho / Sum of Livestock.currentValue for ACTIVE animals<br>
                 <strong>Yaguze (Sold Amount)</strong> = Amafaranga yakoreshejwe mu kugurisha / Sum of Livestock.soldPrice for SOLD animals<br>
-                <strong>Igiciro Indwara (Sick Cost)</strong> = Amafaranga y'indwara / Sum of LivestockSick.treatmentCost<br>
-                <strong>Igiciro Imiti (Treat Cost)</strong> = Amafaranga y'imiti / Sum of LivestockTreatment.treatmentCost<br>
-                <strong>IGICIRO CYOSE (Total Cost)</strong> = Sick Cost + Treatment Cost
+                <strong>Igiciro Imiti (Treatment Cost)</strong> = Amafaranga y'imiti / Sum of LivestockTreatment.treatmentCost<br>
+                <strong>IGICIRO CYOSE (Total Cost)</strong> = Treatment Cost only
             </div>
 
             <!-- Beneficiary overview table -->
@@ -421,12 +424,12 @@
                             <th>Amatungo</th>
                             <th>Akiriho</th>
                             <th>Yaguze</th>
+                            <th>Yapfuye</th>
                             <th>Yavutswe</th>
                             <th>Yarwaye</th>
                             <th>Agaciro<br><small style="font-weight:400;">(Current RWF)</small></th>
                             <th>Yagurishijwe<br><small style="font-weight:400;">(Sold RWF)</small></th>
-                            <th>Igiciro Indwara<br><small style="font-weight:400;">(Sick Cost RWF)</small></th>
-                            <th>Igiciro Imiti<br><small style="font-weight:400;">(Treat Cost RWF)</small></th>
+                            <th>Igiciro Imiti<br><small style="font-weight:400;">(Treatment Cost RWF)</small></th>
                             <th>IGICIRO CYOSE<br><small style="font-weight:400;">(Total RWF)</small></th>
                             <th></th>
                         </tr>
@@ -447,6 +450,15 @@
                             <td><span class="cnt-chip" th:text="${s.totalAnimals}">0</span></td>
                             <td><span class="bdg bdg-active" th:text="${s.activeAnimals}">0</span></td>
                             <td><span class="bdg bdg-sold" th:text="${s.soldAnimals}">0</span></td>
+
+                            <!-- Dead Animals column -->
+                            <td>
+                                <span th:if="${s.deadAnimals > 0}" class="bdg bdg-dead">
+                                    <i class="bi bi-x-circle-fill"></i> <span th:text="${s.deadAnimals}"></span>
+                                </span>
+                                <span th:if="${s.deadAnimals == 0}" class="text-muted">—</span>
+                            </td>
+
                             <td>
                                 <span th:if="${s.bornOnFarm > 0}" class="bdg bdg-born">
                                     <i class="bi bi-stars"></i> <span th:text="${s.bornOnFarm}"></span>
@@ -478,16 +490,7 @@
                                       class="text-muted">—</span>
                             </td>
 
-                            <!-- Sick Cost column -->
-                            <td>
-                                <span th:if="${s.sickCost != null and s.sickCost.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
-                                      class="cost-pill-sick"
-                                      th:text="${#numbers.formatDecimal(s.sickCost,1,'COMMA',0,'POINT')} + ' RWF'">0</span>
-                                <span th:if="${s.sickCost == null or s.sickCost.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
-                                      class="text-muted">—</span>
-                            </td>
-
-                            <!-- Treat Cost column -->
+                            <!-- Treatment Cost column (formerly Treat Cost) -->
                             <td>
                                 <span th:if="${s.treatCost != null and s.treatCost.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                       class="cost-pill-treat"
@@ -517,11 +520,11 @@
                             <td th:text="${totalBenAnimals}">0</td>
                             <td th:text="${totalBenActive}">0</td>
                             <td th:text="${totalBenSold}">0</td>
+                            <td th:text="${totalBenDead}">0</td>
                             <td th:text="${totalBenBorn}">0</td>
                             <td th:text="${totalBenSick}">0</td>
                             <td th:text="${totalBenCurrentValue != null ? #numbers.formatDecimal(totalBenCurrentValue,1,'COMMA',0,'POINT') + ' RWF' : '0 RWF'}">0</td>
                             <td th:text="${totalBenSoldAmount != null ? #numbers.formatDecimal(totalBenSoldAmount,1,'COMMA',0,'POINT') + ' RWF' : '0 RWF'}">0</td>
-                            <td th:text="${totalBenSickCost != null ? #numbers.formatDecimal(totalBenSickCost,1,'COMMA',0,'POINT') + ' RWF' : '0 RWF'}">0</td>
                             <td th:text="${totalBenTreatCost != null ? #numbers.formatDecimal(totalBenTreatCost,1,'COMMA',0,'POINT') + ' RWF' : '0 RWF'}">0</td>
                             <td th:text="${supTotalCost != null ? #numbers.formatDecimal(supTotalCost,1,'COMMA',0,'POINT') + ' RWF' : '0 RWF'}">0</td>
                             <td></td>
@@ -555,7 +558,7 @@
                 </span>
             </div>
 
-            <!-- 9 stat cards - including sold and value -->
+            <!-- 9 stat cards - including sold, dead, and value -->
             <div class="stat-row">
                 <div class="stat s1">
                     <div class="stat-num" th:text="${totalAnimals}">0</div>
@@ -604,7 +607,7 @@
                 </div>
             </div>
 
-            <!-- Cost banner with breakdown -->
+            <!-- Cost banner with breakdown - UPDATED: Removed Sick Cost -->
             <div class="cost-banner">
                 <i class="bi bi-cash-stack" style="color:#7c3aed;font-size:1.5rem;margin-right:16px;"></i>
                 <div class="cost-item">
@@ -620,13 +623,7 @@
                 </div>
                 <div class="cost-div mx-3"></div>
                 <div class="cost-item">
-                    <div class="cost-lbl">Igiciro Indwara / Sick Care</div>
-                    <div class="cost-val" th:text="${#numbers.formatDecimal(sickCost,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
-                    <div style="font-size:.65rem;color:#7c3aed;margin-top:2px;">From LivestockSick</div>
-                </div>
-                <div class="cost-div mx-3"></div>
-                <div class="cost-item">
-                    <div class="cost-lbl">Igiciro Imiti / Treatment</div>
+                    <div class="cost-lbl">Igiciro Imiti / Treatment Cost</div>
                     <div class="cost-val" th:text="${#numbers.formatDecimal(treatCost,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
                     <div style="font-size:.65rem;color:#7c3aed;margin-top:2px;">From LivestockTreatment</div>
                 </div>
@@ -635,7 +632,7 @@
                     <div class="cost-lbl" style="color:#4c1d95;font-weight:800;">IGICIRO CYOSE / TOTAL COST</div>
                     <div class="cost-val" style="font-size:1.35rem;"
                          th:text="${#numbers.formatDecimal(totalCost,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</div>
-                    <div style="font-size:.65rem;color:#4c1d95;margin-top:2px;">Sick + Treatment</div>
+                    <div style="font-size:.65rem;color:#4c1d95;margin-top:2px;">Treatment Cost</div>
                 </div>
             </div>
 
@@ -649,7 +646,7 @@
                 <button class="btn-exp print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print</button>
             </div>
 
-            <!-- Animals table -->
+            <!-- Animals table - UPDATED: Removed Sick Cost column -->
             <div class="rpt-card">
                 <div class="rpt-card-hdr">
                     <div class="rpt-card-title">
@@ -672,8 +669,7 @@
                             <th>Yavutswe / Born</th>
                             <th>Yarwaye / Sick</th>
                             <th>Imiti / Treat.</th>
-                            <th>Igiciro Indwara<br><small style="font-weight:400;">(Sick Cost)</small></th>
-                            <th>Igiciro Imiti<br><small style="font-weight:400;">(Treat Cost)</small></th>
+                            <th>Igiciro Imiti<br><small style="font-weight:400;">(Treatment Cost)</small></th>
                             <th>IGICIRO CYOSE<br><small style="font-weight:400;">(Total Cost)</small></th>
                             <th>Agaciro / Value (RWF)</th>
                         </tr>
@@ -734,15 +730,7 @@
                                 <span th:if="${animalTreatCountMap == null or !animalTreatCountMap.containsKey(animal.id)}"
                                       class="text-muted">—</span>
                             </td>
-                            <!-- Sick Cost per animal -->
-                            <td>
-                                <span th:if="${animalSickCostMap != null and animalSickCostMap.containsKey(animal.id) and animalSickCostMap[animal.id].compareTo(T(java.math.BigDecimal).ZERO) > 0}"
-                                      class="cost-pill-sick"
-                                      th:text="${#numbers.formatDecimal(animalSickCostMap[animal.id],1,'COMMA',0,'POINT')} + ' RWF'">0</span>
-                                <span th:if="${animalSickCostMap == null or !animalSickCostMap.containsKey(animal.id) or animalSickCostMap[animal.id].compareTo(T(java.math.BigDecimal).ZERO) == 0}"
-                                      class="text-muted">—</span>
-                            </td>
-                            <!-- Treat Cost per animal -->
+                            <!-- Treatment Cost per animal -->
                             <td>
                                 <span th:if="${animalTreatCostMap != null and animalTreatCostMap.containsKey(animal.id) and animalTreatCostMap[animal.id].compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                       class="cost-pill-treat"
@@ -750,15 +738,13 @@
                                 <span th:if="${animalTreatCostMap == null or !animalTreatCostMap.containsKey(animal.id) or animalTreatCostMap[animal.id].compareTo(T(java.math.BigDecimal).ZERO) == 0}"
                                       class="text-muted">—</span>
                             </td>
-                            <!-- Total Cost per animal -->
+                            <!-- Total Cost per animal (now equals Treatment Cost) -->
                             <td>
-                                <span th:with="
-                                    sc=${animalSickCostMap != null and animalSickCostMap.containsKey(animal.id) ? animalSickCostMap[animal.id] : T(java.math.BigDecimal).ZERO},
-                                    tc=${animalTreatCostMap != null and animalTreatCostMap.containsKey(animal.id) ? animalTreatCostMap[animal.id] : T(java.math.BigDecimal).ZERO}">
-                                    <span th:if="${sc.add(tc).compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                <span th:with="tc=${animalTreatCostMap != null and animalTreatCostMap.containsKey(animal.id) ? animalTreatCostMap[animal.id] : T(java.math.BigDecimal).ZERO}">
+                                    <span th:if="${tc.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                           class="cost-pill-total"
-                                          th:text="${#numbers.formatDecimal(sc.add(tc),1,'COMMA',0,'POINT')} + ' RWF'">0</span>
-                                    <span th:if="${sc.add(tc).compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                          th:text="${#numbers.formatDecimal(tc,1,'COMMA',0,'POINT')} + ' RWF'">0</span>
+                                    <span th:if="${tc.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
                                           class="text-muted">—</span>
                                 </span>
                             </td>

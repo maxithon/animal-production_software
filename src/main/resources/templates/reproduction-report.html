@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Reproduction Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-heart text-danger"></i> Reproduction Report</h2>
+        <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print</button>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="/livestock/reproduction-report" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-muted small text-uppercase mb-2">Total Births</div>
+                <div class="stat-value text-success" th:text="${totalBirths}">0</div>
+                <small class="text-muted">Animals born in period</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-muted small text-uppercase mb-2">Pregnant Now</div>
+                <div class="stat-value text-warning" th:text="${totalPregnant}">0</div>
+                <small class="text-muted">Expecting offspring</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-muted small text-uppercase mb-2">Active Mothers</div>
+                <div class="stat-value text-primary" th:text="${totalMothers}">0</div>
+                <small class="text-muted">With offspring recorded</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="text-muted small text-uppercase mb-2">Avg Offspring</div>
+                <div class="stat-value text-info" th:text="${#numbers.formatDecimal(avgOffspring, 1, 'POINT', 1, 'POINT')}">0</div>
+                <small class="text-muted">Per mother</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Abortions Alert -->
+    <div class="alert alert-warning" th:if="${totalAbortions > 0}">
+        <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Abortions Recorded</h5>
+        <p class="mb-0">
+            <strong th:text="${totalAbortions}">0</strong> abortion events recorded in this period.
+            Review nutrition, breeding schedule, and stress factors.
+        </p>
+    </div>
+
+    <!-- Births Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-stars"></i> Births in Period</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Offspring Tag</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Birth Date</th>
+                    <th>Mother Tag</th>
+                    <th>Current Value</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="birth : ${births}">
+                    <td><strong th:text="${birth.tagNumber}">TAG001</strong></td>
+                    <td th:text="${birth.livestockCategory?.name}">Cow</td>
+                    <td>
+                                <span class="badge"
+                                      th:classappend="${birth.gender == 'MALE'} ? 'bg-primary' : 'bg-danger'"
+                                      th:text="${birth.gender}">MALE</span>
+                    </td>
+                    <td th:text="${#temporals.format(birth.dateReceived, 'yyyy-MM-dd')}">2024-01-01</td>
+                    <td th:text="${birth.mother?.tagNumber ?: 'Unknown'}">TAG-MOM</td>
+                    <td class="fw-bold" th:text="${#numbers.formatDecimal(birth.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</td>
+                    <td><span class="badge bg-success" th:text="${birth.status}">ACTIVE</span></td>
+                </tr>
+                <tr th:if="${births.isEmpty()}">
+                    <td colspan="7" class="text-center text-muted">No births in this period</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pregnant Animals -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="bi bi-hourglass-split"></i> Currently Pregnant</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Expected Date</th>
+                    <th>Days Pregnant</th>
+                    <th>Location</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal : ${pregnant}">
+                    <td><strong th:text="${animal.tagNumber}">TAG001</strong></td>
+                    <td th:text="${animal.livestockCategory?.name}">Cow</td>
+                    <td th:text="${animal.lastBirthDate != null ? #temporals.format(animal.lastBirthDate, 'yyyy-MM-dd') : 'Not set'}">2024-06-01</td>
+                    <td>
+                                <span class="badge bg-info" th:if="${animal.dateReceived != null}"
+                                      th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(animal.dateReceived, T(java.time.LocalDate).now())} + ' days'">
+                                    0 days
+                                </span>
+                    </td>
+                    <td th:text="${animal.location?.name ?: 'N/A'}">Farm A</td>
+                </tr>
+                <tr th:if="${pregnant.isEmpty()}">
+                    <td colspan="5" class="text-center text-muted">No pregnant animals currently</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Top Mothers -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="bi bi-trophy"></i> Top Mothers (by Offspring Count)</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Offspring Count</th>
+                    <th>Last Birth Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="mother, iter : ${mothers}" th:if="${iter.count <= 10}">
+                    <td><span class="badge bg-warning" th:text="${iter.count}">1</span></td>
+                    <td><strong th:text="${mother.tagNumber}">TAG001</strong></td>
+                    <td th:text="${mother.livestockCategory?.name}">Cow</td>
+                    <td class="fw-bold text-success" th:text="${mother.offspringCount}">0</td>
+                    <td th:text="${mother.lastBirthDate != null ? #temporals.format(mother.lastBirthDate, 'yyyy-MM-dd') : 'N/A'}">2024-01-01</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

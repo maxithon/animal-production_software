@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Livestock Sales</title>
+<head>
+    <meta charset="UTF-8">
+    <title>Livestock Sales</title>
+    <!-- CSRF meta tags - required for Spring Security -->
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { background: #f8f9fa; padding: 20px; font-family: 'DM Sans', sans-serif; }
         .page-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-
-        /* ── Add form section ── */
         .add-form-section {
             background: #fff8e1; border-left: 4px solid #ffc107;
             border-radius: 10px; padding: 20px; margin-bottom: 25px;
         }
-
-        /* ── Buyer card inside the form ── */
         .buyer-card {
             background: #f0f9ff; border: 1.5px solid #bae6fd;
             border-radius: 10px; padding: 16px 20px; margin-top: 16px;
@@ -24,12 +26,54 @@
             text-transform: uppercase; letter-spacing: 0.05em;
             display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
         }
-
-        /* ── Table buyer cell ── */
-        .buyer-cell { min-width: 160px; }
-        .buyer-row  { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; line-height: 1.4; }
+        .buyer-cell { min-width: 180px; }
+        .buyer-row { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; line-height: 1.4; }
         .buyer-icon { font-size: 0.75rem; flex-shrink: 0; color: #64748b; }
         .buyer-none { color: #94a3b8; font-style: italic; font-size: 0.78rem; }
+
+        /* Live Search Styles */
+        .buyer-search-container { position: relative; }
+        .buyer-search-results {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px;
+            max-height: 300px; overflow-y: auto; z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none;
+        }
+        .buyer-search-results.show { display: block; }
+        .buyer-search-item {
+            padding: 12px 16px; cursor: pointer;
+            border-bottom: 1px solid #f1f5f9; transition: background 0.2s;
+        }
+        .buyer-search-item:hover { background: #f8fafc; }
+        .buyer-search-item:last-child { border-bottom: none; }
+        .buyer-search-name { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+        .buyer-search-details { font-size: 0.85rem; color: #64748b; }
+        .buyer-add-new {
+            background: #ecfdf5; color: #059669;
+            font-weight: 600; border-top: 2px solid #10b981;
+        }
+        .buyer-add-new:hover { background: #d1fae5; }
+        .loading-spinner { padding: 16px; text-align: center; color: #64748b; }
+        .no-results { padding: 16px; text-align: center; color: #94a3b8; font-style: italic; }
+
+        #newBuyerFields { display: none; }
+
+        .selected-buyer-display {
+            display: none; background: #f0fdf4;
+            border: 1px solid #86efac; border-radius: 6px;
+            padding: 10px 12px; margin-top: 8px;
+        }
+        .selected-buyer-display.show {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .selected-buyer-info { font-size: 0.9rem; }
+        .selected-buyer-name { font-weight: 600; color: #166534; }
+        .selected-buyer-details { color: #15803d; font-size: 0.85rem; }
+        .clear-buyer-btn {
+            background: none; border: none; color: #dc2626;
+            cursor: pointer; padding: 4px 8px; border-radius: 4px;
+        }
+        .clear-buyer-btn:hover { background: #fee2e2; }
     </style>
 </head>
 <body>
@@ -59,7 +103,10 @@
     <!-- ══ Add Sale Form ══════════════════════════════════════════════ -->
     <div class="add-form-section">
         <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Sale</h5>
-        <form th:action="@{/livestock/sales/new}" th:object="${sale}" method="post">
+        <form th:action="@{/livestock/sales/new}" th:object="${sale}" method="post" id="saleForm">
+
+            <!-- CSRF hidden field for the main form -->
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
             <!-- Row 1: Animal, Date, Price, Location, Reason -->
             <div class="row g-3 align-items-end">
@@ -67,8 +114,10 @@
                     <label class="form-label fw-semibold">Animal (Tag) *</label>
                     <select class="form-select" th:field="*{livestockIdValue}" required>
                         <option value="">Select animal...</option>
-                        <option th:each="ls : ${livestockList}" th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"></option>
+                        <option th:each="ls : ${livestockList}"
+                                th:value="${ls.id}"
+                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}">
+                        </option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -83,7 +132,7 @@
                     <label class="form-label fw-semibold">Sale Location</label>
                     <input type="text" class="form-control" th:field="*{saleLocation}" placeholder="Location...">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label fw-semibold">Reason</label>
                     <select class="form-select" th:field="*{saleReason}">
                         <option value="">Select reason...</option>
@@ -96,7 +145,75 @@
                 </div>
             </div>
 
+            <!-- Buyer Information Card -->
+            <div class="buyer-card">
+                <div class="buyer-card-title">
+                    <i class="bi bi-person-badge"></i> Buyer Information
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Search Buyer</label>
+                        <div class="buyer-search-container">
+                            <input type="text"
+                                   class="form-control"
+                                   id="buyerSearchInput"
+                                   placeholder="Type buyer name, phone, or ID..."
+                                   autocomplete="off">
 
+                            <!-- Hidden input for buyer ID -->
+                            <input type="hidden" th:field="*{buyerIdValue}" id="buyerIdField">
+
+                            <!-- Search Results Dropdown -->
+                            <div class="buyer-search-results" id="buyerSearchResults"></div>
+                        </div>
+
+                        <!-- Selected Buyer Display -->
+                        <div class="selected-buyer-display" id="selectedBuyerDisplay">
+                            <div class="selected-buyer-info">
+                                <div class="selected-buyer-name" id="selectedBuyerName"></div>
+                                <div class="selected-buyer-details" id="selectedBuyerDetails"></div>
+                            </div>
+                            <button type="button" class="clear-buyer-btn" id="clearBuyerBtn">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Buyer Fields (hidden initially) -->
+                <div id="newBuyerFields" class="mt-3">
+                    <hr class="my-3">
+                    <h6 class="text-success mb-3"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Name *</label>
+                            <input type="text" class="form-control" id="newBuyerName" placeholder="Buyer name">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Phone *</label>
+                            <input type="tel" class="form-control" id="newBuyerPhone" placeholder="Phone number">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Address</label>
+                            <input type="text" class="form-control" id="newBuyerAddress" placeholder="Address">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">National ID</label>
+                            <input type="text" class="form-control" id="newBuyerNationalId"
+                                   placeholder="16 digits" maxlength="16">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <!-- type="button" is critical — prevents form submit -->
+                        <button type="button" class="btn btn-success btn-sm" id="saveNewBuyerBtn">
+                            <i class="bi bi-check-circle"></i> Save Buyer
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="cancelNewBuyerBtn">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Submit -->
             <div class="mt-3 d-flex justify-content-end">
@@ -120,7 +237,7 @@
                 <th>Price (RWF)</th>
                 <th>Location</th>
                 <th>Reason</th>
-
+                <th>Buyer</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -147,7 +264,24 @@
                           th:text="${s.saleReason}"></span>
                     <span th:if="${s.saleReason == null}" class="text-muted">—</span>
                 </td>
-
+                <!-- Buyer Column -->
+                <td class="buyer-cell">
+                    <div th:if="${s.buyer != null}">
+                        <div class="buyer-row">
+                            <i class="bi bi-person-fill buyer-icon"></i>
+                            <strong th:text="${s.buyer.buyerName}"></strong>
+                        </div>
+                        <div class="buyer-row" th:if="${s.buyer.buyerPhone}">
+                            <i class="bi bi-telephone buyer-icon"></i>
+                            <span th:text="${s.buyer.buyerPhone}"></span>
+                        </div>
+                        <div class="buyer-row" th:if="${s.buyer.buyerNationalId}">
+                            <i class="bi bi-card-text buyer-icon"></i>
+                            <small th:text="${s.buyer.buyerNationalId}"></small>
+                        </div>
+                    </div>
+                    <span th:if="${s.buyer == null}" class="buyer-none">No buyer recorded</span>
+                </td>
                 <!-- Actions -->
                 <td>
                     <a th:href="@{/livestock/sales/edit/{id}(id=${s.id})}"
@@ -175,11 +309,18 @@
                             <div class="modal-footer">
                                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <form th:action="@{/livestock/sales/delete/{id}(id=${s.id})}" method="post" class="d-inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                     <button class="btn btn-danger">Delete</button>
                                 </form>
                             </div>
                         </div></div>
                     </div>
+                </td>
+            </tr>
+            <tr th:if="${sales.empty}">
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="bi bi-currency-dollar fs-2 d-block mb-2"></i>
+                    No sales recorded yet.
                 </td>
             </tr>
             </tbody>
@@ -188,6 +329,178 @@
     <!-- ══ End Sales Table ════════════════════════════════════════════ -->
 
 </div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        'use strict';
+
+        // ── Read CSRF token from meta tags (set by Thymeleaf/Spring Security) ──
+        const csrfToken  = document.querySelector('meta[name="_csrf"]')         ? document.querySelector('meta[name="_csrf"]').getAttribute('content')         : null;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')  ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content')  : null;
+
+        const buyerSearchInput     = document.getElementById('buyerSearchInput');
+        const buyerSearchResults   = document.getElementById('buyerSearchResults');
+        const buyerIdField         = document.getElementById('buyerIdField');
+        const selectedBuyerDisplay = document.getElementById('selectedBuyerDisplay');
+        const selectedBuyerName    = document.getElementById('selectedBuyerName');
+        const selectedBuyerDetails = document.getElementById('selectedBuyerDetails');
+        const clearBuyerBtn        = document.getElementById('clearBuyerBtn');
+        const newBuyerFields       = document.getElementById('newBuyerFields');
+        const saveNewBuyerBtn      = document.getElementById('saveNewBuyerBtn');
+        const cancelNewBuyerBtn    = document.getElementById('cancelNewBuyerBtn');
+
+        let searchTimeout;
+
+        // ── Live search ──────────────────────────────────────────────────────────
+        buyerSearchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+            clearTimeout(searchTimeout);
+
+            if (query.length < 2) {
+                buyerSearchResults.classList.remove('show');
+                return;
+            }
+
+            buyerSearchResults.innerHTML =
+                '<div class="loading-spinner"><i class="bi bi-arrow-clockwise"></i> Searching...</div>';
+            buyerSearchResults.classList.add('show');
+
+            searchTimeout = setTimeout(() => {
+                fetch('/livestock/buyers/search?q=' + encodeURIComponent(query))
+                    .then(r => r.json())
+                    .then(buyers => displaySearchResults(buyers))
+                    .catch(() => {
+                        buyerSearchResults.innerHTML =
+                            '<div class="no-results">Error searching buyers</div>';
+                    });
+            }, 300);
+        });
+
+        function displaySearchResults(buyers) {
+            buyerSearchResults.innerHTML = '';
+
+            if (buyers.length === 0) {
+                buyerSearchResults.innerHTML = '<div class="no-results">No buyers found</div>';
+            } else {
+                buyers.forEach(buyer => {
+                    const item = document.createElement('div');
+                    item.className = 'buyer-search-item';
+                    item.innerHTML = `
+                        <div class="buyer-search-name">${buyer.name}</div>
+                        <div class="buyer-search-details">
+                            ${buyer.phone    ? `<i class="bi bi-telephone"></i> ${buyer.phone}` : ''}
+                            ${buyer.nationalId ? ` | <i class="bi bi-card-text"></i> ${buyer.nationalId}` : ''}
+                        </div>`;
+                    item.addEventListener('click', () => selectBuyer(buyer));
+                    buyerSearchResults.appendChild(item);
+                });
+            }
+
+            // Always show "Add New Buyer" option at the bottom
+            const addNew = document.createElement('div');
+            addNew.className = 'buyer-search-item buyer-add-new';
+            addNew.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Buyer';
+            addNew.addEventListener('click', showNewBuyerForm);
+            buyerSearchResults.appendChild(addNew);
+
+            buyerSearchResults.classList.add('show');
+        }
+
+        function selectBuyer(buyer) {
+            buyerIdField.value = buyer.id;
+            selectedBuyerName.textContent = buyer.name;
+            selectedBuyerDetails.innerHTML =
+                `${buyer.phone     ? `<i class="bi bi-telephone"></i> ${buyer.phone}` : ''}
+                 ${buyer.nationalId ? ` | <i class="bi bi-card-text"></i> ${buyer.nationalId}` : ''}`;
+            buyerSearchInput.value = buyer.displayName || buyer.name;
+            selectedBuyerDisplay.classList.add('show');
+            buyerSearchResults.classList.remove('show');
+            newBuyerFields.style.display = 'none';
+        }
+
+        clearBuyerBtn.addEventListener('click', function () {
+            buyerIdField.value = '';
+            buyerSearchInput.value = '';
+            selectedBuyerDisplay.classList.remove('show');
+            newBuyerFields.style.display = 'none';
+        });
+
+        function showNewBuyerForm() {
+            buyerSearchResults.classList.remove('show');
+            newBuyerFields.style.display = 'block';
+            document.getElementById('newBuyerName').focus();
+        }
+
+        cancelNewBuyerBtn.addEventListener('click', function () {
+            newBuyerFields.style.display = 'none';
+            ['newBuyerName', 'newBuyerPhone', 'newBuyerAddress', 'newBuyerNationalId']
+                .forEach(id => document.getElementById(id).value = '');
+        });
+
+        // ── Save new buyer via AJAX (with CSRF token) ────────────────────────────
+        saveNewBuyerBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const name       = document.getElementById('newBuyerName').value.trim();
+            const phone      = document.getElementById('newBuyerPhone').value.trim();
+            const address    = document.getElementById('newBuyerAddress').value.trim();
+            const nationalId = document.getElementById('newBuyerNationalId').value.trim();
+
+            if (!name || !phone) {
+                alert('Buyer name and phone are required!');
+                return;
+            }
+
+            saveNewBuyerBtn.disabled = true;
+            saveNewBuyerBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Saving...';
+
+            // Build headers — include CSRF token so Spring Security allows the POST
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            fetch('/livestock/buyers/quick-add', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({ name, phone, address, nationalId })
+            })
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error('Server returned ' + r.status + ' ' + r.statusText);
+                }
+                return r.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    selectBuyer(data.buyer);
+                    ['newBuyerName', 'newBuyerPhone', 'newBuyerAddress', 'newBuyerNationalId']
+                        .forEach(id => document.getElementById(id).value = '');
+                    newBuyerFields.style.display = 'none';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Save buyer error:', err);
+                alert('Error saving buyer: ' + err.message);
+            })
+            .finally(() => {
+                saveNewBuyerBtn.disabled = false;
+                saveNewBuyerBtn.innerHTML = '<i class="bi bi-check-circle"></i> Save Buyer';
+            });
+        });
+
+        // ── Close dropdown when clicking outside ────────────────────────────────
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.buyer-search-container')) {
+                buyerSearchResults.classList.remove('show');
+            }
+        });
+
+    })();
+</script>
 </body>
 </html>

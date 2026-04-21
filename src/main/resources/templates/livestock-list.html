@@ -436,14 +436,16 @@
                         <span th:if="${item.gender == null}" class="badge bg-secondary">N/A</span>
                     </td>
 
-                    <!-- Pregnant -->
+                    <!-- Pregnant - FIXED: Handle null case -->
                     <td>
-                        <span th:if="${item.isPregnant}" class="badge bg-warning text-dark">
-                            <i class="bi bi-heart-fill"></i> Yes
-                            <span th:if="${item.pregnancyMonths != null}"
-                                  th:text="' (' + ${item.pregnancyMonths} + ' mo)'"></span>
-                        </span>
-                        <span th:if="${!item.isPregnant}" class="badge bg-light text-dark">No</span>
+                        <th:block th:with="isPregnantValue=${item.isPregnant != null ? item.isPregnant : false}">
+                            <span th:if="${isPregnantValue}" class="badge bg-warning text-dark">
+                                <i class="bi bi-heart-fill"></i> Yes
+                                <span th:if="${item.pregnancyMonths != null}"
+                                      th:text="' (' + ${item.pregnancyMonths} + ' mo)'"></span>
+                            </span>
+                            <span th:if="${!isPregnantValue}" class="badge bg-light text-dark">No</span>
+                        </th:block>
                     </td>
 
                     <!-- Beneficiary -->
@@ -516,10 +518,7 @@
                         </div>
 
                         <!-- 2. HEALTH section header -->
-                        <div th:if="${
-                            (treatmentMap != null and treatmentMap.containsKey(item.id))
-                            or (abortionMap != null and abortionMap.containsKey(item.id))
-                        }">
+                        <div th:if="${(treatmentMap != null and treatmentMap.containsKey(item.id)) or (abortionMap != null and abortionMap.containsKey(item.id))}">
                             <div style="border-top:1px dashed #e2e8f0; margin:5px 0;"></div>
                             <span class="lc-section-head lc-head-health">
                                 <i class="bi bi-heart-pulse-fill"></i> Health
@@ -571,10 +570,7 @@
                         </div>
 
                         <!-- No health events -->
-                        <div th:if="${
-                            (treatmentMap == null or !treatmentMap.containsKey(item.id))
-                            and (abortionMap == null or !abortionMap.containsKey(item.id))
-                        }">
+                        <div th:if="${(treatmentMap == null or !treatmentMap.containsKey(item.id)) and (abortionMap == null or !abortionMap.containsKey(item.id))}">
                             <div class="lc-row">
                                 <i class="bi bi-shield-check lc-icon text-success"></i>
                                 <span class="lc-none">No health events</span>

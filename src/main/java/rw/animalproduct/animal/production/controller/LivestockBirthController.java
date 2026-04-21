@@ -25,20 +25,21 @@ import java.util.stream.Collectors;
 @RequestMapping("/livestock/births")
 public class LivestockBirthController {
 
-    private final LivestockBirthService birthService;
-    private final LivestockRepository livestockRepository;
-    private final LivestockSaleRepository saleRepository;   // ★ NEW — needed for Born→Sold report
+    private final LivestockBirthService   birthService;
+    private final LivestockRepository     livestockRepository;
+    private final LivestockSaleRepository saleRepository;
 
     @Autowired
     public LivestockBirthController(LivestockBirthService birthService,
                                     LivestockRepository livestockRepository,
                                     LivestockSaleRepository saleRepository) {
-        this.birthService       = birthService;
+        this.birthService        = birthService;
         this.livestockRepository = livestockRepository;
-        this.saleRepository     = saleRepository;
+        this.saleRepository      = saleRepository;
     }
 
     // ── Helper ───────────────────────────────────────────────────────
+
     private void addLivestockToModel(Model model) {
         List<Livestock> females = livestockRepository.findByGenderIgnoreCase("FEMALE");
         if (females.isEmpty()) {
@@ -49,7 +50,8 @@ public class LivestockBirthController {
         model.addAttribute("allLivestockList", livestockRepository.findAll());
     }
 
-    // ── Redirect: /livestock/births → /livestock/births/list ─────────
+    // ── Redirect ─────────────────────────────────────────────────────
+
     @GetMapping({"", "/"})
     public String redirectToList() {
         return "redirect:/livestock/births/list";
@@ -79,7 +81,7 @@ public class LivestockBirthController {
         return "livestock-births-list";
     }
 
-    // ===================== REGISTER NEW BIRTH =====================
+    // ===================== REGISTER =====================
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
@@ -94,8 +96,14 @@ public class LivestockBirthController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
-        if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
-            result.rejectValue("livestockIdValue", "error.birth", "Mother animal is required");
+        boolean isExternal = Boolean.TRUE.equals(birth.getIsExternalBirth());
+
+        // Mother is required ONLY for on-farm births
+        if (!isExternal
+                && (birth.getLivestockIdValue() == null
+                || birth.getLivestockIdValue().trim().isEmpty())) {
+            result.rejectValue("livestockIdValue", "error.birth",
+                    "Mother animal is required for on-farm births");
         }
 
         if (result.hasErrors()) {
@@ -109,8 +117,10 @@ public class LivestockBirthController {
 
         try {
             LivestockBirth saved = birthService.addNew(birth);
-            redirectAttributes.addFlashAttribute("success",
-                    "Birth recorded successfully! Now link the child animals below.");
+            String msg = isExternal
+                    ? "External birth recorded! Now link the purchased animal below."
+                    : "Birth recorded successfully! Now link the child animals below.";
+            redirectAttributes.addFlashAttribute("success", msg);
             return "redirect:/livestock/births/" + saved.getId() + "/children";
         } catch (Exception e) {
             model.addAttribute("error", "Error recording birth: " + e.getMessage());
@@ -142,8 +152,13 @@ public class LivestockBirthController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
-        if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
-            result.rejectValue("livestockIdValue", "error.birth", "Mother animal is required");
+        boolean isExternal = Boolean.TRUE.equals(birth.getIsExternalBirth());
+
+        if (!isExternal
+                && (birth.getLivestockIdValue() == null
+                || birth.getLivestockIdValue().trim().isEmpty())) {
+            result.rejectValue("livestockIdValue", "error.birth",
+                    "Mother animal is required for on-farm births");
         }
 
         if (result.hasErrors()) {
@@ -179,7 +194,7 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/list";
     }
 
-    // ===================== VIEW DETAIL =====================
+    // ===================== VIEW =====================
 
     @GetMapping("/view/{id}")
     public String viewDetail(@PathVariable UUID id, Model model) {
@@ -225,9 +240,9 @@ public class LivestockBirthController {
                             RedirectAttributes redirectAttributes) {
         try {
             birthService.linkChild(birthId, childLivestockId);
-            redirectAttributes.addFlashAttribute("success", "Child animal linked successfully!");
+            redirectAttributes.addFlashAttribute("success", "Animal linked successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error linking child: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", "Error linking animal: " + e.getMessage());
         }
         return "redirect:/livestock/births/" + birthId + "/children";
     }
@@ -238,7 +253,7 @@ public class LivestockBirthController {
                               RedirectAttributes redirectAttributes) {
         try {
             birthService.unlinkChild(childLivestockId);
-            redirectAttributes.addFlashAttribute("success", "Child unlinked successfully!");
+            redirectAttributes.addFlashAttribute("success", "Animal unlinked successfully!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
         }
@@ -253,14 +268,14 @@ public class LivestockBirthController {
         if (opt.isEmpty()) return "redirect:/livestock/list";
 
         Livestock animal = opt.get();
-        List<Livestock> directChildren  = birthService.getDirectChildren(livestockId);
+        List<Livestock> directChildren      = birthService.getDirectChildren(livestockId);
         List<LivestockBirth> birthsAsMother = birthService.getByLivestockId(livestockId);
 
-        model.addAttribute("animal",       animal);
-        model.addAttribute("mother",       animal.getMother());
+        model.addAttribute("animal",         animal);
+        model.addAttribute("mother",         animal.getMother());
         model.addAttribute("directChildren", directChildren);
         model.addAttribute("birthsAsMother", birthsAsMother);
-        model.addAttribute("hasChildren",  birthService.hasChildren(livestockId));
+        model.addAttribute("hasChildren",    birthService.hasChildren(livestockId));
 
         Livestock grandmother = null;
         if (animal.getMother() != null && animal.getMother().getMother() != null) {
@@ -271,33 +286,17 @@ public class LivestockBirthController {
         return "livestock-family";
     }
 
-    // ===================== ★ BORN → SOLD REPORT =====================
+    // ===================== BORN → SOLD REPORT =====================
 
-    /**
-     * Shows every child animal that was born on this farm,
-     * alongside its sale details (if it has been sold).
-     *
-     * How it works:
-     *  - Loop through all birth events.
-     *  - For each birth, loop through its linked children (LivestockOffspring).
-     *  - For each child, look up any sale record in livestock_sales.
-     *  - Build a flat row with: child tag, mother tag, birth date,
-     *    sale date, days between birth and sale, sale price, sale location,
-     *    current status (ACTIVE / SOLD / DEAD).
-     *
-     * This answers the question:
-     *  "I recorded a birth one week ago — did that child get sold?"
-     */
     @GetMapping("/report/born-and-sold")
     public String bornAndSoldReport(Model model) {
 
         List<LivestockBirth> allBirths = birthService.getAll();
 
-        // ── Build report rows ─────────────────────────────────────────
-        List<Map<String, Object>> rows     = new ArrayList<>();
-        long totalSold    = 0;
-        long totalOnFarm  = 0;
-        long totalDead    = 0;
+        List<Map<String, Object>> rows = new ArrayList<>();
+        long totalSold   = 0;
+        long totalOnFarm = 0;
+        long totalDead   = 0;
 
         for (LivestockBirth birth : allBirths) {
             if (birth.getChildren() == null || birth.getChildren().isEmpty()) continue;
@@ -307,30 +306,34 @@ public class LivestockBirthController {
                 if (child == null) continue;
 
                 Map<String, Object> row = new LinkedHashMap<>();
-                row.put("childId",       child.getId());
-                row.put("childTag",      child.getTagNumber());
-                row.put("childGender",   child.getGender());
-                row.put("category",      child.getLivestockCategory() != null
+                row.put("childId",        child.getId());
+                row.put("childTag",       child.getTagNumber());
+                row.put("childGender",    child.getGender());
+                row.put("category",       child.getLivestockCategory() != null
                         ? child.getLivestockCategory().getName() : "—");
-                row.put("motherTag",     birth.getLivestock() != null
-                        ? birth.getLivestock().getTagNumber() : "—");
-                row.put("motherId",      birth.getLivestock() != null
+
+                // Mother tag — null for external/purchased animals
+                row.put("motherTag",      birth.getLivestock() != null
+                        ? birth.getLivestock().getTagNumber() : "Unknown (purchased)");
+                row.put("motherId",       birth.getLivestock() != null
                         ? birth.getLivestock().getId() : null);
-                row.put("birthDate",     birth.getBirthDate());
-                row.put("birthId",       birth.getId());
-                row.put("generation",    offspring.getGeneration());
-                row.put("status",        child.getStatus() != null
+                row.put("isExternal",     birth.getIsExternalBirth());
+                row.put("sourceLocation", birth.getSourceLocation() != null
+                        ? birth.getSourceLocation() : "—");
+
+                // birth_date comes from livestock_births — same for both farm and purchased animals
+                row.put("birthDate",      birth.getBirthDate());
+                row.put("birthId",        birth.getId());
+                row.put("generation",     offspring.getGeneration());
+                row.put("status",         child.getStatus() != null
                         ? child.getStatus() : Livestock.STATUS_ACTIVE);
 
-                // ── Look up sale record for this child ────────────────
+                // Sale record
                 List<LivestockSale> sales = saleRepository.findByLivestockId(child.getId());
-
                 if (!sales.isEmpty()) {
-                    // Use the most recent sale if there are multiple
                     LivestockSale latestSale = sales.stream()
                             .max(Comparator.comparing(LivestockSale::getSaleDate))
                             .orElse(sales.get(0));
-
                     row.put("saleId",       latestSale.getId());
                     row.put("saleDate",     latestSale.getSaleDate());
                     row.put("salePrice",    latestSale.getSalePrice());
@@ -338,17 +341,13 @@ public class LivestockBirthController {
                             ? latestSale.getSaleLocation() : "—");
                     row.put("saleReason",   latestSale.getSaleReason() != null
                             ? latestSale.getSaleReason() : "—");
-
-                    // Days from birth to sale
                     if (birth.getBirthDate() != null && latestSale.getSaleDate() != null) {
-                        long days = ChronoUnit.DAYS.between(
-                                birth.getBirthDate(), latestSale.getSaleDate());
+                        long days = ChronoUnit.DAYS.between(birth.getBirthDate(), latestSale.getSaleDate());
                         row.put("daysToSale", days);
                     } else {
                         row.put("daysToSale", null);
                     }
                 } else {
-                    // No sale found — animal still on farm or dead
                     row.put("saleId",       null);
                     row.put("saleDate",     null);
                     row.put("salePrice",    null);
@@ -356,20 +355,16 @@ public class LivestockBirthController {
                     row.put("saleReason",   "—");
                     row.put("daysToSale",   null);
                 }
-                // ─────────────────────────────────────────────────────
 
-                // Tally for summary cards
                 String status = (String) row.get("status");
-                if (Livestock.STATUS_SOLD.equals(status))   totalSold++;
+                if (Livestock.STATUS_SOLD.equals(status))      totalSold++;
                 else if (Livestock.STATUS_DEAD.equals(status)) totalDead++;
-                else totalOnFarm++;
+                else                                           totalOnFarm++;
 
                 rows.add(row);
             }
         }
-        // ─────────────────────────────────────────────────────────────
 
-        // Sort: SOLD animals first, then ACTIVE, then DEAD
         rows.sort(Comparator.comparing(r -> {
             String s = (String) r.get("status");
             if (Livestock.STATUS_SOLD.equals(s))   return 0;
@@ -385,5 +380,4 @@ public class LivestockBirthController {
 
         return "livestock-born-sold-report";
     }
-    // ================================================================
 }

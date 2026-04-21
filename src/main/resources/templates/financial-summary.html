@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Financial Summary Report 🔥</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .hero-stat {
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            color: white;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+            margin-bottom: 30px;
+        }
+        .hero-value { font-size: 4rem; font-weight: 900; margin: 20px 0; }
+        .hero-label { font-size: 1.2rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 2px; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; }
+        .stat-value { font-size: 2.2rem; font-weight: 800; }
+        .stat-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+        .income-card { border-left: 4px solid #10b981; }
+        .expense-card { border-left: 4px solid #ef4444; }
+        .chart-container { position: relative; height: 350px; }
+        .metric-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .metric-row:last-child { border-bottom: none; }
+        .profit-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-graph-up-arrow text-primary"></i> Financial Summary Report 🔥</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button onclick="exportFinancialPDF()" class="btn btn-outline-danger me-2">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </button>
+            <a href="/livestock" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="/livestock/financial-summary" class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}">
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-calendar-range"></i> Update Period
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hero Net Profit/Loss -->
+    <div class="hero-stat" th:classappend="${profitStatus == 'PROFIT'} ? '' : 'bg-danger'">
+        <div class="hero-label">
+            <i class="bi" th:classappend="${profitStatus == 'PROFIT'} ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle'"></i>
+            NET <span th:text="${profitStatus}">PROFIT</span>
+        </div>
+        <div class="hero-value">
+            <span th:text="${profitStatus == 'PROFIT' ? '+' : '-'}">+</span>
+            <span th:text="${#numbers.formatDecimal(netProfit.abs(), 0, 'COMMA', 0, 'POINT')}">0</span> RWF
+        </div>
+        <p style="font-size: 1rem; opacity: 0.9; margin: 0;">
+                <span th:if="${profitStatus == 'PROFIT'}">
+                    ✓ Your livestock business is profitable — revenue exceeds all costs
+                </span>
+            <span th:if="${profitStatus == 'LOSS'}">
+                    ✗ Operating at a loss — costs exceed revenue, review spending
+                </span>
+        </p>
+        <div class="mt-3">
+                <span class="profit-badge"
+                      th:classappend="${profitMargin >= 20} ? 'bg-success' : (${profitMargin >= 0} ? 'bg-warning' : 'bg-danger')"
+                      th:text="'Profit Margin: ' + ${#numbers.formatDecimal(profitMargin, 1, 'POINT', 1, 'POINT')} + '%'">
+                    Profit Margin: 0%
+                </span>
+        </div>
+    </div>
+
+    <!-- Income vs Expenses -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="stat-card income-card">
+                <div class="stat-label"><i class="bi bi-arrow-down-circle text-success"></i> TOTAL INCOME</div>
+                <div class="stat-value text-success" th:text="${#numbers.formatDecimal(totalIncome, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <hr>
+                <div class="metric-row">
+                    <span><i class="bi bi-cash-coin"></i> Sales Revenue</span>
+                    <strong th:text="${#numbers.formatDecimal(salesRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row">
+                    <span><i class="bi bi-box-seam"></i> Current Livestock Value</span>
+                    <strong th:text="${#numbers.formatDecimal(currentLivestockValue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row">
+                    <span><i class="bi bi-stars"></i> Born Animals Value</span>
+                    <strong th:text="${#numbers.formatDecimal(bornAnimalsValue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="stat-card expense-card">
+                <div class="stat-label"><i class="bi bi-arrow-up-circle text-danger"></i> TOTAL EXPENSES</div>
+                <div class="stat-value text-danger" th:text="${#numbers.formatDecimal(totalExpenses, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <hr>
+                <div class="metric-row">
+                    <span><i class="bi bi-capsule"></i> Treatment Costs</span>
+                    <strong th:text="${#numbers.formatDecimal(treatmentCosts, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row">
+                    <span><i class="bi bi-heart-pulse"></i> Sick Care Costs</span>
+                    <strong th:text="${#numbers.formatDecimal(sickCareCosts, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row">
+                    <span><i class="bi bi-cart-plus"></i> Purchase Costs</span>
+                    <strong th:text="${#numbers.formatDecimal(purchaseCosts, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row">
+                    <span><i class="bi bi-x-circle"></i> Loss from Deaths</span>
+                    <strong th:text="${#numbers.formatDecimal(deathLoss, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Income Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Expense Breakdown</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profitability Analysis -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Profitability Analysis</h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" style="height: 250px;">
+                <canvas id="profitChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Insights -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Financial Insights</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="alert" th:classappend="${profitStatus == 'PROFIT'} ? 'alert-success' : 'alert-danger'">
+                        <h6 class="alert-heading">
+                            <i class="bi" th:classappend="${profitStatus == 'PROFIT'} ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+                            Business Status
+                        </h6>
+                        <p class="mb-0" th:text="${profitStatus == 'PROFIT'} ?
+                                'Your business is generating profit. Keep monitoring costs to maintain profitability.' :
+                                'Your business is operating at a loss. Review and reduce expenses, or increase sales revenue.'">
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="bi bi-graph-up"></i> Growth Opportunity</h6>
+                        <p class="mb-0" th:text="'Current livestock value: ' + ${#numbers.formatDecimal(currentLivestockValue, 0, 'COMMA', 0, 'POINT')} + ' RWF. This represents your farm assets that can generate future income.'"></p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading"><i class="bi bi-shield-exclamation"></i> Cost Control</h6>
+<p class="mb-0" th:text="'Total health-related costs (treatment + sick care): ' +
+                        ${#numbers.formatDecimal((treatmentCosts ?: 0) + (sickCareCosts ?: 0), 0, 'COMMA', 0, 'POINT')} + ' RWF. Focus on preventive care to reduce these costs.'"></p>
+
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-secondary">
+                        <h6 class="alert-heading"><i class="bi bi-calendar-check"></i> Period Summary</h6>
+                        <p class="mb-0">
+                            Reporting period:
+                            <strong th:text="${#temporals.format(fromDate, 'MMM dd, yyyy')}">Jan 01, 2024</strong> to
+                            <strong th:text="${#temporals.format(toDate, 'MMM dd, yyyy')}">Dec 31, 2024</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Income Chart
+    new Chart(document.getElementById('incomeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Sales Revenue', 'Current Stock Value', 'Born Animals Value'],
+            datasets: [{
+                data: [
+                    /*[[${salesRevenue}]]*/,
+                    /*[[${currentLivestockValue}]]*/,
+                    /*[[${bornAnimalsValue}]]*/
+                ],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(14, 165, 233, 0.8)',
+                    'rgba(139, 92, 246, 0.8)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' +
+                                   context.parsed.toLocaleString() + ' RWF';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Expense Chart
+    new Chart(document.getElementById('expenseChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Treatment Costs', 'Sick Care', 'Purchases', 'Death Loss'],
+            datasets: [{
+                data: [
+                    /*[[${treatmentCosts}]]*/,
+                    /*[[${sickCareCosts}]]*/,
+                    /*[[${purchaseCosts}]]*/,
+                    /*[[${deathLoss}]]*/
+                ],
+                backgroundColor: [
+                    'rgba(139, 92, 246, 0.8)',
+                    'rgba(245, 158, 11, 0.8)',
+                    'rgba(99, 102, 241, 0.8)',
+                    'rgba(239, 68, 68, 0.8)'
+                ],
+                borderColor: '#fff',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': ' +
+                                   context.parsed.toLocaleString() + ' RWF';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Profit Chart
+    const totalIncome = /*[[${totalIncome}]]*/;
+    const totalExpenses = /*[[${totalExpenses}]]*/;
+    const netProfit = /*[[${netProfit}]]*/;
+
+    new Chart(document.getElementById('profitChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expenses', 'Net Profit/Loss'],
+            datasets: [{
+                label: 'RWF',
+                data: [totalIncome, totalExpenses, Math.abs(netProfit)],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.6)',
+                    'rgba(239, 68, 68, 0.6)',
+                    netProfit >= 0 ? 'rgba(14, 165, 233, 0.6)' : 'rgba(239, 68, 68, 0.6)'
+                ],
+                borderColor: [
+                    'rgb(16, 185, 129)',
+                    'rgb(239, 68, 68)',
+                    netProfit >= 0 ? 'rgb(14, 165, 233)' : 'rgb(239, 68, 68)'
+                ],
+                borderWidth: 2,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + ' RWF';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' RWF';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    function exportFinancialPDF() {
+        alert('PDF export feature coming soon! For now, please use Print (Ctrl+P) and save as PDF.');
+    }
+
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

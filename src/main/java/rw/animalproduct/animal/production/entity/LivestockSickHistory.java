@@ -6,58 +6,46 @@ import java.util.UUID;
 
 /**
  * Audit trail for every status change on a LivestockSick episode.
- * One row is written each time the status (or severity) changes.
- * Records are never updated — only inserted.
  */
 @Entity
 @Table(name = "livestock_sick_history",
-       indexes = {
-           @Index(name = "idx_sick_history_sick_id",    columnList = "sick_id"),
-           @Index(name = "idx_sick_history_changed_at", columnList = "changed_at"),
-           @Index(name = "idx_sick_history_status",     columnList = "status")
-       })
+        indexes = {
+                @Index(name = "idx_sick_history_sick_id",    columnList = "sick_id"),
+                @Index(name = "idx_sick_history_changed_at", columnList = "changed_at"),
+                @Index(name = "idx_sick_history_status",     columnList = "status")
+        })
 public class LivestockSickHistory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    /** Which sick episode this history row belongs to. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sick_id", nullable = false)
     private LivestockSick livestockSick;
 
-    /** The new status that was set at this point in time. */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private LivestockSick.SickStatus status;
 
-    /** The severity at the time of this change (may be null if not changed). */
     @Enumerated(EnumType.STRING)
     @Column(name = "severity_level", length = 20)
     private LivestockSick.SeverityLevel severityLevel;
 
-    /** Exact timestamp when the change was recorded. */
     @Column(name = "changed_at", nullable = false)
     private LocalDateTime changedAt;
 
-    /**
-     * Username of the person who made the change.
-     * Auto-captured from Spring Security principal.
-     */
     @Column(name = "changed_by", length = 150)
     private String changedBy;
 
-    /**
-     * Free-text reason / notes provided at the time of the status change.
-     * Mirrors treatment_notes from the sick record at that moment.
-     */
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
     public LivestockSickHistory() {}
 
-    // ── Convenience constructor ───────────────────────────────────────
     public LivestockSickHistory(LivestockSick sick,
                                 LivestockSick.SickStatus status,
                                 LivestockSick.SeverityLevel severityLevel,
@@ -72,7 +60,6 @@ public class LivestockSickHistory {
     }
 
     // ── Getters & Setters ────────────────────────────────────────────
-
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -93,4 +80,7 @@ public class LivestockSickHistory {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public Boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 }

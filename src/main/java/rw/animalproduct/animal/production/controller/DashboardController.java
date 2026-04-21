@@ -4,14 +4,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import rw.animalproduct.animal.production.entity.LivestockAbortion;
-import rw.animalproduct.animal.production.entity.LivestockBirth;
-import rw.animalproduct.animal.production.entity.LivestockDeath;
-import rw.animalproduct.animal.production.entity.LivestockSale;
-import rw.animalproduct.animal.production.entity.LivestockSick;
-import rw.animalproduct.animal.production.entity.LivestockSickHistory;
-import rw.animalproduct.animal.production.entity.LivestockTreatment;
-import rw.animalproduct.animal.production.entity.Users;
+import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSickHistoryRepository;
 import rw.animalproduct.animal.production.services.AbaragizwaAmatungoService;
@@ -23,7 +16,6 @@ import rw.animalproduct.animal.production.services.LivestockSickService;
 import rw.animalproduct.animal.production.services.LivestockTreatmentService;
 import rw.animalproduct.animal.production.services.UhagarariyeAbororaService;
 import rw.animalproduct.animal.production.services.UsersService;
-import rw.animalproduct.animal.production.entity.Livestock;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -102,6 +94,7 @@ public class DashboardController {
         List<LivestockBirth> allBirths = birthService.getAll();
         model.addAttribute("totalBirths", allBirths.size());
 
+        // ✅ FIX: These were missing from the model — JS renderBirthReport() needs them
         long totalMothers = allBirths.stream()
                 .map(b -> b.getLivestock() != null ? b.getLivestock().getId() : null)
                 .filter(id -> id != null).distinct().count();
@@ -148,17 +141,12 @@ public class DashboardController {
         // ════════════════════════════════════════════════════════════
         List<LivestockSick> sickList = sickService.getAll();
 
-        // ── FIX 1: template uses "sickRecords", not "sickList" ───────
         model.addAttribute("sickRecords", sickList);
-
-        // Keep sickList too in case other parts of the dashboard use it
         model.addAttribute("sickList",  sickList);
         model.addAttribute("totalSick", (long) sickList.size());
 
-        // ── FIX 2: empty form object required by th:object="${sickRecord}" ──
         model.addAttribute("sickRecord", new LivestockSick());
 
-        // ── FIX 3: livestock dropdown in the add form ─────────────────
         List<Livestock> availableLivestock = livestockRepository.findAll().stream()
                 .filter(ls -> !Livestock.STATUS_DEAD.equals(ls.getStatus())
                         && !"SOLD".equals(ls.getStatus()))
@@ -169,6 +157,7 @@ public class DashboardController {
                 .filter(s -> s.getStatus() != null && !s.getStatus().name().equals("RECOVERED")).count();
         model.addAttribute("currentlySick", currentlySick);
 
+        // ✅ FIX: criticalCount was computed but never added to model — JS renderSickReport() needs it
         long criticalCount = sickList.stream()
                 .filter(s -> s.getStatus() != null && s.getStatus().name().equals("CRITICAL")).count();
         model.addAttribute("criticalCount", criticalCount);
@@ -177,6 +166,7 @@ public class DashboardController {
                 .filter(s -> s.getStatus() != null && s.getStatus().name().equals("RECOVERING")).count();
         model.addAttribute("recoveringCount", recoveringCount);
 
+        // ✅ FIX: recoveredCount was computed but never added to model — JS renderSickReport() needs it
         long recoveredCount = sickList.stream()
                 .filter(s -> s.getStatus() != null && s.getStatus().name().equals("RECOVERED")).count();
         model.addAttribute("recoveredCount", recoveredCount);
@@ -194,9 +184,11 @@ public class DashboardController {
                 .map(Map.Entry::getKey).orElse("—");
         model.addAttribute("mostSickAnimalTag", mostSickAnimalTag);
 
-        BigDecimal totalSickTreatmentCost = sickList.stream()
-                .filter(s -> s.getTreatmentCost() != null)
-                .map(LivestockSick::getTreatmentCost)
+        // Calculate totalSickTreatmentCost from LivestockTreatment table
+        BigDecimal totalSickTreatmentCost = treatmentList.stream()
+                .filter(t -> t.getSickLivestock() != null)
+                .map(LivestockTreatment::getTreatmentCost)
+                .filter(cost -> cost != null)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalSickTreatmentCost", totalSickTreatmentCost);
 
@@ -217,7 +209,7 @@ public class DashboardController {
 
         long recoveryRate = yearSickCount > 0
                 ? Math.round((yearRecoveredCount * 100.0) / yearSickCount)
-                : 0L;
+                : 100L;
         model.addAttribute("recoveryRate", recoveryRate);
 
         LocalDateTime historyFrom = LocalDateTime.now().minusDays(30);
@@ -249,6 +241,7 @@ public class DashboardController {
         model.addAttribute("abortionList",   abortionList);
         model.addAttribute("totalAbortions", (long) abortionList.size());
 
+        // ✅ FIX: totalAnimalsAffected was computed but never added to model — JS renderAbortionReport() needs it
         long totalAnimalsAffected = abortionList.stream()
                 .filter(a -> a.getLivestock() != null)
                 .map(a -> a.getLivestock().getId()).distinct().count();
@@ -313,6 +306,7 @@ public class DashboardController {
                 .map(Map.Entry::getKey).orElse("—");
         model.addAttribute("mostCommonCause", mostCommonCause);
 
+        // ✅ FIX: distinctCausesCount was computed but never added to model — JS renderDeathsReport() needs it
         long distinctCausesCount = deathsList.stream()
                 .filter(d -> d.getCauseOfDeath() != null && !d.getCauseOfDeath().isBlank())
                 .map(LivestockDeath::getCauseOfDeath).distinct().count();
@@ -357,17 +351,15 @@ public class DashboardController {
         model.addAttribute("totalTreatmentSpend", totalTreatmentSpend);
         model.addAttribute("totalTreatmentsCount", allTreatments.size());
 
-        // ── Sick care spend ───────────────────────────────────────────
-        List<LivestockSick> allSick = sickService.getAll();
-        BigDecimal totalSickSpend = allSick.stream()
-                .filter(s -> s.getTreatmentCost() != null)
-                .map(LivestockSick::getTreatmentCost)
+        // ── Sick care spend (from treatments linked to sick episodes) ──
+        BigDecimal totalSickCareSpend = allTreatments.stream()
+                .filter(t -> t.getSickLivestock() != null && t.getTreatmentCost() != null)
+                .map(LivestockTreatment::getTreatmentCost)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        model.addAttribute("totalSickSpend", totalSickSpend);
 
-        // ── Combined treatment cost (treatment records + sick care) ───
-        BigDecimal totalCareSpend = totalTreatmentSpend.add(totalSickSpend);
+        BigDecimal totalCareSpend = totalTreatmentSpend;
         model.addAttribute("totalCareSpend", totalCareSpend);
+        model.addAttribute("totalSickCareSpend", totalSickCareSpend);
 
         // ── Sales ─────────────────────────────────────────────────────
         List<LivestockSale> allSales = saleService.getAll();
@@ -403,5 +395,4 @@ public class DashboardController {
 
         return "livestock-summary-report";
     }
-
 }

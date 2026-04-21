@@ -41,7 +41,9 @@ public class LivestockAbortionService {
             LivestockAbortion a = existing.get();
             a.setAbortionDate(updated.getAbortionDate());
             a.setPregnancyNumber(updated.getPregnancyNumber());
-            a.setExpectedBirthDate(updated.getExpectedBirthDate());
+            a.setAbortionReason(updated.getAbortionReason());
+            a.setStageOfPregnancy(updated.getStageOfPregnancy());
+            // REMOVED: a.setExpectedBirthDate(updated.getExpectedBirthDate());
             a.setLivestockIdValue(updated.getLivestockIdValue());
             resolveAndSetLivestock(a);
             return abortionRepository.save(a);

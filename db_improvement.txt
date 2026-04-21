@@ -1,0 +1,57 @@
+Here is my database structure so let me know what could be the inhencement so that I could build a very strong animal production system:
+1. sec_user_type:
+user_type_id,user_type_name
+
+2.sec_user:
+user_id,email,is_active,"password",registration_date,user_type_id,photo_url
+
+3.a_location:
+id,state,"version",code,regulator_code,"name",location_type,parent_id,
+"comments"
+
+4.uhagarariye_aborora :
+id,first_name,last_name,gender,maritial_status,nid,phone,email	
+icyo_akora,amasezerano,photo,location_id,created_date,created_by
+
+5.abaragizwa_amatungo;
+id,first_name,last_name,gender,maritial_status,nid,phone,amasezerano,
+uhagarariye_aborora_id,location_id,photo,created_date,created_by
+
+6.livestock_categories:
+id,code	,"name"
+
+7.livestock:
+id,acquisition_method,current_value,date_received,gender	
+is_pregnant,last_birth_date,offspring_count,photo,pregnancy_months	
+status,tag_number,abaragizwa_amatungo_id,created_by	
+livestock_category_id,location_id,	mother_id,sold_price
+
+8.livestock_treatments:
+livestock_treatments:
+id,medication,next_treatment_date,treatment_cost,treatment_date	
+sick_livestock_id,description,dosage,treatment_type	,vet_name
+
+9.livestock_sick:
+id,recovery_date,reported_date,status,symptoms,livestock_id	
+diagnosis,severity_level,temperature,treatment_notes,vet_name
+
+10.livestock_sick_history:
+id,hanged_at,changed_by,notes,severity_level,status	sick_id
+
+11.livestock_abortions:
+id,abortion_date,pregnancy_number,expected_birth_date,livestock_id
+
+12.livestock_births:
+id,birth_date,next_breeding_date,offspring_count,offspring_gender,
+weaning_date,livestock_id,notes
+
+13.livestock_deaths :
+id,cause_of_death,death_date,livestock_id
+
+14.livestock_offspring :
+id,birth_id,child_livestock_id,generation
+
+15.livestock_sales:
+id,sale_date,sale_location,sale_price,sale_reason,livestock_id,buyer_name,
+buyer_phone,buyer_address,buyer_national_id
+

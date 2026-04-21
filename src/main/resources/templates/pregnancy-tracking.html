@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregnancy Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .page-header { 
+            background: white; 
+            border-bottom: 1px solid #dee2e6; 
+            padding: 20px 30px; 
+            margin-bottom: 24px; 
+        }
+        .content-card { 
+            background: white; 
+            border-radius: 10px; 
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); 
+            padding: 24px; 
+            margin-bottom: 24px; 
+        }
+        .pregnancy-card {
+            border-left: 4px solid #3b82f6;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .progress-container {
+            position: relative;
+            margin: 16px 0;
+        }
+        .progress {
+            height: 24px;
+            border-radius: 12px;
+        }
+        .progress-label {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 24px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .trimester-badge {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .trimester-1 { background: #dbeafe; color: #1e40af; }
+        .trimester-2 { background: #fef3c7; color: #92400e; }
+        .trimester-3 { background: #fecaca; color: #991b1b; }
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -22px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #3b82f6;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: -16px;
+            top: 18px;
+            width: 2px;
+            height: calc(100% - 12px);
+            background: #e5e7eb;
+        }
+        .timeline-item:last-child::after {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-hourglass-split text-success me-2"></i>Pregnancy Tracking</h4>
+        <small class="text-muted">Monitor and manage pregnant animals</small>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addCheckupModal">
+            <i class="bi bi-calendar-plus me-1"></i> Schedule Checkup
+        </button>
+        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+    
+    <!-- Summary Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="content-card text-center">
+                <h3 class="text-primary mb-1" th:text="${totalPregnant}">12</h3>
+                <small class="text-muted">Total Pregnant</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="content-card text-center">
+                <h3 class="text-warning mb-1" th:text="${dueSoon}">3</h3>
+                <small class="text-muted">Due in 30 Days</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="content-card text-center">
+                <h3 class="text-info mb-1" th:text="${checkupsDue}">5</h3>
+                <small class="text-muted">Checkups Due</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="content-card text-center">
+                <h3 class="text-danger mb-1" th:text="${highRisk}">1</h3>
+                <small class="text-muted">High Risk</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Critical Attention Needed -->
+    <div class="content-card" th:if="${criticalCases != null and !criticalCases.empty}">
+        <h6 class="fw-bold mb-3 text-danger border-bottom pb-2">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Requires Immediate Attention (<span th:text="${criticalCases.size()}">0</span>)
+        </h6>
+        <div th:each="pregnancy : ${criticalCases}" class="pregnancy-card" style="border-left-color: #ef4444;">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6 class="mb-2">
+                        <strong th:text="${pregnancy.livestock.tagNumber}">Tag #001</strong>
+                        <span class="badge bg-danger ms-2">Critical</span>
+                    </h6>
+                    <p class="mb-2 text-danger">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        <strong th:text="${pregnancy.criticalReason}">Overdue for checkup by 15 days</strong>
+                    </p>
+                    <div class="row text-muted small">
+                        <div class="col-md-4">
+                            <i class="bi bi-calendar-event me-1"></i>
+                            Bred: <strong th:text="${#temporals.format(pregnancy.breedingDate, 'dd-MM-yyyy')}">01-01-2026</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-calendar-check me-1"></i>
+                            Due: <strong th:text="${#temporals.format(pregnancy.expectedDueDate, 'dd-MM-yyyy')}">15-10-2026</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-clock me-1"></i>
+                            Days Pregnant: <strong th:text="${pregnancy.daysPregnant}">95</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a th:href="@{/livestock/breeding/checkup/{id}(id=${pregnancy.id})}" class="btn btn-danger btn-sm">
+                        <i class="bi bi-clipboard-pulse me-1"></i> Urgent Checkup
+                    </a>
+                    <a th:href="@{/livestock/breeding/view/{id}(id=${pregnancy.id})}" class="btn btn-outline-secondary btn-sm mt-2">
+                        <i class="bi bi-eye me-1"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Pregnancies -->
+    <div class="content-card">
+        <h6 class="fw-bold mb-3 border-bottom pb-2">
+            <i class="bi bi-heart-pulse text-success me-2"></i>
+            Active Pregnancies (<span th:text="${pregnancies != null ? pregnancies.size() : 0}">0</span>)
+        </h6>
+        
+        <div th:if="${pregnancies == null or pregnancies.empty}">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No active pregnancies to track at the moment.
+            </div>
+        </div>
+        
+        <div th:each="pregnancy : ${pregnancies}" class="pregnancy-card">
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <h6 class="mb-1">
+                        <strong th:text="${pregnancy.livestock.tagNumber}">Tag #002</strong>
+                        <span class="ms-2" th:text="${pregnancy.livestock.category != null ? pregnancy.livestock.category.name : ''}">Cattle</span>
+                    </h6>
+                    <small class="text-muted">
+                        Owner: <strong th:text="${pregnancy.livestock.owner != null ? pregnancy.livestock.owner.name : 'N/A'}">John Doe</strong>
+                    </small>
+                </div>
+                <div class="col-md-6 text-end">
+                    <span class="trimester-badge" 
+                          th:classappend="${pregnancy.trimester == 1 ? 'trimester-1' : (pregnancy.trimester == 2 ? 'trimester-2' : 'trimester-3')}"
+                          th:text="${pregnancy.trimester != null ? 'Trimester ' + pregnancy.trimester : 'Early Stage'}">
+                        Trimester 2
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="progress-container">
+                <div class="progress">
+                    <div class="progress-bar bg-success" 
+                         role="progressbar" 
+                         th:style="'width: ' + ${pregnancy.progressPercentage} + '%'"
+                         th:aria-valuenow="${pregnancy.progressPercentage}"
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+                <div class="progress-label" th:text="${pregnancy.progressPercentage + '%'}">65%</div>
+            </div>
+            
+            <div class="row text-muted small mb-3">
+                <div class="col-md-3">
+                    <i class="bi bi-calendar-event me-1"></i>
+                    Breeding Date<br>
+                    <strong th:text="${#temporals.format(pregnancy.breedingDate, 'dd-MM-yyyy')}">15-01-2026</strong>
+                </div>
+                <div class="col-md-3">
+                    <i class="bi bi-calendar-check me-1"></i>
+                    Expected Due Date<br>
+                    <strong th:text="${#temporals.format(pregnancy.expectedDueDate, 'dd-MM-yyyy')}">25-10-2026</strong>
+                </div>
+                <div class="col-md-3">
+                    <i class="bi bi-clock me-1"></i>
+                    Days Pregnant<br>
+                    <strong th:text="${pregnancy.daysPregnant}">83</strong>
+                </div>
+                <div class="col-md-3">
+                    <i class="bi bi-calendar-range me-1"></i>
+                    Days Remaining<br>
+                    <strong th:text="${pregnancy.daysRemaining}">197</strong>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="timeline">
+                <div class="timeline-item" th:each="checkup : ${pregnancy.checkups}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong th:text="${#temporals.format(checkup.checkupDate, 'dd MMM yyyy')}">15 Mar 2026</strong>
+                            <p class="mb-0 small text-muted" th:text="${checkup.notes}">Routine checkup - all vitals normal</p>
+                            <small class="text-muted">
+                                Vet: <span th:text="${checkup.veterinarian != null ? checkup.veterinarian.name : 'N/A'}">Dr. Smith</span>
+                            </small>
+                        </div>
+                        <span class="badge bg-success">✓ Completed</span>
+                    </div>
+                </div>
+                
+                <!-- Next Checkup -->
+                <div class="timeline-item" th:if="${pregnancy.nextCheckupDate != null}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong th:text="${#temporals.format(pregnancy.nextCheckupDate, 'dd MMM yyyy')}">15 Apr 2026</strong>
+                            <p class="mb-0 small text-muted">Next scheduled checkup</p>
+                        </div>
+                        <span class="badge bg-warning text-dark">Upcoming</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-3 pt-3 border-top">
+                <div class="row">
+                    <div class="col-md-8">
+                        <small class="text-muted">
+                            Last Updated: 
+                            <strong th:text="${pregnancy.lastCheckup != null ? #temporals.format(pregnancy.lastCheckup, 'dd-MM-yyyy HH:mm') : 'Never'}">
+                                05-04-2026 14:30
+                            </strong>
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a th:href="@{/livestock/breeding/checkup/{id}(id=${pregnancy.id})}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-clipboard-pulse me-1"></i> Record Checkup
+                        </a>
+                        <a th:href="@{/livestock/breeding/view/{id}(id=${pregnancy.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i> View Full History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add Checkup Modal -->
+<div class="modal fade" id="addCheckupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Checkup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Select Animal</label>
+                        <select class="form-select" required>
+                            <option value="">Choose...</option>
+                            <option th:each="p : ${pregnancies}" th:value="${p.id}" th:text="${p.livestock.tagNumber}">Tag #001</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Checkup Date</label>
+                        <input type="date" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Veterinarian</label>
+                        <select class="form-select" required>
+                            <option value="">Choose...</option>
+                            <option value="1">Dr. Smith</option>
+                            <option value="2">Dr. Johnson</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">Schedule Checkup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

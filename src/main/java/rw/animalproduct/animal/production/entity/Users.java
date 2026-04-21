@@ -1,6 +1,7 @@
 package rw.animalproduct.animal.production.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -12,10 +13,13 @@ import java.util.UUID;
 public class Users {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator
+    @Column(name = "user_id", nullable = false, updatable = false)
     private UUID userId;
 
     @Column(unique = true)
+    @Email(message = "Invalid email format")
     private String email;
 
     @NotEmpty
@@ -30,7 +34,6 @@ public class Users {
     @JoinColumn(name="userTypeId", referencedColumnName = "userTypeId")
     private UsersType userTypeId;
 
-    // ⭐ NEW: profile photo path
     private String photoUrl;
 
     @Transient

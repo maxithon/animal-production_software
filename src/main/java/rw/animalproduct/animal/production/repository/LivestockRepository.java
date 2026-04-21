@@ -1,77 +1,157 @@
 package rw.animalproduct.animal.production.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import rw.animalproduct.animal.production.entity.Livestock;
-import rw.animalproduct.animal.production.entity.LivestockSick;
-
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
+    // ========== BASIC FINDERS ==========
+
+    /**
+     * Find livestock by tag number
+     */
     Optional<Livestock> findByTagNumber(String tagNumber);
 
-    List<Livestock> findByStatus(String status);
-
+    /**
+     * Find livestock by category ID
+     */
     List<Livestock> findByLivestockCategoryId(UUID categoryId);
 
-    // Existing method may not work depending on your entity mapping
-    List<Livestock> findByLivestockCategory_Id(UUID categoryId);
+    /**
+     * Find livestock by beneficiary ID
+     */
+    List<Livestock> findByAbaragizwaAmatungoId(UUID beneficiaryId);
 
-    // Pagination version if needed
-    Page<Livestock> findByLivestockCategory_Id(UUID categoryId, Pageable pageable);
-
-    List<Livestock> findByAbaragizwaAmatungoId(UUID abaragizwaId);
-
-    List<Livestock> findByLocationId(UUID locationId);
-
-    List<Livestock> findByGender(String gender);
-
-    List<Livestock> findByIsPregnant(Boolean isPregnant);
-
-    List<Livestock> findByTagNumberContaining(String tagNumber);
-
-    // ── Mother / Child queries ───────────────────────────────────────
-
-    // All direct children of a given mother
-    List<Livestock> findByMotherId(UUID motherId);
-
-    // Founding animals (no mother — purchased/donated)
-    List<Livestock> findByMotherIsNull();
-
-    // Does this animal have any children?
-    boolean existsByMotherId(UUID motherId);
-
-    // All female animals (potential mothers for birth dropdown)
-    List<Livestock> findByGenderIgnoreCase(String gender);
-
-    // ── Counts ──────────────────────────────────────────────────────
-
+    /**
+     * Count livestock by category
+     */
     @Query("SELECT COUNT(l) FROM Livestock l WHERE l.livestockCategory.id = :categoryId")
     long countByCategory(@Param("categoryId") UUID categoryId);
 
-    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = :status")
-    long countByStatus(@Param("status") String status);
+    /**
+     * Count livestock by status
+     */
+    long countByStatus(String status);
 
-    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.abaragizwaAmatungo.id = :abaragizwaId")
-    long countByAbaragizwa(@Param("abaragizwaId") UUID abaragizwaId);
+    // ========== GENDER-BASED QUERIES (ADD THESE!) ==========
 
-    // ── Pagination ──────────────────────────────────────────────────
+    /**
+     * Find all livestock by gender (case insensitive)
+     * Example: findByGenderIgnoreCase("FEMALE") or findByGenderIgnoreCase("MALE")
+     */
+    List<Livestock> findByGenderIgnoreCase(String gender);
 
-    Page<Livestock> findAll(Pageable pageable);
+    /**
+     * Find all livestock by gender (case sensitive)
+     */
+    List<Livestock> findByGender(String gender);
 
-    Page<Livestock> findByStatus(String status, Pageable pageable);
+    /**
+     * Find livestock by gender and status
+     */
+    List<Livestock> findByGenderIgnoreCaseAndStatus(String gender, String status);
 
-    Page<Livestock> findByLivestockCategoryId(UUID categoryId, Pageable pageable);
+    /**
+     * Count livestock by gender
+     */
+    long countByGenderIgnoreCase(String gender);
 
-    Page<Livestock> findByTagNumberContaining(String tagNumber, Pageable pageable);
+    /**
+     * Count livestock by gender and status
+     */
+    long countByGenderIgnoreCaseAndStatus(String gender, String status);
 
-    @Query("SELECT s FROM LivestockSick s WHERE s.livestock.id IN :animalIds")
-    List<LivestockSick> findByLivestockIds(@Param("animalIds") List<UUID> animalIds);
+    // ========== MOTHER-CHILD RELATIONSHIPS ==========
 
+    /**
+     * Find all children of a specific mother
+     */
+    List<Livestock> findByMotherId(UUID motherId);
+
+    /**
+     * Check if a mother has any children
+     */
+    boolean existsByMotherId(UUID motherId);
+
+    // ========== QUERIES FOR DASHBOARD ==========
+
+    /**
+     * Get livestock by status
+     */
+    List<Livestock> findByStatus(String status);
+
+    /**
+     * Get livestock not in specified statuses (for dropdowns)
+     */
+    @Query("SELECT l FROM Livestock l WHERE l.status NOT IN :statuses")
+    List<Livestock> findByStatusNotIn(@Param("statuses") List<String> statuses);
+
+    /**
+     * Count male livestock
+     */
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.gender = 'MALE'")
+    long countMales();
+
+    /**
+     * Count female livestock
+     */
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.gender = 'FEMALE'")
+    long countFemales();
+
+    /**
+     * Sum of current values for active livestock
+     */
+    @Query("SELECT COALESCE(SUM(l.currentValue), 0) FROM Livestock l WHERE l.status = 'ACTIVE'")
+    BigDecimal sumActiveValues();
+
+    /**
+     * Get livestock count by category
+     */
+    @Query("SELECT l.livestockCategory.name, COUNT(l) FROM Livestock l " +
+            "WHERE l.livestockCategory IS NOT NULL " +
+            "GROUP BY l.livestockCategory.name")
+    List<Object[]> getCountByCategory();
+
+    /**
+     * Get livestock count by status
+     */
+    @Query("SELECT l.status, COUNT(l) FROM Livestock l GROUP BY l.status")
+    List<Object[]> getCountByStatus();
+
+    /**
+     * Get recently added livestock
+     */
+    List<Livestock> findTop20ByOrderByCreatedAtDesc();
+
+    /**
+     * Get pregnant livestock
+     */
+    @Query("SELECT l FROM Livestock l WHERE l.status = 'PREGNANT'")
+    List<Livestock> findPregnantLivestock();
+
+    /**
+     * Get all female livestock that are not dead or sold (for breeding selection)
+     */
+    @Query("SELECT l FROM Livestock l " +
+            "WHERE UPPER(l.gender) = 'FEMALE' " +
+            "AND l.status NOT IN ('DEAD', 'SOLD') " +
+            "AND l.isDeleted = false " +
+            "ORDER BY l.tagNumber")
+    List<Livestock> findAllActiveFemales();
+
+    /**
+     * Get all male livestock that are not dead or sold (for breeding selection)
+     */
+    @Query("SELECT l FROM Livestock l " +
+            "WHERE UPPER(l.gender) = 'MALE' " +
+            "AND l.status NOT IN ('DEAD', 'SOLD') " +
+            "AND l.isDeleted = false " +
+            "ORDER BY l.tagNumber")
+    List<Livestock> findAllActiveMales();
 }

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pregnancy Tracking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f0f4f8; }
+        .page-header { background: linear-gradient(135deg,#db2777,#ec4899); color:white; padding:24px 32px; margin-bottom:24px; }
+        .sum-card { background:white; border-radius:10px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+        .card-panel { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); overflow:hidden; margin-bottom:20px; }
+        .card-panel-header { padding:14px 20px; font-weight:700; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; gap:8px; }
+        .animal-row { padding:14px 20px; border-bottom:1px solid #f8fafc; display:flex; align-items:center; justify-content:space-between; }
+        .animal-row:last-child { border-bottom:none; }
+        .animal-row:hover { background:#fdf2f8; }
+        .due-overdue  { border-left:4px solid #ef4444; background:#fef2f2; }
+        .due-critical { border-left:4px solid #f97316; background:#fff7ed; }
+        .due-soon     { border-left:4px solid #eab308; background:#fefce8; }
+        .due-ok       { border-left:4px solid #22c55e; background:#f0fdf4; }
+        .urgency-badge { padding:4px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; display:inline-block; }
+        .badge-overdue   { background:#fee2e2; color:#991b1b; }
+        .badge-critical  { background:#fff7ed; color:#c2410c; }
+        .badge-soon      { background:#fefce8; color:#a16207; }
+        .badge-ok        { background:#f0fdf4; color:#166534; }
+        .table { margin-bottom:0; }
+        .table thead th { background:#f8fafc; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-hourglass-split me-2"></i>Pregnancy Tracking</h4>
+        <small style="opacity:.85">Monitor all pregnant animals, due dates, and birth notifications</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-light btn-sm">← Dashboard</a>
+        <a th:href="@{/livestock/lifecycle/notifications}" class="btn btn-warning btn-sm fw-bold">
+            <i class="bi bi-bell-fill me-1"></i>Notifications
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="sum-card" style="border-left:4px solid #db2777;">
+                <div style="font-size:2rem;font-weight:800;color:#db2777;" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</div>
+                <div class="text-muted small">Total Pregnant</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sum-card" style="border-left:4px solid #ef4444;">
+                <div style="font-size:2rem;font-weight:800;color:#ef4444;" th:text="${overdueCount}">0</div>
+                <div class="text-muted small">Overdue</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sum-card" style="border-left:4px solid #eab308;">
+                <div style="font-size:2rem;font-weight:800;color:#eab308;" th:text="${dueSoonCount}">0</div>
+                <div class="text-muted small">Due Soon (14 days)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OVERDUE ALERT -->
+    <div th:if="${overdueCount > 0}" class="alert alert-danger d-flex gap-3 align-items-start mb-4">
+        <i class="bi bi-exclamation-octagon-fill fs-4 mt-1"></i>
+        <div>
+            <strong th:text="${overdueCount}">0</strong> animal(s) are <strong>OVERDUE</strong> — expected due date has passed.
+            Please check on these animals immediately.
+        </div>
+    </div>
+
+    <!-- All Pregnant Animals -->
+    <div class="card-panel">
+        <div class="card-panel-header" style="background:#fdf2f8;color:#db2777;">
+            <i class="bi bi-heart-fill"></i>
+            All Pregnant Animals
+            <span class="badge ms-2" style="background:#db2777;" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</span>
+        </div>
+
+        <!-- Check if pregnantAnimals is null or empty -->
+        <div th:if="${pregnantAnimals == null or pregnantAnimals.empty}" style="padding:40px;text-align:center;color:#94a3b8;">
+            <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+            No pregnant animals currently. Record a breeding event and confirm pregnancy to start tracking.
+        </div>
+
+        <div th:each="animal : ${pregnantAnimals}"
+             th:if="${pregnantAnimals != null and !pregnantAnimals.empty}"
+             class="animal-row"
+             th:classappend="${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())} ? 'due-overdue' :
+                             (${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(7))} ? 'due-critical' :
+                             (${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))} ? 'due-soon' : 'due-ok'))">
+
+            <!-- Animal info -->
+            <div class="d-flex align-items-center gap-3" style="flex:1;">
+                <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#db2777,#ec4899);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;flex-shrink:0;">
+                    🤱
+                </div>
+                <div>
+                    <div class="fw-bold" th:text="${animal.tagNumber}">TAG</div>
+                    <div class="small text-muted">
+                        <span th:if="${animal.categoryName != null}" class="badge bg-secondary me-1" th:text="${animal.categoryName}"></span>
+                        <span th:if="${animal.locationName != null}" th:text="${animal.locationName}"></span>
+                        <span th:if="${animal.beneficiaryName != null}">· Owner: <span th:text="${animal.beneficiaryName}"></span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conception -->
+            <div class="text-center px-3" style="min-width:110px;">
+                <div class="small text-muted fw-bold">CONCEIVED</div>
+                <div th:if="${animal.conceptionDate != null}" th:text="${#temporals.format(animal.conceptionDate, 'dd-MM-yyyy')}"></div>
+                <div th:if="${animal.conceptionDate == null}" class="text-muted small">—</div>
+            </div>
+
+            <!-- Due Date -->
+            <div class="text-center px-3" style="min-width:110px;">
+                <div class="small text-muted fw-bold">DUE DATE</div>
+                <div th:if="${animal.expectedDueDate != null}" class="fw-bold" th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></div>
+                <div th:if="${animal.expectedDueDate == null}" class="text-muted small">Not set</div>
+            </div>
+
+            <!-- Days left / overdue -->
+            <div class="text-center px-3" style="min-width:100px;">
+                <div class="small text-muted fw-bold">STATUS</div>
+                <span th:if="${animal.expectedDueDate != null}"
+                      class="urgency-badge"
+                      th:classappend="${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())} ? 'badge-overdue' :
+                                      (${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(7))} ? 'badge-critical' :
+                                      (${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))} ? 'badge-soon' : 'badge-ok'))"
+                      th:text="${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate()) ?
+                                 'Overdue ' + T(java.time.temporal.ChronoUnit).DAYS.between(animal.expectedDueDate, #temporals.createNow().toLocalDate()) + 'd' :
+                                 T(java.time.temporal.ChronoUnit).DAYS.between(#temporals.createNow().toLocalDate(), animal.expectedDueDate) + ' days left'}">
+                </span>
+                <span th:if="${animal.expectedDueDate == null}" class="text-muted small">No date</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2">
+                <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-eye"></i> View
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Animals Section -->
+    <div class="card-panel" th:if="${overdueCount > 0}">
+        <div class="card-panel-header" style="background:#fef2f2;color:#dc2626;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Overdue Animals
+            <span class="badge bg-danger ms-2" th:text="${overdueCount}">0</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Expected Due Date</th>
+                    <th>Days Overdue</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal : ${pregnantAnimals}" th:if="${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())}">
+                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
+                    <td><span th:text="${animal.categoryName}" class="badge bg-info"></span></td>
+                    <td th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></td>
+                    <td><span class="badge bg-danger" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(animal.expectedDueDate, #temporals.createNow().toLocalDate())} + ' days'"></span></td>
+                    <td>
+                        <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${overdueCount == 0}">
+                    <td colspan="5" class="text-center text-muted py-3">No overdue animals</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Due Soon Section -->
+    <div class="card-panel" th:if="${dueSoonCount > 0}">
+        <div class="card-panel-header" style="background:#fefce8;color:#a16207;">
+            <i class="bi bi-calendar-heart"></i>
+            Due Soon (Next 14 Days)
+            <span class="badge ms-2" style="background:#eab308;" th:text="${dueSoonCount}">0</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Expected Due Date</th>
+                    <th>Days Left</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal : ${pregnantAnimals}"
+                    th:if="${animal.expectedDueDate != null and !animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate()) and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))}">
+                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
+                    <td><span th:text="${animal.categoryName}" class="badge bg-info"></span></td>
+                    <td th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></td>
+                    <td><span class="badge bg-warning text-dark" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(#temporals.createNow().toLocalDate(), animal.expectedDueDate)} + ' days'"></span></td>
+                    <td>
+                        <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                <tr th:if="${dueSoonCount == 0}">
+                    <td colspan="5" class="text-center text-muted py-3">No animals due soon</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

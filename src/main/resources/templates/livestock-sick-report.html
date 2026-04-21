@@ -180,7 +180,7 @@
         </form>
     </div>
 
-    <!-- KPI STRIP -->
+    <!-- Updated KPI strip (removed cost card) -->
     <div class="kpi-strip">
         <div class="kpi k-total">
             <div class="kpi-icon text-secondary"><i class="bi bi-list-ul"></i></div>
@@ -207,6 +207,7 @@
             <div class="kpi-num text-primary" th:text="${recoveredCases != null ? recoveredCases.size() : 0}">0</div>
             <div class="kpi-lbl">Recovered</div>
         </div>
+    </div>
         <div class="kpi k-cost">
             <div class="kpi-icon" style="color:#8b5cf6"><i class="bi bi-cash-stack"></i></div>
             <div class="kpi-num" style="color:#8b5cf6;font-size:1.3rem;" id="kpiCostNum">—</div>

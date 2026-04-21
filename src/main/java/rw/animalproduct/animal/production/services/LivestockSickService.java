@@ -7,9 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockSick;
 import rw.animalproduct.animal.production.entity.LivestockSickHistory;
+import rw.animalproduct.animal.production.entity.Veterinarian;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSickHistoryRepository;
 import rw.animalproduct.animal.production.repository.LivestockSickRepository;
+import rw.animalproduct.animal.production.repository.VeterinarianRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,15 +24,19 @@ public class LivestockSickService {
     private final LivestockSickRepository        sickRepository;
     private final LivestockRepository            livestockRepository;
     private final LivestockSickHistoryRepository historyRepository;
+    // ✅ FIX: Added VeterinarianRepository to properly resolve vet by ID during update
+    private final VeterinarianRepository         veterinarianRepository;
 
     private static final String STATUS_SOLD = "SOLD";
 
     public LivestockSickService(LivestockSickRepository sickRepository,
                                 LivestockRepository livestockRepository,
-                                LivestockSickHistoryRepository historyRepository) {
-        this.sickRepository      = sickRepository;
-        this.livestockRepository = livestockRepository;
-        this.historyRepository   = historyRepository;
+                                LivestockSickHistoryRepository historyRepository,
+                                VeterinarianRepository veterinarianRepository) {
+        this.sickRepository         = sickRepository;
+        this.livestockRepository    = livestockRepository;
+        this.historyRepository      = historyRepository;
+        this.veterinarianRepository = veterinarianRepository;
     }
 
     // ── Read ──────────────────────────────────────────────────────────
@@ -80,6 +86,7 @@ public class LivestockSickService {
     @Transactional
     public LivestockSick addNew(LivestockSick sick) {
         resolveAndSetLivestock(sick);
+        resolveAndSetVeterinarian(sick);
 
         if (sick.getLivestock() != null) {
             Livestock animal = sick.getLivestock();
@@ -101,7 +108,7 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(sick);
 
-        // ✅ Write the first history entry automatically
+        // Write the first history entry automatically
         recordHistory(saved,
                 saved.getStatus(),
                 saved.getSeverityLevel(),
@@ -130,13 +137,16 @@ public class LivestockSickService {
         existing.setSymptoms(updated.getSymptoms());
         existing.setDiagnosis(updated.getDiagnosis());
         existing.setTreatmentNotes(updated.getTreatmentNotes());
-        existing.setVetName(updated.getVetName());
         existing.setTemperature(updated.getTemperature());
         existing.setSeverityLevel(updated.getSeverityLevel());
-        existing.setTreatmentCost(updated.getTreatmentCost());
         existing.setStatus(updated.getStatus());
         existing.setRecoveryDate(updated.getRecoveryDate());
         existing.setLivestockIdValue(updated.getLivestockIdValue());
+        existing.setVeterinarianIdValue(updated.getVeterinarianIdValue());
+
+        // ✅ FIX: Removed illegal existing.setVetName(updated.getVetName()) call.
+        // Veterinarian is now resolved properly via the VeterinarianRepository.
+        resolveAndSetVeterinarian(existing);
         resolveAndSetLivestock(existing);
 
         Livestock newAnimal = existing.getLivestock();
@@ -161,7 +171,7 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(existing);
 
-        // ✅ Write history only when status OR severity actually changed
+        // Write history only when status OR severity actually changed
         boolean statusChanged   = !oldStatus.equals(saved.getStatus());
         boolean severityChanged = (oldSeverity == null && saved.getSeverityLevel() != null)
                 || (oldSeverity != null && !oldSeverity.equals(saved.getSeverityLevel()));
@@ -205,7 +215,7 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(sick);
 
-        // ✅ Always record history for quick updates
+        // Always record history for quick updates
         String changeNote = notes != null && !notes.isBlank()
                 ? notes
                 : buildChangeNote(oldStatus, newStatus, oldSeverity, oldSeverity, null);
@@ -247,6 +257,19 @@ public class LivestockSickService {
             Livestock ls = livestockRepository.findById(UUID.fromString(idStr))
                     .orElseThrow(() -> new RuntimeException("Livestock not found: " + idStr));
             sick.setLivestock(ls);
+        }
+    }
+
+    /**
+     * ✅ FIX: Resolves the veterinarian entity from the transient veterinarianIdValue string.
+     * This replaces the old (broken) setVetName() approach.
+     */
+    private void resolveAndSetVeterinarian(LivestockSick sick) {
+        String vetIdStr = sick.getVeterinarianIdValue();
+        if (vetIdStr != null && !vetIdStr.isBlank()) {
+            Veterinarian vet = veterinarianRepository.findById(UUID.fromString(vetIdStr))
+                    .orElseThrow(() -> new RuntimeException("Veterinarian not found: " + vetIdStr));
+            sick.setVeterinarian(vet);
         }
     }
 

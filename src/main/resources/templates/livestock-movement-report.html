@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Livestock Movement Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .movement-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .flow-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .flow-arrow {
+            font-size: 2rem;
+            color: #64748b;
+        }
+
+        .quick-filter-btn {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-filter-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        @media print {
+            .no-print, .d-print-none {
+                display: none !important;
+            }
+            .d-print-block {
+                display: block !important;
+            }
+            .stat-card, .movement-flow, .card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            body {
+                background: white !important;
+                padding: 20px !important;
+            }
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+
+        .badge {
+            font-weight: 500;
+            padding: 5px 10px;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <!-- HEADER - Hidden when printing -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print d-print-none">
+        <div>
+            <h2><i class="bi bi-arrow-left-right text-success"></i> Livestock Movement Report</h2>
+            <p class="text-muted mb-0">Track animal movements, financial impact, and herd dynamics</p>
+        </div>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="bi bi-printer"></i> Print Report
+            </button>
+            <a href="/livestock" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Print Header - Visible only when printing -->
+    <div class="d-print-block text-center mb-4" style="display: none;">
+        <h2 style="color: #0ea5e9;">Livestock Movement Report</h2>
+        <p style="font-size: 1.1rem;">Period: <strong th:text="${#temporals.format(fromDate, 'MMMM dd, yyyy')}"></strong> to
+            <strong th:text="${#temporals.format(toDate, 'MMMM dd, yyyy')}"></strong></p>
+        <p>Generated on: <strong th:text="${#temporals.format(#temporals.createNow(), 'MMMM dd, yyyy HH:mm')}"></strong></p>
+        <hr style="border-top: 2px solid #0ea5e9;">
+    </div>
+
+    <!-- Date Filter Card - Hidden when printing -->
+    <div class="card mb-4 no-print d-print-none">
+        <div class="card-body">
+            <form method="get" action="/livestock/movement-report" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-calendar-start"></i> From Date
+                    </label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">
+                        <i class="bi bi-calendar-end"></i> To Date
+                    </label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-calendar-range"></i> Apply Period
+                    </button>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <a href="/livestock/movement-report" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-repeat"></i> Reset to Default
+                    </a>
+                </div>
+            </form>
+
+            <!-- Quick Filter Buttons -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <label class="form-label fw-bold mb-2">
+                        <i class="bi bi-lightning-charge"></i> Quick Filters
+                    </label>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a th:href="@{/livestock/movement-report(from=${#temporals.format(#temporals.createToday().minusDays(30), 'yyyy-MM-dd')}, to=${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')})}"
+                           class="btn btn-outline-secondary quick-filter-btn">
+                            <i class="bi bi-calendar-week"></i> Last 30 Days
+                        </a>
+                        <a th:href="@{/livestock/movement-report(from=${#temporals.format(#temporals.createToday().minusMonths(3), 'yyyy-MM-dd')}, to=${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')})}"
+                           class="btn btn-outline-secondary quick-filter-btn">
+                            <i class="bi bi-calendar-month"></i> Last Quarter
+                        </a>
+                        <a th:href="@{/livestock/movement-report(from=${#temporals.format(#temporals.createToday().withMonth(1).withDayOfMonth(1), 'yyyy-MM-dd')}, to=${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')})}"
+                           class="btn btn-outline-secondary quick-filter-btn">
+                            <i class="bi bi-calendar-year"></i> Year to Date
+                        </a>
+                        <a th:href="@{/livestock/movement-report(from=${#temporals.format(#temporals.createToday().minusYears(1), 'yyyy-MM-dd')}, to=${#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')})}"
+                           class="btn btn-outline-secondary quick-filter-btn">
+                            <i class="bi bi-calendar-range"></i> Last 12 Months
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Inconsistency Alert -->
+    <div th:if="${closingStock < 0}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <h4 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Data Inconsistency Detected!</h4>
+        <p class="mb-0">Closing stock cannot be negative. Please check your records for the selected period. The most common cause is an incorrect 'Opening Stock' calculation or missing movement records.</p>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Key Metrics Row -->
+    <div class="row mb-4 g-3">
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-label">
+                    <i class="bi bi-piggy-bank"></i> Total Herd Value
+                </div>
+                <div class="stat-value text-primary"
+                     th:text="${#numbers.formatDecimal(closingStockValue != null ? closingStockValue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                    0 RWF
+                </div>
+                <small class="text-muted">Closing stock value</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-label">
+                    <i class="bi bi-cash-stack"></i> Total Revenue
+                </div>
+                <div class="stat-value text-success"
+                     th:text="${#numbers.formatDecimal(totalSalesRevenue != null ? totalSalesRevenue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                    0 RWF
+                </div>
+                <small class="text-muted">From animals sold</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-label">
+                    <i class="bi bi-emoji-frown"></i> Total Loss
+                </div>
+                <div class="stat-value text-danger"
+                     th:text="${#numbers.formatDecimal(totalDeathLoss != null ? totalDeathLoss : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                    0 RWF
+                </div>
+                <small class="text-muted">From deaths & purchases</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-label">
+                    <i class="bi bi-graph-up"></i> Net Financial Impact
+                </div>
+                <div class="stat-value"
+                     th:classappend="${netFinancialImpact >= 0} ? 'text-success' : 'text-danger'"
+                     th:text="${#numbers.formatDecimal(netFinancialImpact != null ? netFinancialImpact : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                    0 RWF
+                </div>
+                <small class="text-muted">Revenue - (Purchases + Loss)</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics Row -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Average Sale Price</h6>
+                            <h4 class="text-success mb-0"
+                                th:text="${#numbers.formatDecimal(averageSalePrice, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                                0 RWF
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Average Purchase Price</h6>
+                            <h4 class="text-primary mb-0"
+                                th:text="${#numbers.formatDecimal(averagePurchasePrice, 0, 'COMMA', 0, 'POINT')} + ' RWF'">
+                                0 RWF
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Net Change (Animals)</h6>
+                            <h4 th:classappend="${netChange >= 0} ? 'text-success' : 'text-danger'"
+                                class="mb-0" th:text="${netChange >= 0 ? '+' : ''} + ${netChange}">
+                                0
+                            </h4>
+                        </div>
+                        <div class="col-md-3">
+                            <h6 class="text-muted mb-2">Herd Growth Rate</h6>
+                            <h4 th:classappend="${openingStock > 0 && netChange > 0} ? 'text-success' : 'text-secondary'"
+                                class="mb-0">
+                            <span th:if="${openingStock > 0}"
+                                  th:text="${#numbers.formatDecimal((netChange * 100.0 / openingStock), 1, 'COMMA', 1, 'POINT')} + '%'">
+                                0%
+                            </span>
+                                <span th:if="${openingStock == 0}">N/A</span>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movement Chart -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h6 class="card-subtitle mb-3 text-muted">
+                <i class="bi bi-bar-chart-steps"></i> Movement Breakdown
+            </h6>
+            <canvas id="movementChart" style="max-height: 300px; width: 100%;"></canvas>
+        </div>
+    </div>
+
+    <!-- Movement Flow Diagram - Improved Version -->
+    <div class="movement-flow">
+        <div class="flow-box bg-light">
+            <div class="stat-label">
+                <i class="bi bi-box-seam"></i> Opening Stock
+            </div>
+            <div class="stat-value text-secondary" th:text="${openingStock}">0</div>
+            <small class="text-muted">Animals at start</small>
+            <div class="mt-2" th:if="${openingStock > 0}">
+                <small class="text-success">
+                    <i class="bi bi-info-circle"></i>
+                    <span th:text="${openingStock}"></span> animals on farm
+                </small>
+            </div>
+        </div>
+
+        <i class="bi bi-plus-circle-fill flow-arrow text-success"></i>
+
+        <div class="flow-box" style="background: #d1fae5;">
+            <div class="stat-label">
+                <i class="bi bi-plus-circle"></i> Additions
+            </div>
+            <div class="stat-value text-success" th:text="${additions}">0</div>
+            <small class="text-muted">
+                <span th:text="${purchased.size()}">0</span> purchased +
+                <span th:text="${born.size()}">0</span> born
+            </small>
+            <div class="mt-2" th:if="${purchased.size() > 0}">
+                <small class="text-primary">
+                    <i class="bi bi-cart-plus"></i> Purchased:
+                    <span th:text="${#numbers.formatDecimal(totalPurchasesCost, 0, 'COMMA', 0, 'POINT')} + ' RWF'"></span>
+                </small>
+            </div>
+            <div class="mt-1" th:if="${born.size() > 0}">
+                <small class="text-warning">
+                    <i class="bi bi-stars"></i> Born: <span th:text="${born.size()}"></span> calves
+                </small>
+            </div>
+        </div>
+
+        <i class="bi bi-dash-circle-fill flow-arrow text-danger"></i>
+
+        <div class="flow-box" style="background: #fee2e2;">
+            <div class="stat-label">
+                <i class="bi bi-dash-circle"></i> Removals
+            </div>
+            <div class="stat-value text-danger" th:text="${removals}">0</div>
+            <small class="text-muted">
+                <span th:text="${sold.size()}">0</span> sold +
+                <span th:text="${died.size()}">0</span> died
+            </small>
+            <div class="mt-2" th:if="${sold.size() > 0}">
+                <small class="text-success">
+                    <i class="bi bi-cash-stack"></i> Revenue:
+                    <span th:text="${#numbers.formatDecimal(totalSalesRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'"></span>
+                </small>
+            </div>
+            <div class="mt-1" th:if="${died.size() > 0}">
+                <small class="text-danger">
+                    <i class="bi bi-emoji-frown"></i> Lost:
+                    <span th:text="${#numbers.formatDecimal(totalDeathLoss, 0, 'COMMA', 0, 'POINT')} + ' RWF'"></span>
+                </small>
+            </div>
+        </div>
+
+        <i class="bi bi-arrow-right-circle-fill flow-arrow text-info"></i>
+
+        <div class="flow-box" style="background: linear-gradient(135deg, #0ea5e9, #3b82f6);">
+            <div class="stat-label text-white">
+                <i class="bi bi-box-seam-fill"></i> Closing Stock
+            </div>
+            <div class="stat-value text-white" th:text="${closingStock}">0</div>
+            <small class="text-white-50">Animals at end</small>
+            <div class="mt-2" th:if="${closingStock > 0}">
+                <small class="text-white">
+                    <i class="bi bi-piggy-bank"></i> Value:
+                    <span th:text="${#numbers.formatDecimal(closingStockValue, 0, 'COMMA', 0, 'POINT')} + ' RWF'"></span>
+                </small>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Net Change Indicator -->
+    <div class="alert"
+         th:classappend="${netChange >= 0} ? 'alert-success' : 'alert-warning'"
+         role="alert">
+        <h4 class="alert-heading">
+            <i class="bi" th:classappend="${netChange >= 0} ? 'bi-graph-up-arrow' : 'bi-graph-down-arrow'"></i>
+            Net Change:
+            <span th:text="${netChange >= 0 ? '+' : ''} + ${netChange}">0</span> animals
+        </h4>
+        <p class="mb-0" th:text="${netChange >= 0} ?
+            '✓ Your herd grew during this period. Great job maintaining healthy livestock growth!' :
+            '⚠️ Your herd decreased during this period. Review the causes below and take corrective action.'">
+        </p>
+    </div>
+
+    <!-- Details Tabs -->
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" data-bs-toggle="tab" href="#purchased-tab">
+                <i class="bi bi-cart-plus"></i> Purchased
+                <span class="badge bg-secondary" th:text="${purchased.size()}">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#born-tab">
+                <i class="bi bi-stars"></i> Born
+                <span class="badge bg-secondary" th:text="${born.size()}">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#sold-tab">
+                <i class="bi bi-cash-coin"></i> Sold
+                <span class="badge bg-secondary" th:text="${sold.size()}">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="tab" href="#died-tab">
+                <i class="bi bi-x-circle"></i> Died
+                <span class="badge bg-secondary" th:text="${died.size()}">0</span>
+            </a>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Purchased Tab -->
+        <div class="tab-pane fade show active" id="purchased-tab">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cart-plus text-primary"></i> Animals Purchased in Period
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${purchased.isEmpty()}" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">No purchases recorded in this period</p>
+                    </div>
+
+                    <div th:if="${!purchased.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Tag Number</th>
+                                <th>Category</th>
+                                <th>Gender</th>
+                                <th>Date Received</th>
+                                <th>Current Value</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="animal, iterStat : ${purchased}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td><strong th:text="${animal.tagNumber}">TAG001</strong></td>
+                                <td>
+                                        <span th:if="${animal.livestockCategory != null}"
+                                              class="badge bg-info"
+                                              th:text="${animal.livestockCategory.name}">Cow</span>
+                                    <span th:if="${animal.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td>
+                                        <span class="badge"
+                                              th:classappend="${animal.gender == 'MALE'} ? 'bg-primary' : 'bg-danger'"
+                                              th:text="${animal.gender}">MALE</span>
+                                </td>
+                                <td th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived, 'yyyy-MM-dd') : '—'}">2024-01-01</td>
+                                <td class="fw-bold text-success"
+                                    th:text="${#numbers.formatDecimal(animal.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${!purchased.isEmpty()}">
+                            <tr class="table-secondary">
+                                <td colspan="5" class="text-end fw-bold">Total Investment:</td>
+                                <td class="fw-bold text-success">
+                                    <span th:text="${#numbers.formatDecimal(#aggregates.sum(purchased.![currentValue ?: 0]), 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</span>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Born Tab -->
+        <div class="tab-pane fade" id="born-tab">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-stars text-warning"></i> Animals Born in Period
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${born.isEmpty()}" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">No births recorded in this period</p>
+                    </div>
+
+                    <div th:if="${!born.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Tag Number</th>
+                                <th>Category</th>
+                                <th>Gender</th>
+                                <th>Birth Date</th>
+                                <th>Mother</th>
+                                <th>Current Value</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="animal, iterStat : ${born}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td><strong th:text="${animal.tagNumber}">TAG001</strong></td>
+                                <td>
+                                        <span th:if="${animal.livestockCategory != null}"
+                                              class="badge bg-info"
+                                              th:text="${animal.livestockCategory.name}">Cow</span>
+                                    <span th:if="${animal.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td>
+                                        <span class="badge"
+                                              th:classappend="${animal.gender == 'MALE'} ? 'bg-primary' : 'bg-danger'"
+                                              th:text="${animal.gender}">MALE</span>
+                                </td>
+                                <td th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived, 'yyyy-MM-dd') : '—'}">2024-01-01</td>
+                                <td>
+                                        <span th:if="${animal.mother != null}"
+                                              class="badge bg-secondary"
+                                              th:text="${animal.mother.tagNumber}">TAG-MOM</span>
+                                    <span th:if="${animal.mother == null}" class="text-muted">Unknown</span>
+                                </td>
+                                <td class="fw-bold text-success"
+                                    th:text="${#numbers.formatDecimal(animal.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${!born.isEmpty()}">
+                            <tr class="table-secondary">
+                                <td colspan="6" class="text-end fw-bold">Total Added Value:</td>
+                                <td class="fw-bold text-success">
+                                    <span th:text="${#numbers.formatDecimal(#aggregates.sum(born.![currentValue ?: 0]), 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</span>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sold Tab -->
+        <div class="tab-pane fade" id="sold-tab">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cash-coin text-success"></i> Animals Sold in Period
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${sold.isEmpty()}" class="text-center py-5">
+                        <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3">No sales recorded in this period</p>
+                    </div>
+
+                    <div th:if="${!sold.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Tag Number</th>
+                                <th>Category</th>
+                                <th>Sale Date</th>
+                                <th>Sale Price</th>
+                                <th>Reason</th>
+                                <th>Location</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="sale, iterStat : ${sold}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td><strong th:text="${sale.livestock?.tagNumber ?: 'N/A'}">TAG001</strong></td>
+                                <td>
+                                        <span th:if="${sale.livestock?.livestockCategory != null}"
+                                              class="badge bg-info"
+                                              th:text="${sale.livestock.livestockCategory.name}">Cow</span>
+                                    <span th:if="${sale.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') : '—'}">2024-01-01</td>
+                                <td class="fw-bold text-success"
+                                    th:text="${#numbers.formatDecimal(sale.salePrice ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</td>
+                                <td>
+                                    <span th:if="${sale.saleReason == 'COMMERCIAL'}" class="badge bg-success">Commercial</span>
+                                    <span th:if="${sale.saleReason == 'EMERGENCY'}" class="badge bg-danger">Emergency</span>
+                                    <span th:if="${sale.saleReason == 'OVERSTOCKING'}" class="badge bg-warning text-dark">Overstocking</span>
+                                    <span th:if="${sale.saleReason == 'LOW_PERFORMANCE'}" class="badge bg-secondary">Low Performance</span>
+                                    <span th:if="${sale.saleReason == 'OTHER'}" class="badge bg-info">Other</span>
+                                    <span th:if="${sale.saleReason == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${sale.saleLocation ?: 'N/A'}">N/A</td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${!sold.isEmpty()}">
+                            <tr class="table-secondary">
+                                <td colspan="4" class="text-end fw-bold">Total Revenue:</td>
+                                <td class="fw-bold text-success" colspan="3">
+                                    <span th:text="${#numbers.formatDecimal(#aggregates.sum(sold.![salePrice ?: 0]), 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</span>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Died Tab -->
+        <div class="tab-pane fade" id="died-tab">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-x-circle text-danger"></i> Animals That Died in Period
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div th:if="${died.isEmpty()}" class="text-center py-5">
+                        <i class="bi bi-emoji-smile text-success" style="font-size: 3rem;"></i>
+                        <p class="text-success mt-3">✓ No deaths in this period. Great herd management!</p>
+                    </div>
+
+                    <div th:if="${!died.isEmpty()}" class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Tag Number</th>
+                                <th>Category</th>
+                                <th>Death Date</th>
+                                <th>Cause</th>
+                                <th>Value Lost</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="death, iterStat : ${died}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td><strong th:text="${death.livestock?.tagNumber ?: 'N/A'}">TAG001</strong></td>
+                                <td>
+                                        <span th:if="${death.livestock?.livestockCategory != null}"
+                                              class="badge bg-info"
+                                              th:text="${death.livestock.livestockCategory.name}">Cow</span>
+                                    <span th:if="${death.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${death.deathDate != null ? #temporals.format(death.deathDate, 'yyyy-MM-dd') : '—'}">2024-01-01</td>
+                                <td>
+                                    <span class="badge bg-danger" th:text="${death.cause ?: 'Unknown'}">Disease</span>
+                                </td>
+                                <td class="fw-bold text-danger"
+                                    th:text="${#numbers.formatDecimal(death.livestock?.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</td>
+                            </tr>
+                            </tbody>
+                            <tfoot th:if="${!died.isEmpty()}">
+                            <tr class="table-secondary">
+                                <td colspan="5" class="text-end fw-bold">Total Value Lost:</td>
+                                <td class="fw-bold text-danger">
+                                    <span th:text="${#numbers.formatDecimal(#aggregates.sum(died.![livestock?.currentValue ?: 0]), 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</span>
+                                </td>
+                            </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Chart
+        const ctx = document.getElementById('movementChart').getContext('2d');
+
+        const openingStock = /*[[${openingStock}]]*/ 0;
+        const bornCount = /*[[${born.size()}]]*/ 0;
+        const purchasedCount = /*[[${purchased.size()}]]*/ 0;
+        const soldCount = /*[[${sold.size()}]]*/ 0;
+        const diedCount = /*[[${died.size()}]]*/ 0;
+        const closingStock = /*[[${closingStock < 0 ? 0 : closingStock}]]*/ 0;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Opening Stock', 'Born', 'Purchased', 'Sold', 'Died', 'Closing Stock'],
+                datasets: [{
+                    label: 'Number of Animals',
+                    data: [openingStock, bornCount, purchasedCount, soldCount, diedCount, closingStock],
+                    backgroundColor: [
+                        '#94a3b8', // Opening Stock - Gray
+                        '#10b981', // Born - Green
+                        '#3b82f6', // Purchased - Blue
+                        '#f59e0b', // Sold - Orange
+                        '#ef4444', // Died - Red
+                        '#8b5cf6'  // Closing Stock - Purple
+                    ],
+                    borderRadius: 8,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.dataset.label}: ${context.raw} animals`
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Animals',
+                            font: { weight: 'bold' }
+                        },
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Movement Type',
+                            font: { weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add tooltip to show explanation of values
+        const currentValueCells = document.querySelectorAll('td:last-child, td:nth-last-child(2)');
+        currentValueCells.forEach(cell => {
+            if (cell.textContent.includes('RWF')) {
+                cell.setAttribute('title', 'Current market value of the animal');
+                cell.style.cursor = 'help';
+            }
+        });
+    });
+    /*]]>*/
+</script>
+</body>
+</html>

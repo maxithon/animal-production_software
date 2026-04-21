@@ -7,7 +7,6 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -107,6 +106,7 @@ public class LivestockQRController {
         data.put("gender",   animal.getGender());
         data.put("status",   animal.getStatus());
         data.put("category", animal.getLivestockCategory() != null ? animal.getLivestockCategory().getName() : null);
+
         data.put("beneficiary", animal.getAbaragizwaAmatungo() != null
                 ? animal.getAbaragizwaAmatungo().getFirstName() + " " + animal.getAbaragizwaAmatungo().getLastName()
                 : null);

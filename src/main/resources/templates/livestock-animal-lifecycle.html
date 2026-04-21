@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Animal Lifecycle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f0f4f8; }
+        .page-header { background: linear-gradient(135deg,#1a5f7a,#2e8b9e); color:white; padding:24px 32px; margin-bottom:24px; }
+        .card-panel { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); padding:24px; margin-bottom:20px; }
+        .stage-badge { padding:8px 20px; border-radius:20px; font-size:0.85rem; font-weight:700; display:inline-block; }
+        .stage-NEWBORN      { background:#fef3c7;color:#92400e; }
+        .stage-YOUNG        { background:#dbeafe;color:#1e40af; }
+        .stage-PRE_BREEDING { background:#ede9fe;color:#5b21b6; }
+        .stage-READY_TO_BREED { background:#faf5ff;color:#7c3aed; }
+        .stage-IN_BREEDING  { background:#fff7ed;color:#c2410c; }
+        .stage-PREGNANT     { background:#fdf2f8;color:#db2777; }
+        .stage-NURSING      { background:#f0fdf4;color:#166534; }
+        .stage-SOLD         { background:#f3f4f6;color:#374151; }
+        .stage-DECEASED     { background:#f3f4f6;color:#6b7280; }
+        .timeline-item { display:flex; gap:16px; margin-bottom:16px; position:relative; }
+        .timeline-item:not(:last-child)::before {
+            content:''; position:absolute; left:19px; top:40px;
+            width:2px; height:calc(100% + 0px); background:#e2e8f0;
+        }
+        .timeline-dot { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; z-index:1; }
+        .timeline-content { background:#f8fafc; border-radius:10px; padding:12px 16px; flex:1; }
+        .timeline-date { font-size:0.75rem; color:#64748b; font-weight:600; }
+        .metric-box { background:#f8fafc; border-radius:10px; padding:14px 16px; text-align:center; }
+        .metric-num { font-size:1.6rem; font-weight:800; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1">
+            <i class="bi bi-diagram-3 me-2"></i>
+            Animal Lifecycle —
+            <span th:text="${animal.tagNumber}">TAG</span>
+        </h4>
+        <small style="opacity:.85">
+            <span th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : ''}"></span>
+            ·
+            <span th:text="${animal.gender}"></span>
+            · Age: <span th:text="${ageInMonths}">0</span> months
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-light btn-sm">← Dashboard</a>
+        <a th:href="@{/livestock/view/{id}(id=${animal.id})}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-eye me-1"></i>Full Profile
+        </a>
+        <a th:href="@{/livestock/edit/{id}(id=${animal.id})}" class="btn btn-warning btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+    <div class="row g-4">
+
+        <!-- LEFT: Status + Stage -->
+        <div class="col-lg-4">
+
+            <!-- Current Stage -->
+            <div class="card-panel text-center">
+                <div class="text-muted small fw-bold mb-3">CURRENT LIFECYCLE STAGE</div>
+                <div class="mb-3" style="font-size:3rem;">
+                    <span th:if="${currentStage == 'NEWBORN'}">🐣</span>
+                    <span th:if="${currentStage == 'YOUNG'}">🌱</span>
+                    <span th:if="${currentStage == 'PRE_BREEDING'}">📅</span>
+                    <span th:if="${currentStage == 'READY_TO_BREED'}">💜</span>
+                    <span th:if="${currentStage == 'IN_BREEDING'}">🔗</span>
+                    <span th:if="${currentStage == 'PREGNANT'}">🤱</span>
+                    <span th:if="${currentStage == 'NURSING'}">🍼</span>
+                    <span th:if="${currentStage == 'SOLD'}">💰</span>
+                    <span th:if="${currentStage == 'DECEASED'}">✝️</span>
+                </div>
+                <span class="stage-badge"
+                      th:classappend="'stage-' + ${currentStage}"
+                      th:text="${currentStage.replace('_',' ')}">STAGE</span>
+
+                <div class="mt-3 p-3 rounded" style="background:#f0f9ff;border:1px solid #bae6fd;">
+                    <div class="small text-muted fw-bold">NEXT MILESTONE</div>
+                    <div class="mt-1 fw-semibold small" th:text="${nextMilestone}">—</div>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="card-panel">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Key Metrics</h6>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-primary" th:text="${ageInDays}">0</div>
+                            <div class="small text-muted">Days Old</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-success" th:text="${ageInMonths}">0</div>
+                            <div class="small text-muted">Months</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-warning" th:text="${animal.offspringCount != null ? animal.offspringCount : 0}">0</div>
+                            <div class="small text-muted">Offspring</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-info" th:text="${breedingHistory.size()}">0</div>
+                            <div class="small text-muted">Breedings</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Animal Info -->
+            <div class="card-panel">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Animal Details</h6>
+                <div class="mb-2">
+                    <span class="text-muted small">Tag Number</span>
+                    <div class="fw-bold" th:text="${animal.tagNumber}">—</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Category</span>
+                    <div th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : '—'}">—</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Gender</span>
+                    <div>
+                        <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-danger">♀ Female</span>
+                        <span th:if="${animal.gender == 'MALE'}" class="badge bg-primary">♂ Male</span>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Date Received / Born</span>
+                    <div th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived,'dd-MM-yyyy') : '—'}">—</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Mother</span>
+                    <div>
+                        <a th:if="${animal.mother != null}"
+                           th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.mother.id})}"
+                           th:text="${animal.mother.tagNumber}">—</a>
+                        <span th:if="${animal.mother == null}" class="text-muted">Founding animal</span>
+                    </div>
+                </div>
+                <div class="mb-2" th:if="${animal.expectedDueDate != null}">
+                    <span class="text-muted small">Expected Due Date</span>
+                    <div class="fw-bold text-danger"
+                         th:text="${#temporals.format(animal.expectedDueDate,'dd-MM-yyyy')}">—</div>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted small">Status</span>
+                    <div><span class="badge bg-info" th:text="${animal.status}">—</span></div>
+                </div>
+            </div>
+
+            <!-- Manual Stage Update (for PREGNANT / NURSING transitions) -->
+            <div class="card-panel" th:if="${animal.gender == 'FEMALE'}">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Manual Stage Update</h6>
+                <form th:action="@{/livestock/lifecycle/update-stage/{id}(id=${animal.id})}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Set Stage</label>
+                        <select name="stage" class="form-select form-select-sm">
+                            <option value="">Select...</option>
+                            <option value="PREGNANT">Mark as Pregnant</option>
+                            <option value="ACTIVE">Mark as Active (not pregnant)</option>
+                            <option value="NURSING">Mark as Nursing (gave birth today)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Notes (optional)</label>
+                        <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional note...">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Update Stage</button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- RIGHT: Timeline + Offspring + Breedings -->
+        <div class="col-lg-8">
+
+            <!-- Lifecycle Timeline -->
+            <div class="card-panel">
+                <h6 class="fw-bold mb-4 border-bottom pb-2">
+                    <i class="bi bi-clock-history text-primary me-1"></i>Lifecycle Timeline
+                </h6>
+                <div th:if="${stageHistory.isEmpty()}" class="text-muted fst-italic">No lifecycle events recorded yet.</div>
+
+                <div th:each="event : ${stageHistory}" class="timeline-item">
+                    <div class="timeline-dot"
+                         th:style="'background:' +
+                                   (${#strings.contains(event.stage,'BORN') or #strings.contains(event.stage,'ACQUIR')} ? '#f0fdf4;color:#16a34a;' :
+                                   (${#strings.contains(event.stage,'BREED')} ? '#fff7ed;color:#ea580c;' :
+                                   (${#strings.contains(event.stage,'PREGNANT')} ? '#fdf2f8;color:#db2777;' :
+                                   (${#strings.contains(event.stage,'BIRTH')} ? '#f0fdf4;color:#16a34a;' : '#f8f9fb;color:#374151;'))))">
+                        <span th:if="${#strings.contains(event.stage,'BORN') or #strings.contains(event.stage,'ACQUIR')}">🐣</span>
+                        <span th:if="${#strings.contains(event.stage,'BREED')}">💜</span>
+                        <span th:if="${#strings.contains(event.stage,'PREGNANT')}">🤱</span>
+                        <span th:if="${#strings.contains(event.stage,'BIRTH')}">🍼</span>
+                        <span th:if="${!#strings.contains(event.stage,'BORN') and !#strings.contains(event.stage,'ACQUIR') and !#strings.contains(event.stage,'BREED') and !#strings.contains(event.stage,'PREGNANT') and !#strings.contains(event.stage,'BIRTH')}">📌</span>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-date" th:text="${event.date != null ? #temporals.format(event.date,'dd MMM yyyy') : '—'}">Date</div>
+                        <div class="fw-bold small" th:text="${event.stage}">Stage</div>
+                        <div class="text-muted small" th:if="${event.notes != null}" th:text="${event.notes}">Notes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Breeding History -->
+            <div class="card-panel" th:if="${!breedingHistory.isEmpty()}">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">
+                    <i class="bi bi-heart-fill text-danger me-1"></i>Breeding History
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                        <tr><th>Date</th><th>Method</th><th>Sire</th><th>Status</th><th>Due Date</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="b : ${breedingHistory}">
+                            <td th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate,'dd-MM-yyyy') : '—'}"></td>
+                            <td>
+                                <span th:if="${b.breedingMethod != null}" class="badge bg-info text-dark"
+                                      th:text="${b.breedingMethod.replace('_',' ')}"></span>
+                            </td>
+                            <td th:text="${b.maleLivestock != null ? b.maleLivestock.tagNumber : '—'}"></td>
+                            <td>
+                                <span class="badge"
+                                      th:classappend="${b.status == 'CONFIRMED_PREGNANT'} ? 'bg-success' : (${b.status == 'FAILED'} ? 'bg-danger' : 'bg-warning text-dark')"
+                                      th:text="${b.status != null ? b.status.replace('_',' ') : '—'}"></span>
+                            </td>
+                            <td th:text="${b.expectedDueDate != null ? #temporals.format(b.expectedDueDate,'dd-MM-yyyy') : '—'}"></td>
+                            <td>
+                                <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Offspring -->
+            <div class="card-panel" th:if="${!offspring.isEmpty()}">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">
+                    <i class="bi bi-stars text-success me-1"></i>Offspring
+                    <span class="badge bg-success ms-1" th:text="${offspring.size()}">0</span>
+                </h6>
+                <div class="row g-2">
+                    <div th:each="child : ${offspring}" class="col-md-4">
+                        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;">
+                            <div class="fw-bold" th:text="${child.tagNumber}">TAG</div>
+                            <div class="small text-muted">
+                                <span th:if="${child.gender != null}" th:text="${child.gender}"></span>
+                                <span th:if="${child.dateReceived != null}"> · Born: <span th:text="${#temporals.format(child.dateReceived,'dd-MM-yyyy')}"></span></span>
+                            </div>
+                            <div class="mt-1">
+                                <a th:href="@{/livestock/lifecycle/animal/{id}(id=${child.id})}"
+                                   class="btn btn-xs btn-outline-success" style="padding:2px 8px;font-size:.72rem;">
+                                    View Lifecycle
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card-panel">
+                <h6 class="fw-bold mb-3 border-bottom pb-2">Actions</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/livestock/breeding/register}" class="btn btn-outline-danger">
+                        <i class="bi bi-heart-fill me-1"></i>Record Breeding
+                    </a>
+                    <a th:href="@{/livestock/births/register}" class="btn btn-outline-success">
+                        <i class="bi bi-stars me-1"></i>Record Birth
+                    </a>
+                    <a th:href="@{/livestock/births/family/{id}(id=${animal.id})}" class="btn btn-outline-info">
+                        <i class="bi bi-diagram-3 me-1"></i>Family Tree
+                    </a>
+                    <a th:href="@{/livestock/treatments}" class="btn btn-outline-warning">
+                        <i class="bi bi-heart-pulse me-1"></i>Add Treatment
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

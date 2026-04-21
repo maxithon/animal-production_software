@@ -14,6 +14,15 @@
                           - totalSaleRevenue    : BigDecimal
                           - mostSoldAnimalTag   : String
                           - salesThisMonth      : Long
+
+  ✅ FIX — MISSING RECORDS:
+     In your controller/service that loads salesList, make sure you are NOT
+     filtering by a default date range. Load ALL records:
+       salesList = saleRepository.findAll();   // or findAllByOrderBySaleDateDesc()
+     If you do want date filtering, default fromDate to LocalDate.of(2000,1,1).
+
+  ✅ FIX — BUYER COLUMN:
+     buyerName column is now uncommented and displayed in all tabs.
 =======================================================================
 -->
 
@@ -23,138 +32,138 @@
 ════════════════════════════════════════════════════════════════════ -->
 <style id="SALES_CSS_COPY_THIS_BLOCK">
 
-/* ── Sidebar link ── */
-.submenu-item.sales-report { color: #d97706; font-weight: 500; }
-.submenu-item.sales-report:hover { background: #fffbeb; border-left-color: #d97706; color: #92400e; }
+    /* ── Sidebar link ── */
+    .submenu-item.sales-report { color: #d97706; font-weight: 500; }
+    .submenu-item.sales-report:hover { background: #fffbeb; border-left-color: #d97706; color: #92400e; }
 
-/* ════ SALES REPORT VIEW ════════════════════════════════════════ */
-#sales-report-view { padding: 30px; overflow-y: auto; display: none; }
+    /* ════ SALES REPORT VIEW ════════════════════════════════════════ */
+    #sales-report-view { padding: 30px; overflow-y: auto; display: none; }
 
-/* ─────────────────────────────────────────────────────────────
-   SUMMARY CARDS
-───────────────────────────────────────────────────────────── */
-.sl-summary-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 14px;
-    margin-bottom: 24px;
-}
+    /* ─────────────────────────────────────────────────────────────
+       SUMMARY CARDS
+    ───────────────────────────────────────────────────────────── */
+    .sl-summary-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
+    }
 
-.sl-sum-card {
-    background: white;
-    border-radius: 10px;
-    padding: 16px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-    border-left: 4px solid transparent;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+    .sl-sum-card {
+        background: white;
+        border-radius: 10px;
+        padding: 16px 18px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        border-left: 4px solid transparent;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-.sl-sum-card.c1 { border-left-color: #f59e0b; }   /* amber  – total sales        */
-.sl-sum-card.c2 { border-left-color: #10b981; }   /* green  – total revenue      */
-.sl-sum-card.c3 { border-left-color: #8b5cf6; }   /* purple – most sold animal   */
-.sl-sum-card.c4 { border-left-color: #0ea5e9; }   /* sky    – this month         */
+    .sl-sum-card.c1 { border-left-color: #f59e0b; }
+    .sl-sum-card.c2 { border-left-color: #10b981; }
+    .sl-sum-card.c3 { border-left-color: #8b5cf6; }
+    .sl-sum-card.c4 { border-left-color: #0ea5e9; }
 
-.sl-sum-card .sl-icon    { font-size: 1.8rem; flex-shrink: 0; }
-.sl-sum-card.c1 .sl-icon { color: #f59e0b; }
-.sl-sum-card.c2 .sl-icon { color: #10b981; }
-.sl-sum-card.c3 .sl-icon { color: #8b5cf6; }
-.sl-sum-card.c4 .sl-icon { color: #0ea5e9; }
+    .sl-sum-card .sl-icon    { font-size: 1.8rem; flex-shrink: 0; }
+    .sl-sum-card.c1 .sl-icon { color: #f59e0b; }
+    .sl-sum-card.c2 .sl-icon { color: #10b981; }
+    .sl-sum-card.c3 .sl-icon { color: #8b5cf6; }
+    .sl-sum-card.c4 .sl-icon { color: #0ea5e9; }
 
-.sl-sum-card .sl-text { display: flex; flex-direction: column; }
+    .sl-sum-card .sl-text { display: flex; flex-direction: column; }
 
-.sl-sum-card .sl-num {
-    font-family: 'Syne', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 800;
-    line-height: 1;
-    color: #1a202c;
-}
-.sl-sum-card.c2 .sl-num { font-size: 1.25rem; }
-.sl-sum-card.c3 .sl-num { font-size: 1.1rem; word-break: break-all; }
-.sl-sum-card .sl-lbl {
-    font-size: 0.75rem;
-    color: #6c757d;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 3px;
-}
+    .sl-sum-card .sl-num {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 800;
+        line-height: 1;
+        color: #1a202c;
+    }
+    .sl-sum-card.c2 .sl-num { font-size: 1.25rem; }
+    .sl-sum-card.c3 .sl-num { font-size: 1.1rem; word-break: break-all; }
+    .sl-sum-card .sl-lbl {
+        font-size: 0.75rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-top: 3px;
+    }
 
-/* ── Tab panels ── */
-.sl-tab-panel { display: none; }
-.sl-tab-panel.active { display: block; }
+    /* ── Tab panels ── */
+    .sl-tab-panel { display: none; }
+    .sl-tab-panel.active { display: block; }
 
-/* ── Sales table ── */
-.sl-table { width: 100%; border-collapse: collapse; }
-.sl-table thead th {
-    background: #f8f9fb;
-    padding: 10px 14px;
-    font-size: 0.74rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #64748b;
-    border-bottom: 2px solid #e2e8f0;
-    white-space: nowrap;
-}
-.sl-table tbody td {
-    padding: 10px 14px;
-    font-size: 0.87rem;
-    color: #374151;
-    border-bottom: 1px solid #f0f2f5;
-    vertical-align: middle;
-}
-.sl-table tbody tr:hover { background: #fffbeb; }
+    /* ── Sales table ── */
+    .sl-table { width: 100%; border-collapse: collapse; }
+    .sl-table thead th {
+        background: #f8f9fb;
+        padding: 10px 14px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+        white-space: nowrap;
+    }
+    .sl-table tbody td {
+        padding: 10px 14px;
+        font-size: 0.87rem;
+        color: #374151;
+        border-bottom: 1px solid #f0f2f5;
+        vertical-align: middle;
+    }
+    .sl-table tbody tr:hover { background: #fffbeb; }
 
-/* ── Reason badges ── */
-.bdg-commercial   { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
-.bdg-emergency    { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
-.bdg-overstocking { display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
-.bdg-lowperf      { display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;color:#374151;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
-.bdg-other        { display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#166534;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    /* ── Reason badges ── */
+    .bdg-commercial   { display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    .bdg-emergency    { display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    .bdg-overstocking { display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    .bdg-lowperf      { display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;color:#374151;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
+    .bdg-other        { display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#166534;padding:2px 9px;border-radius:20px;font-size:0.72rem;font-weight:700; }
 
-/* ── Group cards (By Category / By Reason) ── */
-.sl-group-card { border: 2px solid #fde68a; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
-.sl-group-header {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: white; padding: 12px 18px;
-    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-}
-.sl-group-header .sgh-name { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-.sl-group-header .sgh-meta { display: flex; gap: 16px; font-size: 0.8rem; opacity: 0.9; }
-.sl-group-header .sgh-meta span { display: flex; align-items: center; gap: 4px; }
+    /* ── Group cards (By Category / By Reason) ── */
+    .sl-group-card { border: 2px solid #fde68a; border-radius: 10px; overflow: hidden; margin-bottom: 16px; }
+    .sl-group-header {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white; padding: 12px 18px;
+        display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    }
+    .sl-group-header .sgh-name { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .sl-group-header .sgh-meta { display: flex; gap: 16px; font-size: 0.8rem; opacity: 0.9; }
+    .sl-group-header .sgh-meta span { display: flex; align-items: center; gap: 4px; }
 
-/* ── Search box ── */
-.sl-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
-.sl-search-wrap .si { position: absolute; left: 14px; color: #94a3b8; pointer-events: none; }
-.sl-search-input {
-    width: 100%; padding: 12px 44px 12px 42px;
-    border: 2px solid #e2e8f0; border-radius: 10px;
-    font-size: 0.95rem; color: #1a202c; outline: none;
-    transition: border-color 0.2s; background: #fafcff;
-}
-.sl-search-input:focus { border-color: #f59e0b; background: white; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
-.sl-clear-btn { position: absolute; right: 12px; background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 1.1rem; padding: 0; transition: color 0.2s; }
-.sl-clear-btn:hover { color: #64748b; }
+    /* ── Search box ── */
+    .sl-search-wrap { position: relative; display: flex; align-items: center; margin-bottom: 16px; }
+    .sl-search-wrap .si { position: absolute; left: 14px; color: #94a3b8; pointer-events: none; }
+    .sl-search-input {
+        width: 100%; padding: 12px 44px 12px 42px;
+        border: 2px solid #e2e8f0; border-radius: 10px;
+        font-size: 0.95rem; color: #1a202c; outline: none;
+        transition: border-color 0.2s; background: #fafcff;
+    }
+    .sl-search-input:focus { border-color: #f59e0b; background: white; box-shadow: 0 0 0 3px rgba(245,158,11,0.1); }
+    .sl-clear-btn { position: absolute; right: 12px; background: none; border: none; color: #cbd5e0; cursor: pointer; font-size: 1.1rem; padding: 0; transition: color 0.2s; }
+    .sl-clear-btn:hover { color: #64748b; }
 
-/* ── Empty state ── */
-.sl-empty { text-align: center; padding: 48px 20px; color: #94a3b8; }
-.sl-empty i { font-size: 2.8rem; display: block; margin-bottom: 12px; }
+    /* ── Empty state ── */
+    .sl-empty { text-align: center; padding: 48px 20px; color: #94a3b8; }
+    .sl-empty i { font-size: 2.8rem; display: block; margin-bottom: 12px; }
 
-/* ── Revenue total row ── */
-.sl-total-row td { font-weight: 700; background: #fffbeb; border-top: 2px solid #fde68a; }
+    /* ── Revenue total row ── */
+    .sl-total-row td { font-weight: 700; background: #fffbeb; border-top: 2px solid #fde68a; }
 
-/* ── Responsive ── */
-@media (max-width: 768px) {
-    #sales-report-view { padding: 20px 15px; }
-    .sl-summary-row { grid-template-columns: 1fr 1fr; }
-    .sl-table { font-size: 0.8rem; }
-}
-@media (max-width: 480px) {
-    .sl-summary-row { grid-template-columns: 1fr; }
-}
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        #sales-report-view { padding: 20px 15px; }
+        .sl-summary-row { grid-template-columns: 1fr 1fr; }
+        .sl-table { font-size: 0.8rem; }
+    }
+    @media (max-width: 480px) {
+        .sl-summary-row { grid-template-columns: 1fr; }
+    }
 </style>
 
 
@@ -266,53 +275,56 @@
             <div th:if="${salesList != null and !salesList.empty}" class="table-responsive">
                 <table class="sl-table" id="slTableAll">
                     <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Animal Tag</th>
-                            <th>Category</th>
-                            <th>Sale Date</th>
-                            <th>Price (RWF)</th>
-                            <th>Location</th>
-                            <th>Reason</th>
-                        </tr>
+                    <tr>
+                        <th>#</th>
+                        <th>Animal Tag</th>
+                        <th>Category</th>
+                        <th>Sale Date</th>
+                        <th>Price (RWF)</th>
+                        <th>Buyer</th>          <!-- ✅ FIX: Added Buyer column -->
+                        <th>Location</th>
+                        <th>Reason</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="s, i : ${salesList}">
-                            <td th:text="${i.count}">1</td>
-                            <td>
-                                <span class="bdg-commercial"><i class="bi bi-bag-check-fill"></i></span>
-                                <strong class="ms-1" th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}">TAG-001</strong>
-                            </td>
-                            <td>
+                    <tr th:each="s, i : ${salesList}">
+                        <td th:text="${i.count}">1</td>
+                        <td>
+                            <span class="bdg-commercial"><i class="bi bi-bag-check-fill"></i></span>
+                            <strong class="ms-1" th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}">TAG-001</strong>
+                        </td>
+                        <td>
                                 <span th:if="${s.livestock?.livestockCategory != null}"
                                       class="badge bg-info text-white"
                                       th:text="${s.livestock.livestockCategory.name}">Cat</span>
-                                <span th:if="${s.livestock?.livestockCategory == null}" class="text-muted">—</span>
-                            </td>
-                            <td th:text="${s.saleDate != null ? #temporals.format(s.saleDate,'dd-MM-yyyy') : '—'}">—</td>
-                            <td>
+                            <span th:if="${s.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                        </td>
+                        <td th:text="${s.saleDate != null ? #temporals.format(s.saleDate,'dd-MM-yyyy') : '—'}">—</td>
+                        <td>
                                 <span th:if="${s.salePrice != null}"
                                       class="fw-semibold text-success"
                                       th:text="${#numbers.formatDecimal(s.salePrice, 1, 'COMMA', 0, 'POINT')}">—</span>
-                                <span th:if="${s.salePrice == null}" class="text-muted">—</span>
-                            </td>
-                            <td th:text="${s.saleLocation != null ? s.saleLocation : '—'}">—</td>
-                            <td>
-                                <span th:if="${s.saleReason == 'COMMERCIAL'}"    class="bdg-commercial"><i class="bi bi-shop"></i> Commercial</span>
-                                <span th:if="${s.saleReason == 'EMERGENCY'}"     class="bdg-emergency"><i class="bi bi-exclamation-triangle-fill"></i> Emergency</span>
-                                <span th:if="${s.saleReason == 'OVERSTOCKING'}"  class="bdg-overstocking"><i class="bi bi-layers-fill"></i> Overstocking</span>
-                                <span th:if="${s.saleReason == 'LOW_PERFORMANCE'}" class="bdg-lowperf"><i class="bi bi-graph-down"></i> Low Performance</span>
-                                <span th:if="${s.saleReason == 'OTHER'}"         class="bdg-other"><i class="bi bi-three-dots"></i> Other</span>
-                                <span th:if="${s.saleReason == null}"            class="text-muted">—</span>
-                            </td>
-                        </tr>
-                        <!-- Revenue total row -->
-                        <tr class="sl-total-row">
-                            <td colspan="4" class="text-end">Total Revenue:</td>
-                            <td class="text-success"
-                                th:text="${totalSaleRevenue != null ? #numbers.formatDecimal(totalSaleRevenue, 1, 'COMMA', 0, 'POINT') + ' RWF' : '0 RWF'}">0 RWF</td>
-                            <td colspan="2"></td>
-                        </tr>
+                            <span th:if="${s.salePrice == null}" class="text-muted">—</span>
+                        </td>
+                        <!-- ✅ FIX: Buyer column now displayed -->
+                        <td th:text="${s.buyerName != null ? s.buyerName : '—'}">—</td>
+                        <td th:text="${s.saleLocation != null ? s.saleLocation : '—'}">—</td>
+                        <td>
+                            <span th:if="${s.saleReason == 'COMMERCIAL'}"    class="bdg-commercial"><i class="bi bi-shop"></i> Commercial</span>
+                            <span th:if="${s.saleReason == 'EMERGENCY'}"     class="bdg-emergency"><i class="bi bi-exclamation-triangle-fill"></i> Emergency</span>
+                            <span th:if="${s.saleReason == 'OVERSTOCKING'}"  class="bdg-overstocking"><i class="bi bi-layers-fill"></i> Overstocking</span>
+                            <span th:if="${s.saleReason == 'LOW_PERFORMANCE'}" class="bdg-lowperf"><i class="bi bi-graph-down"></i> Low Performance</span>
+                            <span th:if="${s.saleReason == 'OTHER'}"         class="bdg-other"><i class="bi bi-three-dots"></i> Other</span>
+                            <span th:if="${s.saleReason == null}"            class="text-muted">—</span>
+                        </td>
+                    </tr>
+                    <!-- Revenue total row -->
+                    <tr class="sl-total-row">
+                        <td colspan="4" class="text-end">Total Revenue:</td>
+                        <td class="text-success"
+                            th:text="${totalSaleRevenue != null ? #numbers.formatDecimal(totalSaleRevenue, 1, 'COMMA', 0, 'POINT') + ' RWF' : '0 RWF'}">0 RWF</td>
+                        <td colspan="3"></td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -379,288 +391,292 @@
 ════════════════════════════════════════════════════════════════════ -->
 <script id="SALES_JS_COPY_THIS_BLOCK">
 
-/* ── Show sales report view ── */
-function showSalesReport(event, el) {
-    event.preventDefault();
-    showView('sales-report');
-    document.querySelectorAll('.submenu-item').forEach(function(i) { i.classList.remove('active-item'); });
-    el.classList.add('active-item');
-    slSwitchTab('all', document.querySelector('#sales-report-view .report-tab'));
-    closeSidebarOnMobile();
-}
-
-/* ── Extend showView to handle sales-report ── */
-(function () {
-    var _orig = showView;
-    showView = function (which) {
-        document.getElementById('dashboard-view').style.display         = (which === 'dashboard')         ? 'block' : 'none';
-        document.getElementById('report-view').style.display            = (which === 'report')            ? 'block' : 'none';
-        document.getElementById('treatment-report-view') &&
-            (document.getElementById('treatment-report-view').style.display  = (which === 'treatment-report')  ? 'block' : 'none');
-        document.getElementById('abortion-report-view') &&
-            (document.getElementById('abortion-report-view').style.display   = (which === 'abortion-report')   ? 'block' : 'none');
-        document.getElementById('sales-report-view').style.display      = (which === 'sales-report')      ? 'block' : 'none';
-        document.getElementById('iframe-view').style.display            = (which === 'iframe')            ? 'block' : 'none';
-    };
-})();
-
-/* ── Switch tabs ── */
-function slSwitchTab(tab, btn) {
-    document.querySelectorAll('.sl-tab-panel').forEach(function(p) { p.classList.remove('active'); });
-    document.querySelectorAll('#sales-report-view .report-tab').forEach(function(b) { b.classList.remove('active'); });
-    var panel = document.getElementById('sl-tab-' + tab);
-    if (panel) panel.classList.add('active');
-    if (btn)   btn.classList.add('active');
-    var labels = {
-        all:      'Showing all sale records',
-        search:   'Search by animal tag',
-        category: 'Grouped by category',
-        reason:   'Grouped by reason'
-    };
-    var infoEl = document.getElementById('slExportInfo');
-    if (infoEl) infoEl.textContent = labels[tab] || '';
-    if (tab === 'category') slBuildCategoryGroups();
-    if (tab === 'reason')   slBuildReasonGroups();
-}
-
-/* ── Search by tag ── */
-function slFilterByTag(query) {
-    var resultsDiv = document.getElementById('slSearchResults');
-    var infoEl     = document.getElementById('slExportInfo');
-    query = (query || '').trim().toUpperCase();
-    if (!query) {
-        resultsDiv.innerHTML = '<div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its sale history</p></div>';
-        if (infoEl) infoEl.textContent = 'Search by animal tag';
-        return;
+    /* ── Show sales report view ── */
+    function showSalesReport(event, el) {
+        event.preventDefault();
+        showView('sales-report');
+        document.querySelectorAll('.submenu-item').forEach(function(i) { i.classList.remove('active-item'); });
+        el.classList.add('active-item');
+        slSwitchTab('all', document.querySelector('#sales-report-view .report-tab'));
+        closeSidebarOnMobile();
     }
-    var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
-    var matches = [];
-    rows.forEach(function(row) {
-        var tagEl = row.querySelector('td:nth-child(2) strong');
-        if (tagEl && tagEl.textContent.toUpperCase().includes(query)) matches.push(row);
-    });
-    if (matches.length === 0) {
-        resultsDiv.innerHTML = '<div class="no-results-msg"><i class="bi bi-search me-2"></i>No sale records found for tag <strong>' + query + '</strong></div>';
-        if (infoEl) infoEl.textContent = 'No results for: ' + query;
-        return;
+
+    /* ── Extend showView to handle sales-report ── */
+    (function () {
+        var _orig = showView;
+        showView = function (which) {
+            document.getElementById('dashboard-view').style.display         = (which === 'dashboard')         ? 'block' : 'none';
+            document.getElementById('report-view').style.display            = (which === 'report')            ? 'block' : 'none';
+            document.getElementById('treatment-report-view') &&
+                (document.getElementById('treatment-report-view').style.display  = (which === 'treatment-report')  ? 'block' : 'none');
+            document.getElementById('abortion-report-view') &&
+                (document.getElementById('abortion-report-view').style.display   = (which === 'abortion-report')   ? 'block' : 'none');
+            document.getElementById('sales-report-view').style.display      = (which === 'sales-report')      ? 'block' : 'none';
+            document.getElementById('iframe-view').style.display            = (which === 'iframe')            ? 'block' : 'none';
+        };
+    })();
+
+    /* ── Switch tabs ── */
+    function slSwitchTab(tab, btn) {
+        document.querySelectorAll('.sl-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+        document.querySelectorAll('#sales-report-view .report-tab').forEach(function(b) { b.classList.remove('active'); });
+        var panel = document.getElementById('sl-tab-' + tab);
+        if (panel) panel.classList.add('active');
+        if (btn)   btn.classList.add('active');
+        var labels = {
+            all:      'Showing all sale records',
+            search:   'Search by animal tag',
+            category: 'Grouped by category',
+            reason:   'Grouped by reason'
+        };
+        var infoEl = document.getElementById('slExportInfo');
+        if (infoEl) infoEl.textContent = labels[tab] || '';
+        if (tab === 'category') slBuildCategoryGroups();
+        if (tab === 'reason')   slBuildReasonGroups();
     }
-    /* calc subtotal for matched rows */
-    var subtotal = 0;
-    matches.forEach(function(row) {
-        var priceCell = row.querySelectorAll('td')[4];
-        if (priceCell) {
-            var raw = priceCell.textContent.replace(/[^\d.]/g, '');
-            var num = parseFloat(raw);
-            if (!isNaN(num)) subtotal += num;
+
+    /* ── Search by tag ── */
+    function slFilterByTag(query) {
+        var resultsDiv = document.getElementById('slSearchResults');
+        var infoEl     = document.getElementById('slExportInfo');
+        query = (query || '').trim().toUpperCase();
+        if (!query) {
+            resultsDiv.innerHTML = '<div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its sale history</p></div>';
+            if (infoEl) infoEl.textContent = 'Search by animal tag';
+            return;
         }
-    });
-    if (infoEl) infoEl.textContent = matches.length + ' record(s) for: ' + query;
-    var html = '<table class="sl-table"><thead><tr>'
-        + '<th>#</th><th>Animal Tag</th><th>Category</th><th>Sale Date</th>'
-        + '<th>Price (RWF)</th><th>Location</th><th>Reason</th>'
-        + '</tr></thead><tbody>';
-    matches.forEach(function(row, idx) {
-        var cells = row.querySelectorAll('td');
-        html += '<tr><td>' + (idx + 1) + '</td>';
-        for (var i = 1; i < cells.length; i++) html += '<td>' + cells[i].innerHTML + '</td>';
-        html += '</tr>';
-    });
-    html += '<tr class="sl-total-row"><td colspan="4" class="text-end">Subtotal:</td>'
-          + '<td class="text-success">' + subtotal.toLocaleString() + ' RWF</td><td colspan="2"></td></tr>';
-    html += '</tbody></table>';
-    resultsDiv.innerHTML = html;
-}
-
-function slClearSearch() {
-    document.getElementById('slSearchInput').value = '';
-    slFilterByTag('');
-}
-
-/* ── Helper: reason label ── */
-function slReasonLabel(reason) {
-    var map = {
-        'COMMERCIAL':       '<span class="bdg-commercial"><i class="bi bi-shop"></i> Commercial</span>',
-        'EMERGENCY':        '<span class="bdg-emergency"><i class="bi bi-exclamation-triangle-fill"></i> Emergency</span>',
-        'OVERSTOCKING':     '<span class="bdg-overstocking"><i class="bi bi-layers-fill"></i> Overstocking</span>',
-        'LOW_PERFORMANCE':  '<span class="bdg-lowperf"><i class="bi bi-graph-down"></i> Low Performance</span>',
-        'OTHER':            '<span class="bdg-other"><i class="bi bi-three-dots"></i> Other</span>'
-    };
-    return map[reason] || ('<span class="text-muted">' + (reason || '—') + '</span>');
-}
-
-/* ── Helper: build group HTML ── */
-function slBuildGroupHTML(groups, keys, icon) {
-    var html = '';
-    keys.forEach(function(key) {
-        var recs = groups[key];
+        var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
+        var matches = [];
+        rows.forEach(function(row) {
+            var tagEl = row.querySelector('td:nth-child(2) strong');
+            if (tagEl && tagEl.textContent.toUpperCase().includes(query)) matches.push(row);
+        });
+        if (matches.length === 0) {
+            resultsDiv.innerHTML = '<div class="no-results-msg"><i class="bi bi-search me-2"></i>No sale records found for tag <strong>' + query + '</strong></div>';
+            if (infoEl) infoEl.textContent = 'No results for: ' + query;
+            return;
+        }
         var subtotal = 0;
-        recs.forEach(function(row) {
-            var c = row.querySelectorAll('td');
-            if (c[4]) {
-                var raw = c[4].textContent.replace(/[^\d.]/g, '');
+        matches.forEach(function(row) {
+            var priceCell = row.querySelectorAll('td')[4];
+            if (priceCell) {
+                var raw = priceCell.textContent.replace(/[^\d.]/g, '');
                 var num = parseFloat(raw);
                 if (!isNaN(num)) subtotal += num;
             }
         });
-        html += '<div class="sl-group-card"><div class="sl-group-header">'
-            + '<div class="sgh-name"><i class="bi bi-' + icon + '"></i> ' + key + '</div>'
-            + '<div class="sgh-meta">'
-            + '<span><i class="bi bi-list-check"></i> ' + recs.length + ' sale' + (recs.length !== 1 ? 's' : '') + '</span>'
-            + '<span><i class="bi bi-cash-stack"></i> ' + subtotal.toLocaleString() + ' RWF</span>'
-            + '</div></div>'
-            + '<div class="table-responsive"><table class="sl-table"><thead><tr>'
-            + '<th>#</th><th>Animal Tag</th><th>Sale Date</th><th>Price (RWF)</th><th>Location</th><th>Reason</th>'
+        if (infoEl) infoEl.textContent = matches.length + ' record(s) for: ' + query;
+        // ✅ FIX: Added Buyer column to search results table
+        var html = '<table class="sl-table"><thead><tr>'
+            + '<th>#</th><th>Animal Tag</th><th>Category</th><th>Sale Date</th>'
+            + '<th>Price (RWF)</th><th>Buyer</th><th>Location</th><th>Reason</th>'
             + '</tr></thead><tbody>';
-        recs.forEach(function(row, idx) {
-            var c = row.querySelectorAll('td');
-            html += '<tr>'
-                + '<td>' + (idx + 1) + '</td>'
-                + '<td>' + (c[1] ? c[1].innerHTML : '—') + '</td>'
-                + '<td>' + (c[3] ? c[3].textContent.trim() : '—') + '</td>'
-                + '<td class="fw-semibold text-success">' + (c[4] ? c[4].textContent.trim() : '—') + '</td>'
-                + '<td>' + (c[5] ? c[5].textContent.trim() : '—') + '</td>'
-                + '<td>' + (c[6] ? c[6].innerHTML : '—') + '</td>'
-                + '</tr>';
+        matches.forEach(function(row, idx) {
+            var cells = row.querySelectorAll('td');
+            html += '<tr><td>' + (idx + 1) + '</td>';
+            for (var i = 1; i < cells.length; i++) html += '<td>' + cells[i].innerHTML + '</td>';
+            html += '</tr>';
         });
-        html += '<tr class="sl-total-row"><td colspan="3" class="text-end">Subtotal:</td>'
-              + '<td class="text-success" colspan="3">' + subtotal.toLocaleString() + ' RWF</td></tr>';
-        html += '</tbody></table></div></div>';
-    });
-    return html;
-}
-
-/* ── Build category groups ── */
-function slBuildCategoryGroups() {
-    var container = document.getElementById('slCatGroupContainer');
-    var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
-    var groups = {};
-    rows.forEach(function(row) {
-        var cells = row.querySelectorAll('td');
-        if (!cells[2]) return;
-        var cat = cells[2].textContent.trim() || 'Uncategorised';
-        if (!groups[cat]) groups[cat] = [];
-        groups[cat].push(row);
-    });
-    var keys = Object.keys(groups);
-    if (keys.length === 0) {
-        container.innerHTML = '<div class="sl-empty"><i class="bi bi-tag"></i><p>No category data available.</p></div>';
-        return;
+        html += '<tr class="sl-total-row"><td colspan="4" class="text-end">Subtotal:</td>'
+              + '<td class="text-success">' + subtotal.toLocaleString() + ' RWF</td><td colspan="3"></td></tr>';
+        html += '</tbody></table>';
+        resultsDiv.innerHTML = html;
     }
-    keys.sort(function(a, b) { return groups[b].length - groups[a].length; });
-    container.innerHTML = slBuildGroupHTML(groups, keys, 'tag-fill');
-}
 
-/* ── Build reason groups ── */
-function slBuildReasonGroups() {
-    var container = document.getElementById('slReasonGroupContainer');
-    var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
-    var groups = {};
-    rows.forEach(function(row) {
-        var cells = row.querySelectorAll('td');
-        if (!cells[6]) return;
-        var reason = cells[6].textContent.trim() || 'Unspecified';
-        if (!groups[reason]) groups[reason] = [];
-        groups[reason].push(row);
-    });
-    var keys = Object.keys(groups);
-    if (keys.length === 0) {
-        container.innerHTML = '<div class="sl-empty"><i class="bi bi-funnel"></i><p>No reason data available.</p></div>';
-        return;
+    function slClearSearch() {
+        document.getElementById('slSearchInput').value = '';
+        slFilterByTag('');
     }
-    keys.sort(function(a, b) { return groups[b].length - groups[a].length; });
-    container.innerHTML = slBuildGroupHTML(groups, keys, 'funnel-fill');
-}
 
-/* ══ EXPORT FUNCTIONS ══════════════════════════════════════════ */
-function slGetActiveTab() {
-    var tabs = ['all','search','category','reason'];
-    for (var i = 0; i < tabs.length; i++) {
-        var p = document.getElementById('sl-tab-' + tabs[i]);
-        if (p && p.classList.contains('active')) return tabs[i];
+    /* ── Helper: reason label ── */
+    function slReasonLabel(reason) {
+        var map = {
+            'COMMERCIAL':       '<span class="bdg-commercial"><i class="bi bi-shop"></i> Commercial</span>',
+            'EMERGENCY':        '<span class="bdg-emergency"><i class="bi bi-exclamation-triangle-fill"></i> Emergency</span>',
+            'OVERSTOCKING':     '<span class="bdg-overstocking"><i class="bi bi-layers-fill"></i> Overstocking</span>',
+            'LOW_PERFORMANCE':  '<span class="bdg-lowperf"><i class="bi bi-graph-down"></i> Low Performance</span>',
+            'OTHER':            '<span class="bdg-other"><i class="bi bi-three-dots"></i> Other</span>'
+        };
+        return map[reason] || ('<span class="text-muted">' + (reason || '—') + '</span>');
     }
-    return 'all';
-}
 
-function slFormatDate() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-}
-
-function slDownloadCSV(csv, filename) {
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-
-function slGetTableCSV(tableId, title) {
-    var table = document.getElementById(tableId);
-    if (!table) return null;
-    var csv = 'Animal Production System - ' + title + '\nGenerated: ' + new Date().toLocaleString() + '\n\n';
-    var headers = [];
-    table.querySelectorAll('thead th').forEach(function(th) {
-        var t = th.textContent.trim(); if (t) headers.push('"' + t + '"');
-    });
-    csv += headers.join(',') + '\n';
-    table.querySelectorAll('tbody tr').forEach(function(row) {
-        var cols = [];
-        row.querySelectorAll('td').forEach(function(td) {
-            cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
-        });
-        if (cols.length) csv += cols.join(',') + '\n';
-    });
-    return csv;
-}
-
-function slExportExcel() {
-    var tab = slGetActiveTab(), csv = '', filename = '';
-    if (tab === 'all' || tab === 'category' || tab === 'reason') {
-        csv = slGetTableCSV('slTableAll', 'All Sales');
-        filename = 'All_Sales_' + slFormatDate() + '.csv';
-    } else if (tab === 'search') {
-        var query = (document.getElementById('slSearchInput').value || '').trim().toUpperCase();
-        var rows  = document.querySelectorAll('#slSearchResults tbody tr:not(.sl-total-row)');
-        csv = 'Animal Production System - Sale Search: ' + (query||'all') + '\nGenerated: ' + new Date().toLocaleString() + '\n\n'
-            + '"#","Animal Tag","Category","Sale Date","Price (RWF)","Location","Reason"\n';
-        rows.forEach(function(row, idx) {
-            var cols = ['"' + (idx+1) + '"'];
-            row.querySelectorAll('td').forEach(function(td, i) {
-                if (i > 0) cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+    /* ── Helper: build group HTML ── */
+    // ✅ FIX: Column indices updated — Buyer is now col 5 (index 5), Location 6, Reason 7
+    function slBuildGroupHTML(groups, keys, icon) {
+        var html = '';
+        keys.forEach(function(key) {
+            var recs = groups[key];
+            var subtotal = 0;
+            recs.forEach(function(row) {
+                var c = row.querySelectorAll('td');
+                if (c[4]) {
+                    var raw = c[4].textContent.replace(/[^\d.]/g, '');
+                    var num = parseFloat(raw);
+                    if (!isNaN(num)) subtotal += num;
+                }
             });
-            if (cols.length > 1) csv += cols.join(',') + '\n';
+            html += '<div class="sl-group-card"><div class="sl-group-header">'
+                + '<div class="sgh-name"><i class="bi bi-' + icon + '"></i> ' + key + '</div>'
+                + '<div class="sgh-meta">'
+                + '<span><i class="bi bi-list-check"></i> ' + recs.length + ' sale' + (recs.length !== 1 ? 's' : '') + '</span>'
+                + '<span><i class="bi bi-cash-stack"></i> ' + subtotal.toLocaleString() + ' RWF</span>'
+                + '</div></div>'
+                + '<div class="table-responsive"><table class="sl-table"><thead><tr>'
+                + '<th>#</th><th>Animal Tag</th><th>Sale Date</th><th>Price (RWF)</th><th>Buyer</th><th>Location</th><th>Reason</th>'
+                + '</tr></thead><tbody>';
+            recs.forEach(function(row, idx) {
+                var c = row.querySelectorAll('td');
+                html += '<tr>'
+                    + '<td>' + (idx + 1) + '</td>'
+                    + '<td>' + (c[1] ? c[1].innerHTML : '—') + '</td>'
+                    + '<td>' + (c[3] ? c[3].textContent.trim() : '—') + '</td>'
+                    + '<td class="fw-semibold text-success">' + (c[4] ? c[4].textContent.trim() : '—') + '</td>'
+                    + '<td>' + (c[5] ? c[5].textContent.trim() : '—') + '</td>'   /* Buyer */
+                    + '<td>' + (c[6] ? c[6].textContent.trim() : '—') + '</td>'   /* Location */
+                    + '<td>' + (c[7] ? c[7].innerHTML : '—') + '</td>'            /* Reason */
+                    + '</tr>';
+            });
+            html += '<tr class="sl-total-row"><td colspan="3" class="text-end">Subtotal:</td>'
+                  + '<td class="text-success" colspan="4">' + subtotal.toLocaleString() + ' RWF</td></tr>';
+            html += '</tbody></table></div></div>';
         });
-        filename = 'Sale_Search_' + (query||'all') + '_' + slFormatDate() + '.csv';
+        return html;
     }
-    if (csv) slDownloadCSV(csv, filename);
-}
 
-function slExportPDF() {
-    var tab   = slGetActiveTab();
-    var title = {all:'All Sales',search:'Sale Search',category:'Sales by Category',reason:'Sales by Reason'}[tab] || 'Sales Report';
-    var date  = new Date().toLocaleString();
-    var printArea = document.getElementById('print-area');
-    if (tab === 'search') {
-        var query   = document.getElementById('slSearchInput').value || '(all)';
-        var results = document.getElementById('slSearchResults').cloneNode(true);
-        results.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
-        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sale Search</h3><p>Search: ' + query + ' | Generated: ' + date + '</p></div>' + results.outerHTML;
-    } else if (tab === 'category') {
-        var cont = document.getElementById('slCatGroupContainer').cloneNode(true);
-        cont.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
-        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sales by Category</h3><p>Generated: ' + date + '</p></div>' + cont.outerHTML;
-    } else if (tab === 'reason') {
-        var cont2 = document.getElementById('slReasonGroupContainer').cloneNode(true);
-        cont2.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
-        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sales by Reason</h3><p>Generated: ' + date + '</p></div>' + cont2.outerHTML;
-    } else {
-        var table = document.getElementById('slTableAll');
-        if (!table) return;
-        var clone = table.cloneNode(true);
-        printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — ' + title + '</h3><p>Generated: ' + date + ' | Records: ' + clone.querySelectorAll('tbody tr:not(.sl-total-row)').length + '</p></div>' + clone.outerHTML;
+    /* ── Build category groups ── */
+    function slBuildCategoryGroups() {
+        var container = document.getElementById('slCatGroupContainer');
+        var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
+        var groups = {};
+        rows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (!cells[2]) return;
+            var cat = cells[2].textContent.trim() || 'Uncategorised';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(row);
+        });
+        var keys = Object.keys(groups);
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="sl-empty"><i class="bi bi-tag"></i><p>No category data available.</p></div>';
+            return;
+        }
+        keys.sort(function(a, b) { return groups[b].length - groups[a].length; });
+        container.innerHTML = slBuildGroupHTML(groups, keys, 'tag-fill');
     }
-    window.print();
-}
 
-function slPrint() { slExportPDF(); }
+    /* ── Build reason groups ── */
+    // ✅ FIX: Reason is now column index 7 (was 6 before Buyer was added)
+    function slBuildReasonGroups() {
+        var container = document.getElementById('slReasonGroupContainer');
+        var rows = document.querySelectorAll('#slTableAll tbody tr:not(.sl-total-row)');
+        var groups = {};
+        rows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (!cells[7]) return;
+            var reason = cells[7].textContent.trim() || 'Unspecified';
+            if (!groups[reason]) groups[reason] = [];
+            groups[reason].push(row);
+        });
+        var keys = Object.keys(groups);
+        if (keys.length === 0) {
+            container.innerHTML = '<div class="sl-empty"><i class="bi bi-funnel"></i><p>No reason data available.</p></div>';
+            return;
+        }
+        keys.sort(function(a, b) { return groups[b].length - groups[a].length; });
+        container.innerHTML = slBuildGroupHTML(groups, keys, 'funnel-fill');
+    }
+
+    /* ══ EXPORT FUNCTIONS ══════════════════════════════════════════ */
+    function slGetActiveTab() {
+        var tabs = ['all','search','category','reason'];
+        for (var i = 0; i < tabs.length; i++) {
+            var p = document.getElementById('sl-tab-' + tabs[i]);
+            if (p && p.classList.contains('active')) return tabs[i];
+        }
+        return 'all';
+    }
+
+    function slFormatDate() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function slDownloadCSV(csv, filename) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+        a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function slGetTableCSV(tableId, title) {
+        var table = document.getElementById(tableId);
+        if (!table) return null;
+        var csv = 'Animal Production System - ' + title + '\nGenerated: ' + new Date().toLocaleString() + '\n\n';
+        var headers = [];
+        table.querySelectorAll('thead th').forEach(function(th) {
+            var t = th.textContent.trim(); if (t) headers.push('"' + t + '"');
+        });
+        csv += headers.join(',') + '\n';
+        table.querySelectorAll('tbody tr').forEach(function(row) {
+            var cols = [];
+            row.querySelectorAll('td').forEach(function(td) {
+                cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+            });
+            if (cols.length) csv += cols.join(',') + '\n';
+        });
+        return csv;
+    }
+
+    function slExportExcel() {
+        var tab = slGetActiveTab(), csv = '', filename = '';
+        if (tab === 'all' || tab === 'category' || tab === 'reason') {
+            csv = slGetTableCSV('slTableAll', 'All Sales');
+            filename = 'All_Sales_' + slFormatDate() + '.csv';
+        } else if (tab === 'search') {
+            var query = (document.getElementById('slSearchInput').value || '').trim().toUpperCase();
+            var rows  = document.querySelectorAll('#slSearchResults tbody tr:not(.sl-total-row)');
+            // ✅ FIX: Buyer added to search export headers
+            csv = 'Animal Production System - Sale Search: ' + (query||'all') + '\nGenerated: ' + new Date().toLocaleString() + '\n\n'
+                + '"#","Animal Tag","Category","Sale Date","Price (RWF)","Buyer","Location","Reason"\n';
+            rows.forEach(function(row, idx) {
+                var cols = ['"' + (idx+1) + '"'];
+                row.querySelectorAll('td').forEach(function(td, i) {
+                    if (i > 0) cols.push('"' + td.textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+                });
+                if (cols.length > 1) csv += cols.join(',') + '\n';
+            });
+            filename = 'Sale_Search_' + (query||'all') + '_' + slFormatDate() + '.csv';
+        }
+        if (csv) slDownloadCSV(csv, filename);
+    }
+
+    function slExportPDF() {
+        var tab   = slGetActiveTab();
+        var title = {all:'All Sales',search:'Sale Search',category:'Sales by Category',reason:'Sales by Reason'}[tab] || 'Sales Report';
+        var date  = new Date().toLocaleString();
+        var printArea = document.getElementById('print-area');
+        if (tab === 'search') {
+            var query   = document.getElementById('slSearchInput').value || '(all)';
+            var results = document.getElementById('slSearchResults').cloneNode(true);
+            results.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
+            printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sale Search</h3><p>Search: ' + query + ' | Generated: ' + date + '</p></div>' + results.outerHTML;
+        } else if (tab === 'category') {
+            var cont = document.getElementById('slCatGroupContainer').cloneNode(true);
+            cont.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
+            printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sales by Category</h3><p>Generated: ' + date + '</p></div>' + cont.outerHTML;
+        } else if (tab === 'reason') {
+            var cont2 = document.getElementById('slReasonGroupContainer').cloneNode(true);
+            cont2.querySelectorAll('button, a.btn').forEach(function(el) { el.remove(); });
+            printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — Sales by Reason</h3><p>Generated: ' + date + '</p></div>' + cont2.outerHTML;
+        } else {
+            var table = document.getElementById('slTableAll');
+            if (!table) return;
+            var clone = table.cloneNode(true);
+            printArea.innerHTML = '<div class="print-header"><h3>Animal Production System — ' + title + '</h3><p>Generated: ' + date + ' | Records: ' + clone.querySelectorAll('tbody tr:not(.sl-total-row)').length + '</p></div>' + clone.outerHTML;
+        }
+        window.print();
+    }
+
+    function slPrint() { slExportPDF(); }
 
 </script>

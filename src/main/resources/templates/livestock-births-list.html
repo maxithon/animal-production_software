@@ -10,13 +10,10 @@
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
         .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin: 0 24px 24px; }
         .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
-        .badge-gender-male { background-color: #0d6efd; }
-        .badge-gender-female { background-color: #d63384; }
     </style>
 </head>
 <body>
 
-<!-- Page Header -->
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h4 class="mb-1"><i class="bi bi-heart-pulse text-success me-2"></i>Livestock Births</h4>
@@ -34,7 +31,6 @@
 
 <div class="content-card p-0">
 
-    <!-- Alerts -->
     <div class="p-3">
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-0">
             <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
@@ -46,42 +42,64 @@
         </div>
     </div>
 
-    <!-- Table -->
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
             <tr>
                 <th style="width:40px">#</th>
-                <th>Mother Animal</th>
+                <th>Type</th>
+                <th>Mother / Source</th>
                 <th>Category</th>
                 <th>Birth Date</th>
                 <th>Offspring #</th>
                 <th>Offspring Gender</th>
                 <th>Weaning Date</th>
                 <th>Next Breeding</th>
-                <th>Children Linked</th>
+                <th>Animals Linked</th>
                 <th>Actions</th>
             </tr>
             </thead>
             <tbody>
+
             <tr th:if="${births == null or births.empty}">
-                <td colspan="10" class="text-center py-5 text-muted">
+                <td colspan="11" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                     No birth records yet.
                     <a href="/livestock/births/register">Record the first one</a>
                 </td>
             </tr>
+
             <tr th:each="b, i : ${births}">
                 <td class="text-muted" th:text="${(currentPage * pageSize) + i.count}"></td>
 
-                <!-- Mother tag -->
+                <!-- Type badge -->
                 <td>
-                    <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
-                    <div th:if="${b.livestock != null}">
-                        <a th:href="@{/livestock/births/family/{id}(id=${b.livestock.id})}"
-                           class="text-muted small">
-                            <i class="bi bi-diagram-3"></i> Family tree
-                        </a>
+                    <span th:if="${b.isExternalBirth}"
+                          class="badge bg-primary">
+                        <i class="bi bi-box-arrow-in-down me-1"></i>Purchased
+                    </span>
+                    <span th:if="${!b.isExternalBirth}"
+                          class="badge bg-success">
+                        <i class="bi bi-house-heart me-1"></i>Farm Birth
+                    </span>
+                </td>
+
+                <!-- Mother tag (farm) or source location (external) -->
+                <td>
+                    <div th:if="${!b.isExternalBirth}">
+                        <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
+                        <div th:if="${b.livestock != null}">
+                            <a th:href="@{/livestock/births/family/{id}(id=${b.livestock.id})}"
+                               class="text-muted small">
+                                <i class="bi bi-diagram-3"></i> Family tree
+                            </a>
+                        </div>
+                    </div>
+                    <div th:if="${b.isExternalBirth}">
+                        <span class="text-muted small">
+                            <i class="bi bi-geo-alt me-1"></i>
+                            <span th:text="${b.sourceLocation != null and !b.sourceLocation.isEmpty() ? b.sourceLocation : 'Source not recorded'}"></span>
+                        </span>
                     </div>
                 </td>
 
@@ -93,7 +111,7 @@
                     <span th:if="${b.livestock?.livestockCategory == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Birth date -->
+                <!-- Birth date (from livestock_births.birth_date — same for both types) -->
                 <td th:text="${#temporals.format(b.birthDate, 'dd-MM-yyyy')}"></td>
 
                 <!-- Offspring count -->
@@ -106,9 +124,9 @@
 
                 <!-- Offspring gender -->
                 <td>
-                    <span th:if="${b.offspringGender == 'MALE'}"   class="badge badge-gender-male text-white">Male</span>
-                    <span th:if="${b.offspringGender == 'FEMALE'}" class="badge badge-gender-female text-white">Female</span>
-                    <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">Mixed</span>
+                    <span th:if="${b.offspringGender == 'MALE'}"   class="badge bg-primary text-white">Male</span>
+                    <span th:if="${b.offspringGender == 'FEMALE'}" class="badge bg-danger text-white">Female</span>
+                    <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">—</span>
                 </td>
 
                 <!-- Weaning -->
@@ -125,7 +143,7 @@
                     <span th:if="${b.nextBreedingDate == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Children linked -->
+                <!-- Animals linked -->
                 <td>
                     <a th:href="@{/livestock/births/{id}/children(id=${b.id})}"
                        class="badge bg-success text-decoration-none">
@@ -152,7 +170,6 @@
                         </button>
                     </div>
 
-                    <!-- Delete confirmation modal -->
                     <div class="modal fade" th:id="'delModal' + ${b.id}" tabindex="-1">
                         <div class="modal-dialog modal-sm">
                             <div class="modal-content">
@@ -165,7 +182,7 @@
                                 <div class="modal-body small">
                                     Delete birth record dated
                                     <strong th:text="${#temporals.format(b.birthDate, 'dd-MM-yyyy')}"></strong>?
-                                    Linked children will be unlinked.
+                                    Linked animals will be unlinked.
                                 </div>
                                 <div class="modal-footer">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -186,9 +203,8 @@
     <div class="d-flex justify-content-between align-items-center p-3 border-top"
          th:if="${totalPages > 1}">
         <small class="text-muted">
-            Showing page <span th:text="${currentPage + 1}"></span>
-            of <span th:text="${totalPages}"></span>
-            (<span th:text="${totalItems}"></span> total records)
+            Page <span th:text="${currentPage + 1}"></span> of <span th:text="${totalPages}"></span>
+            (<span th:text="${totalItems}"></span> total)
         </small>
         <nav>
             <ul class="pagination pagination-sm mb-0">

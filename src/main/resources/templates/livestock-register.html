@@ -40,6 +40,8 @@
                 </div>
 
                 <form th:action="@{/livestock/register/new}" th:object="${livestock}" method="post" id="registerForm">
+                    <!--  hidden field to ensure pregnancy_status is never null -->
+                    <input type="hidden" th:field="*{pregnancyStatus}" th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
 
                     <!-- Photo Upload -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -63,10 +65,44 @@
                     <!-- Basic Information -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-info-circle"></i> Basic Information</h5>
                     <div class="row">
+                        <!-- PURPOSE: The placeholder shows the global last-tag hint on first load.     -->
+                        <!-- Once the user picks a category, fetchTagSuggestion() updates all three     -->
+                        <!-- hint elements below (lastTagInfo, suggestedTagPill, noTagsYet).            -->
+
                         <div class="col-md-4 mb-3">
                             <label for="tagNumber" class="form-label">Tag Number *</label>
-                            <input type="text" class="form-control" id="tagNumber" th:field="*{tagNumber}"
-                                   placeholder="e.g. TAG-001" required>
+                            <input type="text" class="form-control" id="tagNumber"
+                                   th:field="*{tagNumber}"
+                                   th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
+                                   required>
+
+                            <!-- Shows the last registered tag for this category (filled by JS) -->
+                            <!-- Hidden on load; JS shows it after a category is selected -->
+                            <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none;">
+                                <i class="bi bi-tag-fill"></i>
+                                Last in this category: <code id="lastTagValue"></code>
+                            </div>
+
+                            <!-- Clickable pill — click it to auto-fill the next suggested tag -->
+                            <!-- data-tag is set by JS; onclick reads it to avoid Thymeleaf security error -->
+                            <div id="suggestedTagPill"
+                                 style="display:none; margin-top:6px; align-items:center; gap:6px;
+                background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
+                border-radius:20px; font-size:0.8rem; font-weight:600;
+                color:#0369a1; cursor:pointer;"
+                                 onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
+                                 title="Click to use this tag number">
+                                <i class="bi bi-arrow-right-circle-fill"></i>
+                                Next available: <strong id="suggestedTagValue"></strong>
+                                <span style="font-size:0.72rem; opacity:0.75;">(click to use)</span>
+                            </div>
+
+                            <!-- Shown when the selected category has no animals registered yet -->
+                            <div id="noTagsYet"
+                                 style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
+                                <i class="bi bi-info-circle"></i>
+                                No animals registered in this category yet — enter your first tag number.
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="gender" class="form-label">Gender *</label>
@@ -145,8 +181,14 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="livestockCategoryIdValue" class="form-label">Livestock Category *</label>
+                            <!-- PURPOSE: Every time the user picks a different category, the browser       -->
+                            <!-- calls fetchTagSuggestion() which hits /livestock/api/suggest-tag and       -->
+                            <!-- updates the tag hints below the input to match THAT category's last tag.   -->
+
                             <select class="form-select" id="livestockCategoryIdValue"
-                                    th:field="*{livestockCategoryIdValue}" required>
+                                    th:field="*{livestockCategoryIdValue}"
+                                    onchange="fetchTagSuggestion(this.value)"
+                                    required>
                                 <option value="">Select category...</option>
                                 <option th:each="cat : ${categories}"
                                         th:value="${cat.id}"
@@ -383,6 +425,66 @@
             select.disabled = true;
         });
     }
+
+    <!-- PURPOSE: Handles the per-category tag suggestion logic entirely in the     -->
+<!-- browser. When the user changes the category dropdown, it calls the         -->
+<!-- /livestock/api/suggest-tag endpoint and updates the hint elements.         -->
+<!-- The DOMContentLoaded block re-triggers the suggestion if the form          -->
+<!-- re-renders after a validation error (category is already pre-selected).    -->
+
+    function fetchTagSuggestion(categoryId) {
+        const pill      = document.getElementById('suggestedTagPill');
+        const lastInfo  = document.getElementById('lastTagInfo');
+        const noTags    = document.getElementById('noTagsYet');
+        const tagInput  = document.getElementById('tagNumber');
+
+        // Hide all hint elements while the fetch is in progress
+        pill.style.display    = 'none';
+        lastInfo.style.display = 'none';
+        noTags.style.display  = 'none';
+
+        // Do nothing if no category is selected yet
+        if (!categoryId) return;
+
+        // Call the per-category API endpoint added in LivestockController.java
+        fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
+            .then(response => response.json())
+            .then(data => {
+
+                // Always show the last tag for context ("Last in this category: GTS001000005")
+                document.getElementById('lastTagValue').textContent = data.lastTag;
+                lastInfo.style.display = 'block';
+
+                if (data.suggestedTag) {
+                    // Category has existing animals — show the next tag pill
+                    document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
+                    // Store the value in data-tag so onclick can read it safely
+                    // (avoids Thymeleaf's security restriction on strings in event handlers)
+                    pill.setAttribute('data-tag', data.suggestedTag);
+                    pill.style.display = 'inline-flex';
+                    // Update the placeholder to match the expected format for this category
+                    tagInput.placeholder = data.suggestedTag;
+                } else {
+                    // Category has no animals yet — prompt user to enter the first tag
+                    noTags.style.display = 'block';
+                    tagInput.placeholder = 'Enter first tag for this category...';
+                }
+            })
+            .catch(() => {
+                // Silently fail — just reset the placeholder
+                tagInput.placeholder = 'Enter tag number...';
+            });
+    }
+
+    // When the page loads, check if a category is already selected.
+    // This happens when the form re-renders after a validation error —
+    // the category dropdown keeps its value but the JS hints need to be rebuilt.
+    document.addEventListener('DOMContentLoaded', function () {
+        const select = document.getElementById('livestockCategoryIdValue');
+        if (select && select.value) {
+            fetchTagSuggestion(select.value);
+        }
+    });
 
 </script>
 </body>

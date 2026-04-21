@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Sales Report - Detailed Analysis 💰</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; }
+        .stat-value { font-size: 2rem; font-weight: 800; }
+        .stat-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
+        .chart-container { position: relative; height: 300px; }
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h2><i class="bi bi-cash-stack text-warning"></i> Sales Report - Detailed Analysis 💰</h2>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                <i class="bi bi-printer"></i> Print
+            </button>
+            <button onclick="exportToCSV()" class="btn btn-outline-success me-2">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+            </button>
+            <a href="/livestock" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="card mb-4 no-print">
+        <div class="card-body">
+            <form method="get" action="/livestock/sales-report-detailed" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <option th:each="cat : ${allCategories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"
+                                th:selected="${selectedCategoryId != null and selectedCategoryId == cat.id}"></option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- METRICS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Sales</div>
+                <div class="stat-value text-primary" th:text="${totalSalesCount}">0</div>
+                <small class="text-muted">transactions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value text-success"
+                     th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Average Price</div>
+                <div class="stat-value text-info"
+                     th:text="${#numbers.formatDecimal(averageSalePrice, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-label">Reporting Period</div>
+                <div class="fw-semibold mt-2">
+                    <span th:text="${#temporals.format(fromDate, 'MMM dd, yyyy')}">Start</span>
+                    <span class="text-muted mx-1">→</span>
+                    <span th:text="${#temporals.format(toDate, 'MMM dd, yyyy')}">End</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+        <div class="card-header">
+            <h5>All Sales (<span th:text="${sales != null ? sales.size() : 0}">0</span> records)</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${sales == null or sales.empty}" class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3">No sales records found for the selected period.</p>
+            </div>
+
+            <div th:if="${sales != null and !sales.empty}" class="table-responsive">
+                <table class="table table-striped table-hover" id="salesTable">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Tag</th>
+                        <th>Category</th>
+                        <th>Gender</th>
+                        <th>Price (RWF)</th>
+                        <th>Buyer</th>
+                        <th>Reason</th>
+                        <th>Location</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="sale, iterStat : ${sales}">
+                        <td th:text="${iterStat.count}">1</td>
+                        <td th:text="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') : '—'}">2024-01-01</td>
+                        <td>
+                            <strong th:text="${sale.livestock?.tagNumber ?: 'N/A'}">TAG-001</strong>
+                        </td>
+                        <td>
+                            <span th:if="${sale.livestock?.livestockCategory != null}"
+                                  class="badge bg-info"
+                                  th:text="${sale.livestock.livestockCategory.name}">Category</span>
+                            <span th:if="${sale.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${sale.livestock?.gender == 'MALE'}" class="badge bg-primary">Male</span>
+                            <span th:if="${sale.livestock?.gender == 'FEMALE'}" class="badge bg-danger">Female</span>
+                            <span th:if="${sale.livestock?.gender == null}" class="text-muted">—</span>
+                        </td>
+                        <td class="fw-bold text-success"
+                            th:text="${sale.salePrice != null ? #numbers.formatDecimal(sale.salePrice, 0, 'COMMA', 0, 'POINT') : '0'}">0</td>
+
+
+                        <span th:if="${sale.buyer != null}"
+                              th:text="${sale.buyer.displayName}">Buyer</span>
+
+                        <span th:if="${sale.buyer == null}"
+                              class="text-muted">—</span>
+
+
+                        <span th:if="${sale.buyer == null or sale.buyer.buyerName == null or sale.buyer.buyerName.isEmpty()}"
+                              class="text-muted">—</span>
+
+                        <td>
+                            <span th:if="${sale.saleReason == 'COMMERCIAL'}"
+                                  class="badge bg-success">Commercial</span>
+                            <span th:if="${sale.saleReason == 'EMERGENCY'}"
+                                  class="badge bg-danger">Emergency</span>
+                            <span th:if="${sale.saleReason == 'OVERSTOCKING'}"
+                                  class="badge bg-warning text-dark">Overstocking</span>
+                            <span th:if="${sale.saleReason == 'LOW_PERFORMANCE'}"
+                                  class="badge bg-secondary">Low Performance</span>
+                            <span th:if="${sale.saleReason == 'OTHER'}"
+                                  class="badge bg-info">Other</span>
+                            <span th:if="${sale.saleReason == null}" class="text-muted">—</span>
+                        </td>
+                        <td th:text="${sale.saleLocation != null and !sale.saleLocation.isEmpty() ? sale.saleLocation : '—'}">Location</td>
+                    </tr>
+                    </tbody>
+                    <tfoot th:if="${sales != null and !sales.empty}">
+                    <tr class="table-secondary">
+                        <td colspan="5" class="text-end fw-bold">Total Revenue:</td>
+                        <td class="fw-bold text-success" colspan="4">
+                            <span th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</span>
+                        </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+    function exportToCSV() {
+        let csv = 'Sales Report\n';
+
+        csv += 'Period: ' + '[[${#temporals.format(fromDate, "yyyy-MM-dd")}]]' + ' to ' +
+               '[[${#temporals.format(toDate, "yyyy-MM-dd")}]]' + '\n';
+        csv += 'Total Sales: [[${totalSalesCount}]]\n';
+        csv += 'Total Revenue: [[${#numbers.formatDecimal(totalRevenue, 0, "COMMA", 0, "POINT")}]] RWF\n\n';
+
+        csv += '#,Date,Tag,Category,Gender,Price,Buyer,Reason,Location\n';
+
+        const rows = document.querySelectorAll("#salesTable tbody tr");
+
+        rows.forEach(row => {
+            const cols = row.querySelectorAll("td");
+            let data = [];
+            cols.forEach(col => {
+                let text = col.innerText.replace(/"/g, '""');
+                data.push('"' + text + '"');
+            });
+            csv += data.join(",") + "\n";
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "sales_report_" + new Date().toISOString().split('T')[0] + ".csv";
+        link.click();
+    }
+
+    /*]]>*/
+</script>
+
+</body>
+</html>

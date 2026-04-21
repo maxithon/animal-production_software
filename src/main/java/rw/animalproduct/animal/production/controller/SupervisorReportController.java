@@ -128,6 +128,7 @@ public class SupervisorReportController {
             long totalAnimals  = animals.size();
             long activeAnimals = animals.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
             long soldAnimals   = animals.stream().filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count();
+            long deadAnimals   = animals.stream().filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus())).count();
             long bornOnFarm    = animals.stream().filter(l -> l.getMother() != null).count();
 
             // Calculate current value (only for active animals)
@@ -149,8 +150,6 @@ public class SupervisorReportController {
             long sickCount      = sickList.size();
             long criticalCount  = sickList.stream().filter(s -> s.getStatus() != null && "CRITICAL".equals(s.getStatus().name())).count();
             long recoveredCount = sickList.stream().filter(s -> s.getStatus() != null && "RECOVERED".equals(s.getStatus().name())).count();
-            BigDecimal sickCost = sickList.stream().filter(s -> s.getTreatmentCost() != null)
-                    .map(LivestockSick::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // Treatment stats
             List<LivestockTreatment> treatments = animalIds.isEmpty()
@@ -160,12 +159,12 @@ public class SupervisorReportController {
             BigDecimal treatCost = treatments.stream().filter(t -> t.getTreatmentCost() != null)
                     .map(LivestockTreatment::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            BigDecimal totalCost = sickCost.add(treatCost);
+            BigDecimal totalCost = treatCost;
 
-            stats.add(new BeneficiaryStat(ben, totalAnimals, activeAnimals, soldAnimals, bornOnFarm,
+            stats.add(new BeneficiaryStat(ben, totalAnimals, activeAnimals, soldAnimals, deadAnimals, bornOnFarm,
                     currentValue, soldAmount,
                     sickCount, criticalCount, recoveredCount,
-                    treatCount, treatCost, sickCost, totalCost));
+                    treatCount, treatCost, totalCost));
         }
         return stats;
     }
@@ -182,10 +181,12 @@ public class SupervisorReportController {
 
     private List<LivestockTreatment> fetchTreatmentsByAnimalIds(List<UUID> animalIds) {
         try {
-            return treatmentRepository.findByLivestockIds(animalIds);
+            // ✅ FIXED: Use the direct livestock relationship
+            return treatmentRepository.findByLivestock_IdIn(animalIds);
         } catch (Exception e) {
             return treatmentRepository.findAll().stream()
-                    .filter(t -> t.getLivestock() != null && animalIds.contains(t.getLivestock().getId()))
+                    .filter(t -> t.getLivestock() != null
+                            && animalIds.contains(t.getLivestock().getId()))
                     .collect(Collectors.toList());
         }
     }
@@ -220,6 +221,7 @@ public class SupervisorReportController {
         long       totalAnimals    = benStats.stream().mapToLong(BeneficiaryStat::getTotalAnimals).sum();
         long       totalActive     = benStats.stream().mapToLong(BeneficiaryStat::getActiveAnimals).sum();
         long       totalSold       = benStats.stream().mapToLong(BeneficiaryStat::getSoldAnimals).sum();
+        long       totalDead       = benStats.stream().mapToLong(BeneficiaryStat::getDeadAnimals).sum();
         long       totalBorn       = benStats.stream().mapToLong(BeneficiaryStat::getBornOnFarm).sum();
         long       totalSick       = benStats.stream().mapToLong(BeneficiaryStat::getSickCount).sum();
         long       totalCritical   = benStats.stream().mapToLong(BeneficiaryStat::getCriticalCount).sum();
@@ -230,12 +232,9 @@ public class SupervisorReportController {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalSoldAmount   = benStats.stream().map(BeneficiaryStat::getSoldAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalSickCost     = benStats.stream().map(BeneficiaryStat::getSickCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalTreatCost    = benStats.stream().map(BeneficiaryStat::getTreatCost)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalCost         = benStats.stream().map(BeneficiaryStat::getTotalCost)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalCost         = totalTreatCost;
 
         Map<UUID, Long> benCount = buildBenCountBySupervisor();
 
@@ -252,6 +251,7 @@ public class SupervisorReportController {
         model.addAttribute("supTotalAnimals",      totalAnimals);
         model.addAttribute("supTotalActive",       totalActive);
         model.addAttribute("supTotalSold",         totalSold);
+        model.addAttribute("supTotalDead",         totalDead);
         model.addAttribute("supTotalSick",         totalSick);
         model.addAttribute("supTotalTreat",        totalTreat);
         model.addAttribute("supTotalBorn",         totalBorn);
@@ -263,6 +263,7 @@ public class SupervisorReportController {
         model.addAttribute("totalBenAnimals",      totalAnimals);
         model.addAttribute("totalBenActive",       totalActive);
         model.addAttribute("totalBenSold",         totalSold);
+        model.addAttribute("totalBenDead",         totalDead);
         model.addAttribute("totalBenBorn",         totalBorn);
         model.addAttribute("totalBenSick",         totalSick);
         model.addAttribute("totalBenCritical",     totalCritical);
@@ -270,7 +271,6 @@ public class SupervisorReportController {
         model.addAttribute("totalBenTreat",        totalTreat);
         model.addAttribute("totalBenCurrentValue", totalCurrentValue);
         model.addAttribute("totalBenSoldAmount",   totalSoldAmount);
-        model.addAttribute("totalBenSickCost",     totalSickCost);
         model.addAttribute("totalBenTreatCost",    totalTreatCost);
 
         return "supervisor-report";
@@ -316,18 +316,10 @@ public class SupervisorReportController {
         long sickCount      = sickList.size();
         long criticalCount  = sickList.stream().filter(s -> s.getStatus() != null && "CRITICAL".equals(s.getStatus().name())).count();
         long recoveredCount = sickList.stream().filter(s -> s.getStatus() != null && "RECOVERED".equals(s.getStatus().name())).count();
-        BigDecimal sickCost = sickList.stream().filter(s -> s.getTreatmentCost() != null)
-                .map(LivestockSick::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Map<UUID, List<LivestockSick>> animalSickMap = sickList.stream()
                 .filter(s -> s.getLivestock() != null)
                 .collect(Collectors.groupingBy(s -> s.getLivestock().getId()));
-
-        Map<UUID, BigDecimal> animalSickCostMap = sickList.stream()
-                .filter(s -> s.getLivestock() != null && s.getTreatmentCost() != null)
-                .collect(Collectors.groupingBy(
-                        s -> s.getLivestock().getId(),
-                        Collectors.reducing(BigDecimal.ZERO, LivestockSick::getTreatmentCost, BigDecimal::add)));
 
         // Treatments
         List<LivestockTreatment> treatments = animalIds.isEmpty()
@@ -337,16 +329,15 @@ public class SupervisorReportController {
                 .map(LivestockTreatment::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Map<UUID, Long> animalTreatCountMap = treatments.stream()
-                .filter(t -> t.getLivestock() != null)
+                .filter(t -> t.getLivestock() != null)  // ✅ CORRECT - direct reference
                 .collect(Collectors.groupingBy(t -> t.getLivestock().getId(), Collectors.counting()));
 
         Map<UUID, BigDecimal> animalTreatCostMap = treatments.stream()
-                .filter(t -> t.getLivestock() != null && t.getTreatmentCost() != null)
+                .filter(t -> t.getLivestock() != null && t.getTreatmentCost() != null)  // ✅ CORRECT
                 .collect(Collectors.groupingBy(
                         t -> t.getLivestock().getId(),
                         Collectors.reducing(BigDecimal.ZERO, LivestockTreatment::getTreatmentCost, BigDecimal::add)));
-
-        BigDecimal totalCost = sickCost.add(treatCost);
+        BigDecimal totalCost = treatCost;
 
         Map<UUID, Long> benCount = buildBenCountBySupervisor();
 
@@ -370,11 +361,9 @@ public class SupervisorReportController {
         model.addAttribute("recoveredCount",      recoveredCount);
         model.addAttribute("treatmentCount",      treatCount);
         model.addAttribute("treatCost",           treatCost);
-        model.addAttribute("sickCost",            sickCost);
         model.addAttribute("totalCost",           totalCost);
         model.addAttribute("animalSickMap",       animalSickMap);
         model.addAttribute("animalTreatCountMap", animalTreatCountMap);
-        model.addAttribute("animalSickCostMap",   animalSickCostMap);
         model.addAttribute("animalTreatCostMap",  animalTreatCostMap);
 
         return "supervisor-report";
@@ -419,13 +408,13 @@ public class SupervisorReportController {
             long totAnimals   = stats.stream().mapToLong(BeneficiaryStat::getTotalAnimals).sum();
             long totActive    = stats.stream().mapToLong(BeneficiaryStat::getActiveAnimals).sum();
             long totSold      = stats.stream().mapToLong(BeneficiaryStat::getSoldAnimals).sum();
+            long totDead      = stats.stream().mapToLong(BeneficiaryStat::getDeadAnimals).sum();
             long totSick      = stats.stream().mapToLong(BeneficiaryStat::getSickCount).sum();
             long totTreat     = stats.stream().mapToLong(BeneficiaryStat::getTreatCount).sum();
             BigDecimal totCurrentValue = stats.stream().map(BeneficiaryStat::getCurrentValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal totSoldAmount   = stats.stream().map(BeneficiaryStat::getSoldAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal totSickCost     = stats.stream().map(BeneficiaryStat::getSickCost).reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal totTreatCost    = stats.stream().map(BeneficiaryStat::getTreatCost).reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal totCost         = totSickCost.add(totTreatCost);
+            BigDecimal totCost         = totTreatCost;
 
             PdfPTable kpiTable = new PdfPTable(7);
             kpiTable.setWidthPercentage(100);
@@ -440,15 +429,14 @@ public class SupervisorReportController {
             doc.add(kpiTable);
 
             // Main table with all columns including current value and sold amount
-            PdfPTable table = new PdfPTable(new float[]{0.3f, 2.5f, 1.5f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 1.5f, 1.5f, 1.3f, 1.3f, 1.5f});
+            PdfPTable table = new PdfPTable(new float[]{0.3f, 2.5f, 1.5f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 0.8f, 1.5f, 1.5f, 1.3f, 1.5f});
             table.setWidthPercentage(100);
 
             String[] headers = {
                     "#", "Amazina / Name", "NID",
-                    "Amatungo", "Akiriho", "Yaguze", "Yavutswe", "Yarwaye", "Bikomeye",
+                    "Amatungo", "Akiriho", "Yaguze", "Yapfuye", "Yavutswe", "Yarwaye", "Bikomeye",
                     "Agaciro\n(Current RWF)",
                     "Yagurishijwe\n(Sold RWF)",
-                    "Igiciro Indwara\n(Sick RWF)",
                     "Igiciro Imiti\n(Treat RWF)",
                     "IGICIRO CYOSE\n(Total RWF)"
             };
@@ -471,12 +459,12 @@ public class SupervisorReportController {
                 addPdfCell(table, String.valueOf(s.getTotalAnimals()), cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(s.getActiveAnimals()), cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(s.getSoldAnimals()),  cellFont, rowBg, Element.ALIGN_CENTER);
+                addPdfCell(table, String.valueOf(s.getDeadAnimals()),  cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(s.getBornOnFarm()),   cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(s.getSickCount()),    cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(s.getCriticalCount()), cellFont, rowBg, Element.ALIGN_CENTER);
                 addPdfCell(table, formatRwf(s.getCurrentValue()),      cellFont, rowBg, Element.ALIGN_RIGHT);
                 addPdfCell(table, formatRwf(s.getSoldAmount()),        cellFont, rowBg, Element.ALIGN_RIGHT);
-                addPdfCell(table, formatRwf(s.getSickCost()),          cellFont, rowBg, Element.ALIGN_RIGHT);
                 addPdfCell(table, formatRwf(s.getTreatCost()),         cellFont, rowBg, Element.ALIGN_RIGHT);
                 addPdfCell(table, formatRwf(s.getTotalCost()),         cellFont, rowBg, Element.ALIGN_RIGHT);
                 alt = !alt;
@@ -491,12 +479,12 @@ public class SupervisorReportController {
             addPdfCell(table, String.valueOf(totAnimals), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, String.valueOf(totActive), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, String.valueOf(totSold), footerFont, footerBg, Element.ALIGN_CENTER);
+            addPdfCell(table, String.valueOf(totDead), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, String.valueOf(stats.stream().mapToLong(BeneficiaryStat::getBornOnFarm).sum()), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, String.valueOf(totSick), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, String.valueOf(stats.stream().mapToLong(BeneficiaryStat::getCriticalCount).sum()), footerFont, footerBg, Element.ALIGN_CENTER);
             addPdfCell(table, formatRwf(totCurrentValue), footerFont, footerBg, Element.ALIGN_RIGHT);
             addPdfCell(table, formatRwf(totSoldAmount), footerFont, footerBg, Element.ALIGN_RIGHT);
-            addPdfCell(table, formatRwf(totSickCost), footerFont, footerBg, Element.ALIGN_RIGHT);
             addPdfCell(table, formatRwf(totTreatCost), footerFont, footerBg, Element.ALIGN_RIGHT);
             addPdfCell(table, formatRwf(totCost), footerFont, footerBg, Element.ALIGN_RIGHT);
 
@@ -530,10 +518,6 @@ public class SupervisorReportController {
                 .collect(Collectors.groupingBy(s -> s.getLivestock().getId(), Collectors.counting()));
         Map<UUID, Long> treatPerAnimal = treatments.stream().filter(t -> t.getLivestock() != null)
                 .collect(Collectors.groupingBy(t -> t.getLivestock().getId(), Collectors.counting()));
-        Map<UUID, BigDecimal> sickCostPerAnimal = sickList.stream()
-                .filter(s -> s.getLivestock() != null && s.getTreatmentCost() != null)
-                .collect(Collectors.groupingBy(s -> s.getLivestock().getId(),
-                        Collectors.reducing(BigDecimal.ZERO, LivestockSick::getTreatmentCost, BigDecimal::add)));
         Map<UUID, BigDecimal> treatCostPerAnimal = treatments.stream()
                 .filter(t -> t.getLivestock() != null && t.getTreatmentCost() != null)
                 .collect(Collectors.groupingBy(t -> t.getLivestock().getId(),
@@ -541,6 +525,7 @@ public class SupervisorReportController {
 
         long activeCount = animals.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
         long soldCount   = animals.stream().filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count();
+        long deadCount   = animals.stream().filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus())).count();
 
         BigDecimal currentValue = animals.stream()
                 .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()) && l.getCurrentValue() != null)
@@ -552,8 +537,6 @@ public class SupervisorReportController {
                 .map(Livestock::getSoldPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal sickCost  = sickList.stream().filter(s -> s.getTreatmentCost() != null)
-                .map(LivestockSick::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal treatCost = treatments.stream().filter(t -> t.getTreatmentCost() != null)
                 .map(LivestockTreatment::getTreatmentCost).reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -606,20 +589,19 @@ public class SupervisorReportController {
             addKpiCell(kpi, "Amatungo yose / Total",       String.valueOf(animals.size()),    new Color(26, 95, 122));
             addKpiCell(kpi, "Akiriho / Available",         String.valueOf(activeCount),       new Color(16, 185, 129));
             addKpiCell(kpi, "Yagurishijwe / Sold",         String.valueOf(soldCount),         new Color(245, 158, 11));
+            addKpiCell(kpi, "Yapfuye / Dead",              String.valueOf(deadCount),         new Color(107, 114, 128));
             addKpiCell(kpi, "Agaciro / Current Value",     formatRwf(currentValue),          new Color(139, 92, 246));
             addKpiCell(kpi, "Yaguze / Sold Amount",        formatRwf(soldAmount),            new Color(34, 197, 94));
-            addKpiCell(kpi, "Igiciro Indwara / Sick",      formatRwf(sickCost),              new Color(220, 38, 38));
             addKpiCell(kpi, "Igiciro Imiti / Treatment",   formatRwf(treatCost),             new Color(239, 68, 68));
             doc.add(kpi);
 
             // Animals table
-            PdfPTable table = new PdfPTable(new float[]{0.4f, 1.8f, 0.8f, 1f, 1.5f, 0.6f, 0.6f, 1.3f, 1.3f, 1.5f, 1.5f});
+            PdfPTable table = new PdfPTable(new float[]{0.4f, 1.8f, 0.8f, 1f, 1.5f, 0.6f, 0.6f, 1.3f, 1.5f, 1.5f});
             table.setWidthPercentage(100);
 
             Color headerBg = new Color(26, 95, 122);
             for (String h : new String[]{"#", "Tag / Inomero", "Igitsina", "Imiterere",
                     "Ubwoko / Category", "Born", "Sick",
-                    "Igiciro Indwara\n(Sick RWF)",
                     "Igiciro Imiti\n(Treat RWF)",
                     "IGICIRO CYOSE\n(Total RWF)",
                     "Agaciro / Value\n(RWF)"}) {
@@ -634,7 +616,6 @@ public class SupervisorReportController {
             boolean alt = false;
             for (Livestock l : animals) {
                 Color bg = alt ? new Color(248, 249, 251) : Color.WHITE;
-                BigDecimal sc = sickCostPerAnimal.getOrDefault(l.getId(), BigDecimal.ZERO);
                 BigDecimal tc = treatCostPerAnimal.getOrDefault(l.getId(), BigDecimal.ZERO);
 
                 addPdfCell(table, String.valueOf(row++),              cellFont, bg, Element.ALIGN_CENTER);
@@ -644,9 +625,8 @@ public class SupervisorReportController {
                 addPdfCell(table, l.getLivestockCategory() != null ? l.getLivestockCategory().getName() : "—", cellFont, bg, Element.ALIGN_LEFT);
                 addPdfCell(table, l.getMother() != null ? "Yego" : "Oya", cellFont, bg, Element.ALIGN_CENTER);
                 addPdfCell(table, String.valueOf(sickPerAnimal.getOrDefault(l.getId(), 0L)), cellFont, bg, Element.ALIGN_CENTER);
-                addPdfCell(table, sc.compareTo(BigDecimal.ZERO) > 0 ? formatRwf(sc) : "—", cellFont, bg, Element.ALIGN_RIGHT);
                 addPdfCell(table, tc.compareTo(BigDecimal.ZERO) > 0 ? formatRwf(tc) : "—", cellFont, bg, Element.ALIGN_RIGHT);
-                addPdfCell(table, sc.add(tc).compareTo(BigDecimal.ZERO) > 0 ? formatRwf(sc.add(tc)) : "—", cellFont, bg, Element.ALIGN_RIGHT);
+                addPdfCell(table, tc.compareTo(BigDecimal.ZERO) > 0 ? formatRwf(tc) : "—", cellFont, bg, Element.ALIGN_RIGHT);
                 addPdfCell(table, l.getCurrentValue() != null ? formatRwf(l.getCurrentValue()) : "—", cellFont, bg, Element.ALIGN_RIGHT);
                 alt = !alt;
             }
@@ -655,9 +635,8 @@ public class SupervisorReportController {
 
             doc.add(new Paragraph("Agaciro k'amatungo akiriho / Current value of available animals:  " + formatRwf(currentValue), boldBlue));
             doc.add(new Paragraph("Amafaranga yo kugurisha / Sold amount:                           " + formatRwf(soldAmount), boldBlue));
-            doc.add(new Paragraph("Igiciro cy'imiti y'indwara / Sick care cost:                     " + formatRwf(sickCost), boldBlue));
             doc.add(new Paragraph("Igiciro cy'imiti / Treatment cost:                               " + formatRwf(treatCost), boldBlue));
-            doc.add(new Paragraph("IGICIRO CYOSE CY'IMITI / TOTAL TREATMENT COST:                   " + formatRwf(sickCost.add(treatCost)),
+            doc.add(new Paragraph("IGICIRO CYOSE CY'IMITI / TOTAL TREATMENT COST:                   " + formatRwf(treatCost),
                     new Font(Font.HELVETICA, 11, Font.BOLD, new Color(76, 29, 149))));
 
             addPdfFooter(doc, subFont);
@@ -723,12 +702,11 @@ public class SupervisorReportController {
             Row headerRow = sheet.createRow(r++);
             String[] cols = {
                     "#", "Amazina / Name", "NID", "Telefone / Phone",
-                    "Amatungo / Animals", "Akiriho / Available", "Yagurishijwe / Sold",
+                    "Amatungo / Animals", "Akiriho / Available", "Yagurishijwe / Sold", "Yapfuye / Dead",
                     "Yavutswe / Born on Farm", "Yarwaye / Sick", "Bikomeye / Critical",
                     "Yarakize / Recovered", "Imiti / Treatments",
                     "Agaciro / Current Value (RWF)",
                     "Yaguze / Sold Amount (RWF)",
-                    "Igiciro Indwara / Sick Cost (RWF)",
                     "Igiciro Imiti / Treat. Cost (RWF)",
                     "IGICIRO CYOSE / TOTAL (RWF)"
             };
@@ -750,14 +728,14 @@ public class SupervisorReportController {
                 setNumCell(row, 4,  s.getTotalAnimals(),             numStyle);
                 setNumCell(row, 5,  s.getActiveAnimals(),            numStyle);
                 setNumCell(row, 6,  s.getSoldAnimals(),              numStyle);
-                setNumCell(row, 7,  s.getBornOnFarm(),               numStyle);
-                setNumCell(row, 8,  s.getSickCount(),                numStyle);
-                setNumCell(row, 9,  s.getCriticalCount(),            numStyle);
-                setNumCell(row, 10, s.getRecoveredCount(),           numStyle);
-                setNumCell(row, 11, s.getTreatCount(),               numStyle);
-                setNumCell(row, 12, s.getCurrentValue().longValue(), numStyle);
-                setNumCell(row, 13, s.getSoldAmount().longValue(),   numStyle);
-                setNumCell(row, 14, s.getSickCost().longValue(),     numStyle);
+                setNumCell(row, 7,  s.getDeadAnimals(),              numStyle);
+                setNumCell(row, 8,  s.getBornOnFarm(),               numStyle);
+                setNumCell(row, 9,  s.getSickCount(),                numStyle);
+                setNumCell(row, 10, s.getCriticalCount(),            numStyle);
+                setNumCell(row, 11, s.getRecoveredCount(),           numStyle);
+                setNumCell(row, 12, s.getTreatCount(),               numStyle);
+                setNumCell(row, 13, s.getCurrentValue().longValue(), numStyle);
+                setNumCell(row, 14, s.getSoldAmount().longValue(),   numStyle);
                 setNumCell(row, 15, s.getTreatCost().longValue(),    numStyle);
                 setNumCell(row, 16, s.getTotalCost().longValue(),    numStyle);
                 alt = !alt;
@@ -778,14 +756,14 @@ public class SupervisorReportController {
             setNumCell(totRow, 4,  stats.stream().mapToLong(BeneficiaryStat::getTotalAnimals).sum(),  totStyle);
             setNumCell(totRow, 5,  stats.stream().mapToLong(BeneficiaryStat::getActiveAnimals).sum(), totStyle);
             setNumCell(totRow, 6,  stats.stream().mapToLong(BeneficiaryStat::getSoldAnimals).sum(),   totStyle);
-            setNumCell(totRow, 7,  stats.stream().mapToLong(BeneficiaryStat::getBornOnFarm).sum(),    totStyle);
-            setNumCell(totRow, 8,  stats.stream().mapToLong(BeneficiaryStat::getSickCount).sum(),     totStyle);
-            setNumCell(totRow, 9,  stats.stream().mapToLong(BeneficiaryStat::getCriticalCount).sum(), totStyle);
-            setNumCell(totRow, 10, stats.stream().mapToLong(BeneficiaryStat::getRecoveredCount).sum(),totStyle);
-            setNumCell(totRow, 11, stats.stream().mapToLong(BeneficiaryStat::getTreatCount).sum(),    totStyle);
-            setNumCell(totRow, 12, stats.stream().map(BeneficiaryStat::getCurrentValue).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),  totStyle);
-            setNumCell(totRow, 13, stats.stream().map(BeneficiaryStat::getSoldAmount).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),    totStyle);
-            setNumCell(totRow, 14, stats.stream().map(BeneficiaryStat::getSickCost).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),      totStyle);
+            setNumCell(totRow, 7,  stats.stream().mapToLong(BeneficiaryStat::getDeadAnimals).sum(),   totStyle);
+            setNumCell(totRow, 8,  stats.stream().mapToLong(BeneficiaryStat::getBornOnFarm).sum(),    totStyle);
+            setNumCell(totRow, 9,  stats.stream().mapToLong(BeneficiaryStat::getSickCount).sum(),     totStyle);
+            setNumCell(totRow, 10, stats.stream().mapToLong(BeneficiaryStat::getCriticalCount).sum(), totStyle);
+            setNumCell(totRow, 11, stats.stream().mapToLong(BeneficiaryStat::getRecoveredCount).sum(),totStyle);
+            setNumCell(totRow, 12, stats.stream().mapToLong(BeneficiaryStat::getTreatCount).sum(),    totStyle);
+            setNumCell(totRow, 13, stats.stream().map(BeneficiaryStat::getCurrentValue).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),  totStyle);
+            setNumCell(totRow, 14, stats.stream().map(BeneficiaryStat::getSoldAmount).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),    totStyle);
             setNumCell(totRow, 15, stats.stream().map(BeneficiaryStat::getTreatCost).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),     totStyle);
             setNumCell(totRow, 16, stats.stream().map(BeneficiaryStat::getTotalCost).reduce(BigDecimal.ZERO, BigDecimal::add).longValue(),     totStyle);
 
@@ -816,10 +794,6 @@ public class SupervisorReportController {
                 .collect(Collectors.groupingBy(s -> s.getLivestock().getId(), Collectors.counting()));
         Map<UUID, Long> treatPerAnimal = treatments.stream().filter(t -> t.getLivestock() != null)
                 .collect(Collectors.groupingBy(t -> t.getLivestock().getId(), Collectors.counting()));
-        Map<UUID, BigDecimal> sickCostPerAnimal = sickList.stream()
-                .filter(s -> s.getLivestock() != null && s.getTreatmentCost() != null)
-                .collect(Collectors.groupingBy(s -> s.getLivestock().getId(),
-                        Collectors.reducing(BigDecimal.ZERO, LivestockSick::getTreatmentCost, BigDecimal::add)));
         Map<UUID, BigDecimal> treatCostPerAnimal = treatments.stream()
                 .filter(t -> t.getLivestock() != null && t.getTreatmentCost() != null)
                 .collect(Collectors.groupingBy(t -> t.getLivestock().getId(),
@@ -872,7 +846,6 @@ public class SupervisorReportController {
                     "#", "Tag / Inomero", "Igitsina / Gender", "Imiterere / Status",
                     "Ubwoko / Category", "Yavutswe mu rugo / Born on Farm",
                     "Yarwaye / Sick (count)",
-                    "Igiciro Indwara / Sick Cost (RWF)",
                     "Imiti / Treat. (count)",
                     "Igiciro Imiti / Treat. Cost (RWF)",
                     "IGICIRO CYOSE / Total Cost (RWF)",
@@ -886,7 +859,6 @@ public class SupervisorReportController {
 
             int rowNum = 1;
             boolean alt = false;
-            BigDecimal grandSickCost  = BigDecimal.ZERO;
             BigDecimal grandTreatCost = BigDecimal.ZERO;
             BigDecimal grandTotalCost = BigDecimal.ZERO;
             BigDecimal grandCurrentValue = BigDecimal.ZERO;
@@ -894,13 +866,11 @@ public class SupervisorReportController {
             for (Livestock l : animals) {
                 Row row = sheet.createRow(r++);
                 CellStyle rs = alt ? altStyle : null;
-                BigDecimal sc = sickCostPerAnimal.getOrDefault(l.getId(), BigDecimal.ZERO);
                 BigDecimal tc = treatCostPerAnimal.getOrDefault(l.getId(), BigDecimal.ZERO);
                 BigDecimal cv = l.getCurrentValue() != null ? l.getCurrentValue() : BigDecimal.ZERO;
 
-                grandSickCost  = grandSickCost.add(sc);
                 grandTreatCost = grandTreatCost.add(tc);
-                grandTotalCost = grandTotalCost.add(sc.add(tc));
+                grandTotalCost = grandTotalCost.add(tc);
                 grandCurrentValue = grandCurrentValue.add(cv);
 
                 setCell(row, 0, String.valueOf(rowNum++), rs);
@@ -910,11 +880,10 @@ public class SupervisorReportController {
                 setCell(row, 4, l.getLivestockCategory() != null ? l.getLivestockCategory().getName() : "—", rs);
                 setCell(row, 5, l.getMother() != null ? "Yego/Yes" : "Oya/No", rs);
                 setNumCell(row, 6,  sickPerAnimal.getOrDefault(l.getId(), 0L), numStyle);
-                setNumCell(row, 7,  sc.longValue(), numStyle);
-                setNumCell(row, 8,  treatPerAnimal.getOrDefault(l.getId(), 0L), numStyle);
-                setNumCell(row, 9,  tc.longValue(), numStyle);
-                setNumCell(row, 10, sc.add(tc).longValue(), numStyle);
-                setNumCell(row, 11, cv.longValue(), numStyle);
+                setNumCell(row, 7,  treatPerAnimal.getOrDefault(l.getId(), 0L), numStyle);
+                setNumCell(row, 8,  tc.longValue(), numStyle);
+                setNumCell(row, 9, tc.longValue(), numStyle);
+                setNumCell(row, 10, cv.longValue(), numStyle);
                 alt = !alt;
             }
 
@@ -933,11 +902,10 @@ public class SupervisorReportController {
             setCell(tot, 4, "", ts2);
             setCell(tot, 5, "", ts2);
             setNumCell(tot, 6,  (long) sickList.size(), ts2);
-            setNumCell(tot, 7,  grandSickCost.longValue(), ts2);
-            setNumCell(tot, 8,  (long) treatments.size(), ts2);
-            setNumCell(tot, 9,  grandTreatCost.longValue(), ts2);
-            setNumCell(tot, 10, grandTotalCost.longValue(), ts2);
-            setNumCell(tot, 11, grandCurrentValue.longValue(), ts2);
+            setNumCell(tot, 7,  (long) treatments.size(), ts2);
+            setNumCell(tot, 8,  grandTreatCost.longValue(), ts2);
+            setNumCell(tot, 9, grandTotalCost.longValue(), ts2);
+            setNumCell(tot, 10, grandCurrentValue.longValue(), ts2);
 
             for (int i = 0; i < 5; i++) sheet.autoSizeColumn(i);
             wb.write(response.getOutputStream());
@@ -1033,20 +1001,21 @@ public class SupervisorReportController {
 
     public static class BeneficiaryStat {
         private final AbaragizwaAmatungo beneficiary;
-        private final long   totalAnimals, activeAnimals, soldAnimals, bornOnFarm;
+        private final long   totalAnimals, activeAnimals, soldAnimals, deadAnimals, bornOnFarm;
         private final BigDecimal currentValue, soldAmount;
         private final long   sickCount, criticalCount, recoveredCount, treatCount;
-        private final BigDecimal treatCost, sickCost, totalCost;
+        private final BigDecimal treatCost, totalCost;
 
         public BeneficiaryStat(AbaragizwaAmatungo b,
-                               long totalAnimals, long activeAnimals, long soldAnimals, long bornOnFarm,
+                               long totalAnimals, long activeAnimals, long soldAnimals, long deadAnimals, long bornOnFarm,
                                BigDecimal currentValue, BigDecimal soldAmount,
                                long sickCount, long criticalCount, long recoveredCount,
-                               long treatCount, BigDecimal treatCost, BigDecimal sickCost, BigDecimal totalCost) {
+                               long treatCount, BigDecimal treatCost, BigDecimal totalCost) {
             this.beneficiary    = b;
             this.totalAnimals   = totalAnimals;
             this.activeAnimals  = activeAnimals;
             this.soldAnimals    = soldAnimals;
+            this.deadAnimals    = deadAnimals;
             this.bornOnFarm     = bornOnFarm;
             this.currentValue   = currentValue;
             this.soldAmount     = soldAmount;
@@ -1055,7 +1024,6 @@ public class SupervisorReportController {
             this.recoveredCount = recoveredCount;
             this.treatCount     = treatCount;
             this.treatCost      = treatCost;
-            this.sickCost       = sickCost;
             this.totalCost      = totalCost;
         }
 
@@ -1063,6 +1031,7 @@ public class SupervisorReportController {
         public long getTotalAnimals()               { return totalAnimals; }
         public long getActiveAnimals()              { return activeAnimals; }
         public long getSoldAnimals()                { return soldAnimals; }
+        public long getDeadAnimals()                { return deadAnimals; }
         public long getBornOnFarm()                 { return bornOnFarm; }
         public BigDecimal getCurrentValue()         { return currentValue; }
         public BigDecimal getSoldAmount()           { return soldAmount; }
@@ -1071,7 +1040,6 @@ public class SupervisorReportController {
         public long getRecoveredCount()             { return recoveredCount; }
         public long getTreatCount()                 { return treatCount; }
         public BigDecimal getTreatCost()            { return treatCost; }
-        public BigDecimal getSickCost()             { return sickCost; }
         public BigDecimal getTotalCost()            { return totalCost; }
     }
 }

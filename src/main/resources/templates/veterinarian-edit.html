@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Veterinarian</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
+        .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; max-width: 800px; margin: 0 auto; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-pencil-square text-warning me-2"></i>Edit Veterinarian</h4>
+        <small class="text-muted">Update veterinarian details</small>
+    </div>
+    <a href="/veterinarians" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="container-fluid px-4">
+    <div class="content-card">
+        <form th:action="@{/veterinarians/update/{id}(id=${vet.id})}" th:object="${vet}" method="post">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                    <input th:field="*{firstName}" type="text" class="form-control"
+                           th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:errors="*{firstName}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                    <input th:field="*{lastName}" type="text" class="form-control"
+                           th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'" required>
+                    <div class="invalid-feedback" th:errors="*{lastName}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Phone</label>
+                    <input th:field="*{phone}" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input th:field="*{email}" type="email" class="form-control"
+                           th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{email}"></div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">License Number</label>
+                    <input th:field="*{licenseNumber}" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Specialization</label>
+                    <input th:field="*{specialization}" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Clinic Name</label>
+                    <input th:field="*{clinicName}" type="text" class="form-control">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Location</label>
+                    <select th:field="*{locationIdValue}" class="form-select">
+                        <option value="">— Select Location —</option>
+                        <option th:each="loc : ${locations}"
+                                th:value="${loc.id}"
+                                th:text="${loc.name}"
+                                th:selected="${vet.locationIdValue != null and vet.locationIdValue == loc.id.toString()}">
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label fw-semibold">Notes</label>
+                    <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="col-md-12 d-flex align-items-center gap-2">
+                    <input th:field="*{isActive}" type="checkbox" class="form-check-input" id="isActive">
+                    <label class="form-check-label" for="isActive">Active</label>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-save me-1"></i> Update Veterinarian
+                </button>
+                <a href="/veterinarians" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

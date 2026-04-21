@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pre-Breeding Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .page-header { 
+            background: white; 
+            border-bottom: 1px solid #dee2e6; 
+            padding: 20px 30px; 
+            margin-bottom: 24px; 
+        }
+        .content-card { 
+            background: white; 
+            border-radius: 10px; 
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08); 
+            padding: 24px; 
+            margin-bottom: 24px; 
+        }
+        .animal-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+        .animal-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #3b82f6;
+        }
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .ready { background: #d1fae5; color: #065f46; }
+        .not-ready { background: #fee2e2; color: #991b1b; }
+        .under-review { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-clipboard-check text-primary me-2"></i>Pre-Breeding Management</h4>
+        <small class="text-muted">Assess and prepare animals for breeding</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+    
+    <!-- Filter Section -->
+    <div class="content-card">
+        <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2"></i>Filters</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Health Status</label>
+                <select class="form-select" id="healthFilter">
+                    <option value="">All</option>
+                    <option value="healthy">Healthy</option>
+                    <option value="under-treatment">Under Treatment</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Breeding Readiness</label>
+                <select class="form-select" id="readinessFilter">
+                    <option value="">All</option>
+                    <option value="ready">Ready</option>
+                    <option value="not-ready">Not Ready</option>
+                    <option value="under-review">Under Review</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eligible Animals -->
+    <div class="content-card">
+        <h6 class="fw-bold mb-3 border-bottom pb-2">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            Eligible for Breeding (<span th:text="${eligibleAnimals != null ? eligibleAnimals.size() : 0}">0</span>)
+        </h6>
+        
+        <div th:if="${eligibleAnimals == null or eligibleAnimals.empty}">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No animals currently eligible for breeding. Check back later or review animals under assessment.
+            </div>
+        </div>
+        
+        <div th:each="animal : ${eligibleAnimals}" class="animal-card">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-1" th:text="${animal.tagNumber}">Tag #001</h6>
+                    <small class="text-muted">
+                        <span th:text="${animal.category != null ? animal.category.name : 'N/A'}">Cattle</span> • 
+                        <span th:text="${animal.sex}">Female</span>
+                    </small>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Age</small>
+                    <strong th:text="${animal.age != null ? animal.age + ' months' : 'N/A'}">24 months</strong>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Health Status</small>
+                    <span class="badge bg-success">Healthy</span>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Last Breeding</small>
+                    <strong th:text="${animal.lastBreedingDate != null ? #temporals.format(animal.lastBreedingDate, 'dd-MM-yyyy') : 'Never'}">Never</strong>
+                </div>
+                <div class="col-md-3 text-end">
+                    <span class="status-badge ready">Ready for Breeding</span>
+                    <div class="mt-2">
+                        <a th:href="@{/livestock/breeding/register(animalId=${animal.id})}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-heart-fill me-1"></i> Start Breeding
+                        </a>
+                        <a th:href="@{/livestock/view/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animals Under Review -->
+    <div class="content-card">
+        <h6 class="fw-bold mb-3 border-bottom pb-2">
+            <i class="bi bi-hourglass-split text-warning me-2"></i>
+            Under Health Review (<span th:text="${underReview != null ? underReview.size() : 0}">0</span>)
+        </h6>
+        
+        <div th:if="${underReview == null or underReview.empty}">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                No animals currently under review.
+            </div>
+        </div>
+        
+        <div th:each="animal : ${underReview}" class="animal-card">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-1" th:text="${animal.tagNumber}">Tag #002</h6>
+                    <small class="text-muted">
+                        <span th:text="${animal.category != null ? animal.category.name : 'N/A'}">Cattle</span> • 
+                        <span th:text="${animal.sex}">Female</span>
+                    </small>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Review Reason</small>
+                    <strong th:text="${animal.reviewReason ?: 'Routine check'}">Recent treatment</strong>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Review Date</small>
+                    <strong th:text="${animal.reviewDate != null ? #temporals.format(animal.reviewDate, 'dd-MM-yyyy') : 'Pending'}">05-04-2026</strong>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Vet Assigned</small>
+                    <strong th:text="${animal.veterinarian != null ? animal.veterinarian.name : 'Unassigned'}">Dr. Smith</strong>
+                </div>
+                <div class="col-md-3 text-end">
+                    <span class="status-badge under-review">Under Review</span>
+                    <div class="mt-2">
+                        <a th:href="@{/livestock/health-check/{id}(id=${animal.id})}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-clipboard-pulse me-1"></i> Complete Review
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Not Ready for Breeding -->
+    <div class="content-card">
+        <h6 class="fw-bold mb-3 border-bottom pb-2">
+            <i class="bi bi-x-circle text-danger me-2"></i>
+            Not Ready for Breeding (<span th:text="${notReady != null ? notReady.size() : 0}">0</span>)
+        </h6>
+        
+        <div th:if="${notReady == null or notReady.empty}">
+            <div class="alert alert-success">
+                <i class="bi bi-check-circle me-2"></i>
+                Great! All animals are either ready or under review.
+            </div>
+        </div>
+        
+        <div th:each="animal : ${notReady}" class="animal-card">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <h6 class="mb-1" th:text="${animal.tagNumber}">Tag #003</h6>
+                    <small class="text-muted">
+                        <span th:text="${animal.category != null ? animal.category.name : 'N/A'}">Cattle</span> • 
+                        <span th:text="${animal.sex}">Female</span>
+                    </small>
+                </div>
+                <div class="col-md-3">
+                    <small class="text-muted d-block">Reason</small>
+                    <strong th:text="${animal.notReadyReason}">Too young</strong>
+                </div>
+                <div class="col-md-2">
+                    <small class="text-muted d-block">Eligible Date</small>
+                    <strong th:text="${animal.eligibleDate != null ? #temporals.format(animal.eligibleDate, 'dd-MM-yyyy') : 'TBD'}">01-07-2026</strong>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="status-badge not-ready">Not Ready</span>
+                    <div class="mt-2">
+                        <a th:href="@{/livestock/view/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i> View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Filter functionality
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('healthFilter').addEventListener('change', applyFilters);
+    document.getElementById('readinessFilter').addEventListener('change', applyFilters);
+    
+    function applyFilters() {
+        // Implement filtering logic
+        console.log('Filters applied');
+    }
+</script>
+
+</body>
+</html>

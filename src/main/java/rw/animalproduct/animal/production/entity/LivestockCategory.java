@@ -15,15 +15,24 @@ public class LivestockCategory {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @NotEmpty(message = "Category code is required")
+    @Size(min = 1, max = 20, message = "Category code must be between 1 and 20 characters")
+    @Column(name = "code", unique = true, nullable = false)
+    private String code;
+
     @NotEmpty(message = "Category name is required")
     @Size(min = 2, max = 100, message = "Category name must be between 2 and 100 characters")
     @Column(name = "name", nullable = false)
     private String name;
 
-    @NotEmpty(message = "Category code is required")
-    @Size(min = 1, max = 20, message = "Category code must be between 1 and 20 characters")
-    @Column(name = "code", unique = true, nullable = false)
-    private String code;
+    @Column(name = "gestation_period_months")
+    private Integer gestationPeriodMonths;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
 
     @OneToMany(mappedBy = "livestockCategory", cascade = CascadeType.ALL)
     private List<Livestock> livestockList;
@@ -41,6 +50,14 @@ public class LivestockCategory {
         this.id = id;
     }
 
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
     public String getName() {
         return name;
     }
@@ -49,12 +66,28 @@ public class LivestockCategory {
         this.name = name;
     }
 
-    public String getCode() {
-        return code;
+    public Integer getGestationPeriodMonths() {
+        return gestationPeriodMonths;
     }
 
-    public void setCode(String code) {
-        this.code = code;
+    public void setGestationPeriodMonths(Integer gestationPeriodMonths) {
+        this.gestationPeriodMonths = gestationPeriodMonths;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
     public List<Livestock> getLivestockList() {
@@ -71,6 +104,7 @@ public class LivestockCategory {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", code='" + code + '\'' +
+                ", gestationPeriodMonths=" + gestationPeriodMonths +
                 '}';
     }
 }

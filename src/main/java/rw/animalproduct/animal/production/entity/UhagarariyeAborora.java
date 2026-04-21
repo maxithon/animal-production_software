@@ -28,18 +28,21 @@ public class UhagarariyeAborora {
     @Column(name = "last_name")
     private String lastName;
 
+    @Column(name = "gender")
     private String gender;
 
     @Column(name = "maritial_status")
     private String maritialStatus;
 
-    @Column(unique = true)
+    @Column(unique = true, name = "nid")
     @Pattern(regexp = "^[0-9]{16}$", message = "National ID must be exactly 16 digits")
-    private String nid; // National ID - EXACTLY 16 digits
+    private String nid;
 
+    @Column(name = "phone")
     @Pattern(regexp = "^(078|079|072|073)[0-9]{7}$", message = "Phone number must be 10 digits starting with 078, 079, 072, or 073")
-    private String phone; // EXACTLY 10 digits
+    private String phone;
 
+    @Column(name = "email")
     @Email(message = "Please provide a valid email address")
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Invalid email format")
     private String email;
@@ -47,8 +50,10 @@ public class UhagarariyeAborora {
     @Column(name = "icyo_akora")
     private String icyoAkora;
 
+    @Column(name = "amasezerano")
     private String amasezerano;
 
+    @Column(name = "photo")
     private String photo;
 
     @ManyToOne
@@ -60,17 +65,19 @@ public class UhagarariyeAborora {
     private Date createdDate;
 
     @ManyToOne
-    @JoinColumn(name = "created_by")
+    @JoinColumn(name = "created_by", referencedColumnName = "user_id")
     private Users createdBy;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
 
     @Transient
     private String locationIdValue;
 
-    // Constructors, Getters and Setters remain the same...
     public UhagarariyeAborora() {
     }
 
-    // All getters and setters as before...
+    // Getters and Setters
     public UUID getId() {
         return id;
     }
@@ -181,6 +188,14 @@ public class UhagarariyeAborora {
 
     public void setCreatedBy(Users createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public Boolean getIsDeleted() {
+        return isDeleted;
+    }
+
+    public void setIsDeleted(Boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
     public String getLocationIdValue() {

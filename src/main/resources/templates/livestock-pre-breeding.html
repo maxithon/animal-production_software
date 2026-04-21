@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Pre-Breeding Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f0f4f8; }
+        .page-header { background: linear-gradient(135deg,#1a5f7a,#2e8b9e); color:white; padding:24px 32px; margin-bottom:24px; }
+        .card-panel { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); overflow:hidden; margin-bottom:20px; }
+        .card-panel-header { padding:14px 20px; font-weight:700; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; gap:8px; }
+        .sum-card { background:white; border-radius:10px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+        .age-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; }
+        .newborn-chip   { background:#fef3c7; color:#92400e; }
+        .young-chip     { background:#dbeafe; color:#1e40af; }
+        .approach-chip  { background:#fae8ff; color:#7e22ce; }
+        .table { margin-bottom:0; }
+        .table thead th { background:#f8fafc; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1"><i class="bi bi-arrow-up-circle me-2"></i>Pre-Breeding Management</h4>
+        <small style="opacity:.85">Automatic tracking from birth to breeding age · Animals advance automatically</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-light btn-sm">
+            <i class="bi bi-speedometer2 me-1"></i>Lifecycle Dashboard
+        </a>
+        <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="btn btn-warning btn-sm fw-bold">
+            <i class="bi bi-heart-arrow me-1"></i>Ready to Breed →
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4">
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="sum-card">
+                <div class="text-warning" style="font-size:2rem;font-weight:800;" th:text="${youngAnimals != null ? youngAnimals.size() : 0}">0</div>
+                <div class="text-muted small fw-600">Young Animals</div>
+                <div class="mt-1"><span class="age-chip young-chip">31 – 365 days</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sum-card">
+                <div class="text-success" style="font-size:2rem;font-weight:800;" th:text="${matureAnimals != null ? matureAnimals.size() : 0}">0</div>
+                <div class="text-muted small fw-600">Mature Animals</div>
+                <div class="mt-1"><span class="age-chip approach-chip">12+ months</span></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="sum-card">
+                <div class="text-primary" style="font-size:2rem;font-weight:800;" th:text="${(youngAnimals != null ? youngAnimals.size() : 0) + (matureAnimals != null ? matureAnimals.size() : 0)}">0</div>
+                <div class="text-muted small fw-600">Total Pre-Breeding</div>
+                <div class="mt-1"><span class="age-chip newborn-chip">All animals</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info box: automatic progression -->
+    <div class="alert alert-info d-flex gap-3 align-items-start mb-4">
+        <i class="bi bi-info-circle-fill fs-4 mt-1 text-info"></i>
+        <div>
+            <strong>How automatic progression works:</strong>
+            Animals move from <em>Newborn → Young → Pre-Breeding → Ready to Breed</em> automatically
+            based on their <strong>Date Received / Birth Date</strong>.
+            No manual action is needed for these stages.
+            When a female reaches <strong>12+ months</strong>, she automatically appears in the
+            <a th:href="@{/livestock/lifecycle/ready-to-breed}">Ready to Breed</a> list.
+        </div>
+    </div>
+
+    <!-- Young Animals Table -->
+    <div class="card-panel">
+        <div class="card-panel-header" style="background:#eff6ff;color:#2563eb;">
+            <i class="bi bi-arrow-up-circle"></i>
+            Young Animals (Pre-Breeding)
+            <span class="badge bg-primary ms-2" th:text="${youngAnimals != null ? youngAnimals.size() : 0}">0</span>
+        </div>
+
+        <div th:if="${youngAnimals == null or youngAnimals.empty}" style="padding:30px;text-align:center;color:#94a3b8;">
+            <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+            No young animals in pre-breeding stage
+        </div>
+
+        <div class="table-responsive" th:if="${youngAnimals != null and !youngAnimals.empty}">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Age (Days)</th>
+                    <th>Stage</th>
+                    <th>Ready In (Days)</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal : ${youngAnimals}">
+                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
+                    <td>
+                        <span th:if="${animal.categoryName != null}" class="badge bg-info" th:text="${animal.categoryName}"></span>
+                        <span th:if="${animal.categoryName == null}" class="badge bg-secondary">N/A</span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.gender == 'MALE'}" class="badge bg-primary">Male</span>
+                        <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-danger">Female</span>
+                        <span th:if="${animal.gender == null}" class="badge bg-secondary">N/A</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border" th:text="${animal.ageInDays != null ? animal.ageInDays + ' days' : 'Unknown'}"></span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.ageInDays != null and animal.ageInDays <= 30}" class="badge bg-warning text-dark">Newborn</span>
+                        <span th:if="${animal.ageInDays != null and animal.ageInDays > 30 and animal.ageInDays <= 180}" class="badge bg-primary">Young</span>
+                        <span th:if="${animal.ageInDays != null and animal.ageInDays > 180}" class="badge bg-secondary">Pre-Breeding</span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.ageInDays != null and animal.gender == 'FEMALE'}" class="small text-muted" th:text="${365 - animal.ageInDays} + ' days to breeding age'"></span>
+                        <span th:if="${animal.ageInDays != null and animal.gender == 'MALE'}" class="small text-muted" th:text="${365 - animal.ageInDays} + ' days to maturity'"></span>
+                        <span th:if="${animal.ageInDays == null}" class="text-muted small">Unknown</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Mature Animals Table -->
+    <div class="card-panel">
+        <div class="card-panel-header" style="background:#d1fae5;color:#059669;">
+            <i class="bi bi-check-circle"></i>
+            Mature Animals
+            <span class="badge ms-2" style="background:#059669;" th:text="${matureAnimals != null ? matureAnimals.size() : 0}">0</span>
+        </div>
+
+        <div th:if="${matureAnimals == null or matureAnimals.empty}" style="padding:30px;text-align:center;color:#94a3b8;">
+            <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+            No mature animals
+        </div>
+
+        <div class="table-responsive" th:if="${matureAnimals != null and !matureAnimals.empty}">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Age (Months)</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="animal : ${matureAnimals}">
+                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
+                    <td>
+                        <span th:if="${animal.categoryName != null}" class="badge bg-info" th:text="${animal.categoryName}"></span>
+                        <span th:if="${animal.categoryName == null}" class="badge bg-secondary">N/A</span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.gender == 'MALE'}" class="badge bg-primary">Male</span>
+                        <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-danger">Female</span>
+                        <span th:if="${animal.gender == null}" class="badge bg-secondary">N/A</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark border" th:text="${animal.ageInMonths != null ? animal.ageInMonths + ' months' : 'Unknown'}"></span>
+                    </td>
+                    <td>
+                        <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-success">Ready to Breed</span>
+                        <span th:if="${animal.gender == 'MALE'}" class="badge bg-primary">Breeding Male</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="btn btn-sm" th:classappend="${animal.gender == 'FEMALE'} ? 'btn-success' : 'btn-primary'">
+                            <i class="bi bi-heart-fill"></i>
+                            <span th:if="${animal.gender == 'FEMALE'}">Breed</span>
+                            <span th:if="${animal.gender == 'MALE'}">Use for Breeding</span>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

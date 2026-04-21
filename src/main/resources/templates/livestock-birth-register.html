@@ -8,20 +8,26 @@
     <style>
         body { background: #f8f9fa; }
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
-        .form-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; margin: 0 24px; }
-        .section-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #6c757d; letter-spacing: .05em; margin-bottom: 12px; }
-        .info-box { background: #e8f4fd; border-left: 4px solid #0d6efd; border-radius: 6px; padding: 12px 16px; font-size: 0.875rem; }
+        .form-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; margin: 0 24px 24px; }
+        .birth-type-card {
+            border: 2px solid #dee2e6; border-radius: 10px; padding: 16px 20px;
+            cursor: pointer; transition: all 0.2s; background: white;
+        }
+        .birth-type-card:hover { border-color: #0d6efd; background: #f0f7ff; }
+        .birth-type-card.selected-farm     { border-color: #198754; background: #f0fff4; }
+        .birth-type-card.selected-external { border-color: #0d6efd; background: #f0f7ff; }
+        .section-divider { border-top: 1px dashed #dee2e6; margin: 20px 0; }
     </style>
 </head>
 <body>
 
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
-        <h4 class="mb-1"><i class="bi bi-heart-pulse text-success me-2"></i>Record Birth Event</h4>
-        <small class="text-muted">Step 1 of 2 — Record the birth, then link child animals</small>
+        <h4 class="mb-1"><i class="bi bi-heart-pulse text-success me-2"></i>Record Birth</h4>
+        <small class="text-muted">Record a new birth or register a purchased animal's birth details</small>
     </div>
-    <a href="/livestock/births/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Births
+    <a href="/livestock/births/list" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back
     </a>
 </div>
 
@@ -32,87 +38,183 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- How it works info box -->
-    <div class="info-box mb-4">
-        <strong><i class="bi bi-info-circle"></i> How multi-generation births work:</strong><br>
-        Select the <strong>mother animal</strong> below. After saving, you will link the newborn animals.
-        When a calf grows up and gives birth, simply select that calf as the mother in a new record —
-        the system tracks grandmother, great-grandmother, etc. automatically.
-    </div>
-
     <form th:action="@{/livestock/births/register/new}" th:object="${birth}" method="post">
 
-        <!-- Mother Animal -->
-        <div class="section-label">Mother Animal</div>
+        <!-- ══ STEP 1: Birth Type ══════════════════════════════════════ -->
+        <h6 class="fw-bold mb-3">
+            <span class="badge bg-success me-2">1</span>
+            What type of birth are you recording?
+        </h6>
+
         <div class="row g-3 mb-4">
             <div class="col-md-6">
-                <label class="form-label fw-semibold">Mother Animal (Tag) *</label>
-                <select class="form-select" th:field="*{livestockIdValue}" required>
-                    <option value="">Select mother animal...</option>
-                    <option th:each="ls : ${livestockList}"
-                            th:value="${ls.id}"
-                            th:text="${ls.tagNumber
-                                + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')
-                                + ' [' + (ls.gender != null ? ls.gender : 'Unknown') + ']'
-                                + (ls.mother != null ? ' (mother: ' + ls.mother.tagNumber + ')' : '')}">
-                    </option>
-                </select>
-                <div class="form-text">Only female animals are shown. The selected animal is the mother.</div>
+                <div class="birth-type-card selected-farm" id="cardFarm" onclick="selectBirthType('farm')">
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="font-size:1.8rem; color:#198754;"><i class="bi bi-house-heart-fill"></i></div>
+                        <div>
+                            <div class="fw-bold">Born on this farm</div>
+                            <div class="text-muted small">
+                                The animal was born here. You know the mother.
+                                Select the mother from your livestock list.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="birth-type-card" id="cardExternal" onclick="selectBirthType('external')">
+                    <div class="d-flex align-items-start gap-3">
+                        <div style="font-size:1.8rem; color:#0d6efd;"><i class="bi bi-box-arrow-in-down"></i></div>
+                        <div>
+                            <div class="fw-bold">Purchased / External</div>
+                            <div class="text-muted small">
+                                The animal was bought elsewhere. Mother is unknown.
+                                Enter the birth date to track breeding eligibility.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Birth Details -->
-        <div class="section-label">Birth Details</div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Birth Date *</label>
-                <input type="date" class="form-control" th:field="*{birthDate}" required>
+        <!-- Hidden field bound to isExternalBirth -->
+        <input type="hidden" th:field="*{isExternalBirth}" id="isExternalBirthField" value="false">
+
+        <!-- ══ STEP 2a: Mother (farm birth) ══════════════════════════ -->
+        <div id="motherSection">
+            <div class="section-divider"></div>
+            <h6 class="fw-bold mb-3">
+                <span class="badge bg-success me-2">2</span>
+                Mother Animal
+            </h6>
+            <div class="mb-3">
+                <label class="form-label">Select Mother <span class="text-danger">*</span></label>
+                <select class="form-select" th:field="*{livestockIdValue}" id="motherSelect">
+                    <option value="">-- Select the mother animal --</option>
+                    <option th:each="ls : ${livestockList}"
+                            th:value="${ls.id}"
+                            th:text="${ls.tagNumber
+                                + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')
+                                + ' — ' + (ls.gender != null ? ls.gender : 'Unknown gender')}">
+                    </option>
+                </select>
+                <div class="form-text text-muted">Only female animals are shown by default.</div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label fw-semibold">Number of Offspring</label>
+        </div>
+
+        <!-- ══ STEP 2b: Source location (external birth) ═════════════ -->
+        <div id="externalSection" class="d-none">
+            <div class="section-divider"></div>
+            <h6 class="fw-bold mb-3">
+                <span class="badge bg-primary me-2">2</span>
+                Purchase Details
+            </h6>
+            <div class="mb-3">
+                <label class="form-label">Where was this animal purchased from?</label>
+                <input type="text" class="form-control" th:field="*{sourceLocation}"
+                       placeholder="e.g. Nyagatare livestock market, Private farm in Musanze">
+                <div class="form-text text-muted">Helps track the origin of purchased animals.</div>
+            </div>
+            <div class="alert alert-info py-2 px-3">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>How it works:</strong> The birth date you enter below is saved in the
+                <code>livestock_births.birth_date</code> column — the same place farm births use.
+                You then link the purchased animal on the next screen. The system uses that
+                birth date to calculate when the animal is ready for breeding.
+            </div>
+        </div>
+
+        <!-- ══ STEP 3: Birth Date & Details ══════════════════════════ -->
+        <div class="section-divider"></div>
+        <h6 class="fw-bold mb-3">
+            <span class="badge bg-success me-2" id="step3Badge">3</span>
+            <span id="step3Label">Birth Details</span>
+        </h6>
+
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">
+                    Birth Date <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" th:field="*{birthDate}" required>
+                <div class="form-text text-muted" id="birthDateHint">
+                    The date this animal was born.
+                </div>
+            </div>
+
+            <div class="col-md-4" id="offspringCountWrap">
+                <label class="form-label">Number of Offspring</label>
                 <input type="number" class="form-control" th:field="*{offspringCount}" min="1" placeholder="e.g. 1">
             </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Offspring Gender</label>
+
+            <div class="col-md-4" id="offspringGenderWrap">
+                <label class="form-label">Offspring Gender</label>
                 <select class="form-select" th:field="*{offspringGender}">
-                    <option value="">Mixed / Unknown</option>
+                    <option value="">-- Mixed / Unknown --</option>
                     <option value="MALE">Male</option>
                     <option value="FEMALE">Female</option>
                 </select>
             </div>
-        </div>
 
-        <!-- Dates -->
-        <div class="section-label">Follow-up Dates</div>
-        <div class="row g-3 mb-4">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Weaning Date</label>
+            <div class="col-md-4" id="weaningDateWrap">
+                <label class="form-label">Weaning Date</label>
                 <input type="date" class="form-control" th:field="*{weaningDate}">
             </div>
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">Next Breeding Date</label>
+
+            <div class="col-md-4" id="nextBreedingWrap">
+                <label class="form-label">Next Breeding Date (Mother)</label>
                 <input type="date" class="form-control" th:field="*{nextBreedingDate}">
+                <div class="form-text text-muted">When the mother can be bred again.</div>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" th:field="*{notes}" rows="3"
+                          placeholder="Any observations, complications, or notes..."></textarea>
             </div>
         </div>
 
-        <!-- Notes -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-8">
-                <label class="form-label fw-semibold">Notes</label>
-                <textarea class="form-control" th:field="*{notes}" rows="2"
-                          placeholder="Any observations about this birth..."></textarea>
-            </div>
-        </div>
-
+        <!-- ══ Submit ═════════════════════════════════════════════════ -->
+        <div class="section-divider"></div>
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle me-1"></i> Save Birth &amp; Link Children
+                <i class="bi bi-check-circle me-1"></i>
+                <span id="submitLabel">Record Birth &amp; Link Children</span>
             </button>
             <a href="/livestock/births/list" class="btn btn-outline-secondary">Cancel</a>
         </div>
+
     </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function selectBirthType(type) {
+        const isExternal = (type === 'external');
+        document.getElementById('isExternalBirthField').value = isExternal;
+
+        document.getElementById('cardFarm').className     = 'birth-type-card' + (isExternal ? '' : ' selected-farm');
+        document.getElementById('cardExternal').className = 'birth-type-card' + (isExternal ? ' selected-external' : '');
+
+        document.getElementById('motherSection').classList.toggle('d-none', isExternal);
+        document.getElementById('externalSection').classList.toggle('d-none', !isExternal);
+
+        ['offspringCountWrap','offspringGenderWrap','weaningDateWrap','nextBreedingWrap'].forEach(id => {
+            document.getElementById(id).classList.toggle('d-none', isExternal);
+        });
+
+        document.getElementById('submitLabel').textContent = isExternal
+            ? 'Record & Link Purchased Animal'
+            : 'Record Birth & Link Children';
+
+        document.getElementById('birthDateHint').textContent = isExternal
+            ? 'Enter the date the seller provided, or your best estimate. Stored in livestock_births.birth_date — used to calculate breeding eligibility.'
+            : 'The date this animal was born on your farm.';
+
+        if (isExternal) {
+            document.getElementById('motherSelect').value = '';
+        }
+    }
+</script>
 </body>
 </html>

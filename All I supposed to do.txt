@@ -66,3 +66,110 @@ ROLE_SALES
 
 --__________________________________________----
 
+
+
+Livestock Movement Report
+👉 Tracks lifecycle events
+
+Includes:
+Purchased animals
+Born animals
+Sold animals
+Dead animals
+Filter:
+By date range
+
+✔ Helps answer: “How did herd change over time?”
+
+Sales Report (VERY IMPORTANT 💰)
+Includes:
+Number of animals sold
+Total sales amount
+Sales per period (daily/monthly)
+Top categories sold
+✔ Direct business value
+✔ Used for decision making
+
+Treatment / Health Report
+Includes:
+Number of sick animals
+Treatments performed
+Total treatment cost
+Most common diseases
+✔ Helps reduce losses
+✔ Improves farm management
+
+Financial Summary Report (🔥 MOST IMPORTANT)
+👉 This is your dashboard-level report
+
+Includes:
+Total livestock value
+Total sales revenue
+Total treatment cost
+Profit / Loss
+Formula:
+Profit = Sales - Treatment Cost
+
+✔ This is what managers care about most
+
+Reproduction Report
+Includes:
+Number of births
+Pregnant animals
+Offspring per animal
+✔ Important for growth tracking
+
+Farmer / Owner Report (Based on your table)
+Since you have:
+
+Name
+NID
+Phone
+
+👉 You need:
+
+Includes:
+Animals per owner
+Value per owner
+Sales per owner
+Costs per owner
+
+✔ Useful for cooperatives / SACCO systems
+
+Mortality Report
+Includes:
+Dead animals
+Causes (if available)
+Loss estimation
+✔ Helps reduce risk
+
+Category Performance Report
+Includes:
+Cows vs Goats vs Sheep
+Profit per category
+Cost per category
+✔ Helps decision making:
+👉 “Which animal is more profitable?”
+
+Detailed Animal Report
+👉 Drill-down report
+
+Includes:
+Animal info
+Treatments history
+Sales info
+Birth history
+
+✔ Used for audits & tracking
+
+
+
+
+---__________________________________________----
+
+
+Do THIS now:
+Use cost_transaction with:
+FEED
+TREATMENT
+LABOR

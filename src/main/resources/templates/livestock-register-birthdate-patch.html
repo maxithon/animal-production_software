@@ -1,0 +1,28 @@
+<!--
+  ════════════════════════════════════════════════════════════════
+  ADD THIS BLOCK to your existing livestock-register.html form.
+  Place it near the "date_received" / acquisition section.
+  ════════════════════════════════════════════════════════════════
+-->
+
+<!-- Birth Date (for purchased animals) -->
+<div class="col-md-4" xmlns:th="http://www.w3.org/1999/xhtml">
+    <label class="form-label fw-semibold">
+        Birth Date
+        <span class="badge bg-info text-dark ms-1" style="font-size:0.7rem;">Purchased animals</span>
+    </label>
+    <input type="date" class="form-control" th:field="*{birthDate}"
+           th:max="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+    <div class="form-text text-muted">
+        <i class="bi bi-info-circle text-info"></i>
+        For animals bought elsewhere: enter the known or estimated birth date.
+        This is used to calculate when the animal is eligible for breeding.
+        Leave empty for animals born on this farm (birth date is in the birth record).
+    </div>
+</div>
+
+<!--
+  ════════════════════════════════════════════════════════════════
+  ALSO ADD THIS BLOCK to livestock-edit.html at the same location.
+  ════════════════════════════════════════════════════════════════
+-->

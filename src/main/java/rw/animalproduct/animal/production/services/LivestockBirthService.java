@@ -20,16 +20,16 @@ import java.util.UUID;
 @Service
 public class LivestockBirthService {
 
-    private final LivestockBirthRepository birthRepository;
-    private final LivestockRepository livestockRepository;
+    private final LivestockBirthRepository   birthRepository;
+    private final LivestockRepository        livestockRepository;
     private final LivestockOffspringRepository offspringRepository;
 
     public LivestockBirthService(LivestockBirthRepository birthRepository,
                                  LivestockRepository livestockRepository,
                                  LivestockOffspringRepository offspringRepository) {
-        this.birthRepository = birthRepository;
-        this.livestockRepository = livestockRepository;
-        this.offspringRepository = offspringRepository;
+        this.birthRepository      = birthRepository;
+        this.livestockRepository  = livestockRepository;
+        this.offspringRepository  = offspringRepository;
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────
@@ -51,41 +51,76 @@ public class LivestockBirthService {
         return birthRepository.findByLivestockId(livestockId);
     }
 
+    /**
+     * Save a new birth record.
+     *
+     * TWO CASES:
+     *
+     * Case 1 — Farm birth (isExternalBirth = false or null):
+     *   - livestockIdValue must be provided — this is the mother.
+     *   - Mother's last_birth_date, offspring_count, pregnancy status are updated.
+     *
+     * Case 2 — External / purchased birth (isExternalBirth = true):
+     *   - No mother needed. livestockIdValue is ignored.
+     *   - birth_date in livestock_births stores when the purchased animal was born.
+     *   - This birth_date is used later to calculate breeding eligibility.
+     *   - After saving, link the purchased animal via linkChild().
+     */
     @Transactional
     public LivestockBirth addNew(LivestockBirth birth) {
-        resolveAndSetLivestock(birth);
+        boolean isExternal = Boolean.TRUE.equals(birth.getIsExternalBirth());
 
-        // Update mother's last_birth_date and increment offspring_count
-        if (birth.getLivestock() != null) {
-            Livestock mother = birth.getLivestock();
-            mother.setLastBirthDate(birth.getBirthDate());
-            mother.setIsPregnant(false);  // no longer pregnant after birth
-            if (birth.getOffspringCount() != null) {
-                int current = mother.getOffspringCount() == null ? 0 : mother.getOffspringCount();
-                mother.setOffspringCount(current + birth.getOffspringCount());
+        if (!isExternal) {
+            // Farm birth — resolve and set the mother
+            resolveAndSetLivestock(birth);
+
+            if (birth.getLivestock() != null) {
+                Livestock mother = birth.getLivestock();
+                mother.setLastBirthDate(birth.getBirthDate());
+                mother.setIsPregnant(false);
+                mother.setPregnancyStatus("NOT_PREGNANT");
+                mother.setStatus(Livestock.STATUS_ACTIVE);
+                if (birth.getOffspringCount() != null) {
+                    int current = mother.getOffspringCount() == null ? 0 : mother.getOffspringCount();
+                    mother.setOffspringCount(current + birth.getOffspringCount());
+                }
+                livestockRepository.save(mother);
             }
-            livestockRepository.save(mother);
+        } else {
+            // External birth — no mother on this farm
+            birth.setLivestock(null);
         }
 
         return birthRepository.save(birth);
     }
 
+    /**
+     * Update an existing birth record.
+     */
     @Transactional
     public LivestockBirth update(UUID id, LivestockBirth updated) {
         Optional<LivestockBirth> existingOpt = birthRepository.findById(id);
-        if (existingOpt.isPresent()) {
-            LivestockBirth existing = existingOpt.get();
-            existing.setBirthDate(updated.getBirthDate());
-            existing.setOffspringCount(updated.getOffspringCount());
-            existing.setOffspringGender(updated.getOffspringGender());
-            existing.setWeaningDate(updated.getWeaningDate());
-            existing.setNextBreedingDate(updated.getNextBreedingDate());
-            existing.setNotes(updated.getNotes());
+        if (existingOpt.isEmpty()) return null;
+
+        LivestockBirth existing = existingOpt.get();
+        existing.setBirthDate(updated.getBirthDate());
+        existing.setOffspringCount(updated.getOffspringCount());
+        existing.setOffspringGender(updated.getOffspringGender());
+        existing.setWeaningDate(updated.getWeaningDate());
+        existing.setNextBreedingDate(updated.getNextBreedingDate());
+        existing.setNotes(updated.getNotes());
+        existing.setIsExternalBirth(updated.getIsExternalBirth());
+        existing.setSourceLocation(updated.getSourceLocation());
+
+        boolean isExternal = Boolean.TRUE.equals(updated.getIsExternalBirth());
+        if (!isExternal) {
             existing.setLivestockIdValue(updated.getLivestockIdValue());
             resolveAndSetLivestock(existing);
-            return birthRepository.save(existing);
+        } else {
+            existing.setLivestock(null);
         }
-        return null;
+
+        return birthRepository.save(existing);
     }
 
     @Transactional
@@ -96,21 +131,13 @@ public class LivestockBirthService {
     // ── Child Linking ─────────────────────────────────────────────────
 
     /**
-     * Link a child animal to a birth event.
+     * Link a child / purchased animal to a birth event.
      *
-     * HOW MULTI-GENERATION WORKS:
-     * ─────────────────────────────────────────────────────────────────
-     * 1. Register Calf B as a Livestock record (normal livestock register flow).
-     * 2. Call this method: birthId = the CowA birth event, childId = CalfB.
-     *    → CalfB.mother = CowA, generation = 1.
+     * Farm birth:    child.mother = birth.livestock (the known mother on this farm).
+     * External birth: child.mother stays null (mother unknown / not on this farm).
      *
-     * 3. Years later CalfB gives birth to CalfE:
-     *    - Record a NEW LivestockBirth with livestock = CalfB.
-     *    - Register CalfE as a Livestock record.
-     *    - Call this method: birthId = CalfB birth event, childId = CalfE.
-     *    → CalfE.mother = CalfB, generation = 2.
-     *    → CalfE's grandmother = CalfB.mother = CowA  (found automatically).
-     * ─────────────────────────────────────────────────────────────────
+     * In both cases the birth_date from the LivestockBirth record tells you
+     * when that animal was born, which is all you need to calculate breeding eligibility.
      */
     @Transactional
     public LivestockOffspring linkChild(UUID birthId, UUID childLivestockId) {
@@ -121,23 +148,22 @@ public class LivestockBirthService {
                 .orElseThrow(() -> new RuntimeException("Child livestock not found"));
 
         Livestock mother = birth.getLivestock();
-        if (mother == null) {
-            throw new RuntimeException("Birth record has no mother assigned");
+
+        if (mother != null) {
+            // Farm birth — we know the mother, set it on the child
+            child.setMother(mother);
+            livestockRepository.save(child);
         }
+        // External birth — mother is null, child.mother stays null, no save needed for mother
 
-        // Set mother reference on the child animal
-        child.setMother(mother);
-        livestockRepository.save(child);
-
-        // Calculate generation depth by walking up the mother chain
-        int generation = calculateGeneration(mother) + 1;
+        int generation = (mother != null) ? calculateGeneration(mother) + 1 : 0;
 
         LivestockOffspring link = new LivestockOffspring(birth, child, generation);
         return offspringRepository.save(link);
     }
 
     /**
-     * Unlink a child from its birth event (clears mother_id too).
+     * Unlink a child from its birth event (also clears mother_id on the child).
      */
     @Transactional
     public void unlinkChild(UUID childLivestockId) {
@@ -153,12 +179,10 @@ public class LivestockBirthService {
 
     // ── Family queries ────────────────────────────────────────────────
 
-    /** All direct children of a given animal */
     public List<Livestock> getDirectChildren(UUID livestockId) {
         return livestockRepository.findByMotherId(livestockId);
     }
 
-    /** Does this animal have any children? */
     public boolean hasChildren(UUID livestockId) {
         return livestockRepository.existsByMotherId(livestockId);
     }
@@ -167,7 +191,7 @@ public class LivestockBirthService {
 
     private void resolveAndSetLivestock(LivestockBirth birth) {
         String idStr = birth.getLivestockIdValue();
-        if (idStr != null && !idStr.isEmpty()) {
+        if (idStr != null && !idStr.trim().isEmpty()) {
             Livestock ls = livestockRepository.findById(UUID.fromString(idStr))
                     .orElseThrow(() -> new RuntimeException("Livestock not found: " + idStr));
             birth.setLivestock(ls);
@@ -176,16 +200,14 @@ public class LivestockBirthService {
 
     /**
      * Walk up the mother chain to calculate how deep this animal is from founding stock.
-     * Founding animal (no mother) = 0.  Its children = 1.  Grandchildren = 2. Etc.
+     * Founding animal (no mother) = 0.  Direct child = 1.  Grandchild = 2.  Etc.
      */
     private int calculateGeneration(Livestock animal) {
         int gen = 0;
         Livestock current = animal;
-        // Load mother eagerly if needed (avoid lazy issues in loop)
         while (current.getMother() != null && gen < 50) {
             gen++;
-            current = livestockRepository.findById(current.getMother().getId())
-                    .orElse(null);
+            current = livestockRepository.findById(current.getMother().getId()).orElse(null);
             if (current == null) break;
         }
         return gen;

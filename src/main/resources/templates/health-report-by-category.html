@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Health Report by Category</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .stat-value { font-size: 1.8rem; font-weight: 800; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+
+    <!-- Page Title -->
+    <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-tags-fill text-primary fs-3 me-3"></i>
+        <div>
+            <h2 class="mb-0">Health Report by Category</h2>
+            <small class="text-muted">Select a livestock category to view its health summary</small>
+        </div>
+    </div>
+
+    <!-- Filter Form: Select Category + Date Range -->
+    <div class="card mb-4 no-print">
+        <div class="card-body">
+            <form method="get" action="/livestock/health-report-by-category" class="row g-3">
+
+                <!-- Category Dropdown -->
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Livestock Category</label>
+                    <select name="categoryId" class="form-select">
+                        <option value="">-- Select Category --</option>
+                        <!-- Loop through all categories like Pigs, Goats, etc. -->
+                        <option th:each="cat : ${allCategories}"
+                                th:value="${cat.id}"
+                                th:text="${cat.name}"
+                                th:selected="${cat.id == selectedCategoryId}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- From Date -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}">
+                </div>
+
+                <!-- To Date -->
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}">
+                </div>
+
+                <!-- Submit Button -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-1"></i> Search
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Message when no category selected yet -->
+    <div th:if="${categoryResult == null}" class="card text-center py-5">
+        <div class="card-body">
+            <i class="bi bi-tags text-muted" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-muted">Please select a category and click Search</h5>
+        </div>
+    </div>
+
+    <!-- Results section: only shown when a category is selected -->
+    <div th:if="${categoryResult != null}">
+
+        <!-- Category Title + Print Button -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">
+                <i class="bi bi-tag-fill text-primary me-2"></i>
+                <!-- Show selected category name like "Pigs" or "Goats" -->
+                <span th:text="${categoryResult.categoryName}">Category</span>
+            </h4>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm no-print">
+                <i class="bi bi-printer me-1"></i> Print
+            </button>
+        </div>
+
+        <!-- Summary stat cards -->
+        <div class="row g-3 mb-4">
+
+            <!-- Total Sick -->
+            <div class="col-6 col-md-3">
+                <div class="stat-card border-start border-4 border-danger">
+                    <div class="text-muted small text-uppercase mb-1">Sick Animals</div>
+                    <div class="stat-value text-danger" th:text="${categoryResult.sickCount}">0</div>
+                </div>
+            </div>
+
+            <!-- Recovered -->
+            <div class="col-6 col-md-3">
+                <div class="stat-card border-start border-4 border-success">
+                    <div class="text-muted small text-uppercase mb-1">Recovered</div>
+                    <div class="stat-value text-success" th:text="${categoryResult.recoveredCount}">0</div>
+                    <div class="progress mt-2" style="height:8px;">
+                        <div class="progress-bar bg-success"
+                             th:style="'width:' + ${categoryResult.recoveryRate} + '%'"></div>
+                    </div>
+                    <small class="text-muted"
+                           th:text="${#numbers.formatDecimal(categoryResult.recoveryRate,1,'POINT',1,'POINT')} + '% recovery rate'">
+                    </small>
+                </div>
+            </div>
+
+            <!-- Total Treatments -->
+            <div class="col-6 col-md-3">
+                <div class="stat-card border-start border-4 border-primary">
+                    <div class="text-muted small text-uppercase mb-1">Treatments</div>
+                    <div class="stat-value text-primary" th:text="${categoryResult.treatmentCount}">0</div>
+                </div>
+            </div>
+
+            <!-- Total Treatment Cost -->
+            <div class="col-6 col-md-3">
+                <div class="stat-card border-start border-4 border-warning">
+                    <div class="text-muted small text-uppercase mb-1">Treatment Cost</div>
+                    <div class="stat-value text-warning"
+                         th:text="${#numbers.formatDecimal(categoryResult.treatmentCost,0,'COMMA',0,'POINT')}">0</div>
+                    <small class="text-muted">RWF</small>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Disease breakdown chart + sick records table -->
+        <div class="row g-3 mb-4"
+             th:if="${!#lists.isEmpty(categoryResult.sickRecords)}">
+
+            <!-- Doughnut chart for diagnoses -->
+            <div class="col-md-4"
+                 th:if="${!#maps.isEmpty(categoryResult.diseaseBreakdown)}">
+                <div class="card h-100">
+                    <div class="card-header py-2">
+                        <small class="fw-bold text-muted text-uppercase">Diagnoses Breakdown</small>
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center">
+                        <canvas id="diseaseChart" style="max-height:200px;"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sick animals table -->
+            <div th:class="${!#maps.isEmpty(categoryResult.diseaseBreakdown)} ? 'col-md-8' : 'col-md-12'">
+                <div class="card h-100">
+                    <div class="card-header py-2">
+                        <small class="fw-bold text-muted text-uppercase">
+                            <i class="bi bi-virus me-1 text-danger"></i> Sick Animals
+                        </small>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Tag Number</th>
+                                <th>Reported Date</th>
+                                <th>Diagnosis</th>
+                                <th>Status</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <!-- Each sick record is now a simple map -->
+                            <tr th:each="sick : ${categoryResult.sickRecords}">
+                                <td class="fw-bold" th:text="${sick.tagNumber}">TAG</td>
+                                <td th:text="${#temporals.format(sick.reportedDate, 'dd MMM yyyy')}">Date</td>
+                                <td>
+                                        <span class="badge bg-danger"
+                                              th:text="${sick.diagnosis != null ? sick.diagnosis : 'Unknown'}">
+                                        </span>
+                                </td>
+                                <td>
+                                    <!-- Status is now a plain string like RECOVERED, SICK, etc. -->
+                                    <span th:switch="${sick.status}">
+                                            <span th:case="'RECOVERED'" class="badge bg-success">Recovered</span>
+                                            <span th:case="'SICK'" class="badge bg-danger">Sick</span>
+                                            <span th:case="'UNDER_TREATMENT'" class="badge bg-warning text-dark">Under Treatment</span>
+                                            <span th:case="*" class="badge bg-secondary" th:text="${sick.status}">Unknown</span>
+                                        </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Treatments table -->
+        <div th:if="${!#lists.isEmpty(categoryResult.treatments)}" class="mb-4">
+            <div class="card">
+                <div class="card-header py-2">
+                    <small class="fw-bold text-muted text-uppercase">
+                        <i class="bi bi-capsule me-1 text-primary"></i> Treatments
+                    </small>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Tag Number</th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Medicine</th>
+                            <th>Administered By</th>
+                            <th class="text-end">Cost (RWF)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- Each treatment is now a simple map -->
+                        <tr th:each="t : ${categoryResult.treatments}">
+                            <td class="fw-bold" th:text="${t.tagNumber}">TAG</td>
+                            <td th:text="${#temporals.format(t.treatmentDate, 'dd MMM yyyy')}">Date</td>
+                            <td>
+                                    <span class="badge bg-primary"
+                                          th:text="${t.treatmentType != null ? t.treatmentType : 'N/A'}">
+                                    </span>
+                            </td>
+                            <td th:text="${t.medicineName != null ? t.medicineName : 'N/A'}">Medicine</td>
+                            <td th:text="${t.administeredBy != null ? t.administeredBy : 'N/A'}">Vet</td>
+                            <td class="text-end fw-bold text-warning"
+                                th:text="${t.treatmentCost != null}
+                                        ? ${#numbers.formatDecimal(t.treatmentCost, 0, 'COMMA', 0, 'POINT')}
+                                        : '0'">0</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- No records message -->
+        <div th:if="${#lists.isEmpty(categoryResult.sickRecords) and #lists.isEmpty(categoryResult.treatments)}"
+             class="card text-center py-4">
+            <div class="card-body">
+                <i class="bi bi-check-circle text-success" style="font-size:2rem;"></i>
+                <h6 class="mt-2 text-muted">
+                    No sick animals or treatments found for
+                    <strong th:text="${categoryResult.categoryName}">this category</strong>
+                    in the selected period.
+                </h6>
+            </div>
+        </div>
+
+    </div><!-- end results -->
+
+</div><!-- end container -->
+
+<!-- Chart script: only runs if there is disease breakdown data -->
+<script th:inline="javascript" th:if="${categoryResult != null and !#maps.isEmpty(categoryResult.diseaseBreakdown)}">
+    /*<![CDATA[*/
+    // Get disease breakdown data from server
+    const breakdown = /*[[${categoryResult.diseaseBreakdown}]]*/ {};
+    const canvas = document.getElementById('diseaseChart');
+    if (canvas && Object.keys(breakdown).length > 0) {
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(breakdown),
+                datasets: [{
+                    data: Object.values(breakdown),
+                    backgroundColor: ['#ef4444','#f97316','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } }
+                }
+            }
+        });
+    }
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

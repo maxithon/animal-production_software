@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Health & Treatment Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 800; }
+        @media print { .no-print { display: none !important; } }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-heart-pulse text-danger"></i> Health &amp; Treatment Report</h2>
+        <button onclick="window.print()" class="btn btn-primary no-print">
+            <i class="bi bi-printer"></i> Print
+        </button>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card mb-4 no-print">
+        <div class="card-body">
+            <form method="get" action="/livestock/health-report" class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">From Date</label>
+                    <input type="date" name="from" class="form-control" th:value="${fromDate}">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold">To Date</label>
+                    <input type="date" name="to" class="form-control" th:value="${toDate}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Apply</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card border-start border-danger border-4">
+                <div class="text-muted small text-uppercase mb-2">Sick Animals</div>
+                <div class="stat-value text-danger" th:text="${totalSickCount}">0</div>
+                <small class="text-muted">Cases reported</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-success border-4">
+                <div class="text-muted small text-uppercase mb-2">Recovery Rate</div>
+                <div class="stat-value text-success"
+                     th:text="${#numbers.formatDecimal(recoveryRate, 1, 'POINT', 1, 'POINT')} + '%'">0%</div>
+                <small class="text-muted"><span th:text="${recoveredCount}">0</span> recovered</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-primary border-4">
+                <div class="text-muted small text-uppercase mb-2">Total Treatments</div>
+                <div class="stat-value text-primary" th:text="${totalTreatments}">0</div>
+                <small class="text-muted">In period</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-warning border-4">
+                <div class="text-muted small text-uppercase mb-2">Treatment Cost</div>
+                <div class="stat-value text-warning"
+                     th:text="${#numbers.formatDecimal(totalTreatmentCost, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <small class="text-muted">Total expenditure</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="mb-0">Disease / Diagnosis Frequency</h5></div>
+                <div class="card-body">
+                    <canvas id="diseaseChart" style="height: 260px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="mb-0">Treatments by Type</h5></div>
+                <div class="card-body">
+                    <canvas id="treatmentTypeChart" style="height: 260px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sick Animals Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-virus text-danger me-2"></i>Sick Animals</h5>
+            <span class="badge bg-danger" th:text="${totalSickCount} + ' records'">0 records</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tag Number</th>
+                        <th>Reported Date</th>
+                        <th>Diagnosis</th>
+                        <th>Symptoms</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="sick : ${sickRecords}">
+                        <td class="fw-bold" th:text="${sick.livestock?.tagNumber}">TAG001</td>
+                        <td th:text="${#temporals.format(sick.reportedDate, 'yyyy-MM-dd')}">2024-01-01</td>
+                        <td>
+                            <span class="badge bg-danger"
+                                  th:text="${sick.diagnosis ?: 'Unknown'}">Diagnosis</span>
+                        </td>
+                        <td th:text="${sick.symptoms ?: 'N/A'}">Symptoms</td>
+                        <td>
+                            <span th:switch="${sick.status?.name()}">
+                                <span th:case="'RECOVERED'" class="badge bg-success">Recovered</span>
+                                <span th:case="'SICK'" class="badge bg-danger">Sick</span>
+                                <span th:case="'UNDER_TREATMENT'" class="badge bg-warning text-dark">Under Treatment</span>
+                                <span th:case="*" class="badge bg-secondary" th:text="${sick.status}">Unknown</span>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr th:if="${sickRecords.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-4">
+                            <i class="bi bi-check-circle text-success fs-4 d-block mb-2"></i>
+                            No sick animals reported in this period
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Treatments Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-capsule text-primary me-2"></i>Treatments</h5>
+            <span class="badge bg-primary" th:text="${totalTreatments} + ' records'">0 records</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tag Number</th>
+                        <th>Treatment Date</th>
+                        <th>Type</th>
+                        <th>Medicine / Vaccine</th>
+                        <th>Vet / Admin</th>
+                        <th class="text-end">Cost (RWF)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="treatment : ${treatments}">
+                        <td class="fw-bold" th:text="${treatment.livestock?.tagNumber}">TAG001</td>
+                        <td th:text="${#temporals.format(treatment.treatmentDate, 'yyyy-MM-dd')}">2024-01-01</td>
+                        <td>
+                            <span class="badge bg-primary"
+                                  th:text="${treatment.treatmentType ?: 'N/A'}">Type</span>
+                        </td>
+                        <td th:text="${treatment.medicationName ?: 'N/A'}">Medicine</td>
+                        <td th:text="${treatment.vetName ?: 'N/A'}">Vet</td>
+                        <td class="text-end fw-bold"
+                            th:text="${treatment.treatmentCost != null}
+                                ? ${#numbers.formatDecimal(treatment.treatmentCost, 0, 'COMMA', 0, 'POINT')}
+                                : '0'">0</td>
+                    </tr>
+                    <tr th:if="${treatments.isEmpty()}">
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-info-circle text-muted fs-4 d-block mb-2"></i>
+                            No treatments recorded in this period
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Chart JS (safe inline approach — no iteration inside script inline) -->
+<script th:inline="javascript">
+    const diseaseFrequency  = /*[[${diseaseFrequency}]]*/ {};
+    const treatmentByType   = /*[[${treatmentByType}]]*/ {};
+
+    const palette = [
+        '#ef4444','#f97316','#f59e0b','#eab308','#84cc16',
+        '#22c55e','#14b8a6','#3b82f6','#8b5cf6','#ec4899'
+    ];
+
+    // Disease frequency — horizontal bar
+    const dLabels = Object.keys(diseaseFrequency);
+    const dData   = Object.values(diseaseFrequency);
+    if (dLabels.length > 0) {
+        new Chart(document.getElementById('diseaseChart'), {
+            type: 'bar',
+            data: {
+                labels: dLabels,
+                datasets: [{
+                    label: 'Cases',
+                    data: dData,
+                    backgroundColor: palette.slice(0, dLabels.length),
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+    } else {
+        document.getElementById('diseaseChart').parentElement.innerHTML =
+            '<p class="text-center text-muted mt-4">No diagnosis data available</p>';
+    }
+
+    // Treatment by type — doughnut
+    const tLabels = Object.keys(treatmentByType);
+    const tData   = Object.values(treatmentByType);
+    if (tLabels.length > 0) {
+        new Chart(document.getElementById('treatmentTypeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: tLabels,
+                datasets: [{
+                    data: tData,
+                    backgroundColor: palette.slice(0, tLabels.length),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+    } else {
+        document.getElementById('treatmentTypeChart').parentElement.innerHTML =
+            '<p class="text-center text-muted mt-4">No treatment type data available</p>';
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

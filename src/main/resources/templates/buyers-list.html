@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Buyers Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #f0f2f8;
+            --border: #e2e6f0;
+            --accent: #4f7dff;
+            --accent-glow: rgba(79, 125, 255, 0.12);
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ── Layout ── */
+        .dashboard-wrapper {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .page-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+        .page-title span {
+            color: var(--accent);
+        }
+        .page-subtitle {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── KPI Cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .kpi-card:hover { border-color: var(--accent); }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .kpi-card.accent-blue::before  { background: var(--accent); }
+        .kpi-card.accent-green::before { background: var(--success); }
+        .kpi-card.accent-red::before   { background: var(--danger); }
+        .kpi-card.accent-amber::before { background: var(--warning); }
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-primary);
+            font-family: 'DM Mono', monospace;
+        }
+        .kpi-card.accent-blue  .kpi-value { color: var(--accent); }
+        .kpi-card.accent-green .kpi-value { color: var(--success); }
+        .kpi-card.accent-red   .kpi-value { color: var(--danger); }
+        .kpi-card.accent-amber .kpi-value { color: var(--warning); }
+
+        /* ── Chart Card ── */
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .chart-card-title {
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        /* ── Table Card ── */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Search */
+        .search-wrap {
+            position: relative;
+        }
+        .search-wrap svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .search-input {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 12px 8px 34px;
+            width: 240px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        /* Rows per page */
+        .rows-select {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.82rem;
+            padding: 7px 10px;
+            outline: none;
+            cursor: pointer;
+        }
+        .rows-select:focus { border-color: var(--accent); }
+
+        /* Add Buyer Button */
+        .btn-add {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn-add:hover { opacity: 0.88; }
+        .btn-add:active { transform: scale(0.97); }
+
+        /* Table */
+        .table-scroll { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead tr {
+            background: var(--surface-2);
+        }
+        thead th {
+            padding: 11px 16px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+        }
+        thead th:hover { color: var(--text-secondary); }
+        thead th .sort-icon {
+            margin-left: 4px;
+            opacity: 0.4;
+            font-style: normal;
+        }
+        thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(79,125,255,0.04); }
+
+        td {
+            padding: 13px 16px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+        td.name-cell {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        td.mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.82rem;
+        }
+
+        /* Badges */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+        .badge-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+        .badge-active {
+            background: rgba(34,197,94,0.12);
+            color: var(--success);
+        }
+        .badge-active::before { background: var(--success); }
+        .badge-inactive {
+            background: rgba(239,68,68,0.12);
+            color: var(--danger);
+        }
+        .badge-inactive::before { background: var(--danger); }
+
+        .badge-type {
+            background: rgba(79,125,255,0.1);
+            color: var(--accent);
+            font-size: 0.73rem;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Action buttons */
+        .action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-action {
+            padding: 5px 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+        .btn-action:hover { opacity: 0.8; }
+        .btn-edit { background: rgba(79,125,255,0.15); color: var(--accent); }
+        .btn-delete { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+        .empty-state p { font-size: 0.875rem; }
+
+        /* ── Pagination ── */
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .pagination-info strong { color: var(--text-secondary); }
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+            user-select: none;
+        }
+        .page-btn:hover:not(:disabled):not(.active) {
+            background: var(--surface-2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .page-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+            font-weight: 700;
+        }
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .page-ellipsis {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        /* ── Modal ── */
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 18px 22px;
+        }
+        .modal-title { font-size: 1rem; font-weight: 700; }
+        .btn-close { filter: none; opacity: 0.5; }
+        .modal-body { padding: 22px; }
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 14px 22px;
+        }
+        .form-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 5px;
+        }
+        .form-control, .form-select {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--surface-2);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            color: var(--text-primary);
+            outline: none;
+        }
+        .form-control::placeholder { color: var(--text-muted); }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+        .btn-secondary-modal {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-secondary-modal:hover { background: var(--border); }
+
+        /* Chart customization */
+        canvas { max-height: 140px; }
+    </style>
+</head>
+<body>
+<div class="dashboard-wrapper">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <div class="page-title">Buyers <span>Dashboard</span></div>
+            <div class="page-subtitle">Manage and track all buyer activity</div>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+        <div class="kpi-card accent-blue">
+            <div class="kpi-label">Active Buyers</div>
+            <div class="kpi-value" th:text="${activeCount}">0</div>
+        </div>
+        <div class="kpi-card accent-red">
+            <div class="kpi-label">Inactive Buyers</div>
+            <div class="kpi-value" th:text="${inactiveCount}">0</div>
+        </div>
+        <div class="kpi-card accent-green">
+            <div class="kpi-label">Total Buyers</div>
+            <div class="kpi-value" id="totalBuyersKpi">—</div>
+        </div>
+        <div class="kpi-card accent-amber">
+            <div class="kpi-label">Showing</div>
+            <div class="kpi-value" id="showingKpi">—</div>
+        </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+        <div class="chart-card-title">Top Buyers by Purchases</div>
+        <canvas id="topBuyersChart" height="60"></canvas>
+    </div>
+
+    <!-- Table Card -->
+    <div class="table-card">
+
+        <!-- Toolbar -->
+        <div class="table-toolbar">
+            <div class="toolbar-left">
+                <div class="search-wrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search buyers…">
+                </div>
+                <select class="rows-select" id="rowsPerPage">
+                    <option value="5">5 rows</option>
+                    <option value="10" selected>10 rows</option>
+                    <option value="25">25 rows</option>
+                    <option value="50">50 rows</option>
+                </select>
+            </div>
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addBuyerModal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add Buyer
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-scroll">
+            <table>
+                <thead>
+                <tr>
+                    <th onclick="sortTable('buyerName')" id="th-buyerName">
+                        Name <i class="sort-icon">↕</i>
+                    </th>
+                    <th>Phone</th>
+                    <th>National ID</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th onclick="sortTable('totalPurchases')" id="th-totalPurchases">
+                        Purchases <i class="sort-icon">↕</i>
+                    </th>
+                    <th onclick="sortTable('isActive')" id="th-isActive">
+                        Status <i class="sort-icon">↕</i>
+                    </th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="buyersTableBody">
+                <!-- Thymeleaf rows — used only on server render; JS pagination replaces them client-side -->
+                <tr th:each="buyer : ${buyers}" th:attr="data-id=${buyer.id}"
+                    th:data-name="${buyer.buyerName}" th:data-phone="${buyer.buyerPhone}"
+                    th:data-nid="${buyer.buyerNationalId}" th:data-email="${buyer.buyerEmail}"
+                    th:data-type="${buyer.buyerType}" th:data-purchases="${buyer.totalPurchases}"
+                    th:data-active="${buyer.isActive}">
+                    <td class="name-cell" th:text="${buyer.buyerName}">Name</td>
+                    <td class="mono" th:text="${buyer.buyerPhone}">Phone</td>
+                    <td class="mono" th:text="${buyer.buyerNationalId}">NID</td>
+                    <td th:text="${buyer.buyerEmail}">Email</td>
+                    <td><span class="badge-type" th:text="${buyer.buyerType}">Type</span></td>
+                    <td class="mono" th:text="${buyer.totalPurchases}">0</td>
+                    <td>
+                        <span th:classappend="${buyer.isActive} ? 'badge-active' : 'badge-inactive'"
+                              class="badge-status"
+                              th:text="${buyer.isActive} ? 'Active' : 'Inactive'">Status</span>
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <a th:href="@{/buyers/edit/{id}(id=${buyer.id})}" class="btn-action btn-edit">Edit</a>
+                            <form th:action="@{/buyers/delete/{id}(id=${buyer.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-action btn-delete"
+                                        onclick="return confirm('Deactivate this buyer?');">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <p>No buyers match your search.</p>
+            </div>
+        </div>
+
+        <!-- Footer / Pagination -->
+        <div class="table-footer">
+            <div class="pagination-info" id="paginationInfo">Showing — of — buyers</div>
+            <div class="pagination-controls" id="paginationControls"></div>
+        </div>
+    </div>
+
+</div><!-- /wrapper -->
+
+<!-- Add Buyer Modal -->
+<div class="modal fade" id="addBuyerModal" tabindex="-1" aria-labelledby="addBuyerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/buyers/new}" method="post" th:object="${buyer}">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBuyerModalLabel">Add New Buyer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" th:field="*{buyerName}" placeholder="Full name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" th:field="*{buyerPhone}" placeholder="+1 234 567 8900" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">National ID</label>
+                            <input type="text" class="form-control" th:field="*{buyerNationalId}" placeholder="ID number">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" th:field="*{buyerEmail}" placeholder="email@example.com">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Type</label>
+                            <input type="text" class="form-control" th:field="*{buyerType}" placeholder="e.g. Wholesale, Retail">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" placeholder="Optional notes…"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-add">Save Buyer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* ── Chart ── */
+    const topBuyers = /*[[${topBuyers}]]*/ [];
+    const ctx = document.getElementById('topBuyersChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: topBuyers.map(b => b.buyerName),
+            datasets: [{
+                label: 'Total Purchases',
+                data: topBuyers.map(b => b.totalPurchases),
+                backgroundColor: 'rgba(79,125,255,0.55)',
+                borderColor: 'rgba(79,125,255,1)',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } },
+                y: { beginAtZero: true, ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } }
+            }
+        }
+    });
+
+    /* ── Pagination & Search & Sort ── */
+    let allBuyers = [];
+    let filtered  = [];
+    let currentPage = 1;
+    let rowsPerPage = 10;
+    let sortKey  = '';
+    let sortAsc  = true;
+
+    // Collect rows rendered by Thymeleaf on initial page load
+    function collectRows() {
+        const rows = document.querySelectorAll('#buyersTableBody tr[data-id]');
+        allBuyers = Array.from(rows).map(r => ({
+            id:             r.dataset.id,
+            buyerName:      r.dataset.name      || '',
+            buyerPhone:     r.dataset.phone     || '',
+            buyerNationalId:r.dataset.nid       || '',
+            buyerEmail:     r.dataset.email     || '',
+            buyerType:      r.dataset.type      || '',
+            totalPurchases: Number(r.dataset.purchases) || 0,
+            isActive:       r.dataset.active === 'true'
+        }));
+    }
+
+    function applyFilter(query) {
+        const q = query.toLowerCase();
+        filtered = allBuyers.filter(b =>
+            b.buyerName.toLowerCase().includes(q) ||
+            b.buyerPhone.toLowerCase().includes(q) ||
+            (b.buyerNationalId || '').toLowerCase().includes(q) ||
+            (b.buyerEmail || '').toLowerCase().includes(q) ||
+            (b.buyerType || '').toLowerCase().includes(q)
+        );
+    }
+
+    function applySort() {
+        if (!sortKey) return;
+        filtered.sort((a, b) => {
+            let va = a[sortKey], vb = b[sortKey];
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return sortAsc ? -1 : 1;
+            if (va > vb) return sortAsc ?  1 : -1;
+            return 0;
+        });
+    }
+
+    function renderTable() {
+        const start = (currentPage - 1) * rowsPerPage;
+        const page  = filtered.slice(start, start + rowsPerPage);
+        const tbody = document.getElementById('buyersTableBody');
+        const empty = document.getElementById('emptyState');
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = '';
+        } else {
+            empty.style.display = 'none';
+            tbody.innerHTML = page.map(b => `
+                <tr>
+                    <td class="name-cell">${esc(b.buyerName)}</td>
+                    <td class="mono">${esc(b.buyerPhone)}</td>
+                    <td class="mono">${esc(b.buyerNationalId)}</td>
+                    <td>${esc(b.buyerEmail)}</td>
+                    <td>${b.buyerType ? `<span class="badge-type">${esc(b.buyerType)}</span>` : '—'}</td>
+                    <td class="mono">${b.totalPurchases}</td>
+                    <td>
+                        <span class="badge-status ${b.isActive ? 'badge-active' : 'badge-inactive'}">
+                            ${b.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <a href="/buyers/edit/${b.id}" class="btn-action btn-edit">Edit</a>
+                            <form action="/buyers/delete/${b.id}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-action btn-delete"
+                                    onclick="return confirm('Deactivate this buyer?');">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        renderPagination();
+        updateKpis();
+    }
+
+    function renderPagination() {
+        const total  = filtered.length;
+        const pages  = Math.ceil(total / rowsPerPage);
+        const start  = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+        const end    = Math.min(currentPage * rowsPerPage, total);
+
+        document.getElementById('paginationInfo').innerHTML =
+            `Showing <strong>${start}–${end}</strong> of <strong>${total}</strong> buyers`;
+
+        const ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+
+        if (pages <= 1) return;
+
+        // Prev
+        const prev = btn('‹', currentPage === 1);
+        prev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); }});
+        ctrl.appendChild(prev);
+
+        // Page numbers with ellipsis
+        const nums = pageNumbers(currentPage, pages);
+        nums.forEach(n => {
+            if (n === '…') {
+                const el = document.createElement('span');
+                el.className = 'page-ellipsis';
+                el.textContent = '…';
+                ctrl.appendChild(el);
+            } else {
+                const el = btn(n, false, n === currentPage);
+                el.addEventListener('click', () => { currentPage = n; renderTable(); });
+                ctrl.appendChild(el);
+            }
+        });
+
+        // Next
+        const next = btn('›', currentPage === pages);
+        next.addEventListener('click', () => { if (currentPage < pages) { currentPage++; renderTable(); }});
+        ctrl.appendChild(next);
+    }
+
+    function pageNumbers(cur, total) {
+        if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+        if (cur <= 4)  return [1,2,3,4,5,'…',total];
+        if (cur >= total - 3) return [1,'…',total-4,total-3,total-2,total-1,total];
+        return [1,'…',cur-1,cur,cur+1,'…',total];
+    }
+
+    function btn(label, disabled = false, active = false) {
+        const el = document.createElement('button');
+        el.className = 'page-btn' + (active ? ' active' : '');
+        el.textContent = label;
+        el.disabled = disabled;
+        return el;
+    }
+
+    function updateKpis() {
+        document.getElementById('totalBuyersKpi').textContent  = allBuyers.length;
+        document.getElementById('showingKpi').textContent      = filtered.length;
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    /* ── Sort ── */
+    window.sortTable = function(key) {
+        if (sortKey === key) sortAsc = !sortAsc;
+        else { sortKey = key; sortAsc = true; }
+
+        document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+        const th = document.getElementById('th-' + key);
+        if (th) {
+            th.classList.add('sorted');
+            th.querySelector('.sort-icon').textContent = sortAsc ? '↑' : '↓';
+        }
+        currentPage = 1;
+        applySort();
+        renderTable();
+    };
+
+    /* ── Search ── */
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        const q = this.value;
+        searchTimeout = setTimeout(() => {
+            if (q.length > 0) {
+                fetch(`/buyers/search?query=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        allBuyers = data;
+                        filtered  = [...data];
+                        currentPage = 1;
+                        renderTable();
+                    })
+                    .catch(() => {
+                        // fallback: client-side filter
+                        applyFilter(q);
+                        currentPage = 1;
+                        renderTable();
+                    });
+            } else {
+                collectRows();
+                filtered = [...allBuyers];
+                currentPage = 1;
+                renderTable();
+            }
+        }, 300);
+    });
+
+    /* ── Rows per page ── */
+    document.getElementById('rowsPerPage').addEventListener('change', function () {
+        rowsPerPage = Number(this.value);
+        currentPage = 1;
+        renderTable();
+    });
+
+    /* ── Init ── */
+    collectRows();
+    filtered = [...allBuyers];
+    renderTable();
+</script>
+</body>
+</html>

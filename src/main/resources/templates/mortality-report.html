@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Mortality Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-value { font-size: 2rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-x-circle text-dark"></i> Mortality Report</h2>
+        <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print</button>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" action="/livestock/mortality-report" class="row g-3">
+                <div class="col-md-5"><label class="form-label fw-bold">From Date</label><input type="date" name="from" class="form-control" th:value="${fromDate}"></div>
+                <div class="col-md-5"><label class="form-label fw-bold">To Date</label><input type="date" name="to" class="form-control" th:value="${toDate}"></div>
+                <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">Apply</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card border-start border-danger border-4">
+                <div class="text-muted small text-uppercase mb-2">Total Deaths</div>
+                <div class="stat-value text-danger" th:text="${totalDeaths}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card border-start border-warning border-4">
+                <div class="text-muted small text-uppercase mb-2">Mortality Rate</div>
+                <div class="stat-value text-warning" th:text="${#numbers.formatDecimal(mortalityRate, 1, 'POINT', 1, 'POINT')} + '%'">0%</div>
+                <small class="text-muted">Of total herd (<span th:text="${totalLivestock}">0</span>)</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-card border-start border-dark border-4">
+                <div class="text-muted small text-uppercase mb-2">Total Loss Estimation</div>
+                <div class="stat-value text-dark" th:text="${#numbers.formatDecimal(totalLoss, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <small class="text-muted">Value of animals lost</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card"><div class="card-header"><h5>Deaths by Cause</h5></div>
+                <div class="card-body"><canvas id="causeChart" style="height: 250px;"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card"><div class="card-header"><h5>Deaths by Category</h5></div>
+                <div class="card-body"><canvas id="categoryChart" style="height: 250px;"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deaths Table -->
+    <div class="card">
+        <div class="card-header"><h5>All Deaths</h5></div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                <tr><th>Tag Number</th><th>Category</th><th>Death Date</th><th>Cause</th><th>Value Lost</th><th>Notes</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="death : ${deaths}">
+                    <td th:text="${death.livestock?.tagNumber}">TAG001</td>
+                    <td th:text="${death.livestock?.livestockCategory?.name}">Cow</td>
+                    <td th:text="${#temporals.format(death.deathDate, 'yyyy-MM-dd')}">2024-01-01</td>
+                    <td><span class="badge bg-danger" th:text="${death.cause}">Disease</span></td>
+                    <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(death.livestock?.currentValue ?: 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</td>
+                  <!--  <td th:text="${death.notes ?: 'N/A'}">Notes</td> -->
+                </tr>
+                <tr th:if="${deaths.isEmpty()}"><td colspan="6" class="text-center text-muted">No deaths in this period</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const deathsByCause = /*[[${deathsByCause}]]*/ {};
+    const deathsByCategory = /*[[${deathsByCategory}]]*/ {};
+
+    const causeLabels = Object.keys(deathsByCause);
+    const causeData = Object.values(deathsByCause);
+    new Chart(document.getElementById('causeChart'), {
+        type: 'pie',
+        data: { labels: causeLabels, datasets: [{ data: causeData, backgroundColor: ['#ef4444','#f97316','#f59e0b','#eab308','#84cc16'] }] },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    const catLabels = Object.keys(deathsByCategory);
+    const catData = Object.values(deathsByCategory);
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'bar',
+        data: { labels: catLabels, datasets: [{ label: 'Deaths', data: catData, backgroundColor: '#ef4444', borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

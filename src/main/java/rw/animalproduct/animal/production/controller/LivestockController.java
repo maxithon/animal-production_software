@@ -12,13 +12,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import rw.animalproduct.animal.production.entity.Livestock;
-import rw.animalproduct.animal.production.entity.LivestockAbortion;
-import rw.animalproduct.animal.production.entity.LivestockBirth;
-import rw.animalproduct.animal.production.entity.LivestockCategory;
-import rw.animalproduct.animal.production.entity.LivestockOffspring;
-import rw.animalproduct.animal.production.entity.LivestockSale;
-import rw.animalproduct.animal.production.entity.LivestockTreatment;
+import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.AbaragizwaAmatungoRepository;
 import rw.animalproduct.animal.production.repository.LivestockAbortionRepository;
 import rw.animalproduct.animal.production.repository.LivestockBirthRepository;
@@ -32,6 +26,7 @@ import rw.animalproduct.animal.production.services.LivestockService;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Comparator;
 
 @Controller
 @RequestMapping("/livestock")
@@ -44,8 +39,8 @@ public class LivestockController {
     private final LivestockRepository           livestockRepository;
     private final LivestockBirthRepository      birthRepository;
     private final LivestockSaleRepository       saleRepository;
-    private final LivestockTreatmentRepository  treatmentRepository;  // ★ NEW
-    private final LivestockAbortionRepository   abortionRepository;   // ★ NEW
+    private final LivestockTreatmentRepository  treatmentRepository;
+    private final LivestockAbortionRepository   abortionRepository;
 
     @Autowired
     public LivestockController(LivestockService livestockService,
@@ -55,8 +50,8 @@ public class LivestockController {
                                LivestockRepository livestockRepository,
                                LivestockBirthRepository birthRepository,
                                LivestockSaleRepository saleRepository,
-                               LivestockTreatmentRepository treatmentRepository,  // ★ NEW
-                               LivestockAbortionRepository abortionRepository) {   // ★ NEW
+                               LivestockTreatmentRepository treatmentRepository,
+                               LivestockAbortionRepository abortionRepository) {
         this.livestockService             = livestockService;
         this.livestockCategoryService     = livestockCategoryService;
         this.abaragizwaAmatungoRepository = abaragizwaAmatungoRepository;
@@ -64,11 +59,45 @@ public class LivestockController {
         this.livestockRepository          = livestockRepository;
         this.birthRepository              = birthRepository;
         this.saleRepository               = saleRepository;
-        this.treatmentRepository          = treatmentRepository;  // ★ NEW
-        this.abortionRepository           = abortionRepository;   // ★ NEW
+        this.treatmentRepository          = treatmentRepository;
+        this.abortionRepository           = abortionRepository;
     }
 
-    // ===================== LIVESTOCK CATEGORIES =====================
+    // =====================================================================
+    // HELPER METHODS
+    // =====================================================================
+
+    private String suggestNextTag(String existingTag) {
+        if (existingTag == null || existingTag.isEmpty()) return null;
+
+        int i = existingTag.length() - 1;
+        while (i >= 0 && Character.isDigit(existingTag.charAt(i))) i--;
+
+        if (i == existingTag.length() - 1) return null;
+
+        String prefix = existingTag.substring(0, i + 1);
+        String numPart = existingTag.substring(i + 1);
+
+        try {
+            long num = Long.parseLong(numPart);
+            String nextNum = String.format("%0" + numPart.length() + "d", num + 1);
+            return prefix + nextNum;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    private String findLastTagNumber() {
+        return livestockRepository.findAll().stream()
+                .map(Livestock::getTagNumber)
+                .filter(t -> t != null && !t.isEmpty())
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+    }
+
+    // =====================================================================
+    // LIVESTOCK CATEGORIES
+    // =====================================================================
 
     @GetMapping("/categories")
     public String listCategories(Model model) {
@@ -160,7 +189,9 @@ public class LivestockController {
         return "redirect:/livestock/categories";
     }
 
-    // ===================== LIVESTOCK LIST =====================
+    // =====================================================================
+    // LIVESTOCK LIST
+    // =====================================================================
 
     @GetMapping("/list")
     public String listAll(@RequestParam(value = "page", defaultValue = "0") int page,
@@ -168,150 +199,45 @@ public class LivestockController {
                           @RequestParam(value = "sort", defaultValue = "tagNumber") String sort,
                           Model model) {
 
-        // ── Paginated livestock list ──────────────────────────────────
         List<Livestock> currentPageList;
         long totalItems = 0;
-        int  totalPages = 1;
+        int totalPages = 1;
 
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, sort);
             Page<Livestock> pageContent = livestockRepository.findAll(pageable);
             currentPageList = pageContent.getContent();
-            totalItems      = pageContent.getTotalElements();
-            totalPages      = pageContent.getTotalPages();
+            totalItems = pageContent.getTotalElements();
+            totalPages = pageContent.getTotalPages();
         } catch (Exception e) {
             currentPageList = livestockService.getAll();
-            totalItems      = currentPageList.size();
-            totalPages      = 1;
-            page            = 0;
+            totalItems = currentPageList.size();
+            totalPages = 1;
+            page = 0;
         }
 
         model.addAttribute("livestockList", currentPageList);
-        model.addAttribute("currentPage",   page);
-        model.addAttribute("totalPages",    totalPages);
-        model.addAttribute("totalItems",    totalItems);
-        model.addAttribute("pageSize",      size);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("pageSize", size);
 
-        // ── birthMap: child livestock_id → birth date ─────────────────
-        Map<UUID, LocalDate> birthMap = new HashMap<>();
-        try {
-            List<LivestockBirth> allBirths = birthRepository.findAll();
-            for (LivestockBirth birth : allBirths) {
-                if (birth.getChildren() == null) continue;
-                for (LivestockOffspring offspring : birth.getChildren()) {
-                    if (offspring.getChildLivestock() != null) {
-                        birthMap.put(
-                                offspring.getChildLivestock().getId(),
-                                birth.getBirthDate()
-                        );
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-        model.addAttribute("birthMap", birthMap);
-
-        // ── motherMap: mother livestock_id → true ────────────────────
-        Map<UUID, Boolean> motherMap = new HashMap<>();
-        try {
-            List<LivestockBirth> allBirths = birthRepository.findAll();
-            for (LivestockBirth birth : allBirths) {
-                if (birth.getLivestock() != null) {
-                    motherMap.put(birth.getLivestock().getId(), Boolean.TRUE);
-                }
-            }
-        } catch (Exception ignored) {}
-        model.addAttribute("motherMap", motherMap);
-
-        // ── saleMap: livestock_id → most recent LivestockSale ────────
-        Map<UUID, LivestockSale> saleMap = new HashMap<>();
-        try {
-            List<LivestockSale> allSales = saleRepository.findAll();
-            for (LivestockSale sale : allSales) {
-                if (sale.getLivestock() == null) continue;
-                UUID lid = sale.getLivestock().getId();
-                if (!saleMap.containsKey(lid) ||
-                        sale.getSaleDate().isAfter(saleMap.get(lid).getSaleDate())) {
-                    saleMap.put(lid, sale);
-                }
-            }
-        } catch (Exception ignored) {}
-        model.addAttribute("saleMap", saleMap);
-
-        // ── ★ treatmentMap: livestock_id → most recent treatment ─────
-        Map<UUID, LivestockTreatment> treatmentMap      = new HashMap<>();
-        Map<UUID, Long>               treatmentCountMap = new HashMap<>();
-        try {
-            List<LivestockTreatment> allTreatments = treatmentRepository.findAll();
-            for (LivestockTreatment t : allTreatments) {
-                if (t.getLivestock() == null) continue;
-                UUID lid = t.getLivestock().getId();
-                // count per animal
-                treatmentCountMap.merge(lid, 1L, Long::sum);
-                // keep most recent
-                if (!treatmentMap.containsKey(lid) ||
-                        t.getTreatmentDate().isAfter(treatmentMap.get(lid).getTreatmentDate())) {
-                    treatmentMap.put(lid, t);
-                }
-            }
-        } catch (Exception ignored) {}
-        model.addAttribute("treatmentMap",      treatmentMap);
-        model.addAttribute("treatmentCountMap", treatmentCountMap);
-        // total treatments across ALL animals (sum of counts)
-        long totalTreatments = treatmentCountMap.values().stream().mapToLong(Long::longValue).sum();
-        model.addAttribute("totalTreatments", totalTreatments);
-
-        // ── ★ abortionMap: livestock_id → most recent abortion ───────
-        Map<UUID, LivestockAbortion> abortionMap      = new HashMap<>();
-        Map<UUID, Long>              abortionCountMap = new HashMap<>();
-        try {
-            List<LivestockAbortion> allAbortions = abortionRepository.findAll();
-            for (LivestockAbortion a : allAbortions) {
-                if (a.getLivestock() == null) continue;
-                UUID lid = a.getLivestock().getId();
-                // count per animal
-                abortionCountMap.merge(lid, 1L, Long::sum);
-                // keep most recent
-                if (!abortionMap.containsKey(lid) ||
-                        a.getAbortionDate().isAfter(abortionMap.get(lid).getAbortionDate())) {
-                    abortionMap.put(lid, a);
-                }
-            }
-        } catch (Exception ignored) {}
-        model.addAttribute("abortionMap",      abortionMap);
-        model.addAttribute("abortionCountMap", abortionCountMap);
-        // total abortion events across ALL animals
-        long totalAbortions = abortionCountMap.values().stream().mapToLong(Long::longValue).sum();
-        model.addAttribute("totalAbortions", totalAbortions);
-
-        // ── sickMap / sickCountMap: wire up your sick repository here ─
-        // Currently set empty so the template does not crash.
-        model.addAttribute("sickMap",      new HashMap<>());
+        model.addAttribute("birthMap", new HashMap<>());
+        model.addAttribute("motherMap", new HashMap<>());
+        model.addAttribute("saleMap", new HashMap<>());
+        model.addAttribute("treatmentMap", new HashMap<>());
+        model.addAttribute("treatmentCountMap", new HashMap<>());
+        model.addAttribute("abortionMap", new HashMap<>());
+        model.addAttribute("abortionCountMap", new HashMap<>());
+        model.addAttribute("sickMap", new HashMap<>());
         model.addAttribute("sickCountMap", new HashMap<>());
-
-        // ── Status counts for the summary strip ───────────────────────
-        try {
-            List<Livestock> all = livestockRepository.findAll();
-            model.addAttribute("totalActive",
-                    all.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count());
-            model.addAttribute("totalSold",
-                    all.stream().filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count());
-            model.addAttribute("totalDead",
-                    all.stream().filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus())).count());
-            model.addAttribute("totalSick",
-                    all.stream().filter(l -> Livestock.STATUS_SICK.equals(l.getStatus())).count());
-            model.addAttribute("totalBornOnFarm", (long) birthMap.size());
-        } catch (Exception ignored) {
-            model.addAttribute("totalActive",     0L);
-            model.addAttribute("totalSold",       0L);
-            model.addAttribute("totalDead",       0L);
-            model.addAttribute("totalSick",       0L);
-            model.addAttribute("totalBornOnFarm", 0L);
-        }
 
         return "livestock-list";
     }
 
-    // ===================== REGISTER =====================
+    // =====================================================================
+    // REGISTER
+    // =====================================================================
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
@@ -319,6 +245,11 @@ public class LivestockController {
         model.addAttribute("categories", livestockCategoryService.getAll());
         model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
         model.addAttribute("locationList", locationRepository.findAll());
+
+        String lastTag = findLastTagNumber();
+        model.addAttribute("lastTag", lastTag);
+        model.addAttribute("suggestedTag", suggestNextTag(lastTag));
+
         return "livestock-register";
     }
 
@@ -329,20 +260,30 @@ public class LivestockController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
+        // Check for duplicate tag number
         Optional<Livestock> existingTag = livestockService.getByTagNumber(livestock.getTagNumber());
         if (existingTag.isPresent()) {
             result.rejectValue("tagNumber", "error.livestock", "Tag number already exists");
+            model.addAttribute("lastTag", livestock.getTagNumber());
+            model.addAttribute("suggestedTag", suggestNextTag(livestock.getTagNumber()));
         }
 
-        if (livestock.getLivestockCategoryIdValue() == null || livestock.getLivestockCategoryIdValue().trim().isEmpty()) {
-            result.rejectValue("livestockCategoryIdValue", "error.livestock", "Livestock category is required");
-        }
-
-        if (livestock.getAbaragizwaAmatungoIdValue() == null || livestock.getAbaragizwaAmatungoIdValue().trim().isEmpty()) {
-            result.rejectValue("abaragizwaAmatungoIdValue", "error.livestock", "Beneficiary is required");
+        // Handle pregnancy logic using plain String values
+        if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
+            livestock.setStatus(Livestock.STATUS_PREGNANT);
+            livestock.setPregnancyStatus("PREGNANT");
+        } else {
+            livestock.setPregnancyStatus("NOT_PREGNANT");
+            livestock.setPregnancyMonths(null);
         }
 
         if (result.hasErrors()) {
+            if (!model.containsAttribute("suggestedTag")) {
+                String lastTag = findLastTagNumber();
+                model.addAttribute("lastTag", lastTag);
+                model.addAttribute("suggestedTag", suggestNextTag(lastTag));
+            }
+
             String errorMessages = result.getFieldErrors().stream()
                     .map(FieldError::getDefaultMessage)
                     .collect(Collectors.joining(", "));
@@ -369,7 +310,9 @@ public class LivestockController {
         }
     }
 
-    // ===================== EDIT =====================
+    // =====================================================================
+    // EDIT
+    // =====================================================================
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") UUID id, Model model) {
@@ -379,6 +322,8 @@ public class LivestockController {
         }
 
         Livestock livestock = livestockOpt.get();
+
+        // Pre-populate transient fields for the form
         if (livestock.getLivestockCategory() != null) {
             livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
         }
@@ -390,6 +335,7 @@ public class LivestockController {
         model.addAttribute("categories", livestockCategoryService.getAll());
         model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
         model.addAttribute("locationList", locationRepository.findAll());
+
         return "livestock-edit";
     }
 
@@ -401,17 +347,14 @@ public class LivestockController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
-        Optional<Livestock> existingTag = livestockService.getByTagNumber(livestock.getTagNumber());
-        if (existingTag.isPresent() && !existingTag.get().getId().equals(id)) {
-            result.rejectValue("tagNumber", "error.livestock", "Tag number already exists");
-        }
-
-        if (livestock.getLivestockCategoryIdValue() == null || livestock.getLivestockCategoryIdValue().trim().isEmpty()) {
-            result.rejectValue("livestockCategoryIdValue", "error.livestock", "Livestock category is required");
-        }
-
-        if (livestock.getAbaragizwaAmatungoIdValue() == null || livestock.getAbaragizwaAmatungoIdValue().trim().isEmpty()) {
-            result.rejectValue("abaragizwaAmatungoIdValue", "error.livestock", "Beneficiary is required");
+        // Handle pregnancy logic using plain String values
+        if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
+            livestock.setStatus(Livestock.STATUS_PREGNANT);
+            livestock.setPregnancyStatus("PREGNANT");
+        } else {
+            if ("PREGNANT".equals(livestock.getPregnancyStatus())) {
+                livestock.setPregnancyStatus("NOT_PREGNANT");
+            }
         }
 
         if (result.hasErrors()) {
@@ -441,25 +384,55 @@ public class LivestockController {
         }
     }
 
-    // ===================== DELETE =====================
+    // =====================================================================
+    // DELETE
+    // =====================================================================
 
     @PostMapping("/delete/{id}")
-    public String delete(@PathVariable("id") UUID id,
-                         RedirectAttributes redirectAttributes) {
-        livestockService.delete(id);
-        redirectAttributes.addFlashAttribute("success", "Livestock deleted successfully!");
+    public String delete(@PathVariable("id") UUID id, RedirectAttributes redirectAttributes) {
+        try {
+            livestockService.delete(id);
+            redirectAttributes.addFlashAttribute("success", "Livestock deleted successfully!");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Cannot delete livestock: " + e.getMessage());
+        }
         return "redirect:/livestock/list";
     }
 
-    // ===================== VIEW =====================
+    // =====================================================================
+    // VIEW DETAIL
+    // =====================================================================
 
     @GetMapping("/view/{id}")
-    public String viewDetails(@PathVariable("id") UUID id, Model model) {
+    public String viewDetail(@PathVariable("id") UUID id, Model model) {
         Optional<Livestock> livestockOpt = livestockService.getById(id);
         if (livestockOpt.isEmpty()) {
             return "redirect:/livestock/list";
         }
         model.addAttribute("livestock", livestockOpt.get());
-        return "livestock-view";
+        return "livestock-detail";
+    }
+
+    // =====================================================================
+    // API ENDPOINTS
+    // =====================================================================
+
+    @GetMapping("/api/suggest-tag")
+    @ResponseBody
+    public Map<String, String> suggestTagForCategory(@RequestParam("categoryId") String categoryId) {
+        Map<String, String> response = new HashMap<>();
+
+        String lastTag = livestockRepository.findAll().stream()
+                .filter(l -> l.getLivestockCategory() != null
+                        && l.getLivestockCategory().getId().toString().equals(categoryId))
+                .map(Livestock::getTagNumber)
+                .filter(t -> t != null && !t.isEmpty())
+                .max(Comparator.naturalOrder())
+                .orElse(null);
+
+        response.put("lastTag", lastTag != null ? lastTag : "None yet");
+        response.put("suggestedTag", lastTag != null ? suggestNextTag(lastTag) : null);
+
+        return response;
     }
 }

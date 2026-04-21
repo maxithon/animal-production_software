@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Owner / Farmer Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+        .owner-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .owner-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-people text-primary"></i> Owner / Farmer Report</h2>
+        <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer"></i> Print</button>
+    </div>
+
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-info-circle"></i>
+        <strong>Total Owners: <span th:text="${totalOwners}">0</span></strong> —
+        This report shows livestock assets, sales, and costs per farmer/owner
+    </div>
+
+    <!-- Owners List -->
+    <div class="row">
+        <div class="col-12" th:each="owner : ${owners}">
+            <div class="owner-card">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <h4 class="mb-1"><i class="bi bi-person-circle text-primary"></i> <span th:text="${owner.ownerName}">John Doe</span></h4>
+                        <p class="text-muted mb-1"><strong>NID:</strong> <span th:text="${owner.nid}">1234567890123456</span></p>
+                        <p class="text-muted mb-0"><strong>Phone:</strong> <span th:text="${owner.phone}">0781234567</span></p>
+                    </div>
+
+                    <div class="col-md-2 text-center border-start">
+                        <div class="text-muted small text-uppercase">Animals</div>
+                        <div class="fs-3 fw-bold text-primary" th:text="${owner.animalCount}">0</div>
+                    </div>
+
+                    <div class="col-md-2 text-center border-start">
+                        <div class="text-muted small text-uppercase">Total Value</div>
+                        <div class="fs-5 fw-bold text-info" th:text="${#numbers.formatDecimal(owner.totalValue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                    </div>
+
+                    <div class="col-md-2 text-center border-start">
+                        <div class="text-muted small text-uppercase">Sales</div>
+                        <div class="fs-5 fw-bold text-success">
+                            <span th:text="${owner.salesCount}">0</span> /
+                            <span th:text="${#numbers.formatDecimal(owner.salesRevenue, 0, 'COMMA', 0, 'POINT')}">0</span> RWF
+                        </div>
+                    </div>
+
+                    <div class="col-md-2 text-center border-start">
+                        <div class="text-muted small text-uppercase">Costs</div>
+                        <div class="fs-5 fw-bold text-danger" th:text="${#numbers.formatDecimal(owner.treatmentCosts, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                    </div>
+
+                    <div class="col-md-1 text-center border-start">
+                        <div class="text-muted small text-uppercase">Net</div>
+                        <div class="fs-5 fw-bold"
+                             th:classappend="${owner.netPosition >= 0} ? 'text-success' : 'text-danger'"
+                             th:text="${owner.netPosition >= 0 ? '+' : '-'} + ${#numbers.formatDecimal(owner.netPosition.abs(), 0, 'COMMA', 0, 'POINT')}">
+                            0
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${owners.isEmpty()}" class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> No owners/farmers found in the system.
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

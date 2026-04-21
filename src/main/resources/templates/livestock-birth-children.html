@@ -23,7 +23,7 @@
         </h4>
         <small class="text-muted">
             Step 2 of 2 — Birth date:
-            <strong th:text="${#temporals.format(birth.birthDate, 'dd-MM-yyyy')}"></strong>
+            <strong th:text="${birth.birthDate != null ? #temporals.format(birth.birthDate, 'dd-MM-yyyy') : 'N/A'}"></strong>
         </small>
     </div>
     <div class="d-flex gap-2">
@@ -74,7 +74,7 @@
                             <i class="bi bi-flag"></i> Founding animal — no grandmother on record
                         </small>
                     </div>
-                    <div class="ms-auto text-end">
+                    <div class="ms-auto text-end" th:if="${birth.livestock != null}">
                         <a th:href="@{/livestock/births/family/{id}(id=${birth.livestock.id})}"
                            class="btn btn-sm btn-outline-warning">
                             <i class="bi bi-diagram-3"></i> Family Tree

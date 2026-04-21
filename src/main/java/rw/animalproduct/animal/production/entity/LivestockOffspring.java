@@ -5,11 +5,7 @@ import java.util.UUID;
 
 /**
  * Links a birth event to one specific child animal.
- *
- * Multi-generation example:
- *   Gen 1: CowA births CalfB  → LivestockOffspring(birthEvent=B1, child=CalfB, generation=1)
- *   Gen 2: CalfB births CalfE → LivestockOffspring(birthEvent=B2, child=CalfE, generation=2)
- *   CalfE.mother = CalfB, CalfB.mother = CowA  (grandmother found automatically via mother_id chain)
+ * Matches database schema: id, birth_id, child_livestock_id, generation, is_deleted
  */
 @Entity
 @Table(name = "livestock_offspring")
@@ -23,15 +19,15 @@ public class LivestockOffspring {
     @JoinColumn(name = "birth_id", nullable = false)
     private LivestockBirth birthEvent;
 
-    // The actual child animal registered in the livestock table.
-    // child.mother is set to birthEvent.livestock when linked.
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "child_livestock_id", referencedColumnName = "id")
     private Livestock childLivestock;
 
-    // 1 = direct child of mother, 2 = grandchild, 3 = great-grandchild, etc.
     @Column(name = "generation")
     private Integer generation = 1;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
 
     public LivestockOffspring() {}
 
@@ -41,6 +37,7 @@ public class LivestockOffspring {
         this.generation = generation;
     }
 
+    // Getters and Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -52,4 +49,7 @@ public class LivestockOffspring {
 
     public Integer getGeneration() { return generation; }
     public void setGeneration(Integer generation) { this.generation = generation; }
+
+    public Boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 }

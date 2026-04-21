@@ -10,6 +10,33 @@
         body { background: #f8f9fa; padding: 20px; font-family:'DM Sans',sans-serif; }
         .edit-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .section-divider { font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; color:#94a3b8; margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid #f0f2f5; }
+
+        /* ── Vet live-search widget ── */
+        .vet-search-wrapper { position: relative; }
+        .vet-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #fff; border: 1.5px solid #4299e1; border-top: none;
+            border-radius: 0 0 8px 8px; z-index: 1055; max-height: 220px;
+            overflow-y: auto; display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .vet-dd-item {
+            padding: 9px 14px; cursor: pointer; font-size: .88rem;
+            border-bottom: 1px solid #f0f4f8; transition: background .12s;
+        }
+        .vet-dd-item:last-child { border-bottom: none; }
+        .vet-dd-item:hover { background: #ebf4ff; }
+        .vet-dd-item .vn  { font-weight: 600; color: #2d3748; }
+        .vet-dd-item .vm  { font-size: .77rem; color: #718096; }
+        .vet-dd-no-result { padding: 9px 14px; color: #a0aec0; font-size: .85rem; }
+        .vet-selected-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ebf4ff; border: 1px solid #bee3f8;
+            border-radius: 20px; padding: 4px 10px 4px 12px;
+            font-size: .85rem; color: #2b6cb0; font-weight: 600; margin-top: 6px;
+        }
+        .vet-selected-chip .rmv { cursor: pointer; color: #63b3ed; font-size: 1rem; line-height: 1; }
+        .vet-selected-chip .rmv:hover { color: #c53030; }
     </style>
 </head>
 <body>
@@ -23,7 +50,7 @@
         <form th:action="@{/livestock/sick/update/{id}(id=${sickRecord.id})}"
               th:object="${sickRecord}" method="post">
 
-            <!-- ── Animal & Core Status ── -->
+            <!-- ── Animal & Status ── -->
             <div class="section-divider"><i class="bi bi-clipboard2-pulse me-1"></i> Animal &amp; Status</div>
             <div class="row g-3">
                 <div class="col-md-6">
@@ -52,24 +79,23 @@
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Status *</label>
                     <select class="form-select" th:field="*{status}" required>
-                        <option value="SICK"       th:selected="${sickRecord.status != null and sickRecord.status.name() == 'SICK'}">Sick</option>
-                        <option value="CRITICAL"   th:selected="${sickRecord.status != null and sickRecord.status.name() == 'CRITICAL'}">Critical</option>
-                        <option value="RECOVERING" th:selected="${sickRecord.status != null and sickRecord.status.name() == 'RECOVERING'}">Recovering</option>
-                        <option value="RECOVERED"  th:selected="${sickRecord.status != null and sickRecord.status.name() == 'RECOVERED'}">Recovered</option>
+                        <option value="SICK">Sick</option>
+                        <option value="CRITICAL">Critical</option>
+                        <option value="RECOVERING">Recovering</option>
+                        <option value="RECOVERED">Recovered</option>
                     </select>
                     <div class="form-text text-muted small">
-                        <i class="bi bi-info-circle me-1"></i>
-                        Setting to <strong>Recovered</strong> automatically restores the animal to <strong>ACTIVE</strong>.
+                        Setting to <strong>Recovered</strong> restores the animal to <strong>ACTIVE</strong>.
                     </div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Severity Level</label>
                     <select class="form-select" th:field="*{severityLevel}">
                         <option value="">— Not specified —</option>
-                        <option value="MILD"             th:selected="${sickRecord.severityLevel != null and sickRecord.severityLevel.name() == 'MILD'}">Mild</option>
-                        <option value="MODERATE"         th:selected="${sickRecord.severityLevel != null and sickRecord.severityLevel.name() == 'MODERATE'}">Moderate</option>
-                        <option value="SEVERE"           th:selected="${sickRecord.severityLevel != null and sickRecord.severityLevel.name() == 'SEVERE'}">Severe</option>
-                        <option value="LIFE_THREATENING" th:selected="${sickRecord.severityLevel != null and sickRecord.severityLevel.name() == 'LIFE_THREATENING'}">Life-Threatening</option>
+                        <option value="MILD">Mild</option>
+                        <option value="MODERATE">Moderate</option>
+                        <option value="SEVERE">Severe</option>
+                        <option value="LIFE_THREATENING">Life-Threatening</option>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -85,12 +111,12 @@
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Symptoms / Illness</label>
                     <textarea class="form-control" th:field="*{symptoms}" rows="3"
-                              placeholder="Describe observed symptoms (e.g. high fever, loss of appetite, limping, discharge...)"></textarea>
+                              placeholder="Describe observed symptoms…"></textarea>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Diagnosis</label>
                     <textarea class="form-control" th:field="*{diagnosis}" rows="3"
-                              placeholder="Formal diagnosis from vet (e.g. Foot-and-Mouth Disease, Lumpy Skin, East Coast Fever...)"></textarea>
+                              placeholder="Formal diagnosis from vet…"></textarea>
                 </div>
             </div>
 
@@ -98,21 +124,39 @@
                 <div class="col-md-12">
                     <label class="form-label fw-semibold">Treatment Notes / Medication</label>
                     <textarea class="form-control" th:field="*{treatmentNotes}" rows="2"
-                              placeholder="Medication name, dosage, frequency, next steps, quarantine instructions..."></textarea>
+                              placeholder="Medication name, dosage, frequency, next steps…"></textarea>
                 </div>
             </div>
 
-            <!-- ── Vet & Cost ── -->
-            <div class="section-divider mt-4"><i class="bi bi-person-badge me-1"></i> Veterinary &amp; Cost</div>
+            <!-- ── Veterinarian (live search) ── -->
+            <div class="section-divider mt-4"><i class="bi bi-person-badge me-1"></i> Veterinary Information</div>
             <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Attending Veterinarian</label>
-                    <input type="text" class="form-control" th:field="*{vetName}" placeholder="e.g. Dr. Mukamana Jean Pierre">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Treatment Cost (RWF)</label>
-                    <input type="number" step="1" min="0" class="form-control" th:field="*{treatmentCost}" placeholder="0">
-                    <div class="form-text text-muted small">Include vet visit, medication, and any related costs.</div>
+                <div class="col-md-7">
+                    <label class="form-label fw-semibold">
+                        Attending Veterinarian
+                        <a href="/veterinarians" target="_blank"
+                           class="btn btn-sm btn-outline-primary ms-1 py-0 px-2"
+                           title="Manage veterinarians">
+                            <i class="bi bi-plus-lg"></i>
+                        </a>
+                    </label>
+
+                    <!-- Hidden field submitted with the form -->
+                    <input type="hidden" name="veterinarianIdValue" id="editVetId"
+                           th:value="${sickRecord.veterinarianIdValue}">
+
+                    <div class="vet-search-wrapper">
+                        <input type="text" id="editVetSearch" class="form-control"
+                               placeholder="Search by name or license…" autocomplete="off">
+                        <div class="vet-dropdown" id="editVetDropdown"></div>
+                    </div>
+
+                    <!-- Chip shows existing vet -->
+                    <div id="editVetChip"></div>
+                    <div class="form-text text-muted small mt-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Treatment costs are tracked in the Treatments module.
+                    </div>
                 </div>
             </div>
 
@@ -126,6 +170,93 @@
         </form>
     </div>
 </div></div></div>
+
+<!-- Pre-populate existing vet from server -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const EXISTING_VET_ID   = /*[[${sickRecord.veterinarian != null ? sickRecord.veterinarian.id : ''}]]*/ '';
+    const EXISTING_VET_NAME = /*[[${sickRecord.veterinarian != null ? sickRecord.veterinarian.fullName : ''}]]*/ '';
+    const EXISTING_VET_LIC  = /*[[${sickRecord.veterinarian != null ? (sickRecord.veterinarian.licenseNumber != null ? sickRecord.veterinarian.licenseNumber : '') : ''}]]*/ '';
+    /*]]>*/
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function() {
+        var searchEl = document.getElementById('editVetSearch');
+        var dropdown = document.getElementById('editVetDropdown');
+        var hiddenEl = document.getElementById('editVetId');
+        var chipArea = document.getElementById('editVetChip');
+        var timer;
+
+        /* Pre-populate existing vet chip on page load */
+        if (EXISTING_VET_ID && EXISTING_VET_NAME) {
+            renderChip({ id: EXISTING_VET_ID, fullName: EXISTING_VET_NAME, licenseNumber: EXISTING_VET_LIC });
+        }
+
+        searchEl.addEventListener('input', function() {
+            clearTimeout(timer);
+            var q = this.value.trim();
+            if (!q) { hide(); return; }
+            timer = setTimeout(function(){ fetchVets(q); }, 250);
+        });
+        searchEl.addEventListener('focus', function() {
+            if (this.value.trim()) fetchVets(this.value.trim());
+        });
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.vet-search-wrapper')) hide();
+        });
+
+        function fetchVets(q) {
+            fetch('/veterinarians/search?q=' + encodeURIComponent(q))
+                .then(function(r){ return r.json(); })
+                .then(renderDropdown)
+                .catch(hide);
+        }
+
+        function renderDropdown(vets) {
+            dropdown.innerHTML = '';
+            if (!vets || vets.length === 0) {
+                dropdown.innerHTML = '<div class="vet-dd-no-result">No results. '
+                    + '<a href="/veterinarians" target="_blank" style="color:#4299e1;font-weight:600;">'
+                    + '<i class="bi bi-plus-circle me-1"></i>Add veterinarian</a></div>';
+            } else {
+                vets.forEach(function(v) {
+                    var item = document.createElement('div');
+                    item.className = 'vet-dd-item';
+                    item.innerHTML = '<div class="vn">' + v.fullName + '</div>'
+                        + '<div class="vm">'
+                        + (v.licenseNumber ? 'Lic: ' + v.licenseNumber : '')
+                        + (v.specialization ? ' · ' + v.specialization : '')
+                        + (v.phone ? ' · ' + v.phone : '')
+                        + '</div>';
+                    item.addEventListener('click', function(){ selectVet(v); });
+                    dropdown.appendChild(item);
+                });
+            }
+            dropdown.style.display = 'block';
+        }
+
+        function selectVet(v) {
+            hiddenEl.value = v.id;
+            searchEl.value = '';
+            hide();
+            renderChip(v);
+        }
+
+        function renderChip(v) {
+            chipArea.innerHTML = '<div class="vet-selected-chip">'
+                + '<i class="bi bi-person-badge"></i> ' + v.fullName
+                + (v.licenseNumber ? ' <span style="color:#63b3ed;font-weight:400;">(Lic: ' + v.licenseNumber + ')</span>' : '')
+                + ' <span class="rmv" onclick="clearEditVet()" title="Remove">×</span></div>';
+        }
+
+        window.clearEditVet = function() {
+            hiddenEl.value = ''; chipArea.innerHTML = ''; searchEl.value = '';
+        };
+
+        function hide() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+    })();
+</script>
 </body>
 </html>

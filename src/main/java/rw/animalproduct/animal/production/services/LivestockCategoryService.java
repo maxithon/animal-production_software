@@ -43,6 +43,8 @@ public class LivestockCategoryService {
             LivestockCategory existing = existingOpt.get();
             existing.setName(updatedData.getName());
             existing.setCode(updatedData.getCode());
+            existing.setGestationPeriodMonths(updatedData.getGestationPeriodMonths()); // ← NEW
+            existing.setDescription(updatedData.getDescription());                     // ← NEW
             return livestockCategoryRepository.save(existing);
         }
         return null;
