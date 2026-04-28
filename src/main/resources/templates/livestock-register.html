@@ -197,11 +197,11 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="abaragizwaAmatungoIdValue" class="form-label">Beneficiary (Abaragizwa) *</label>
-                            <select class="form-select" id="abaragizwaAmatungoIdValue"
-                                    th:field="*{abaragizwaAmatungoIdValue}" required>
+                            <label for="beneficiariesAmatungoIdValue" class="form-label">Beneficiary (Abaragizwa) *</label>
+                            <select class="form-select" id="beneficiariesAmatungoIdValue"
+                                    th:field="*{beneficiariesAmatungoIdValue}" required>
                                 <option value="">Select beneficiary...</option>
-                                <option th:each="ab : ${abaragizwaList}"
+                                <option th:each="ab : ${beneficiariesList}"
                                         th:value="${ab.id}"
                                         th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
                                 </option>

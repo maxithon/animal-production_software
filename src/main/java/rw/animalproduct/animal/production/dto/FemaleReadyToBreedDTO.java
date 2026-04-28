@@ -1,92 +1,219 @@
 package rw.animalproduct.animal.production.dto;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
 public class FemaleReadyToBreedDTO {
-
-    private UUID      id;
-    private String    tagNumber;
-    private String    categoryName;
-    private Integer   ageMonths;
+    private UUID id;
+    private String tagNumber;
+    private UUID categoryId;
+    private String categoryName;
+    private String categoryCode;
+    private Integer gestationPeriodMonths;
+    private Integer ageMonths;
+    private Integer offspringCount;
+    private LocalDate lastBreedingDate;
+    private LocalDate firstBreedingDate;
+    private LocalDate lastBirthDate;
+    private Boolean isPregnant;
+    private String pregnancyStatus;
+    private LocalDate conceptionDate;
+    private LocalDate expectedDueDate;
+    private Long totalBreedings;
+    private Long successfulBreedings;
     private LocalDate dateReceived;
     private LocalDate birthDate;
-    private LocalDate lastBreedingDate;
-    private LocalDate expectedDueDate;
-    private String    status;
-    private String    pregnancyStatus;
-    private Boolean   isPregnant;
-    private Integer   offspringCount;
-    private Long      totalBreedings;
-    private Long      successfulBreedings;
+    private String status;
+    private String gender;
+    private Double currentValue;
 
-    // ── Constructor from Object[] ────────────────────────────────────────────
-    // Column order must match the SELECT in FemalesReadyToBreedRepository:
-    //  0  id
-    //  1  tag_number
-    //  2  category_name
-    //  3  age_months
-    //  4  date_received
-    //  5  birth_date
-    //  6  last_breeding_date
-    //  7  expected_due_date
-    //  8  status
-    //  9  pregnancy_status
-    // 10  is_pregnant
-    // 11  offspring_count
-    // 12  total_breedings
-    // 13  successful_breedings
-
+    // Constructor that matches your view's column order
     public FemaleReadyToBreedDTO(Object[] row) {
-        this.id                  = row[0] != null ? UUID.fromString(row[0].toString()) : null;
-        this.tagNumber           = (String)  row[1];
-        this.categoryName        = (String)  row[2];
-        this.ageMonths           = row[3] != null ? ((Number) row[3]).intValue()  : null;
-        this.dateReceived        = toLocalDate(row[4]);
-        this.birthDate           = toLocalDate(row[5]);
-        this.lastBreedingDate    = toLocalDate(row[6]);
-        this.expectedDueDate     = toLocalDate(row[7]);
-        this.status              = (String)  row[8];
-        this.pregnancyStatus     = (String)  row[9];
-        this.isPregnant          = row[10] != null ? (Boolean) row[10] : false;
-        this.offspringCount      = row[11] != null ? ((Number) row[11]).intValue()  : 0;
-        this.totalBreedings      = row[12] != null ? ((Number) row[12]).longValue() : 0L;
-        this.successfulBreedings = row[13] != null ? ((Number) row[13]).longValue() : 0L;
+        if (row == null) return;
+
+        int idx = 0;
+        // 0: id
+        if (row[idx] instanceof UUID) this.id = (UUID) row[idx];
+        else if (row[idx] != null) this.id = UUID.fromString(row[idx].toString());
+        idx++;
+
+        // 1: tag_number
+        this.tagNumber = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 2: category_id
+        if (row[idx] instanceof UUID) this.categoryId = (UUID) row[idx];
+        else if (row[idx] != null) this.categoryId = UUID.fromString(row[idx].toString());
+        idx++;
+
+        // 3: category_name
+        this.categoryName = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 4: category_code
+        this.categoryCode = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 5: gestation_period_months
+        if (row[idx] instanceof Number) this.gestationPeriodMonths = ((Number) row[idx]).intValue();
+        idx++;
+
+        // 6: age_months
+        if (row[idx] instanceof Number) this.ageMonths = ((Number) row[idx]).intValue();
+        idx++;
+
+        // 7: offspring_count
+        if (row[idx] instanceof Number) this.offspringCount = ((Number) row[idx]).intValue();
+        idx++;
+
+        // 8: last_breeding_date
+        this.lastBreedingDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 9: first_breeding_date
+        this.firstBreedingDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 10: last_birth_date
+        this.lastBirthDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 11: is_pregnant
+        if (row[idx] instanceof Boolean) this.isPregnant = (Boolean) row[idx];
+        else if (row[idx] instanceof Number) this.isPregnant = ((Number) row[idx]).intValue() == 1;
+        idx++;
+
+        // 12: pregnancy_status
+        this.pregnancyStatus = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 13: conception_date
+        this.conceptionDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 14: expected_due_date
+        this.expectedDueDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 15: total_breedings
+        if (row[idx] instanceof Number) this.totalBreedings = ((Number) row[idx]).longValue();
+        idx++;
+
+        // 16: successful_breedings
+        if (row[idx] instanceof Number) this.successfulBreedings = ((Number) row[idx]).longValue();
+        idx++;
+
+        // 17: date_received
+        this.dateReceived = toLocalDate(row[idx]);
+        idx++;
+
+        // 18: birth_date
+        this.birthDate = toLocalDate(row[idx]);
+        idx++;
+
+        // 19: status
+        this.status = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 20: gender
+        this.gender = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // 21: current_value
+        if (row[idx] instanceof Number) this.currentValue = ((Number) row[idx]).doubleValue();
     }
 
     private LocalDate toLocalDate(Object val) {
         if (val == null) return null;
-        if (val instanceof LocalDate ld) return ld;
-        if (val instanceof java.sql.Date sd) return sd.toLocalDate();
-        return LocalDate.parse(val.toString());
+        if (val instanceof LocalDate) return (LocalDate) val;
+        if (val instanceof java.sql.Date) return ((java.sql.Date) val).toLocalDate();
+        try {
+            return LocalDate.parse(val.toString());
+        } catch (Exception e) {
+            return null;
+        }
     }
-
-    // ── Getters ──────────────────────────────────────────────────────────────
-
-    public UUID      getId()                  { return id; }
-    public String    getTagNumber()           { return tagNumber; }
-    public String    getCategoryName()        { return categoryName; }
-    public Integer   getAgeMonths()           { return ageMonths; }
-    public LocalDate getDateReceived()        { return dateReceived; }
-    public LocalDate getBirthDate()           { return birthDate; }
-    public LocalDate getLastBreedingDate()    { return lastBreedingDate; }
-    public LocalDate getExpectedDueDate()     { return expectedDueDate; }
-    public String    getStatus()              { return status; }
-    public String    getPregnancyStatus()     { return pregnancyStatus; }
-    public Boolean   getIsPregnant()          { return isPregnant; }
-    public Integer   getOffspringCount()      { return offspringCount; }
-    public Long      getTotalBreedings()      { return totalBreedings; }
-    public Long      getSuccessfulBreedings() { return successfulBreedings; }
-
-    // ── Derived helpers for Thymeleaf ─────────────────────────────────────────
 
     public boolean isNeverBred() {
         return totalBreedings == null || totalBreedings == 0;
     }
 
+    // ADDED: Success rate calculation
     public double getSuccessRate() {
         if (totalBreedings == null || totalBreedings == 0) return 0.0;
-        return (successfulBreedings * 100.0) / totalBreedings;
+        return (successfulBreedings != null ? successfulBreedings : 0) * 100.0 / totalBreedings;
     }
+
+    // ADDED: Safe isPregnant getter that returns primitive boolean (handles null)
+    public boolean isPregnant() {
+        return isPregnant != null && isPregnant;
+    }
+
+    // Getters and Setters
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public String getTagNumber() { return tagNumber; }
+    public void setTagNumber(String tagNumber) { this.tagNumber = tagNumber; }
+
+    public UUID getCategoryId() { return categoryId; }
+    public void setCategoryId(UUID categoryId) { this.categoryId = categoryId; }
+
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+
+    public String getCategoryCode() { return categoryCode; }
+    public void setCategoryCode(String categoryCode) { this.categoryCode = categoryCode; }
+
+    public Integer getGestationPeriodMonths() { return gestationPeriodMonths; }
+    public void setGestationPeriodMonths(Integer gestationPeriodMonths) { this.gestationPeriodMonths = gestationPeriodMonths; }
+
+    public Integer getAgeMonths() { return ageMonths; }
+    public void setAgeMonths(Integer ageMonths) { this.ageMonths = ageMonths; }
+
+    public Integer getOffspringCount() { return offspringCount; }
+    public void setOffspringCount(Integer offspringCount) { this.offspringCount = offspringCount; }
+
+    public LocalDate getLastBreedingDate() { return lastBreedingDate; }
+    public void setLastBreedingDate(LocalDate lastBreedingDate) { this.lastBreedingDate = lastBreedingDate; }
+
+    public LocalDate getFirstBreedingDate() { return firstBreedingDate; }
+    public void setFirstBreedingDate(LocalDate firstBreedingDate) { this.firstBreedingDate = firstBreedingDate; }
+
+    public LocalDate getLastBirthDate() { return lastBirthDate; }
+    public void setLastBirthDate(LocalDate lastBirthDate) { this.lastBirthDate = lastBirthDate; }
+
+    // Keep the original getter for the Boolean object (if needed elsewhere)
+    public Boolean getIsPregnant() { return isPregnant; }
+    public void setIsPregnant(Boolean isPregnant) { this.isPregnant = isPregnant; }
+
+    public String getPregnancyStatus() { return pregnancyStatus; }
+    public void setPregnancyStatus(String pregnancyStatus) { this.pregnancyStatus = pregnancyStatus; }
+
+    public LocalDate getConceptionDate() { return conceptionDate; }
+    public void setConceptionDate(LocalDate conceptionDate) { this.conceptionDate = conceptionDate; }
+
+    public LocalDate getExpectedDueDate() { return expectedDueDate; }
+    public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
+
+    public Long getTotalBreedings() { return totalBreedings; }
+    public void setTotalBreedings(Long totalBreedings) { this.totalBreedings = totalBreedings; }
+
+    public Long getSuccessfulBreedings() { return successfulBreedings; }
+    public void setSuccessfulBreedings(Long successfulBreedings) { this.successfulBreedings = successfulBreedings; }
+
+    public LocalDate getDateReceived() { return dateReceived; }
+    public void setDateReceived(LocalDate dateReceived) { this.dateReceived = dateReceived; }
+
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public Double getCurrentValue() { return currentValue; }
+    public void setCurrentValue(Double currentValue) { this.currentValue = currentValue; }
 }

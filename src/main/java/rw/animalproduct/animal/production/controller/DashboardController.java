@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSickHistoryRepository;
-import rw.animalproduct.animal.production.services.AbaragizwaAmatungoService;
+import rw.animalproduct.animal.production.services.BeneficiaryService;
 import rw.animalproduct.animal.production.services.LivestockAbortionService;
 import rw.animalproduct.animal.production.services.LivestockBirthService;
 import rw.animalproduct.animal.production.services.LivestockDeathService;
 import rw.animalproduct.animal.production.services.LivestockSaleService;
 import rw.animalproduct.animal.production.services.LivestockSickService;
 import rw.animalproduct.animal.production.services.LivestockTreatmentService;
-import rw.animalproduct.animal.production.services.UhagarariyeAbororaService;
+import rw.animalproduct.animal.production.services.RepresentativeService;
 import rw.animalproduct.animal.production.services.UsersService;
 
 import java.math.BigDecimal;
@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 @Controller
 public class DashboardController {
 
-    private final UhagarariyeAbororaService      uhagarariyeAbororaService;
-    private final AbaragizwaAmatungoService       abaragizwaAmatungoService;
+    private final RepresentativeService      representativesAbororaService;
+    private final BeneficiaryService       beneficiariesAmatungoService;
     private final UsersService                   usersService;
     private final LivestockRepository            livestockRepository;
     private final LivestockBirthService          birthService;
@@ -39,8 +39,8 @@ public class DashboardController {
     private final LivestockDeathService          deathService;
     private final LivestockSickHistoryRepository sickHistoryRepository;
 
-    public DashboardController(UhagarariyeAbororaService uhagarariyeAbororaService,
-                               AbaragizwaAmatungoService abaragizwaAmatungoService,
+    public DashboardController(RepresentativeService representativesAbororaService,
+                               BeneficiaryService beneficiariesAmatungoService,
                                UsersService usersService,
                                LivestockRepository livestockRepository,
                                LivestockBirthService birthService,
@@ -50,8 +50,8 @@ public class DashboardController {
                                LivestockSaleService saleService,
                                LivestockDeathService deathService,
                                LivestockSickHistoryRepository sickHistoryRepository) {
-        this.uhagarariyeAbororaService = uhagarariyeAbororaService;
-        this.abaragizwaAmatungoService = abaragizwaAmatungoService;
+        this.representativesAbororaService = representativesAbororaService;
+        this.beneficiariesAmatungoService = beneficiariesAmatungoService;
         this.usersService              = usersService;
         this.livestockRepository       = livestockRepository;
         this.birthService              = birthService;
@@ -71,8 +71,8 @@ public class DashboardController {
         model.addAttribute("isSuperAdmin", true);
 
         // ── Representatives & Beneficiaries ──────────────────────────
-        model.addAttribute("totalRepresentatives", uhagarariyeAbororaService.getAll().size());
-        model.addAttribute("totalBeneficiaries",   abaragizwaAmatungoService.getAll().size());
+        model.addAttribute("totalRepresentatives", representativesAbororaService.getAll().size());
+        model.addAttribute("totalBeneficiaries",   beneficiariesAmatungoService.getAll().size());
 
         // ── Users ─────────────────────────────────────────────────────
         List<Users> allUsers   = usersService.getAllUsers();

@@ -70,6 +70,9 @@ public class VLivestockWithAge {
     @Column(name = "is_pregnant")
     private Boolean isPregnant;
 
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
     // View-specific calculated fields
     @Column(name = "age_in_days")
     private Integer ageInDays;
@@ -93,8 +96,9 @@ public class VLivestockWithAge {
     @Column(name = "livestock_category_id")
     private UUID livestockCategoryId;
 
-    @Column(name = "abaragizwa_amatungo_id")
-    private UUID abaragizwaAmatungoId;
+    // ✅ FIXED: Changed from beneficiaries_amatungo_id to beneficiary_id
+    @Column(name = "beneficiary_id")
+    private UUID beneficiaryId;
 
     @Column(name = "location_id")
     private UUID locationId;
@@ -259,6 +263,14 @@ public class VLivestockWithAge {
         this.isPregnant = isPregnant;
     }
 
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
     public Integer getAgeInDays() {
         return ageInDays;
     }
@@ -315,12 +327,14 @@ public class VLivestockWithAge {
         this.livestockCategoryId = livestockCategoryId;
     }
 
-    public UUID getAbaragizwaAmatungoId() {
-        return abaragizwaAmatungoId;
+    // ✅ FIXED: Getter for beneficiaryId
+    public UUID getBeneficiaryId() {
+        return beneficiaryId;
     }
 
-    public void setAbaragizwaAmatungoId(UUID abaragizwaAmatungoId) {
-        this.abaragizwaAmatungoId = abaragizwaAmatungoId;
+    // ✅ FIXED: Setter for beneficiaryId
+    public void setBeneficiaryId(UUID beneficiaryId) {
+        this.beneficiaryId = beneficiaryId;
     }
 
     public UUID getLocationId() {

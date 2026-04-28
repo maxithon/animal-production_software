@@ -13,17 +13,17 @@ public class LivestockService {
 
     private final LivestockRepository              livestockRepository;
     private final LivestockCategoryRepository      livestockCategoryRepository;
-    private final AbaragizwaAmatungoRepository     abaragizwaAmatungoRepository;
+    private final BeneficiaryRepository beneficiaryRepository;
     private final LocationRepository               locationRepository;
 
     @Autowired
     public LivestockService(LivestockRepository livestockRepository,
                             LivestockCategoryRepository livestockCategoryRepository,
-                            AbaragizwaAmatungoRepository abaragizwaAmatungoRepository,
+                            BeneficiaryRepository beneficiaryRepository,
                             LocationRepository locationRepository) {
         this.livestockRepository          = livestockRepository;
         this.livestockCategoryRepository  = livestockCategoryRepository;
-        this.abaragizwaAmatungoRepository = abaragizwaAmatungoRepository;
+        this.beneficiaryRepository = beneficiaryRepository;
         this.locationRepository           = locationRepository;
     }
 
@@ -53,12 +53,12 @@ public class LivestockService {
         }
 
         // Handle beneficiary relationship
-        if (livestock.getAbaragizwaAmatungoIdValue() != null) {
-            String beneficiaryIdStr = livestock.getAbaragizwaAmatungoIdValue();
+        if (livestock.getBeneficiaryIdValue() != null) {
+            String beneficiaryIdStr = livestock.getBeneficiaryIdValue();
             try {
                 UUID beneficiaryId = UUID.fromString(beneficiaryIdStr);
-                abaragizwaAmatungoRepository.findById(beneficiaryId)
-                        .ifPresent(livestock::setAbaragizwaAmatungo);
+                beneficiaryRepository.findById(beneficiaryId)
+                        .ifPresent(livestock::setBeneficiary);
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid beneficiary ID format: " + beneficiaryIdStr);
             }
@@ -120,12 +120,12 @@ public class LivestockService {
         }
 
         // Update beneficiary relationship
-        if (updatedLivestock.getAbaragizwaAmatungoIdValue() != null) {
-            String beneficiaryIdStr = updatedLivestock.getAbaragizwaAmatungoIdValue();
+        if (updatedLivestock.getBeneficiaryIdValue() != null) {
+            String beneficiaryIdStr = updatedLivestock.getBeneficiaryIdValue();
             try {
                 UUID beneficiaryId = UUID.fromString(beneficiaryIdStr);
-                abaragizwaAmatungoRepository.findById(beneficiaryId)
-                        .ifPresent(existing::setAbaragizwaAmatungo);
+                beneficiaryRepository.findById(beneficiaryId)
+                        .ifPresent(existing::setBeneficiary);
             } catch (IllegalArgumentException e) {
                 throw new RuntimeException("Invalid beneficiary ID format: " + beneficiaryIdStr);
             }
@@ -147,7 +147,7 @@ public class LivestockService {
     }
 
     public List<Livestock> getByBeneficiary(UUID beneficiaryId) {
-        return livestockRepository.findByAbaragizwaAmatungoId(beneficiaryId);
+        return livestockRepository.findByBeneficiaryId(beneficiaryId);
     }
 
     public List<Livestock> getPregnantLivestock() {

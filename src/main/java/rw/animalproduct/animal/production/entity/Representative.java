@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "uhagarariye_aborora")
-public class UhagarariyeAborora {
+@Table(name = "representatives")
+public class Representative {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -47,11 +47,11 @@ public class UhagarariyeAborora {
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Invalid email format")
     private String email;
 
-    @Column(name = "icyo_akora")
-    private String icyoAkora;
+    @Column(name = "occupation")
+    private String occupation;
 
-    @Column(name = "amasezerano")
-    private String amasezerano;
+    @Column(name = "contract_agreement")
+    private String contractAgreement;
 
     @Column(name = "photo")
     private String photo;
@@ -74,7 +74,8 @@ public class UhagarariyeAborora {
     @Transient
     private String locationIdValue;
 
-    public UhagarariyeAborora() {
+    // Constructors
+    public Representative() {
     }
 
     // Getters and Setters
@@ -142,20 +143,20 @@ public class UhagarariyeAborora {
         this.email = email;
     }
 
-    public String getIcyoAkora() {
-        return icyoAkora;
+    public String getOccupation() {
+        return occupation;
     }
 
-    public void setIcyoAkora(String icyoAkora) {
-        this.icyoAkora = icyoAkora;
+    public void setOccupation(String occupation) {
+        this.occupation = occupation;
     }
 
-    public String getAmasezerano() {
-        return amasezerano;
+    public String getContractAgreement() {
+        return contractAgreement;
     }
 
-    public void setAmasezerano(String amasezerano) {
-        this.amasezerano = amasezerano;
+    public void setContractAgreement(String contractAgreement) {
+        this.contractAgreement = contractAgreement;
     }
 
     public String getPhoto() {
@@ -208,7 +209,7 @@ public class UhagarariyeAborora {
 
     @Override
     public String toString() {
-        return "UhagarariyeAborora{" +
+        return "Representative{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +

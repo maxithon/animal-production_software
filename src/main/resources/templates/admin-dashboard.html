@@ -237,24 +237,41 @@
         <div class="nav-section-label">People</div>
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('representatives',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-person-badge"></i></div>
+                    Representatives
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/uhagarariye/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus-fill"></i>Register</a>
-                <a th:href="@{/uhagarariye/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+                <a th:href="@{/representatives/register}" class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-person-plus-fill"></i>Register
+                </a>
+                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View All
+                </a>
             </div>
         </div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('beneficiaries',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-person-check"></i></div>
+                    Beneficiaries
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/abaragizwa/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus"></i>Register</a>
-                <a th:href="@{/abaragizwa/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+                <a th:href="@{/beneficiaries/register}" class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-person-plus"></i>Register
+                </a>
+                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View All
+                </a>
             </div>
         </div>
+
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('buyers',this)">
                 <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers</div>

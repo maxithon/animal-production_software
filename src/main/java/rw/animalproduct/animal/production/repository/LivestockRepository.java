@@ -26,7 +26,7 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     /**
      * Find livestock by beneficiary ID
      */
-    List<Livestock> findByAbaragizwaAmatungoId(UUID beneficiaryId);
+    List<Livestock> findByBeneficiaryId(UUID beneficiaryId);
 
     /**
      * Count livestock by category

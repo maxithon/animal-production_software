@@ -25,7 +25,7 @@
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Abaragizwa Amatungo</h3>
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -35,16 +35,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/abaragizwa/update/{id}(id=${abaragizwa.id})}" th:object="${abaragizwa}" method="post">
+                <form th:action="@{/beneficiaries/update/{id}(id=${beneficiaries.id})}" th:object="${beneficiaries}" method="post">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <!-- FIXED: Display current photo if exists -->
-                            <div th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${abaragizwa.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${beneficiaries.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
@@ -117,7 +117,7 @@
                                 <option th:each="loc : ${locationList}"
                                         th:value="${loc.id}"
                                         th:text="${loc.name + ' (' + loc.locationType + ')'}"
-                                        th:selected="${loc.id == abaragizwa.location?.id}">
+                                        th:selected="${loc.id == beneficiaries.location?.id}">
                                 </option>
                             </select>
                         </div>
@@ -127,13 +127,13 @@
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="uhagarariye" class="form-label">Uhagarariye Aborora (Representative) *</label>
-                            <select class="form-select" id="uhagarariye" th:field="*{uhagarariyeAbororaIdValue}" required>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
-                                <option th:each="rep : ${uhagarariyeList}"
+                                <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
                                         th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}"
-                                        th:selected="${rep.id == abaragizwa.uhagarariyeAborora?.id}">
+                                        th:selected="${rep.id == beneficiaries.representative?.id}">
                                 </option>
                             </select>
                             <div class="form-text">Select the representative who will supervise this beneficiary</div>
@@ -145,10 +145,10 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <!-- FIXED: Display current PDF if exists -->
-                            <div th:if="${abaragizwa.amasezerano != null and !abaragizwa.amasezerano.isEmpty()}" class="pdf-preview mb-2">
+                            <div th:if="${beneficiaries.contractAgreement != null and !beneficiaries.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
                                 <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
-                                <a th:href="${abaragizwa.amasezerano}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
+                                <a th:href="${beneficiaries.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </div>
@@ -163,7 +163,7 @@
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
@@ -174,7 +174,7 @@
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">

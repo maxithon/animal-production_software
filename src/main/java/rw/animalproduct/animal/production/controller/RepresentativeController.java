@@ -9,9 +9,9 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Location;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
+import rw.animalproduct.animal.production.entity.Representative;
 import rw.animalproduct.animal.production.services.LocationService;
-import rw.animalproduct.animal.production.services.UhagarariyeAbororaService;
+import rw.animalproduct.animal.production.services.RepresentativeService;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,60 +19,60 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/uhagarariye")
-public class UhagarariyeAbororaController {
+@RequestMapping("/representatives")
+public class RepresentativeController {
 
-    private final UhagarariyeAbororaService uhagarariyeAbororaService;
+    private final RepresentativeService representativesAbororaService;
     private final LocationService locationService;
 
     @Autowired
-    public UhagarariyeAbororaController(UhagarariyeAbororaService uhagarariyeAbororaService,
-                                        LocationService locationService) {
-        this.uhagarariyeAbororaService = uhagarariyeAbororaService;
+    public RepresentativeController(RepresentativeService representativesAbororaService,
+                                    LocationService locationService) {
+        this.representativesAbororaService = representativesAbororaService;
         this.locationService = locationService;
     }
 
     @GetMapping("/list")
     public String listAll(Model model) {
-        List<UhagarariyeAborora> list = uhagarariyeAbororaService.getAll();
-        model.addAttribute("uhagarariyeList", list);
-        return "uhagarariye-list";
+        List<Representative> list = representativesAbororaService.getAll();
+        model.addAttribute("representativesList", list);
+        return "representatives-list";
     }
 
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
         List<Location> locations = locationService.getAllLocations();
         model.addAttribute("locations", locations);
-        model.addAttribute("uhagarariye", new UhagarariyeAborora());
-        return "uhagarariye-register";
+        model.addAttribute("representatives", new Representative());
+        return "representatives-register";
     }
 
     @PostMapping("/register/new")
-    public String register(@Valid @ModelAttribute("uhagarariye") UhagarariyeAborora uhagarariye,
+    public String register(@Valid @ModelAttribute("representatives") Representative representatives,
                            BindingResult result,
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
         // Check for duplicate NID
-        Optional<UhagarariyeAborora> existingOpt = uhagarariyeAbororaService.getByNid(uhagarariye.getNid());
+        Optional<Representative> existingOpt = representativesAbororaService.getByNid(representatives.getNid());
         if (existingOpt.isPresent()) {
-            result.rejectValue("nid", "error.uhagarariye", "NID already exists");
+            result.rejectValue("nid", "error.representatives", "NID already exists");
         }
 
         // Additional validation for NID format (16 digits)
-        if (uhagarariye.getNid() != null && !uhagarariye.getNid().matches("^[0-9]{16}$")) {
-            result.rejectValue("nid", "error.uhagarariye", "National ID must be exactly 16 digits");
+        if (representatives.getNid() != null && !representatives.getNid().matches("^[0-9]{16}$")) {
+            result.rejectValue("nid", "error.representatives", "National ID must be exactly 16 digits");
         }
 
         // Additional validation for phone format (10 digits)
-        if (uhagarariye.getPhone() != null && !uhagarariye.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
-            result.rejectValue("phone", "error.uhagarariye", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
+        if (representatives.getPhone() != null && !representatives.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
+            result.rejectValue("phone", "error.representatives", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
 
         // Email validation
-        if (uhagarariye.getEmail() != null && !uhagarariye.getEmail().isEmpty()) {
-            if (!uhagarariye.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                result.rejectValue("email", "error.uhagarariye", "Please provide a valid email address");
+        if (representatives.getEmail() != null && !representatives.getEmail().isEmpty()) {
+            if (!representatives.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                result.rejectValue("email", "error.representatives", "Please provide a valid email address");
             }
         }
 
@@ -86,25 +86,25 @@ public class UhagarariyeAbororaController {
             model.addAttribute("error", errorMessages);
             List<Location> locations = locationService.getAllLocations();
             model.addAttribute("locations", locations);
-            return "uhagarariye-register";
+            return "representatives-register";
         }
 
-        uhagarariyeAbororaService.addNew(uhagarariye);
+        representativesAbororaService.addNew(representatives);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora registered successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") UUID id, Model model) {
-        Optional<UhagarariyeAborora> uhagarariyeOpt = uhagarariyeAbororaService.getById(id);
-        if (uhagarariyeOpt.isEmpty()) {
-            return "redirect:/uhagarariye/list";
+        Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
+        if (representativesOpt.isEmpty()) {
+            return "redirect:/representatives/list";
         }
 
-        UhagarariyeAborora uhagarariye = uhagarariyeOpt.get();
+        Representative representatives = representativesOpt.get();
         List<Location> locations = locationService.getAllLocations();
 
-        model.addAttribute("uhagarariye", uhagarariye);
+        model.addAttribute("representatives", representatives);
         model.addAttribute("locations", locations);
 
         // Declare variables OUTSIDE the if block
@@ -114,8 +114,8 @@ public class UhagarariyeAbororaController {
         Location greatGreatGrandParent = null;
 
         // FIXED: Load location hierarchy if location exists
-        if (uhagarariye.getLocation() != null) {
-            Location currentLocation = uhagarariye.getLocation();
+        if (representatives.getLocation() != null) {
+            Location currentLocation = representatives.getLocation();
             model.addAttribute("selectedVillage", currentLocation.getId());
 
             // Load parent locations hierarchically
@@ -167,36 +167,36 @@ public class UhagarariyeAbororaController {
             model.addAttribute("villages", locationService.getChildLocations(parent.getId()));
         }
 
-        return "uhagarariye-edit";
+        return "representatives-edit";
     }
 
     @PostMapping("/update/{id}")
     public String update(@PathVariable("id") UUID id,
-                         @Valid @ModelAttribute("uhagarariye") UhagarariyeAborora uhagarariye,
+                         @Valid @ModelAttribute("representatives") Representative representatives,
                          BindingResult result,
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
         // Check for duplicate NID (excluding current record)
-        Optional<UhagarariyeAborora> existingOpt = uhagarariyeAbororaService.getByNid(uhagarariye.getNid());
+        Optional<Representative> existingOpt = representativesAbororaService.getByNid(representatives.getNid());
         if (existingOpt.isPresent() && !existingOpt.get().getId().equals(id)) {
-            result.rejectValue("nid", "error.uhagarariye", "NID already exists");
+            result.rejectValue("nid", "error.representatives", "NID already exists");
         }
 
         // Additional validation for NID format (16 digits)
-        if (uhagarariye.getNid() != null && !uhagarariye.getNid().matches("^[0-9]{16}$")) {
-            result.rejectValue("nid", "error.uhagarariye", "National ID must be exactly 16 digits");
+        if (representatives.getNid() != null && !representatives.getNid().matches("^[0-9]{16}$")) {
+            result.rejectValue("nid", "error.representatives", "National ID must be exactly 16 digits");
         }
 
         // Additional validation for phone format (10 digits)
-        if (uhagarariye.getPhone() != null && !uhagarariye.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
-            result.rejectValue("phone", "error.uhagarariye", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
+        if (representatives.getPhone() != null && !representatives.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
+            result.rejectValue("phone", "error.representatives", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
 
         // Email validation
-        if (uhagarariye.getEmail() != null && !uhagarariye.getEmail().isEmpty()) {
-            if (!uhagarariye.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-                result.rejectValue("email", "error.uhagarariye", "Please provide a valid email address");
+        if (representatives.getEmail() != null && !representatives.getEmail().isEmpty()) {
+            if (!representatives.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+                result.rejectValue("email", "error.representatives", "Please provide a valid email address");
             }
         }
 
@@ -208,30 +208,30 @@ public class UhagarariyeAbororaController {
             model.addAttribute("error", errorMessages);
             List<Location> locations = locationService.getAllLocations();
             model.addAttribute("locations", locations);
-            return "uhagarariye-edit";
+            return "representatives-edit";
         }
 
-        uhagarariyeAbororaService.update(id, uhagarariye);
+        representativesAbororaService.update(id, representatives);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora updated successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id,
                          RedirectAttributes redirectAttributes) {
-        uhagarariyeAbororaService.delete(id);
+        representativesAbororaService.delete(id);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora deleted successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     @GetMapping("/view/{id}")
     public String viewDetails(@PathVariable("id") UUID id, Model model) {
-        Optional<UhagarariyeAborora> uhagarariyeOpt = uhagarariyeAbororaService.getById(id);
-        if (uhagarariyeOpt.isEmpty()) {
-            return "redirect:/uhagarariye/list";
+        Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
+        if (representativesOpt.isEmpty()) {
+            return "redirect:/representatives/list";
         }
 
-        model.addAttribute("uhagarariye", uhagarariyeOpt.get());
-        return "uhagarariye-view";
+        model.addAttribute("representatives", representativesOpt.get());
+        return "representatives-view";
     }
 }

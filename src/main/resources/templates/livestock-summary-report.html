@@ -330,9 +330,9 @@
                     <span th:if="${a.gender == null}"     class="no-val">—</span>
                 </td>
                 <td>
-                    <span th:if="${a.abaragizwaAmatungo != null}"
-                          th:text="${a.abaragizwaAmatungo.firstName + ' ' + a.abaragizwaAmatungo.lastName}">Name</span>
-                    <span th:if="${a.abaragizwaAmatungo == null}" class="no-val">—</span>
+                    <span th:if="${a.beneficiary != null}"
+                          th:text="${a.beneficiary.firstName + ' ' + a.beneficiary.lastName}">Name</span>
+                    <span th:if="${a.beneficiary == null}" class="no-val">—</span>
                 </td>
                 <td th:text="${a.location != null ? a.location.name : '—'}">—</td>
                 <td th:text="${a.dateReceived != null ? #temporals.format(a.dateReceived, 'dd-MM-yyyy') : '—'}">—</td>

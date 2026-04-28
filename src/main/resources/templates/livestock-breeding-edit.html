@@ -8,8 +8,27 @@
     <style>
         body { background: #f8f9fa; }
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
-        .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; max-width: 860px; margin: 0 auto 32px; }
-        .section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6c757d; border-bottom: 1px solid #e9ecef; padding-bottom: 6px; margin-bottom: 16px; margin-top: 8px; }
+        .content-card {
+            background: white; border-radius: 10px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+            padding: 28px; max-width: 860px; margin: 0 auto 32px;
+        }
+        .section-title {
+            font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .05em; color: #6c757d;
+            border-bottom: 1px solid #e9ecef; padding-bottom: 6px;
+            margin-bottom: 16px; margin-top: 8px;
+        }
+
+        /* FIX 2: male section disabled for AI / Embryo Transfer */
+        #maleSection { transition: opacity .2s; }
+        #maleSection.hidden-method { opacity: .45; pointer-events: none; }
+        .method-note {
+            display: none; font-size: 0.82rem;
+            background: #ebf8ff; border: 1px solid #bee3f8;
+            border-radius: 8px; padding: 8px 14px; color: #2b6cb0; margin-top: 6px;
+        }
+        .method-note.visible { display: block; }
     </style>
 </head>
 <body>
@@ -32,34 +51,51 @@
 <div class="container-fluid px-4">
     <div class="content-card">
 
+        <!-- Validation errors summary -->
+        <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            Please correct the errors below before saving.
+        </div>
+
         <form th:action="@{/livestock/breeding/update/{id}(id=${breeding.id})}"
               th:object="${breeding}" method="post">
 
             <p class="section-title">Animal &amp; Breeding Details</p>
             <div class="row g-3 mb-4">
 
+                <!-- FIX 1: Bind to livestockIdValue, not livestock -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Female Animal <span class="text-danger">*</span></label>
-                    <select th:field="*{livestockIdValue}" class="form-select" required>
+                    <select th:field="*{livestockIdValue}"
+                            class="form-select"
+                            th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
+                            required>
                         <option value="">— Select Female Animal —</option>
                         <option th:each="ls : ${femaleLivestock}"
                                 th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}"
-                                th:selected="${breeding.livestockIdValue != null and breeding.livestockIdValue == ls.id.toString()}">
+                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
                         </option>
                     </select>
+                    <div th:if="${#fields.hasErrors('livestockIdValue')}"
+                         class="invalid-feedback" th:errors="*{livestockIdValue}"></div>
                 </div>
 
-                <div class="col-md-6">
+                <!-- FIX 2: Male section with method-aware hiding -->
+                <div class="col-md-6" id="maleSection">
                     <label class="form-label fw-semibold">Male Animal (Sire)</label>
-                    <select th:field="*{maleLivestockIdValue}" class="form-select">
+                    <select th:field="*{maleLivestockIdValue}" class="form-select" id="maleSelect">
                         <option value="">— Select Male Animal (optional) —</option>
-                        <option th:each="ls : ${maleLivestock}"
+                        <option th:each="ls : ${allMaleLivestock}"
                                 th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}"
-                                th:selected="${breeding.maleLivestockIdValue != null and breeding.maleLivestockIdValue == ls.id.toString()}">
+                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
                         </option>
                     </select>
+                    <div id="methodNote" class="method-note">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <span id="methodNoteText">Male animal is not required for this breeding method.</span>
+                    </div>
+                    <div th:if="${#fields.hasErrors('maleLivestockIdValue')}"
+                         class="text-danger small mt-1" th:errors="*{maleLivestockIdValue}"></div>
                 </div>
 
                 <div class="col-md-6">
@@ -69,7 +105,7 @@
 
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Breeding Method</label>
-                    <select th:field="*{breedingMethod}" class="form-select">
+                    <select th:field="*{breedingMethod}" class="form-select" id="methodSelect">
                         <option value="">— Select Method —</option>
                         <option value="NATURAL">Natural Mating</option>
                         <option value="ARTIFICIAL_INSEMINATION">Artificial Insemination (AI)</option>
@@ -103,8 +139,7 @@
                         <option value="">— Select Veterinarian (optional) —</option>
                         <option th:each="v : ${vets}"
                                 th:value="${v.id}"
-                                th:text="${v.fullName + (v.licenseNumber != null ? ' (' + v.licenseNumber + ')' : '')}"
-                                th:selected="${breeding.veterinarianIdValue != null and breeding.veterinarianIdValue == v.id.toString()}">
+                                th:text="${v.fullName + (v.licenseNumber != null ? ' (' + v.licenseNumber + ')' : '')}">
                         </option>
                     </select>
                 </div>
@@ -139,5 +174,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        const NO_MALE_METHODS = ['ARTIFICIAL_INSEMINATION', 'EMBRYO_TRANSFER'];
+        const methodSelect  = document.getElementById('methodSelect');
+        const maleSelect    = document.getElementById('maleSelect');
+        const maleSection   = document.getElementById('maleSection');
+        const methodNote    = document.getElementById('methodNote');
+        const methodNoteText = document.getElementById('methodNoteText');
+
+        function updateMaleSection() {
+            if (!methodSelect || !maleSection) return;
+            const noMale = NO_MALE_METHODS.includes(methodSelect.value);
+            if (noMale) {
+                maleSection.classList.add('hidden-method');
+                if (maleSelect) maleSelect.value = '';
+                methodNote.classList.add('visible');
+                methodNoteText.textContent = methodSelect.value === 'ARTIFICIAL_INSEMINATION'
+                    ? 'Artificial Insemination does not require selecting a male animal on-farm. Record the semen batch in Notes.'
+                    : 'Embryo Transfer does not require selecting a male animal. Record donor/recipient details in Notes.';
+            } else {
+                maleSection.classList.remove('hidden-method');
+                methodNote.classList.remove('visible');
+            }
+        }
+
+        methodSelect && methodSelect.addEventListener('change', updateMaleSection);
+
+        // Apply on page load (covers pre-filled edit forms)
+        updateMaleSection();
+    })();
+</script>
 </body>
 </html>

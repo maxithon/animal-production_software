@@ -58,9 +58,9 @@ CREATE TABLE sec_user (
 
 
 -- =============================================================================
--- 4. uhagarariye_aborora  (supervisor / farm manager)
+-- 4. representatives_aborora  (supervisor / farm manager)
 -- =============================================================================
-CREATE TABLE uhagarariye_aborora (
+CREATE TABLE representatives_aborora (
     id              BIGSERIAL PRIMARY KEY,
     first_name      VARCHAR(100) NOT NULL,
     last_name       VARCHAR(100) NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE uhagarariye_aborora (
     phone           VARCHAR(20),
     email           VARCHAR(150),
     icyo_akora      VARCHAR(200),
-    amasezerano     VARCHAR(200),
+    contractAgreement     VARCHAR(200),
     photo           VARCHAR(500),
     location_id     BIGINT REFERENCES a_location(id),
     created_date    TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -80,9 +80,9 @@ CREATE TABLE uhagarariye_aborora (
 
 
 -- =============================================================================
--- 5. abaragizwa_amatungo  (livestock owners / farmers)
+-- 5. beneficiaries_amatungo  (livestock owners / farmers)
 -- =============================================================================
-CREATE TABLE abaragizwa_amatungo (
+CREATE TABLE beneficiaries_amatungo (
     id                      BIGSERIAL PRIMARY KEY,
     first_name              VARCHAR(100) NOT NULL,
     last_name               VARCHAR(100) NOT NULL,
@@ -90,8 +90,8 @@ CREATE TABLE abaragizwa_amatungo (
     maritial_status         VARCHAR(30),
     nid                     VARCHAR(50),
     phone                   VARCHAR(20),
-    amasezerano             VARCHAR(200),
-    uhagarariye_aborora_id  BIGINT REFERENCES uhagarariye_aborora(id),
+    contractAgreement             VARCHAR(200),
+    representatives_aborora_id  BIGINT REFERENCES representatives_aborora(id),
     location_id             BIGINT REFERENCES a_location(id),
     photo                   VARCHAR(500),
     created_date            TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -183,7 +183,7 @@ CREATE TABLE livestock (
 
     -- Relations
     mother_id               BIGINT REFERENCES livestock(id),
-    abaragizwa_amatungo_id  BIGINT REFERENCES abaragizwa_amatungo(id),
+    beneficiaries_amatungo_id  BIGINT REFERENCES beneficiaries_amatungo(id),
     livestock_category_id   BIGINT NOT NULL REFERENCES livestock_categories(id),
     location_id             BIGINT REFERENCES a_location(id),
 
@@ -414,7 +414,7 @@ CREATE TABLE aps_log (
 -- livestock core lookups
 CREATE INDEX idx_livestock_tag            ON livestock (tag_number);
 CREATE INDEX idx_livestock_category       ON livestock (livestock_category_id);
-CREATE INDEX idx_livestock_owner          ON livestock (abaragizwa_amatungo_id);
+CREATE INDEX idx_livestock_owner          ON livestock (beneficiaries_amatungo_id);
 CREATE INDEX idx_livestock_pregnancy      ON livestock (pregnancy_status) WHERE is_deleted = FALSE;
 CREATE INDEX idx_livestock_due_date       ON livestock (expected_due_date) WHERE is_deleted = FALSE;
 CREATE INDEX idx_livestock_status         ON livestock (status) WHERE is_deleted = FALSE;
@@ -458,7 +458,7 @@ CREATE INDEX idx_aps_log_action           ON aps_log (action);
 --     lb.breeding_date, lb.breeding_method
 -- FROM livestock l
 -- JOIN livestock_categories lc        ON lc.id = l.livestock_category_id
--- JOIN abaragizwa_amatungo aa         ON aa.id = l.abaragizwa_amatungo_id
+-- JOIN beneficiaries_amatungo aa         ON aa.id = l.beneficiaries_amatungo_id
 -- LEFT JOIN livestock_breeding lb     ON lb.livestock_id = l.id
 --     AND lb.status = 'SUCCESS' AND lb.is_deleted = FALSE
 -- WHERE l.is_deleted = FALSE

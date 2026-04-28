@@ -3,9 +3,14 @@ package rw.animalproduct.animal.production.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import rw.animalproduct.animal.production.dto.FemaleReadyToBreedDTO;
+import rw.animalproduct.animal.production.dto.MaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
+import rw.animalproduct.animal.production.services.FemalesReadyToBreedService;
+import rw.animalproduct.animal.production.services.LivestockBreedingService;
 import rw.animalproduct.animal.production.services.LivestockLifecycleService;
+import rw.animalproduct.animal.production.services.MalesReadyToBreedService;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -13,79 +18,62 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * IMPROVED Livestock Lifecycle Controller
- *
- * Complete lifecycle tracking from birth to offspring with proper data integration
+ * Livestock Lifecycle Controller
+ * Complete lifecycle tracking from birth to offspring with proper data integration.
  */
 @Controller
 @RequestMapping("/livestock/lifecycle")
 public class LivestockLifecycleController {
 
-    private final LivestockLifecycleService lifecycleService;
+    private final LivestockLifecycleService   lifecycleService;
+    private final LivestockBreedingService    breedingService;
+    private final MalesReadyToBreedService    malesReadyToBreedService;
+    private final FemalesReadyToBreedService  femalesReadyToBreedService;
 
-    public LivestockLifecycleController(LivestockLifecycleService lifecycleService) {
-        this.lifecycleService = lifecycleService;
+    public LivestockLifecycleController(
+            LivestockLifecycleService lifecycleService,
+            LivestockBreedingService breedingService,
+            MalesReadyToBreedService malesReadyToBreedService,
+            FemalesReadyToBreedService femalesReadyToBreedService) {
+        this.lifecycleService          = lifecycleService;
+        this.breedingService           = breedingService;
+        this.malesReadyToBreedService  = malesReadyToBreedService;
+        this.femalesReadyToBreedService= femalesReadyToBreedService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // MAIN DASHBOARD - Complete lifecycle overview
+    // MAIN DASHBOARD
     // ═══════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
 
-        // ─── Lifecycle Stage Summary ─────────────────────────────────────────
         Map<String, Long> lifecycleSummary = new LinkedHashMap<>();
-        lifecycleSummary.put("NEWBORN", lifecycleService.countNewborns());
-        lifecycleSummary.put("YOUNG", countYoung());
-        lifecycleSummary.put("PRE_BREEDING", countPreBreeding());
+        lifecycleSummary.put("NEWBORN",        lifecycleService.countNewborns());
+        lifecycleSummary.put("YOUNG",          countYoung());
+        lifecycleSummary.put("PRE_BREEDING",   countPreBreeding());
         lifecycleSummary.put("READY_TO_BREED", lifecycleService.countReadyToBreed());
-        lifecycleSummary.put("BREEDING_MALE", countBreedingMales());
-        lifecycleSummary.put("PREGNANT", lifecycleService.countPregnant());
-        lifecycleSummary.put("MATURE", countMature());
-
+        lifecycleSummary.put("BREEDING_MALE",  countBreedingMales());
+        lifecycleSummary.put("PREGNANT",       lifecycleService.countPregnant());
+        lifecycleSummary.put("MATURE",         countMature());
         model.addAttribute("lifecycleSummary", lifecycleSummary);
 
-        // ─── Status Distribution ──────────────────────────────────────────────
-        Map<String, Long> statusSummary = getStatusDistribution();
-        model.addAttribute("statusSummary", statusSummary);
+        model.addAttribute("statusSummary", getStatusDistribution());
+        model.addAttribute("genderSummary", getGenderDistribution());
 
-        // ─── Gender Distribution ──────────────────────────────────────────────
-        Map<String, Long> genderSummary = getGenderDistribution();
-        model.addAttribute("genderSummary", genderSummary);
+        model.addAttribute("recentNewborns", lifecycleService.getRecentlyBorn(30).stream()
+                .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
-        // ─── Recent Newborns (last 30 days) ───────────────────────────────────
-        List<Map<String, Object>> recentNewborns = lifecycleService.getRecentlyBorn(30)
-                .stream()
-                .limit(10)
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-        model.addAttribute("recentNewborns", recentNewborns);
+        model.addAttribute("pregnantList", lifecycleService.getPregnantAnimals().stream()
+                .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
-        // ─── Pregnant Animals ─────────────────────────────────────────────────
-        List<Map<String, Object>> pregnantList = lifecycleService.getPregnantAnimals()
-                .stream()
-                .limit(10)
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-        model.addAttribute("pregnantList", pregnantList);
+        model.addAttribute("readyToBreed", lifecycleService.getReadyToBreed().stream()
+                .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
-        // ─── Ready to Breed ───────────────────────────────────────────────────
-        List<Map<String, Object>> readyToBreed = lifecycleService.getReadyToBreed()
-                .stream()
-                .limit(10)
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-        model.addAttribute("readyToBreed", readyToBreed);
-
-        // ─── Active Breedings ─────────────────────────────────────────────────
-        List<LivestockBreeding> activeBreedings = lifecycleService.getActiveBreedings();
-        model.addAttribute("activeBreedings", activeBreedings);
-
-        // ─── Key Metrics ──────────────────────────────────────────────────────
-        model.addAttribute("totalAnimals", lifecycleService.countAll());
-        model.addAttribute("dueSoonCount", lifecycleService.countDueSoon(14));
-        model.addAttribute("overdueCount", lifecycleService.getOverdue().size());
+        model.addAttribute("activeBreedings",     lifecycleService.getActiveBreedings());
+        model.addAttribute("totalAnimals",        lifecycleService.countAll());
+        model.addAttribute("dueSoonCount",        lifecycleService.countDueSoon(14));
+        model.addAttribute("overdueCount",        lifecycleService.getOverdue().size());
         model.addAttribute("breedingSuccessRate",
                 String.format("%.1f%%", lifecycleService.getBreedingSuccessRate()));
 
@@ -98,216 +86,236 @@ public class LivestockLifecycleController {
 
     @GetMapping("/pre-breeding")
     public String preBreeding(Model model) {
-        List<Map<String, Object>> youngFemales = lifecycleService.getYoungFemales()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> youngMales = lifecycleService.getYoungMales()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> approaching = lifecycleService.getApproachingBreedingAge()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        model.addAttribute("youngFemales", youngFemales);
-        model.addAttribute("youngMales", youngMales);
-        model.addAttribute("approachingBreedingAge", approaching);
+        model.addAttribute("youngFemales", lifecycleService.getYoungFemales().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("youngMales", lifecycleService.getYoungMales().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("approachingBreedingAge", lifecycleService.getApproachingBreedingAge().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
         model.addAttribute("pageTitle", "Pre-Breeding Management");
-
         return "livestock-pre-breeding";
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // READY TO BREED
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/ready-to-breed")
-    public String readyToBreed(Model model) {
-        List<Map<String, Object>> readyFemales = lifecycleService.getReadyToBreed()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
+    public String readyToBreed(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search,
+            Model model) {
 
-        List<Map<String, Object>> readyMales = lifecycleService.getMalesReadyToBreed()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
+        String selectedCategory = (category != null && !category.isEmpty()) ? category : "all";
+        String searchTerm = (search != null && !search.isEmpty()) ? search : "";
 
-        List<Map<String, Object>> suggestions = lifecycleService.getBreedingSuggestions();
+        // Get all data
+        List<MaleReadyToBreedDTO> allMales = malesReadyToBreedService.getAllReadyToBreed();
+        List<FemaleReadyToBreedDTO> allFemales = femalesReadyToBreedService.getAllReadyToBreed();
 
-        model.addAttribute("readyFemales", readyFemales);
-        model.addAttribute("readyMales", readyMales);
-        model.addAttribute("breedingSuggestions", suggestions);
+        // Apply search filter
+        if (!searchTerm.isEmpty()) {
+            allMales = allMales.stream()
+                    .filter(m -> (m.getTagNumber() != null && m.getTagNumber().toLowerCase().contains(searchTerm.toLowerCase())) ||
+                            (m.getCategoryName() != null && m.getCategoryName().toLowerCase().contains(searchTerm.toLowerCase())))
+                    .collect(Collectors.toList());
+
+            allFemales = allFemales.stream()
+                    .filter(f -> (f.getTagNumber() != null && f.getTagNumber().toLowerCase().contains(searchTerm.toLowerCase())) ||
+                            (f.getCategoryName() != null && f.getCategoryName().toLowerCase().contains(searchTerm.toLowerCase())))
+                    .collect(Collectors.toList());
+        }
+
+        // Group by category
+        Map<String, List<MaleReadyToBreedDTO>> malesByCategory = allMales.stream()
+                .filter(m -> m.getCategoryName() != null)
+                .collect(Collectors.groupingBy(MaleReadyToBreedDTO::getCategoryName,
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+
+        Map<String, List<FemaleReadyToBreedDTO>> femalesByCategory = allFemales.stream()
+                .filter(f -> f.getCategoryName() != null)
+                .collect(Collectors.groupingBy(FemaleReadyToBreedDTO::getCategoryName,
+                        LinkedHashMap::new,
+                        Collectors.toList()));
+
+        // Get all unique categories
+        Set<String> allCategories = new LinkedHashSet<>();
+        allCategories.addAll(malesByCategory.keySet());
+        allCategories.addAll(femalesByCategory.keySet());
+
+        // Apply category filter if needed
+        if (!"all".equals(selectedCategory)) {
+            Map<String, List<MaleReadyToBreedDTO>> filteredMalesByCategory = new LinkedHashMap<>();
+            Map<String, List<FemaleReadyToBreedDTO>> filteredFemalesByCategory = new LinkedHashMap<>();
+
+            if (malesByCategory.containsKey(selectedCategory)) {
+                filteredMalesByCategory.put(selectedCategory, malesByCategory.get(selectedCategory));
+            }
+            if (femalesByCategory.containsKey(selectedCategory)) {
+                filteredFemalesByCategory.put(selectedCategory, femalesByCategory.get(selectedCategory));
+            }
+
+            malesByCategory = filteredMalesByCategory;
+            femalesByCategory = filteredFemalesByCategory;
+        }
+
+        // Calculate totals
+        int maleTotal = allMales.size();
+        int femaleTotal = allFemales.size();
+        double maleAvgSuccessRate = malesReadyToBreedService.getAverageSuccessRate();
+        long maleNeverBred = malesReadyToBreedService.countNeverBred();
+        long femaleNeverBred = femalesReadyToBreedService.countNeverBred();
+
+        // Add attributes
+        model.addAttribute("malesByCategory", malesByCategory);
+        model.addAttribute("femalesByCategory", femalesByCategory);
+        model.addAttribute("allCategories", allCategories);
+        model.addAttribute("selectedCategory", selectedCategory);
+        model.addAttribute("maleTotal", maleTotal);
+        model.addAttribute("femaleTotal", femaleTotal);
+        model.addAttribute("maleAvgSuccessRate", maleAvgSuccessRate);
+        model.addAttribute("maleNeverBred", maleNeverBred);
+        model.addAttribute("femaleNeverBred", femaleNeverBred);
+        model.addAttribute("search", searchTerm);
         model.addAttribute("pageTitle", "Ready to Breed");
 
         return "livestock-ready-to-breed";
     }
 
-    @GetMapping("/breeding-management")
-    public String breedingManagement(Model model) {
-        List<LivestockBreeding> activeBreedings = lifecycleService.getActiveBreedings();
-        List<LivestockBreeding> pendingCheck = lifecycleService.getPendingPregnancyCheck();
-        List<LivestockBreeding> recentBreedings = lifecycleService.getRecentlyBred(30);
-        List<LivestockBreeding> failed = lifecycleService.getFailedBreedings();
+    // ═══════════════════════════════════════════════════════════════════════════
+    // BREEDING MANAGEMENT - COMMENTED OUT TO AVOID DUPLICATE
+    // Use /livestock/lifecycle/breeding-management from LivestockBreedingController instead
+    // ═══════════════════════════════════════════════════════════════════════════
 
-        model.addAttribute("activeBreedings", activeBreedings);
-        model.addAttribute("pendingPregnancyCheck", pendingCheck);
-        model.addAttribute("recentBreedings", recentBreedings);
-        model.addAttribute("failedBreedings", failed);
-        model.addAttribute("successRate", lifecycleService.getBreedingSuccessRate());
-        model.addAttribute("avgDaysToConception", lifecycleService.getAvgDaysToConception());
-        model.addAttribute("pageTitle", "Breeding Management");
+    // @GetMapping("/breeding-management")
+    // public String breedingManagement(Model model) {
+    //     This method has been moved to LivestockBreedingController
+    //     to avoid duplicate mapping error.
+    //     Please use LivestockBreedingController for breeding management.
+    // }
 
-        return "livestock-breeding-management";
-    }
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PREGNANCY TRACKING
+    // ═══════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/pregnancy-tracking")
     public String pregnancyTracking(Model model) {
-        List<Map<String, Object>> pregnant = lifecycleService.getPregnantAnimals()
-                .stream()
-                .map(this::enrichAnimalData)
+
+        LocalDate today = LocalDate.now();
+
+        List<LivestockBreeding> allPregnant = breedingService.getAll().stream()
+                .filter(b -> "CONFIRMED_PREGNANT".equals(b.getStatus()))
+                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
+                .sorted(Comparator.comparingLong(b -> {
+                    if (b.getExpectedDueDate() == null) return Long.MAX_VALUE;
+                    return ChronoUnit.DAYS.between(today, b.getExpectedDueDate());
+                }))
                 .collect(Collectors.toList());
 
-        List<Map<String, Object>> dueSoon = lifecycleService.getDueSoon(14)
-                .stream()
-                .map(this::enrichAnimalData)
+        long dueSoonCount = allPregnant.stream()
+                .filter(b -> b.getExpectedDueDate() != null)
+                .filter(b -> {
+                    long d = ChronoUnit.DAYS.between(today, b.getExpectedDueDate());
+                    return d >= 0 && d <= 30;
+                }).count();
+
+        long checkupsDue = allPregnant.stream()
+                .filter(b -> b.getExpectedPregnancyCheckDate() != null
+                        && b.getExpectedPregnancyCheckDate().isBefore(today))
+                .count();
+
+        List<LivestockBreeding> criticalCases = allPregnant.stream()
+                .filter(b -> b.getExpectedDueDate() != null)
+                .filter(b -> ChronoUnit.DAYS.between(today, b.getExpectedDueDate()) < 7)
                 .collect(Collectors.toList());
 
-        List<Map<String, Object>> overdue = lifecycleService.getOverdue()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> calendar = lifecycleService.getDueDateCalendar();
-
-        model.addAttribute("pregnantAnimals", pregnant);
-        model.addAttribute("dueSoon", dueSoon);
-        model.addAttribute("overdue", overdue);
-        model.addAttribute("dueDateCalendar", calendar);
-        model.addAttribute("pageTitle", "Pregnancy Tracking");
+        model.addAttribute("pregnancies",   allPregnant);
+        model.addAttribute("totalPregnant", allPregnant.size());
+        model.addAttribute("dueSoon",       dueSoonCount);
+        model.addAttribute("checkupsDue",   checkupsDue);
+        model.addAttribute("highRisk",      criticalCases.size());
+        model.addAttribute("criticalCases", criticalCases);
+        model.addAttribute("today",         today);
+        model.addAttribute("pageTitle",     "Pregnancy Tracking");
 
         return "livestock-pregnancy-tracking";
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // OTHER LIFECYCLE VIEWS
+    // ═══════════════════════════════════════════════════════════════════════════
+
     @GetMapping("/male-management")
     public String maleManagement(Model model) {
-        List<Map<String, Object>> allMales = lifecycleService.getAllMales()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> readyMales = lifecycleService.getMalesReadyToBreed()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> breedingStats = lifecycleService.getMaleBreedingStats();
-
-        model.addAttribute("allMales", allMales);
-        model.addAttribute("readyMales", readyMales);
-        model.addAttribute("breedingStats", breedingStats);
+        model.addAttribute("allMales", lifecycleService.getAllMales().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("readyMales", lifecycleService.getMalesReadyToBreed().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("breedingStats", lifecycleService.getMaleBreedingStats());
         model.addAttribute("pageTitle", "Male Management");
-
         return "livestock-male-management";
     }
 
     @GetMapping("/female-management")
     public String femaleManagement(Model model) {
-        List<Map<String, Object>> allFemales = lifecycleService.getAllFemales()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> pregnant = lifecycleService.getPregnantAnimals()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> nursing = lifecycleService.getNursingAnimals()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> readyToBreed = lifecycleService.getReadyToBreed()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        model.addAttribute("allFemales", allFemales);
-        model.addAttribute("pregnantAnimals", pregnant);
-        model.addAttribute("nursingAnimals", nursing);
-        model.addAttribute("readyToBreed", readyToBreed);
+        model.addAttribute("allFemales", lifecycleService.getAllFemales().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("pregnantAnimals", lifecycleService.getPregnantAnimals().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("nursingAnimals", lifecycleService.getNursingAnimals().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
+        model.addAttribute("readyToBreed", lifecycleService.getReadyToBreed().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList()));
         model.addAttribute("pageTitle", "Female Management");
-
         return "livestock-female-management";
     }
 
     @GetMapping("/notifications")
     public String notifications(Model model) {
-        List<Map<String, Object>> dueSoon = lifecycleService.getDueSoon(30)
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
+        List<Map<String, Object>> dueSoonAnimals = lifecycleService.getDueSoon(14).stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList());
+        List<Map<String, Object>> overdueAnimals = lifecycleService.getOverdue().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList());
+        List<Map<String, Object>> newbornAnimals = lifecycleService.getRecentlyBorn(30).stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList());
+        List<Map<String, Object>> readyToBreed = lifecycleService.getReadyToBreed().stream()
+                .map(this::enrichAnimalData).collect(Collectors.toList());
 
-        List<Map<String, Object>> overdue = lifecycleService.getOverdue()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<LivestockBreeding> overdueCheck = lifecycleService.getOverduePregnancyCheck();
-
-        List<Map<String, Object>> approaching = lifecycleService.getApproachingBreedingAge()
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<Map<String, Object>> recentBorn = lifecycleService.getRecentlyBorn(14)
-                .stream()
-                .map(this::enrichAnimalData)
-                .collect(Collectors.toList());
-
-        List<LivestockBreeding> failed = lifecycleService.getFailedBreedings();
-
-        int totalNotifications = dueSoon.size() + overdue.size() + overdueCheck.size() +
-                approaching.size() + recentBorn.size() + failed.size();
-
-        model.addAttribute("dueSoon", dueSoon);
-        model.addAttribute("overdue", overdue);
-        model.addAttribute("overduePregnancyCheck", overdueCheck);
-        model.addAttribute("approachingBreedingAge", approaching);
-        model.addAttribute("recentBirths", recentBorn);
-        model.addAttribute("failedBreedings", failed);
-        model.addAttribute("totalNotifications", totalNotifications);
+        model.addAttribute("dueSoonAnimals",     dueSoonAnimals);
+        model.addAttribute("overdueAnimals",     overdueAnimals);
+        model.addAttribute("newbornAnimals",     newbornAnimals);
+        model.addAttribute("readyToBreed",       readyToBreed);
+        model.addAttribute("totalNotifications",
+                dueSoonAnimals.size() + overdueAnimals.size()
+                        + newbornAnimals.size() + readyToBreed.size());
         model.addAttribute("pageTitle", "Lifecycle Notifications");
-
         return "livestock-lifecycle-notifications";
     }
 
     @GetMapping("/animal/{id}")
     public String animalDetail(@PathVariable UUID id, Model model) {
-        // This would need to be implemented in the service
-        // For now, redirect to the main livestock view
         return "redirect:/livestock/view/" + id;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // API ENDPOINTS
+    // REST / API ENDPOINTS
     // ═══════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/api/summary")
     @ResponseBody
     public Map<String, Object> apiSummary() {
-        Map<String, Object> summary = new LinkedHashMap<>();
-        summary.put("total", lifecycleService.countAll());
-        summary.put("newborns", lifecycleService.countNewborns());
-        summary.put("preBreeding", countPreBreeding());
-        summary.put("readyToBreed", lifecycleService.countReadyToBreed());
-        summary.put("inBreeding", lifecycleService.countInBreeding());
-        summary.put("pregnant", lifecycleService.countPregnant());
-        summary.put("dueSoon", lifecycleService.countDueSoon(14));
-        summary.put("overdue", lifecycleService.getOverdue().size());
-        summary.put("notifications", lifecycleService.countAllNotifications());
-        return summary;
+        Map<String, Object> s = new LinkedHashMap<>();
+        s.put("total",         lifecycleService.countAll());
+        s.put("newborns",      lifecycleService.countNewborns());
+        s.put("preBreeding",   countPreBreeding());
+        s.put("readyToBreed",  lifecycleService.countReadyToBreed());
+        s.put("inBreeding",    lifecycleService.countInBreeding());
+        s.put("pregnant",      lifecycleService.countPregnant());
+        s.put("dueSoon",       lifecycleService.countDueSoon(14));
+        s.put("overdue",       lifecycleService.getOverdue().size());
+        s.put("notifications", lifecycleService.countAllNotifications());
+        return s;
     }
 
     @GetMapping("/api/stage-distribution")
@@ -326,97 +334,51 @@ public class LivestockLifecycleController {
     // HELPER METHODS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Enrich animal data with computed fields for display
-     */
     private Map<String, Object> enrichAnimalData(Livestock animal) {
         Map<String, Object> data = new LinkedHashMap<>();
+        data.put("id",           animal.getId());
+        data.put("tagNumber",    animal.getTagNumber());
+        data.put("gender",       animal.getGender());
+        data.put("status",       animal.getStatus());
+        data.put("categoryName", animal.getLivestockCategory() != null
+                ? animal.getLivestockCategory().getName() : null);
 
-        data.put("id", animal.getId());
-        data.put("tagNumber", animal.getTagNumber());
-        data.put("gender", animal.getGender());
-        data.put("status", animal.getStatus());
-        data.put("category", animal.getLivestockCategory() != null ?
-                animal.getLivestockCategory().getName() : null);
-
-        // Age calculations
-        long ageInDays = lifecycleService.getAgeInDays(animal);
+        long ageInDays   = lifecycleService.getAgeInDays(animal);
         long ageInMonths = lifecycleService.getAgeInMonths(animal);
-        data.put("ageInDays", ageInDays);
-        data.put("ageInMonths", ageInMonths);
-        data.put("ageDisplay", formatAge(ageInDays));
-
-        // Lifecycle stage
-        String stage = lifecycleService.getCurrentStage(animal);
-        data.put("lifecycleStage", stage);
-        data.put("nextMilestone", lifecycleService.getNextMilestone(animal));
-
-        // Breeding/pregnancy data
+        data.put("ageInDays",       ageInDays);
+        data.put("ageInMonths",     ageInMonths);
+        data.put("ageDisplay",      formatAge(ageInDays));
+        data.put("lifecycleStage",  lifecycleService.getCurrentStage(animal));
+        data.put("nextMilestone",   lifecycleService.getNextMilestone(animal));
         data.put("expectedDueDate", animal.getExpectedDueDate());
-        data.put("lastBirthDate", animal.getLastBirthDate());
-        data.put("offspringCount", animal.getOffspringCount());
+        data.put("lastBirthDate",   animal.getLastBirthDate());
+        data.put("offspringCount",  animal.getOffspringCount());
 
-        // Days until due (for pregnant animals)
         if (animal.getExpectedDueDate() != null) {
-            long daysUntilDue = ChronoUnit.DAYS.between(LocalDate.now(), animal.getExpectedDueDate());
-            data.put("daysUntilDue", daysUntilDue);
+            data.put("daysUntilDue",
+                    ChronoUnit.DAYS.between(LocalDate.now(), animal.getExpectedDueDate()));
         }
 
-        // Offspring
         List<Livestock> offspring = lifecycleService.getOffspring(animal.getId());
-        data.put("offspring", offspring);
+        data.put("offspring",      offspring);
         data.put("offspringTotal", offspring.size());
-
         return data;
     }
 
-    /**
-     * Format age in human-readable format
-     */
     private String formatAge(long days) {
-        if (days < 30) {
-            return days + " days";
-        } else if (days < 365) {
-            long months = days / 30;
-            return months + " month" + (months > 1 ? "s" : "");
-        } else {
-            long years = days / 365;
-            long remainingMonths = (days % 365) / 30;
-            String result = years + " year" + (years > 1 ? "s" : "");
-            if (remainingMonths > 0) {
-                result += ", " + remainingMonths + " month" + (remainingMonths > 1 ? "s" : "");
-            }
-            return result;
-        }
+        if (days < 30)  return days + " days";
+        if (days < 365) { long m = days / 30; return m + " month" + (m > 1 ? "s" : ""); }
+        long y = days / 365, rm = (days % 365) / 30;
+        String r = y + " year" + (y > 1 ? "s" : "");
+        if (rm > 0) r += ", " + rm + " month" + (rm > 1 ? "s" : "");
+        return r;
     }
 
-    /**
-     * Count young animals (31-180 days)
-     */
-    private long countYoung() {
-        return lifecycleService.getYoungFemales().size() +
-                lifecycleService.getYoungMales().size();
-    }
+    private long countYoung()        { return lifecycleService.getYoungFemales().size() + lifecycleService.getYoungMales().size(); }
+    private long countPreBreeding()  { return lifecycleService.countPreBreeding(); }
+    private long countBreedingMales(){ return lifecycleService.getMalesReadyToBreed().size(); }
 
-    /**
-     * Count pre-breeding animals (181-365 days)
-     */
-    private long countPreBreeding() {
-        return lifecycleService.countPreBreeding();
-    }
-
-    /**
-     * Count breeding males (ready to breed)
-     */
-    private long countBreedingMales() {
-        return lifecycleService.getMalesReadyToBreed().size();
-    }
-
-    /**
-     * Count mature animals (>365 days, not in other categories)
-     */
     private long countMature() {
-        // Animals over 365 days that are not pregnant, breeding, or nursing
         return lifecycleService.getAllFemales().stream()
                 .filter(a -> lifecycleService.getAgeInDays(a) > 365)
                 .filter(a -> !"PREGNANT".equals(lifecycleService.getCurrentStage(a)))
@@ -425,24 +387,18 @@ public class LivestockLifecycleController {
                 .count();
     }
 
-    /**
-     * Get status distribution
-     */
     private Map<String, Long> getStatusDistribution() {
-        Map<String, Long> dist = new LinkedHashMap<>();
-        dist.put("ACTIVE", lifecycleService.countAll());
-        dist.put("PREGNANT", lifecycleService.countPregnant());
-        dist.put("BREEDING", lifecycleService.countInBreeding());
-        return dist;
+        Map<String, Long> d = new LinkedHashMap<>();
+        d.put("ACTIVE",   lifecycleService.countAll());
+        d.put("PREGNANT", lifecycleService.countPregnant());
+        d.put("BREEDING", lifecycleService.countInBreeding());
+        return d;
     }
 
-    /**
-     * Get gender distribution
-     */
     private Map<String, Long> getGenderDistribution() {
-        Map<String, Long> dist = new LinkedHashMap<>();
-        dist.put("MALE", (long) lifecycleService.getAllMales().size());
-        dist.put("FEMALE", (long) lifecycleService.getAllFemales().size());
-        return dist;
+        Map<String, Long> d = new LinkedHashMap<>();
+        d.put("MALE",   (long) lifecycleService.getAllMales().size());
+        d.put("FEMALE", (long) lifecycleService.getAllFemales().size());
+        return d;
     }
 }

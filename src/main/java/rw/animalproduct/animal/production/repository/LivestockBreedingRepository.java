@@ -1,5 +1,7 @@
 package rw.animalproduct.animal.production.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
@@ -18,4 +20,7 @@ public interface LivestockBreedingRepository extends JpaRepository<LivestockBree
     List<LivestockBreeding> findByExpectedDueDateBetweenAndStatus(LocalDate from, LocalDate to, String status);
 
     List<LivestockBreeding> findByLivestockId(UUID livestockId);
+
+    // Add pagination method
+    Page<LivestockBreeding> findByIsDeletedFalse(Pageable pageable);
 }

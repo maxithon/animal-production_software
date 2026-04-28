@@ -46,20 +46,20 @@ import java.util.stream.Collectors;
 @RequestMapping("/reports/supervisor")
 public class SupervisorReportController {
 
-    private final AbaragizwaAmatungoRepository  benRepository;
+    private final BeneficiaryRepository benRepository;
     private final LivestockRepository           livestockRepository;
     private final LivestockSickRepository       sickRepository;
     private final LivestockTreatmentRepository  treatmentRepository;
-    private final UhagarariyeAbororaService     supervisorService;
+    private final RepresentativeService     supervisorService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public SupervisorReportController(
-            AbaragizwaAmatungoRepository  benRepository,
+            BeneficiaryRepository benRepository,
             LivestockRepository           livestockRepository,
             LivestockSickRepository       sickRepository,
             LivestockTreatmentRepository  treatmentRepository,
-            UhagarariyeAbororaService     supervisorService) {
+            RepresentativeService     supervisorService) {
 
         this.benRepository       = benRepository;
         this.livestockRepository = livestockRepository;
@@ -83,8 +83,8 @@ public class SupervisorReportController {
         } catch (Exception e) {
             Map<UUID, Long> map = new HashMap<>();
             benRepository.findAll().forEach(b -> {
-                if (b.getUhagarariyeAborora() != null) {
-                    map.merge(b.getUhagarariyeAborora().getId(), 1L, Long::sum);
+                if (b.getRepresentative() != null) {
+                    map.merge(b.getRepresentative().getId(), 1L, Long::sum);
                 }
             });
             return map;
@@ -97,31 +97,31 @@ public class SupervisorReportController {
                 .collect(Collectors.toList());
     }
 
-    private List<AbaragizwaAmatungo> beneficiariesOf(UUID supervisorId) {
+    private List<Beneficiary> beneficiariesOf(UUID supervisorId) {
         try {
-            return benRepository.findByUhagarariyeAbororaId(supervisorId);
+            return benRepository.findByRepresentativeId(supervisorId);
         } catch (Exception e) {
             return benRepository.findAll().stream()
-                    .filter(b -> b.getUhagarariyeAborora() != null
-                            && b.getUhagarariyeAborora().getId().equals(supervisorId))
+                    .filter(b -> b.getRepresentative() != null
+                            && b.getRepresentative().getId().equals(supervisorId))
                     .collect(Collectors.toList());
         }
     }
 
     private List<Livestock> animalsOf(UUID beneficiaryId) {
         try {
-            return livestockRepository.findByAbaragizwaAmatungoId(beneficiaryId);
+            return livestockRepository.findByBeneficiaryId(beneficiaryId);
         } catch (Exception e) {
             return livestockRepository.findAll().stream()
-                    .filter(l -> l.getAbaragizwaAmatungo() != null
-                            && l.getAbaragizwaAmatungo().getId().equals(beneficiaryId))
+                    .filter(l -> l.getBeneficiary() != null
+                            && l.getBeneficiary().getId().equals(beneficiaryId))
                     .collect(Collectors.toList());
         }
     }
 
-    private List<BeneficiaryStat> buildBenStats(List<AbaragizwaAmatungo> beneficiaries) {
+    private List<BeneficiaryStat> buildBenStats(List<Beneficiary> beneficiaries) {
         List<BeneficiaryStat> stats = new ArrayList<>();
-        for (AbaragizwaAmatungo ben : beneficiaries) {
+        for (Beneficiary ben : beneficiaries) {
             List<Livestock> animals = animalsOf(ben.getId());
             List<UUID> animalIds = animals.stream().map(Livestock::getId).collect(Collectors.toList());
 
@@ -211,10 +211,10 @@ public class SupervisorReportController {
      */
     @GetMapping("/{supervisorId}")
     public String supervisorView(@PathVariable UUID supervisorId, Model model) {
-        UhagarariyeAborora sup = supervisorService.getById(supervisorId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
         if (sup == null) return "redirect:/reports/supervisor";
 
-        List<AbaragizwaAmatungo> beneficiaries = beneficiariesOf(supervisorId);
+        List<Beneficiary> beneficiaries = beneficiariesOf(supervisorId);
         List<BeneficiaryStat> benStats = buildBenStats(beneficiaries);
 
         // Per-supervisor KPI totals
@@ -284,11 +284,11 @@ public class SupervisorReportController {
                                   @PathVariable UUID beneficiaryId,
                                   Model model) {
 
-        UhagarariyeAborora     sup = supervisorService.getById(supervisorId).orElse(null);
-        AbaragizwaAmatungo     ben = benRepository.findById(beneficiaryId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
+        Beneficiary ben = benRepository.findById(beneficiaryId).orElse(null);
         if (sup == null || ben == null) return "redirect:/reports/supervisor";
 
-        List<AbaragizwaAmatungo> beneficiaries = beneficiariesOf(supervisorId);
+        List<Beneficiary> beneficiaries = beneficiariesOf(supervisorId);
         List<Livestock>          animals       = animalsOf(beneficiaryId);
         List<UUID>               animalIds     = animals.stream().map(Livestock::getId).collect(Collectors.toList());
 
@@ -377,10 +377,10 @@ public class SupervisorReportController {
     public void downloadSupervisorPdf(@PathVariable UUID supervisorId,
                                       HttpServletResponse response) throws IOException {
 
-        UhagarariyeAborora sup = supervisorService.getById(supervisorId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
         if (sup == null) { response.sendError(404); return; }
 
-        List<AbaragizwaAmatungo> beneficiaries = beneficiariesOf(supervisorId);
+        List<Beneficiary> beneficiaries = beneficiariesOf(supervisorId);
         List<BeneficiaryStat>    stats         = buildBenStats(beneficiaries);
 
         response.setContentType("application/pdf");
@@ -505,8 +505,8 @@ public class SupervisorReportController {
                                        @PathVariable UUID beneficiaryId,
                                        HttpServletResponse response) throws IOException {
 
-        UhagarariyeAborora sup = supervisorService.getById(supervisorId).orElse(null);
-        AbaragizwaAmatungo ben = benRepository.findById(beneficiaryId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
+        Beneficiary ben = benRepository.findById(beneficiaryId).orElse(null);
         if (sup == null || ben == null) { response.sendError(404); return; }
 
         List<Livestock>          animals    = animalsOf(beneficiaryId);
@@ -579,7 +579,7 @@ public class SupervisorReportController {
                     "Umuragizwa: " + ben.getFirstName() + " " + ben.getLastName() +
                             " | NID: " + nvl(ben.getNid()) + " | Tel: " + nvl(ben.getPhone()), subFont));
             doc.add(new Paragraph(
-                    "Umuhagarariye: " + sup.getFirstName() + " " + sup.getLastName(), subFont));
+                    "Umrepresentatives: " + sup.getFirstName() + " " + sup.getLastName(), subFont));
             doc.add(new Paragraph("Generated / Yakozwe: " + LocalDate.now().format(DATE_FMT), subFont));
             doc.add(Chunk.NEWLINE);
 
@@ -653,10 +653,10 @@ public class SupervisorReportController {
     public void downloadSupervisorExcel(@PathVariable UUID supervisorId,
                                         HttpServletResponse response) throws IOException {
 
-        UhagarariyeAborora sup = supervisorService.getById(supervisorId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
         if (sup == null) { response.sendError(404); return; }
 
-        List<AbaragizwaAmatungo> beneficiaries = beneficiariesOf(supervisorId);
+        List<Beneficiary> beneficiaries = beneficiariesOf(supervisorId);
         List<BeneficiaryStat>    stats         = buildBenStats(beneficiaries);
 
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -781,8 +781,8 @@ public class SupervisorReportController {
                                          @PathVariable UUID beneficiaryId,
                                          HttpServletResponse response) throws IOException {
 
-        UhagarariyeAborora sup = supervisorService.getById(supervisorId).orElse(null);
-        AbaragizwaAmatungo ben = benRepository.findById(beneficiaryId).orElse(null);
+        Representative sup = supervisorService.getById(supervisorId).orElse(null);
+        Beneficiary ben = benRepository.findById(beneficiaryId).orElse(null);
         if (sup == null || ben == null) { response.sendError(404); return; }
 
         List<Livestock>          animals    = animalsOf(beneficiaryId);
@@ -836,7 +836,7 @@ public class SupervisorReportController {
 
             Row t2 = sheet.createRow(r++);
             t2.createCell(0).setCellValue(
-                    "Umuhagarariye: " + sup.getFirstName() + " " + sup.getLastName()
+                    "Umrepresentatives: " + sup.getFirstName() + " " + sup.getLastName()
                             + "  |  NID: " + nvl(ben.getNid())
                             + "  |  Generated: " + LocalDate.now().format(DATE_FMT));
             r++;
@@ -986,10 +986,10 @@ public class SupervisorReportController {
     // ═════════════════════════════════════════════════════════════════════════
 
     public static class SupervisorSummary {
-        private final UhagarariyeAborora supervisor;
+        private final Representative supervisor;
         private final long               beneficiaryCount;
 
-        public SupervisorSummary(UhagarariyeAborora s, long c) { supervisor = s; beneficiaryCount = c; }
+        public SupervisorSummary(Representative s, long c) { supervisor = s; beneficiaryCount = c; }
 
         public UUID   getId()               { return supervisor.getId(); }
         public String getFirstName()        { return supervisor.getFirstName(); }
@@ -1000,13 +1000,13 @@ public class SupervisorReportController {
     }
 
     public static class BeneficiaryStat {
-        private final AbaragizwaAmatungo beneficiary;
+        private final Beneficiary beneficiary;
         private final long   totalAnimals, activeAnimals, soldAnimals, deadAnimals, bornOnFarm;
         private final BigDecimal currentValue, soldAmount;
         private final long   sickCount, criticalCount, recoveredCount, treatCount;
         private final BigDecimal treatCost, totalCost;
 
-        public BeneficiaryStat(AbaragizwaAmatungo b,
+        public BeneficiaryStat(Beneficiary b,
                                long totalAnimals, long activeAnimals, long soldAnimals, long deadAnimals, long bornOnFarm,
                                BigDecimal currentValue, BigDecimal soldAmount,
                                long sickCount, long criticalCount, long recoveredCount,
@@ -1027,7 +1027,7 @@ public class SupervisorReportController {
             this.totalCost      = totalCost;
         }
 
-        public AbaragizwaAmatungo getBeneficiary()  { return beneficiary; }
+        public Beneficiary getBeneficiary()  { return beneficiary; }
         public long getTotalAnimals()               { return totalAnimals; }
         public long getActiveAnimals()              { return activeAnimals; }
         public long getSoldAnimals()                { return soldAnimals; }

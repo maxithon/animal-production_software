@@ -311,8 +311,8 @@
                 <div class="info-row">
                     <span class="info-label">Owner</span>
                     <span class="info-value"
-                          th:text="${animal.abaragizwaAmatungo != null ?
-                            animal.abaragizwaAmatungo.firstName + ' ' + animal.abaragizwaAmatungo.lastName :
+                          th:text="${animal.beneficiary != null ?
+                            animal.beneficiary.firstName + ' ' + animal.beneficiary.lastName :
                             'Unassigned'}">John Doe</span>
                 </div>
                 <div class="info-row">
@@ -366,8 +366,8 @@
         </div>
         <div class="detail-item">
             <div class="dl">Beneficiary</div>
-            <div class="dv" th:text="${animal.abaragizwaAmatungo != null ?
-                animal.abaragizwaAmatungo.firstName + ' ' + animal.abaragizwaAmatungo.lastName :
+            <div class="dv" th:text="${animal.beneficiary != null ?
+                animal.beneficiary.firstName + ' ' + animal.beneficiary.lastName :
                 'Unassigned'}">John Doe</div>
         </div>
         <div class="detail-item">

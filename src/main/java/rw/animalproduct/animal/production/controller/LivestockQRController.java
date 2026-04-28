@@ -107,8 +107,8 @@ public class LivestockQRController {
         data.put("status",   animal.getStatus());
         data.put("category", animal.getLivestockCategory() != null ? animal.getLivestockCategory().getName() : null);
 
-        data.put("beneficiary", animal.getAbaragizwaAmatungo() != null
-                ? animal.getAbaragizwaAmatungo().getFirstName() + " " + animal.getAbaragizwaAmatungo().getLastName()
+        data.put("beneficiary", animal.getBeneficiary() != null
+                ? animal.getBeneficiary().getFirstName() + " " + animal.getBeneficiary().getLastName()
                 : null);
         data.put("location", animal.getLocation() != null ? animal.getLocation().getName() : null);
         data.put("received", animal.getDateReceived());
@@ -129,9 +129,9 @@ public class LivestockQRController {
         sb.append("Status: ").append(a.getStatus()).append("\n");
         if (a.getDateReceived() != null)
             sb.append("Received: ").append(a.getDateReceived()).append("\n");
-        if (a.getAbaragizwaAmatungo() != null)
-            sb.append("Owner: ").append(a.getAbaragizwaAmatungo().getFirstName())
-              .append(" ").append(a.getAbaragizwaAmatungo().getLastName()).append("\n");
+        if (a.getBeneficiary() != null)
+            sb.append("Owner: ").append(a.getBeneficiary().getFirstName())
+              .append(" ").append(a.getBeneficiary().getLastName()).append("\n");
         if (a.getLocation() != null)
             sb.append("Location: ").append(a.getLocation().getName()).append("\n");
         if (a.getCurrentValue() != null)

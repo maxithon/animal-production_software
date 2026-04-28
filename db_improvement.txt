@@ -9,13 +9,13 @@ user_id,email,is_active,"password",registration_date,user_type_id,photo_url
 id,state,"version",code,regulator_code,"name",location_type,parent_id,
 "comments"
 
-4.uhagarariye_aborora :
+4.representatives_aborora :
 id,first_name,last_name,gender,maritial_status,nid,phone,email	
-icyo_akora,amasezerano,photo,location_id,created_date,created_by
+icyo_akora,contractAgreement,photo,location_id,created_date,created_by
 
-5.abaragizwa_amatungo;
-id,first_name,last_name,gender,maritial_status,nid,phone,amasezerano,
-uhagarariye_aborora_id,location_id,photo,created_date,created_by
+5.beneficiaries_amatungo;
+id,first_name,last_name,gender,maritial_status,nid,phone,contractAgreement,
+representatives_aborora_id,location_id,photo,created_date,created_by
 
 6.livestock_categories:
 id,code	,"name"
@@ -23,7 +23,7 @@ id,code	,"name"
 7.livestock:
 id,acquisition_method,current_value,date_received,gender	
 is_pregnant,last_birth_date,offspring_count,photo,pregnancy_months	
-status,tag_number,abaragizwa_amatungo_id,created_by	
+status,tag_number,beneficiaries_amatungo_id,created_by
 livestock_category_id,location_id,	mother_id,sold_price
 
 8.livestock_treatments:

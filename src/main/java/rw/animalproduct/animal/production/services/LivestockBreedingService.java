@@ -1,5 +1,8 @@
 package rw.animalproduct.animal.production.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
 import rw.animalproduct.animal.production.repository.LivestockBreedingRepository;
@@ -29,6 +32,12 @@ public class LivestockBreedingService {
         return breedingRepository.findAll().stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
                 .collect(Collectors.toList());
+    }
+
+    // NEW: Paginated method
+    public Page<LivestockBreeding> getPaginated(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return breedingRepository.findByIsDeletedFalse(pageable);
     }
 
     public Optional<LivestockBreeding> getById(UUID id) {
@@ -76,7 +85,7 @@ public class LivestockBreedingService {
         return getAll().stream()
                 .filter(b -> LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
                 .filter(b -> b.getExpectedPregnancyCheckDate() != null
-                          && b.getExpectedPregnancyCheckDate().isBefore(today))
+                        && b.getExpectedPregnancyCheckDate().isBefore(today))
                 .collect(Collectors.toList());
     }
 
@@ -87,8 +96,8 @@ public class LivestockBreedingService {
         return getAll().stream()
                 .filter(b -> LivestockBreeding.STATUS_CONFIRMED.equals(b.getStatus()))
                 .filter(b -> b.getExpectedDueDate() != null
-                          && !b.getExpectedDueDate().isBefore(today)
-                          && !b.getExpectedDueDate().isAfter(in30))
+                        && !b.getExpectedDueDate().isBefore(today)
+                        && !b.getExpectedDueDate().isAfter(in30))
                 .collect(Collectors.toList());
     }
 

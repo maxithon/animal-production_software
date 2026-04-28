@@ -62,11 +62,11 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-circle"></i> Beneficiary Details</h3>
                     <div>
-                        <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                        <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                            class="btn btn-warning me-2">
                             <i class="bi bi-pencil"></i> Edit
                         </a>
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -75,16 +75,16 @@
                 <div class="row">
                     <!-- Left Column: Photo and Basic Info -->
                     <div class="col-md-4 text-center mb-4">
-                        <img th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}"
-                             th:src="${abaragizwa.photo}"
+                        <img th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}"
+                             th:src="${beneficiaries.photo}"
                              class="profile-photo mb-3"
                              alt="Profile Photo">
-                        <div th:if="${abaragizwa.photo == null or abaragizwa.photo.isEmpty()}"
+                        <div th:if="${beneficiaries.photo == null or beneficiaries.photo.isEmpty()}"
                              class="profile-photo mb-3 d-flex align-items-center justify-content-center bg-light">
                             <i class="bi bi-person-circle" style="font-size: 5rem; color: #ccc;"></i>
                         </div>
-                        <h4 th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">Full Name</h4>
-                        <p class="text-muted" th:text="${abaragizwa.nid}">NID</p>
+                        <h4 th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">Full Name</h4>
+                        <p class="text-muted" th:text="${beneficiaries.nid}">NID</p>
                     </div>
 
                     <!-- Right Column: Detailed Information -->
@@ -95,36 +95,36 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="info-label">First Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.firstName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.firstName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Last Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.lastName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.lastName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Gender</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.gender == 'MALE'}" class="badge bg-primary">
+                                        <span th:if="${beneficiaries.gender == 'MALE'}" class="badge bg-primary">
                                             <i class="bi bi-gender-male"></i> Male
                                         </span>
-                                        <span th:if="${abaragizwa.gender == 'FEMALE'}" class="badge bg-danger">
+                                        <span th:if="${beneficiaries.gender == 'FEMALE'}" class="badge bg-danger">
                                             <i class="bi bi-gender-female"></i> Female
                                         </span>
-                                        <span th:if="${abaragizwa.gender == null}">-</span>
+                                        <span th:if="${beneficiaries.gender == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Marital Status</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.maritialStatus != null}"
+                                        <span th:if="${beneficiaries.maritialStatus != null}"
                                               class="badge bg-secondary"
-                                              th:text="${abaragizwa.maritialStatus}">-</span>
-                                        <span th:if="${abaragizwa.maritialStatus == null}">-</span>
+                                              th:text="${beneficiaries.maritialStatus}">-</span>
+                                        <span th:if="${beneficiaries.maritialStatus == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
                                     <div class="info-label">National ID</div>
-                                    <div class="info-value" th:text="${abaragizwa.nid}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.nid}">-</div>
                                 </div>
                             </div>
                         </div>
@@ -137,7 +137,7 @@
                                     <div class="info-label">Phone Number</div>
                                     <div class="info-value">
                                         <i class="bi bi-phone"></i>
-                                        <span th:text="${abaragizwa.phone != null ? abaragizwa.phone : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.phone != null ? beneficiaries.phone : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -151,9 +151,9 @@
                                     <div class="info-label">Location</div>
                                     <div class="info-value">
                                         <i class="bi bi-geo-alt-fill text-danger"></i>
-                                        <span th:if="${abaragizwa.location != null}"
-                                              th:text="${abaragizwa.location.name + ' (' + abaragizwa.location.locationType + ')'}">-</span>
-                                        <span th:if="${abaragizwa.location == null}">N/A</span>
+                                        <span th:if="${beneficiaries.location != null}"
+                                              th:text="${beneficiaries.location.name + ' (' + beneficiaries.location.locationType + ')'}">-</span>
+                                        <span th:if="${beneficiaries.location == null}">N/A</span>
                                     </div>
                                 </div>
                             </div>
@@ -162,45 +162,45 @@
                         <!-- Representative Information -->
                         <div class="info-section">
                             <h5 class="section-title"><i class="bi bi-person-badge"></i> Representative Information</h5>
-                            <div th:if="${abaragizwa.uhagarariyeAborora != null}" class="representative-card">
+                            <div th:if="${beneficiaries.representative != null}" class="representative-card">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Name</div>
                                         <div class="info-value">
                                             <i class="bi bi-person-fill text-primary"></i>
-                                            <strong th:text="${abaragizwa.uhagarariyeAborora.firstName + ' ' + abaragizwa.uhagarariyeAborora.lastName}">-</strong>
+                                            <strong th:text="${beneficiaries.representative.firstName + ' ' + beneficiaries.representative.lastName}">-</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative NID</div>
-                                        <div class="info-value" th:text="${abaragizwa.uhagarariyeAborora.nid}">-</div>
+                                        <div class="info-value" th:text="${beneficiaries.representative.nid}">-</div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Phone</div>
                                         <div class="info-value">
                                             <i class="bi bi-phone"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.phone != null ? abaragizwa.uhagarariyeAborora.phone : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.phone != null ? beneficiaries.representative.phone : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Email</div>
                                         <div class="info-value">
                                             <i class="bi bi-envelope"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.email != null ? abaragizwa.uhagarariyeAborora.email : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.email != null ? beneficiaries.representative.email : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="info-label">Location</div>
                                         <div class="info-value">
                                             <i class="bi bi-geo-alt-fill text-danger"></i>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location != null}"
-                                                  th:text="${abaragizwa.uhagarariyeAborora.location.name + ' (' + abaragizwa.uhagarariyeAborora.location.locationType + ')'}">-</span>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location == null}">N/A</span>
+                                            <span th:if="${beneficiaries.representative.location != null}"
+                                                  th:text="${beneficiaries.representative.location.name + ' (' + beneficiaries.representative.location.locationType + ')'}">-</span>
+                                            <span th:if="${beneficiaries.representative.location == null}">N/A</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${abaragizwa.uhagarariyeAborora == null}" class="text-muted">
+                            <div th:if="${beneficiaries.representative == null}" class="text-muted">
                                 No representative assigned
                             </div>
                         </div>
@@ -212,12 +212,12 @@
                                 <div class="col-md-12">
                                     <div class="info-label">Amasezerano (Contract/Agreement)</div>
                                     <div class="info-value">
-                                        <div th:if="${abaragizwa.amasezerano != null and !abaragizwa.amasezerano.isEmpty()}">
-                                            <a th:href="${abaragizwa.amasezerano}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                        <div th:if="${beneficiaries.contractAgreement != null and !beneficiaries.contractAgreement.isEmpty()}">
+                                            <a th:href="${beneficiaries.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-danger">
                                                 <i class="bi bi-file-pdf"></i> View PDF
                                             </a>
                                         </div>
-                                        <div th:if="${abaragizwa.amasezerano == null or abaragizwa.amasezerano.isEmpty()}">
+                                        <div th:if="${beneficiaries.contractAgreement == null or beneficiaries.contractAgreement.isEmpty()}">
                                             N/A
                                         </div>
                                     </div>
@@ -233,14 +233,14 @@
                                     <div class="info-label">Created Date</div>
                                     <div class="info-value">
                                         <i class="bi bi-calendar"></i>
-                                        <span th:text="${#dates.format(abaragizwa.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
+                                        <span th:text="${#dates.format(beneficiaries.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Created By</div>
                                     <div class="info-value">
                                         <i class="bi bi-person"></i>
-                                        <span th:text="${abaragizwa.createdBy != null ? abaragizwa.createdBy.email : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.createdBy != null ? beneficiaries.createdBy.email : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -250,10 +250,10 @@
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end mt-4 pt-3 border-top">
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
-                    <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                    <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                        class="btn btn-warning me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
@@ -278,12 +278,12 @@
             </div>
             <div class="modal-body">
                 Are you sure you want to delete
-                <strong th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">this beneficiary</strong>?
+                <strong th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">this beneficiary</strong>?
                 <br><small class="text-danger">This action cannot be undone.</small>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form th:action="@{/abaragizwa/delete/{id}(id=${abaragizwa.id})}" method="post">
+                <form th:action="@{/beneficiaries/delete/{id}(id=${beneficiaries.id})}" method="post">
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Delete
                     </button>

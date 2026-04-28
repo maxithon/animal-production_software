@@ -2,232 +2,956 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Pregnancy Tracking</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregnancy Tracking — Livestock</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { background: #f0f4f8; }
-        .page-header { background: linear-gradient(135deg,#db2777,#ec4899); color:white; padding:24px 32px; margin-bottom:24px; }
-        .sum-card { background:white; border-radius:10px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.07); }
-        .card-panel { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); overflow:hidden; margin-bottom:20px; }
-        .card-panel-header { padding:14px 20px; font-weight:700; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; gap:8px; }
-        .animal-row { padding:14px 20px; border-bottom:1px solid #f8fafc; display:flex; align-items:center; justify-content:space-between; }
-        .animal-row:last-child { border-bottom:none; }
-        .animal-row:hover { background:#fdf2f8; }
-        .due-overdue  { border-left:4px solid #ef4444; background:#fef2f2; }
-        .due-critical { border-left:4px solid #f97316; background:#fff7ed; }
-        .due-soon     { border-left:4px solid #eab308; background:#fefce8; }
-        .due-ok       { border-left:4px solid #22c55e; background:#f0fdf4; }
-        .urgency-badge { padding:4px 10px; border-radius:20px; font-size:0.72rem; font-weight:700; display:inline-block; }
-        .badge-overdue   { background:#fee2e2; color:#991b1b; }
-        .badge-critical  { background:#fff7ed; color:#c2410c; }
-        .badge-soon      { background:#fefce8; color:#a16207; }
-        .badge-ok        { background:#f0fdf4; color:#166534; }
-        .table { margin-bottom:0; }
-        .table thead th { background:#f8fafc; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
+        :root {
+            --bg:        #f0f3f8;
+            --surface:   #ffffff;
+            --border:    #e4e9f0;
+            --text:      #1a2233;
+            --muted:     #6b7a99;
+            --accent:    #2563eb;
+            --green:     #16a34a;
+            --amber:     #d97706;
+            --red:       #dc2626;
+            --teal:      #0d9488;
+            --radius:    10px;
+            --shadow:    0 1px 6px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* ── TOP NAV BAR ─────────────────────────────────────────────────── */
+        .top-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .top-bar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+        .top-bar-brand .icon-wrap {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #16a34a 0%, #0d9488 100%);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 15px;
+        }
+        .top-bar-actions { display: flex; gap: 8px; align-items: center; }
+
+        /* ── PAGE BODY ───────────────────────────────────────────────────── */
+        .page-body { padding: 24px 28px; max-width: 1600px; margin: 0 auto; }
+
+        .page-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .page-title { font-size: 20px; font-weight: 700; margin: 0 0 2px; }
+        .page-subtitle { color: var(--muted); font-size: 13px; }
+
+        /* ── KPI CARDS ───────────────────────────────────────────────────── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+        @media (max-width: 992px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-top: 3px solid transparent;
+            transition: transform .15s ease, box-shadow .15s ease;
+        }
+        .kpi-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+        .kpi-card.blue  { border-top-color: var(--accent); }
+        .kpi-card.amber { border-top-color: var(--amber); }
+        .kpi-card.green { border-top-color: var(--green); }
+        .kpi-card.red   { border-top-color: var(--red); }
+
+        .kpi-icon {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
+        }
+        .kpi-card.blue  .kpi-icon { background: #eff6ff; color: var(--accent); }
+        .kpi-card.amber .kpi-icon { background: #fffbeb; color: var(--amber); }
+        .kpi-card.green .kpi-icon { background: #f0fdf4; color: var(--green); }
+        .kpi-card.red   .kpi-icon { background: #fef2f2; color: var(--red); }
+
+        .kpi-value { font-size: 26px; font-weight: 800; line-height: 1; font-family: 'DM Mono', monospace; }
+        .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-top: 3px; }
+
+        /* ── ALERT SECTION ───────────────────────────────────────────────── */
+        .alert-section {
+            background: #fff5f5;
+            border: 1px solid #fecaca;
+            border-left: 4px solid var(--red);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .alert-header {
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--red);
+            cursor: pointer;
+            user-select: none;
+        }
+        .alert-header .toggle-icon { margin-left: auto; transition: transform .2s; }
+        .alert-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .alert-body { padding: 0 14px 14px; }
+
+        /* Critical compact cards */
+        .crit-item {
+            background: white;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .crit-tag { font-weight: 700; font-size: 14px; min-width: 80px; }
+        .crit-status { font-size: 12px; color: var(--red); font-weight: 600; }
+        .crit-meta { font-size: 12px; color: var(--muted); flex: 1; }
+        .crit-actions { display: flex; gap: 6px; margin-left: auto; flex-shrink: 0; }
+
+        /* ── MAIN TABLE PANEL ────────────────────────────────────────────── */
+        .panel {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .panel-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .panel-title { font-weight: 700; font-size: 14px; margin-right: 4px; }
+
+        /* ── TOOLBAR ─────────────────────────────────────────────────────── */
+        .toolbar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .toolbar-search {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+            max-width: 260px;
+        }
+        .toolbar-search input {
+            width: 100%;
+            padding: 7px 12px 7px 34px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white;
+            color: var(--text);
+            outline: none;
+            transition: border-color .15s;
+        }
+        .toolbar-search input:focus { border-color: var(--accent); }
+        .toolbar-search .search-icon {
+            position: absolute;
+            left: 10px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 14px;
+            pointer-events: none;
+        }
+        .filter-select {
+            padding: 7px 28px 7px 10px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: inherit;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a99'/%3E%3C/svg%3E") no-repeat right 10px center;
+            color: var(--text);
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+        .filter-select:focus { border-color: var(--accent); }
+        .toolbar-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+        .rows-info { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+        /* ── TABLE ───────────────────────────────────────────────────────── */
+        /* The table-wrap has a max-height and its own scroll, so thead sticky
+           works relative to the wrapper — not the page — avoiding the overlap. */
+        .table-wrap {
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: calc(100vh - 320px);
+            min-height: 200px;
+        }
+        .preg-table { width: 100%; border-collapse: collapse; }
+        .preg-table thead th {
+            background: #f8fafc;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            padding: 10px 14px;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            /* Prevent header from disappearing behind scroll container edge */
+            box-shadow: 0 1px 0 var(--border);
+        }
+        .preg-table thead th.sortable { cursor: pointer; }
+        .preg-table thead th.sortable:hover { color: var(--accent); }
+        .preg-table thead th .sort-icon { font-size: 10px; margin-left: 3px; opacity: .4; }
+        .preg-table thead th.asc .sort-icon::before  { content: '↑'; opacity: 1; }
+        .preg-table thead th.desc .sort-icon::before { content: '↓'; opacity: 1; }
+        .preg-table thead th:not(.asc):not(.desc) .sort-icon::before { content: '↕'; }
+
+        .preg-table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background .1s;
+        }
+        .preg-table tbody tr:first-child td { padding-top: 13px; }
+        .preg-table tbody tr:hover { background: #f8fafc; }
+        .preg-table tbody tr.row-critical { background: #fff5f5; }
+        .preg-table tbody tr.row-critical:hover { background: #fee2e2; }
+        .preg-table tbody tr.row-due-soon { background: #fffbeb; }
+        .preg-table tbody tr.row-due-soon:hover { background: #fef3c7; }
+
+        .preg-table td {
+            padding: 11px 14px;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        /* Tag cell */
+        .tag-cell .tag-num { font-weight: 700; font-size: 13px; font-family: 'DM Mono', monospace; }
+        .tag-cell .tag-cat { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+        /* Progress mini */
+        .mini-prog { width: 110px; }
+        .mini-prog .bar-track {
+            height: 8px; border-radius: 4px;
+            background: #e4e9f0; overflow: hidden;
+        }
+        .mini-prog .bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+        .mini-prog .bar-label { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+        /* Trimester badge */
+        .tri-badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .tri-1 { background: #dbeafe; color: #1e40af; }
+        .tri-2 { background: #fef3c7; color: #92400e; }
+        .tri-3 { background: #fecaca; color: #991b1b; }
+
+        /* Days remaining cell */
+        .days-rem.overdue  { color: var(--red);   font-weight: 700; }
+        .days-rem.critical { color: var(--red);   font-weight: 700; }
+        .days-rem.soon     { color: var(--amber); font-weight: 600; }
+        .days-rem.ok       { color: var(--text); }
+
+        /* Method badge */
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .mb-natural  { background: #dcfce7; color: #166534; }
+        .mb-ai       { background: #e0f2fe; color: #075985; }
+        .mb-embryo   { background: #ede9fe; color: #5b21b6; }
+
+        /* Check date */
+        .check-overdue { color: var(--red); font-weight: 600; }
+        .check-ok      { color: var(--muted); }
+
+        /* Action buttons */
+        .btn-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px; border-radius: 7px;
+            border: 1px solid var(--border);
+            background: white; color: var(--muted);
+            cursor: pointer; transition: all .15s;
+            text-decoration: none; font-size: 14px;
+        }
+        .btn-icon:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-icon.edit:hover  { background: var(--amber); border-color: var(--amber); }
+        .btn-icon.danger:hover{ background: var(--red);   border-color: var(--red); }
+
+        /* ── PAGINATION ──────────────────────────────────────────────────── */
+        .pagination-bar {
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #f8fafc;
+        }
+        .pagination-info { font-size: 12px; color: var(--muted); }
+        .pagination-controls { display: flex; gap: 4px; align-items: center; }
+        .pg-btn {
+            min-width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: white;
+            font-size: 13px; font-family: inherit;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0 8px;
+            transition: all .15s;
+            text-decoration: none;
+        }
+        .pg-btn:hover:not(:disabled):not(.active) { border-color: var(--accent); color: var(--accent); }
+        .pg-btn.active { background: var(--accent); color: white; border-color: var(--accent); font-weight: 700; }
+        .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .pg-ellipsis { padding: 0 4px; color: var(--muted); line-height: 32px; }
+
+        /* ── EMPTY STATE ─────────────────────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 64px 24px;
+            color: var(--muted);
+        }
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 14px;
+            opacity: .35;
+        }
+        .empty-state p { margin: 6px 0 0; font-size: 13px; }
+
+        /* ── UTILITY ─────────────────────────────────────────────────────── */
+        .badge-sm {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #e4e9f0;
+            color: var(--muted);
+        }
+        .mono { font-family: 'DM Mono', monospace; }
+        .text-red   { color: var(--red); }
+        .text-amber { color: var(--amber); }
+        .text-green { color: var(--green); }
+        .text-blue  { color: var(--accent); }
+
+        /* hidden rows (JS filter) */
+        .row-hidden { display: none !important; }
+
+        /* page-size selector */
+        .page-size-sel {
+            padding: 5px 24px 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7a99'/%3E%3C/svg%3E") no-repeat right 8px center;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--text);
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* table-wrap defined above in TABLE section */
     </style>
 </head>
 <body>
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h4 class="mb-1"><i class="bi bi-hourglass-split me-2"></i>Pregnancy Tracking</h4>
-        <small style="opacity:.85">Monitor all pregnant animals, due dates, and birth notifications</small>
+<!-- ── TOP BAR ────────────────────────────────────────────────────────────── -->
+<div class="top-bar">
+    <div class="top-bar-brand">
+        <div class="icon-wrap"><i class="bi bi-heart-pulse-fill"></i></div>
+        Livestock Management
     </div>
-    <div class="d-flex gap-2">
-        <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-light btn-sm">← Dashboard</a>
-        <a th:href="@{/livestock/lifecycle/notifications}" class="btn btn-warning btn-sm fw-bold">
-            <i class="bi bi-bell-fill me-1"></i>Notifications
+    <div class="top-bar-actions">
+        <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        </a>
+        <a th:href="@{/livestock/breeding/register}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> Record Breeding
         </a>
     </div>
 </div>
 
-<div class="container-fluid px-4">
+<!-- ── PAGE BODY ──────────────────────────────────────────────────────────── -->
+<div class="page-body">
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="sum-card" style="border-left:4px solid #db2777;">
-                <div style="font-size:2rem;font-weight:800;color:#db2777;" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</div>
-                <div class="text-muted small">Total Pregnant</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="sum-card" style="border-left:4px solid #ef4444;">
-                <div style="font-size:2rem;font-weight:800;color:#ef4444;" th:text="${overdueCount}">0</div>
-                <div class="text-muted small">Overdue</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="sum-card" style="border-left:4px solid #eab308;">
-                <div style="font-size:2rem;font-weight:800;color:#eab308;" th:text="${dueSoonCount}">0</div>
-                <div class="text-muted small">Due Soon (14 days)</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- OVERDUE ALERT -->
-    <div th:if="${overdueCount > 0}" class="alert alert-danger d-flex gap-3 align-items-start mb-4">
-        <i class="bi bi-exclamation-octagon-fill fs-4 mt-1"></i>
+    <!-- Title row -->
+    <div class="page-title-row">
         <div>
-            <strong th:text="${overdueCount}">0</strong> animal(s) are <strong>OVERDUE</strong> — expected due date has passed.
-            Please check on these animals immediately.
+            <h1 class="page-title"><i class="bi bi-hourglass-split text-green me-2"></i>Pregnancy Tracking</h1>
+            <p class="page-subtitle">Monitor pregnant animals, due dates &amp; birth notifications</p>
+        </div>
+        <div style="font-size:12px;color:var(--muted);padding-top:4px;">
+            <i class="bi bi-calendar3 me-1"></i>
+            Today: <strong class="mono" th:text="${#temporals.format(today, 'dd MMM yyyy')}">—</strong>
         </div>
     </div>
 
-    <!-- All Pregnant Animals -->
-    <div class="card-panel">
-        <div class="card-panel-header" style="background:#fdf2f8;color:#db2777;">
-            <i class="bi bi-heart-fill"></i>
-            All Pregnant Animals
-            <span class="badge ms-2" style="background:#db2777;" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</span>
+    <!-- ── KPI GRID ──────────────────────────────────────────────────────── -->
+    <div class="kpi-grid">
+        <div class="kpi-card blue">
+            <div class="kpi-icon"><i class="bi bi-heart-fill"></i></div>
+            <div>
+                <div class="kpi-value text-blue" th:text="${totalPregnant}">0</div>
+                <div class="kpi-label">Total Pregnant</div>
+            </div>
         </div>
-
-        <!-- Check if pregnantAnimals is null or empty -->
-        <div th:if="${pregnantAnimals == null or pregnantAnimals.empty}" style="padding:40px;text-align:center;color:#94a3b8;">
-            <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
-            No pregnant animals currently. Record a breeding event and confirm pregnancy to start tracking.
+        <div class="kpi-card amber">
+            <div class="kpi-icon"><i class="bi bi-calendar-event-fill"></i></div>
+            <div>
+                <div class="kpi-value text-amber" th:text="${dueSoon}">0</div>
+                <div class="kpi-label">Due in 30 Days</div>
+            </div>
         </div>
+        <div class="kpi-card green">
+            <div class="kpi-icon"><i class="bi bi-clipboard-pulse-fill"></i></div>
+            <div>
+                <div class="kpi-value text-green" th:text="${checkupsDue}">0</div>
+                <div class="kpi-label">Checkups Overdue</div>
+            </div>
+        </div>
+        <div class="kpi-card red">
+            <div class="kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <div class="kpi-value text-red" th:text="${highRisk}">0</div>
+                <div class="kpi-label">High Risk / &lt;7 Days</div>
+            </div>
+        </div>
+    </div>
 
-        <div th:each="animal : ${pregnantAnimals}"
-             th:if="${pregnantAnimals != null and !pregnantAnimals.empty}"
-             class="animal-row"
-             th:classappend="${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())} ? 'due-overdue' :
-                             (${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(7))} ? 'due-critical' :
-                             (${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))} ? 'due-soon' : 'due-ok'))">
+    <!-- ── CRITICAL ALERT SECTION ────────────────────────────────────────── -->
+    <div class="alert-section" th:if="${criticalCases != null and !criticalCases.empty}">
+        <div class="alert-header" id="alertToggle" onclick="toggleAlert()">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            Requires Immediate Attention
+            <span class="badge-sm ms-2"
+                  style="background:#fecaca;color:#991b1b;"
+                  th:text="${criticalCases.size() + ' animals'}">0 animals</span>
+            <i class="bi bi-chevron-down toggle-icon"></i>
+        </div>
+        <div class="alert-body" id="alertBody">
+            <div th:each="b : ${criticalCases}" class="crit-item">
 
-            <!-- Animal info -->
-            <div class="d-flex align-items-center gap-3" style="flex:1;">
-                <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#db2777,#ec4899);display:flex;align-items:center;justify-content:center;color:white;font-size:1.2rem;flex-shrink:0;">
-                    🤱
-                </div>
+                <!-- Tag + category -->
                 <div>
-                    <div class="fw-bold" th:text="${animal.tagNumber}">TAG</div>
-                    <div class="small text-muted">
-                        <span th:if="${animal.categoryName != null}" class="badge bg-secondary me-1" th:text="${animal.categoryName}"></span>
-                        <span th:if="${animal.locationName != null}" th:text="${animal.locationName}"></span>
-                        <span th:if="${animal.beneficiaryName != null}">· Owner: <span th:text="${animal.beneficiaryName}"></span></span>
+                    <div class="crit-tag mono"
+                         th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}">TAG</div>
+                    <div style="font-size:11px;color:var(--muted);"
+                         th:if="${b.livestock?.livestockCategory != null}"
+                         th:text="${b.livestock.livestockCategory.name}"></div>
+                </div>
+
+                <!-- Urgency status -->
+                <div th:with="daysLeft=${T(java.time.temporal.ChronoUnit).DAYS.between(today, b.expectedDueDate)}">
+                    <div class="crit-status">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        <span th:if="${daysLeft < 0}"
+                              th:text="${'Overdue by ' + (-daysLeft) + ' days'}"></span>
+                        <span th:if="${daysLeft == 0}">Due TODAY</span>
+                        <span th:if="${daysLeft > 0}"
+                              th:text="${'Due in ' + daysLeft + ' day' + (daysLeft == 1 ? '' : 's')}"></span>
                     </div>
                 </div>
-            </div>
 
-            <!-- Conception -->
-            <div class="text-center px-3" style="min-width:110px;">
-                <div class="small text-muted fw-bold">CONCEIVED</div>
-                <div th:if="${animal.conceptionDate != null}" th:text="${#temporals.format(animal.conceptionDate, 'dd-MM-yyyy')}"></div>
-                <div th:if="${animal.conceptionDate == null}" class="text-muted small">—</div>
-            </div>
+                <!-- Meta -->
+                <div class="crit-meta">
+                    <span>
+                        <i class="bi bi-calendar-event me-1"></i>Bred:
+                        <strong th:text="${#temporals.format(b.breedingDate, 'dd MMM yyyy')}"></strong>
+                    </span>
+                    <span class="ms-3">
+                        <i class="bi bi-calendar-check me-1"></i>Due:
+                        <strong th:text="${b.expectedDueDate != null ? #temporals.format(b.expectedDueDate, 'dd MMM yyyy') : '—'}"></strong>
+                    </span>
+                    <span class="ms-3">
+                        <i class="bi bi-clock me-1"></i>Days pregnant:
+                        <strong class="mono" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(b.breedingDate, today)}"></strong>
+                    </span>
+                </div>
 
-            <!-- Due Date -->
-            <div class="text-center px-3" style="min-width:110px;">
-                <div class="small text-muted fw-bold">DUE DATE</div>
-                <div th:if="${animal.expectedDueDate != null}" class="fw-bold" th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></div>
-                <div th:if="${animal.expectedDueDate == null}" class="text-muted small">Not set</div>
-            </div>
+                <!-- Actions -->
+                <div class="crit-actions">
+                    <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}"
+                       class="btn-icon edit" title="Update Status">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}"
+                       class="btn-icon" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
 
-            <!-- Days left / overdue -->
-            <div class="text-center px-3" style="min-width:100px;">
-                <div class="small text-muted fw-bold">STATUS</div>
-                <span th:if="${animal.expectedDueDate != null}"
-                      class="urgency-badge"
-                      th:classappend="${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())} ? 'badge-overdue' :
-                                      (${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(7))} ? 'badge-critical' :
-                                      (${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))} ? 'badge-soon' : 'badge-ok'))"
-                      th:text="${animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate()) ?
-                                 'Overdue ' + T(java.time.temporal.ChronoUnit).DAYS.between(animal.expectedDueDate, #temporals.createNow().toLocalDate()) + 'd' :
-                                 T(java.time.temporal.ChronoUnit).DAYS.between(#temporals.createNow().toLocalDate(), animal.expectedDueDate) + ' days left'}">
-                </span>
-                <span th:if="${animal.expectedDueDate == null}" class="text-muted small">No date</span>
             </div>
+        </div>
+    </div>
 
-            <!-- Actions -->
-            <div class="d-flex gap-2">
-                <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-eye"></i> View
+    <!-- ── MAIN PREGNANCIES PANEL ─────────────────────────────────────────── -->
+    <div class="panel">
+
+        <!-- Panel header -->
+        <div class="panel-header">
+            <i class="bi bi-heart-pulse" style="color:var(--green);font-size:16px;"></i>
+            <span class="panel-title">Active Pregnancies</span>
+            <span class="badge-sm"
+                  th:text="${pregnancies != null ? pregnancies.size() + ' records' : '0 records'}">0 records</span>
+        </div>
+
+        <!-- Empty state -->
+        <div class="empty-state" th:if="${pregnancies == null or pregnancies.empty}">
+            <i class="bi bi-inbox empty-icon"></i>
+            <strong>No confirmed pregnancies to track</strong>
+            <p>Set a breeding record's status to <em>Confirmed Pregnant</em> to see it here.</p>
+            <div style="margin-top:18px;display:flex;justify-content:center;gap:8px;">
+                <a th:href="@{/livestock/breeding/register}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Record a Breeding
+                </a>
+                <a th:href="@{/livestock/breeding/list}" class="btn btn-outline-secondary btn-sm">
+                    View All Breedings
                 </a>
             </div>
         </div>
-    </div>
 
-    <!-- Overdue Animals Section -->
-    <div class="card-panel" th:if="${overdueCount > 0}">
-        <div class="card-panel-header" style="background:#fef2f2;color:#dc2626;">
-            <i class="bi bi-exclamation-triangle-fill"></i>
-            Overdue Animals
-            <span class="badge bg-danger ms-2" th:text="${overdueCount}">0</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Tag Number</th>
-                    <th>Category</th>
-                    <th>Expected Due Date</th>
-                    <th>Days Overdue</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="animal : ${pregnantAnimals}" th:if="${animal.expectedDueDate != null and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate())}">
-                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
-                    <td><span th:text="${animal.categoryName}" class="badge bg-info"></span></td>
-                    <td th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></td>
-                    <td><span class="badge bg-danger" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(animal.expectedDueDate, #temporals.createNow().toLocalDate())} + ' days'"></span></td>
-                    <td>
-                        <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-danger">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                    </td>
-                </tr>
-                <tr th:if="${overdueCount == 0}">
-                    <td colspan="5" class="text-center text-muted py-3">No overdue animals</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+        <!-- Table section -->
+        <div th:if="${pregnancies != null and !pregnancies.empty}">
 
-    <!-- Due Soon Section -->
-    <div class="card-panel" th:if="${dueSoonCount > 0}">
-        <div class="card-panel-header" style="background:#fefce8;color:#a16207;">
-            <i class="bi bi-calendar-heart"></i>
-            Due Soon (Next 14 Days)
-            <span class="badge ms-2" style="background:#eab308;" th:text="${dueSoonCount}">0</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                <tr>
-                    <th>Tag Number</th>
-                    <th>Category</th>
-                    <th>Expected Due Date</th>
-                    <th>Days Left</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="animal : ${pregnantAnimals}"
-                    th:if="${animal.expectedDueDate != null and !animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate()) and animal.expectedDueDate.isBefore(#temporals.createNow().toLocalDate().plusDays(14))}">
-                    <td><strong th:text="${animal.tagNumber}">TAG</strong></td>
-                    <td><span th:text="${animal.categoryName}" class="badge bg-info"></span></td>
-                    <td th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></td>
-                    <td><span class="badge bg-warning text-dark" th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(#temporals.createNow().toLocalDate(), animal.expectedDueDate)} + ' days'"></span></td>
-                    <td>
-                        <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal.id})}" class="btn btn-sm btn-outline-warning">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                    </td>
-                </tr>
-                <tr th:if="${dueSoonCount == 0}">
-                    <td colspan="5" class="text-center text-muted py-3">No animals due soon</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-search">
+                    <i class="bi bi-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search tag, category, vet…"
+                           oninput="applyFilters()">
+                </div>
 
-</div>
+                <select class="filter-select" id="filterTrimester" onchange="applyFilters()">
+                    <option value="">All Trimesters</option>
+                    <option value="1">Trimester 1</option>
+                    <option value="2">Trimester 2</option>
+                    <option value="3">Trimester 3</option>
+                </select>
+
+                <select class="filter-select" id="filterUrgency" onchange="applyFilters()">
+                    <option value="">All Urgency</option>
+                    <option value="critical">Critical (&lt;7 days)</option>
+                    <option value="soon">Due Soon (≤30 days)</option>
+                    <option value="normal">Normal</option>
+                </select>
+
+                <select class="filter-select" id="filterMethod" onchange="applyFilters()">
+                    <option value="">All Methods</option>
+                    <option value="NATURAL">Natural</option>
+                    <option value="ARTIFICIAL_INSEMINATION">AI</option>
+                    <option value="EMBRYO_TRANSFER">Embryo Transfer</option>
+                </select>
+
+                <div class="toolbar-right">
+                    <span class="rows-info" id="rowsInfo"></span>
+                    <select class="page-size-sel" id="pageSize" onchange="changePageSize()">
+                        <option value="25">25 / page</option>
+                        <option value="50" selected>50 / page</option>
+                        <option value="100">100 / page</option>
+                        <option value="9999">Show all</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-wrap">
+                <table class="preg-table" id="pregTable">
+                    <thead>
+                    <tr>
+                        <th class="sortable" data-col="0" onclick="sortTable(0)">
+                            Tag / Category <span class="sort-icon"></span>
+                        </th>
+                        <th>Method</th>
+                        <th>Gestation</th>
+                        <th class="sortable" data-col="3" onclick="sortTable(3)">
+                            Breeding Date <span class="sort-icon"></span>
+                        </th>
+                        <th class="sortable" data-col="4" onclick="sortTable(4)">
+                            Due Date <span class="sort-icon"></span>
+                        </th>
+                        <th class="sortable" data-col="5" onclick="sortTable(5)">
+                            Days Preg. <span class="sort-icon"></span>
+                        </th>
+                        <th class="sortable" data-col="6" onclick="sortTable(6)">
+                            Days Left <span class="sort-icon"></span>
+                        </th>
+                        <th>Trimester</th>
+                        <th>Next Check</th>
+                        <th>Vet</th>
+                        <th>Notes</th>
+                        <th style="width:72px;"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    <tr th:each="b : ${pregnancies}"
+                        th:with="
+                                daysPregnant=${T(java.time.temporal.ChronoUnit).DAYS.between(b.breedingDate, today)},
+                                daysRemaining=${b.expectedDueDate != null ? T(java.time.temporal.ChronoUnit).DAYS.between(today, b.expectedDueDate) : 0},
+                                totalDays=${b.expectedDueDate != null ? T(java.time.temporal.ChronoUnit).DAYS.between(b.breedingDate, b.expectedDueDate) : 283},
+                                pct=${b.expectedDueDate != null and totalDays > 0 ? (daysPregnant * 100 / totalDays) : 0},
+                                trimester=${totalDays > 0 ? (daysPregnant < (totalDays / 3) ? 1 : (daysPregnant < (totalDays * 2 / 3) ? 2 : 3)) : 1},
+                                isCritical=${b.expectedDueDate != null and T(java.time.temporal.ChronoUnit).DAYS.between(today, b.expectedDueDate) < 7},
+                                isDueSoon=${b.expectedDueDate != null and T(java.time.temporal.ChronoUnit).DAYS.between(today, b.expectedDueDate) >= 7 and T(java.time.temporal.ChronoUnit).DAYS.between(today, b.expectedDueDate) <= 30}"
+                        th:classappend="${isCritical ? 'row-critical' : (isDueSoon ? 'row-due-soon' : '')}"
+                        th:data-tag="${b.livestock != null ? b.livestock.tagNumber : ''}"
+                        th:data-category="${b.livestock?.livestockCategory != null ? b.livestock.livestockCategory.name : ''}"
+                        th:data-trimester="${trimester}"
+                        th:data-urgency="${isCritical ? 'critical' : (isDueSoon ? 'soon' : 'normal')}"
+                        th:data-method="${b.breedingMethod}"
+                        th:data-vet="${b.veterinarian != null ? (b.veterinarian.firstName + ' ' + b.veterinarian.lastName) : ''}"
+                        th:data-days-preg="${daysPregnant}"
+                        th:data-days-left="${daysRemaining}"
+                        th:data-breeding-date="${b.breedingDate}"
+                        th:data-due-date="${b.expectedDueDate}">
+
+                        <!-- Tag / Category -->
+                        <td>
+                            <div class="tag-cell">
+                                <div class="tag-num mono"
+                                     th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></div>
+                                <div class="tag-cat"
+                                     th:if="${b.livestock?.livestockCategory != null}"
+                                     th:text="${b.livestock.livestockCategory.name}"></div>
+                            </div>
+                        </td>
+
+                        <!-- Breeding method -->
+                        <td>
+                                <span th:if="${b.breedingMethod == 'NATURAL'}"
+                                      class="method-badge mb-natural">Natural</span>
+                            <span th:if="${b.breedingMethod == 'ARTIFICIAL_INSEMINATION'}"
+                                  class="method-badge mb-ai">AI</span>
+                            <span th:if="${b.breedingMethod == 'EMBRYO_TRANSFER'}"
+                                  class="method-badge mb-embryo">Embryo</span>
+                            <span th:if="${b.breedingMethod == null or (b.breedingMethod != 'NATURAL' and b.breedingMethod != 'ARTIFICIAL_INSEMINATION' and b.breedingMethod != 'EMBRYO_TRANSFER')}"
+                                  class="badge-sm">—</span>
+                        </td>
+
+                        <!-- Gestation progress bar -->
+                        <td>
+                            <div class="mini-prog">
+                                <div class="bar-track">
+                                    <div class="bar-fill"
+                                         th:style="'width:' + ${pct > 100 ? 100 : (pct < 0 ? 0 : pct)} + '%;background:' + ${trimester == 3 ? '#dc2626' : (trimester == 2 ? '#d97706' : '#16a34a')}"></div>
+                                </div>
+                                <div class="bar-label"
+                                     th:text="${(pct > 100 ? 100 : (pct < 0 ? 0 : pct)) + '% of gestation'}"></div>
+                            </div>
+                        </td>
+
+                        <!-- Breeding date -->
+                        <td class="mono" style="font-size:12px;"
+                            th:text="${#temporals.format(b.breedingDate, 'dd MMM yyyy')}"></td>
+
+                        <!-- Due date -->
+                        <td class="mono" style="font-size:12px;"
+                            th:text="${b.expectedDueDate != null ? #temporals.format(b.expectedDueDate, 'dd MMM yyyy') : '—'}"></td>
+
+                        <!-- Days pregnant -->
+                        <td class="mono" style="text-align:center;"
+                            th:text="${daysPregnant}"></td>
+
+                        <!-- Days remaining -->
+                        <td>
+                                <span class="days-rem mono"
+                                      th:classappend="${daysRemaining < 0 ? ' overdue' : (daysRemaining < 7 ? ' critical' : (daysRemaining <= 30 ? ' soon' : ' ok'))}"
+                                      th:text="${daysRemaining < 0 ? ('▲ ' + (-daysRemaining) + 'd overdue') : (daysRemaining + 'd')}"></span>
+                        </td>
+
+                        <!-- Trimester -->
+                        <td>
+                                <span class="tri-badge"
+                                      th:classappend="${trimester == 1 ? ' tri-1' : (trimester == 2 ? ' tri-2' : ' tri-3')}"
+                                      th:text="${'T' + trimester}"></span>
+                        </td>
+
+                        <!-- Next pregnancy check -->
+                        <td>
+                                <span th:if="${b.expectedPregnancyCheckDate != null}"
+                                      th:classappend="${b.expectedPregnancyCheckDate.isBefore(today) ? ' check-overdue' : ' check-ok'}"
+                                      class="mono"
+                                      style="font-size:12px;"
+                                      th:text="${#temporals.format(b.expectedPregnancyCheckDate, 'dd MMM yyyy')}"></span>
+                            <span th:if="${b.expectedPregnancyCheckDate != null and b.expectedPregnancyCheckDate.isBefore(today)}"
+                                  style="font-size:10px;color:var(--red);display:block;">overdue</span>
+                            <span th:if="${b.expectedPregnancyCheckDate == null}"
+                                  style="color:var(--muted);">—</span>
+                        </td>
+
+                        <!-- Vet -->
+                        <td style="font-size:12px;">
+                                <span th:if="${b.veterinarian != null}"
+                                      th:text="${b.veterinarian.firstName + ' ' + b.veterinarian.lastName}"></span>
+                            <span th:if="${b.veterinarian == null}"
+                                  style="color:var(--muted);">—</span>
+                        </td>
+
+                        <!-- Notes (truncated) -->
+                        <td style="max-width:160px;">
+                                <span th:if="${b.notes != null and !#strings.isEmpty(b.notes)}"
+                                      style="font-size:11px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                      th:text="${b.notes}"
+                                      th:title="${b.notes}"></span>
+                            <span th:if="${b.notes == null or #strings.isEmpty(b.notes)}"
+                                  style="color:var(--muted);">—</span>
+                        </td>
+
+                        <!-- Actions -->
+                        <td style="text-align:right;white-space:nowrap;">
+                            <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}"
+                               class="btn-icon edit" title="Update Status">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}"
+                               class="btn-icon ms-1" title="View Full Record">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination bar -->
+            <div class="pagination-bar">
+                <span class="pagination-info" id="paginationInfo"></span>
+                <div class="pagination-controls" id="paginationControls"></div>
+            </div>
+
+        </div>
+    </div><!-- /panel -->
+
+</div><!-- /page-body -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* ─────────────────────────────────────────────────────────────────────────
+       Pregnancy Tracking — Table Logic
+       ─────────────────────────────────────────────────────────────────────── */
+
+    const TABLE_ID   = 'tableBody';
+    const INFO_ID    = 'rowsInfo';
+    const PG_INFO    = 'paginationInfo';
+    const PG_CTRL    = 'paginationControls';
+
+    let currentPage = 1;
+    let pageSize    = parseInt(document.getElementById('pageSize')?.value ?? 50);
+    let sortCol     = null;
+    let sortDir     = 'asc';
+    let allRows     = [];
+    let visibleRows = [];   // after filter
+
+    /* ── init ── */
+    window.addEventListener('DOMContentLoaded', () => {
+        allRows = Array.from(document.querySelectorAll(`#${TABLE_ID} tr`));
+        applyFilters();
+    });
+
+    /* ── FILTER ── */
+    function applyFilters() {
+        const search    = document.getElementById('searchInput')?.value.toLowerCase().trim() ?? '';
+        const trimester = document.getElementById('filterTrimester')?.value ?? '';
+        const urgency   = document.getElementById('filterUrgency')?.value ?? '';
+        const method    = document.getElementById('filterMethod')?.value ?? '';
+
+        visibleRows = allRows.filter(row => {
+            const tag      = (row.dataset.tag      ?? '').toLowerCase();
+            const cat      = (row.dataset.category ?? '').toLowerCase();
+            const vet      = (row.dataset.vet      ?? '').toLowerCase();
+            const rowTri   = row.dataset.trimester  ?? '';
+            const rowUrg   = row.dataset.urgency    ?? '';
+            const rowMeth  = row.dataset.method     ?? '';
+
+            const matchSearch    = !search   || tag.includes(search) || cat.includes(search) || vet.includes(search);
+            const matchTrimester = !trimester || rowTri === trimester;
+            const matchUrgency   = !urgency  || rowUrg === urgency;
+            const matchMethod    = !method   || rowMeth === method;
+
+            return matchSearch && matchTrimester && matchUrgency && matchMethod;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    /* ── SORT ── */
+    function sortTable(colIdx) {
+        const headers = document.querySelectorAll('th.sortable');
+        if (sortCol === colIdx) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortCol = colIdx;
+            sortDir = 'asc';
+        }
+
+        headers.forEach(h => { h.classList.remove('asc','desc'); });
+        const activeHeader = document.querySelector(`th[data-col="${colIdx}"]`);
+        if (activeHeader) activeHeader.classList.add(sortDir);
+
+        const dataMap = {
+            0: r => r.dataset.tag ?? '',
+            3: r => r.dataset.breedingDate ?? '',
+            4: r => r.dataset.dueDate ?? '',
+            5: r => parseInt(r.dataset.daysPreg ?? 0),
+            6: r => parseInt(r.dataset.daysLeft ?? 0),
+        };
+        const fn = dataMap[colIdx];
+        if (!fn) return;
+
+        visibleRows.sort((a, b) => {
+            const va = fn(a), vb = fn(b);
+            let cmp = 0;
+            if (typeof va === 'number') { cmp = va - vb; }
+            else { cmp = String(va).localeCompare(String(vb)); }
+            return sortDir === 'asc' ? cmp : -cmp;
+        });
+
+        currentPage = 1;
+        renderTable();
+    }
+
+    /* ── RENDER ── */
+    function renderTable() {
+        const tbody = document.getElementById(TABLE_ID);
+        const total = visibleRows.length;
+        const ps    = pageSize >= 9999 ? total : pageSize;
+        const pages = Math.max(1, Math.ceil(total / ps));
+        if (currentPage > pages) currentPage = pages;
+
+        const start = (currentPage - 1) * ps;
+        const end   = Math.min(start + ps, total);
+
+        // Hide/show rows
+        allRows.forEach(r => { r.classList.add('row-hidden'); });
+        visibleRows.slice(start, end).forEach(r => { r.classList.remove('row-hidden'); });
+
+        // Info
+        const infoEl = document.getElementById(INFO_ID);
+        if (infoEl) {
+            infoEl.textContent = total === allRows.length
+                ? `${total} records`
+                : `${total} of ${allRows.length} records`;
+        }
+
+        renderPagination(total, ps, pages, start, end);
+    }
+
+    /* ── PAGINATION ── */
+    function renderPagination(total, ps, pages, start, end) {
+        const infoEl = document.getElementById(PG_INFO);
+        const ctrlEl = document.getElementById(PG_CTRL);
+        if (!infoEl || !ctrlEl) return;
+
+        infoEl.textContent = total === 0
+            ? 'No records found'
+            : `Showing ${start + 1}–${end} of ${total} records`;
+
+        if (pages <= 1) { ctrlEl.innerHTML = ''; return; }
+
+        const MAX_VISIBLE = 7;
+        let html = '';
+
+        const btn = (label, page, active = false, disabled = false) => {
+            if (disabled) return `<button class="pg-btn" disabled>${label}</button>`;
+            if (active)   return `<button class="pg-btn active">${label}</button>`;
+            return `<button class="pg-btn" onclick="goToPage(${page})">${label}</button>`;
+        };
+
+        html += btn('‹', currentPage - 1, false, currentPage === 1);
+
+        if (pages <= MAX_VISIBLE) {
+            for (let i = 1; i <= pages; i++) html += btn(i, i, i === currentPage);
+        } else {
+            html += btn(1, 1, currentPage === 1);
+            if (currentPage > 3) html += `<span class="pg-ellipsis">…</span>`;
+            const lo = Math.max(2, currentPage - 1);
+            const hi = Math.min(pages - 1, currentPage + 1);
+            for (let i = lo; i <= hi; i++) html += btn(i, i, i === currentPage);
+            if (currentPage < pages - 2) html += `<span class="pg-ellipsis">…</span>`;
+            html += btn(pages, pages, currentPage === pages);
+        }
+
+        html += btn('›', currentPage + 1, false, currentPage === pages);
+        ctrlEl.innerHTML = html;
+    }
+
+    function goToPage(p) { currentPage = p; renderTable(); }
+    function changePageSize() {
+        pageSize = parseInt(document.getElementById('pageSize').value);
+        currentPage = 1;
+        renderTable();
+    }
+
+    /* ── ALERT TOGGLE ── */
+    function toggleAlert() {
+        const body   = document.getElementById('alertBody');
+        const header = document.getElementById('alertToggle');
+        const isOpen = body.style.display !== 'none';
+        body.style.display = isOpen ? 'none' : 'block';
+        header.classList.toggle('collapsed', isOpen);
+    }
+</script>
 </body>
 </html>

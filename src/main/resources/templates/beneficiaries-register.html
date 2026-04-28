@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Uhagarariye Aborora</title>
+    <title>Register Abaragizwa Amatungo - Enhanced</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body { background: #f8f9fa; padding: 20px; }
         .register-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .form-label { font-weight: 500; color: #333; }
-        .btn-register { background: linear-gradient(135deg, #002244 0%, #004488 100%); border: none; color: white; }
-        .btn-register:hover { background: linear-gradient(135deg, #004488 0%, #0066cc 100%); }
+        .btn-register { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
+        .btn-register:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); }
 
-        /* Photo Preview */
         .photo-preview {
             width: 200px;
             height: 200px;
@@ -30,35 +29,17 @@
             max-height: 100%;
             object-fit: contain;
         }
-        .photo-preview .placeholder {
-            text-align: center;
-            color: #999;
-        }
-
-        /* Validation Styles */
-        .form-control.is-invalid,
-        .form-select.is-invalid {
-            border-color: #dc3545;
-        }
-
-        .form-control.is-valid,
-        .form-select.is-valid {
-            border-color: #28a745;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='8 8 24 24'%3e%3cpath fill='none' stroke='%2328a745' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 21.75l-4.5-4.5m0 0l-3-3m3 3l7.5-7.5'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right calc(0.375em + 0.1875rem) center;
-            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-            padding-right: calc(1.5em + 0.75rem);
-        }
-
-        /* Hide error messages */
-        .invalid-feedback {
-            display: none;
-        }
-
+        .photo-preview .placeholder { text-align: center; color: #999; }
         .upload-btn { cursor: pointer; }
         .pdf-preview { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; display: none; }
         .pdf-preview.show { display: block; }
+
+        .location-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .location-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .location-row.full { grid-template-columns: 1fr; }
+        @media (max-width: 768px) {
+            .location-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -67,8 +48,8 @@
         <div class="col-lg-10">
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3><i class="bi bi-person-plus-fill"></i> Register Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <h3><i class="bi bi-person-plus"></i> Register Abaragizwa Amatungo</h3>
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -78,7 +59,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/register/new}" th:object="${uhagarariye}" method="post" id="registrationForm" novalidate>
+                <form th:action="@{/beneficiaries/register/new}" th:object="${beneficiaries}" method="post" id="registrationForm" novalidate>
 
                     <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -119,8 +100,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="gender" class="form-label">Gender *</label>
-                            <select class="form-select" id="gender" th:field="*{gender}" required
-                                    onchange="validateSelect(this)">
+                            <select class="form-select" id="gender" th:field="*{gender}" required>
                                 <option value="">Select gender...</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
@@ -128,8 +108,7 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="maritialStatus" class="form-label">Marital Status *</label>
-                            <select class="form-select" id="maritialStatus" th:field="*{maritialStatus}" required
-                                    onchange="validateSelect(this)">
+                            <select class="form-select" id="maritialStatus" th:field="*{maritialStatus}" required>
                                 <option value="">Select status...</option>
                                 <option value="SINGLE">Single</option>
                                 <option value="MARRIED">Married</option>
@@ -149,35 +128,76 @@
                     <!-- Contact Information -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-telephone"></i> Contact Information</h5>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-12 mb-3">
                             <label for="phone" class="form-label">Phone Number * (10 digits)</label>
                             <input type="tel" class="form-control" id="phone" th:field="*{phone}" required
                                    pattern="(078|079|072|073)[0-9]{7}" maxlength="10"
                                    oninput="validatePhone(this)"
                                    placeholder="0781234567">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="email" class="form-label">Email *</label>
-                            <input type="email" class="form-control" id="email" th:field="*{email}" required
-                                   oninput="validateEmail(this)"
-                                   placeholder="example@email.com">
+                    </div>
+
+                    <!-- Location Selection - FIXED: Cascading dropdowns -->
+                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
+                    <div class="location-section">
+                        <div class="location-row">
+                            <div class="form-group">
+                                <label for="province" class="form-label">Province *</label>
+                                <select class="form-select" id="province" required onchange="loadDistrictsAbaragizwa()">
+                                    <option value="">Select province...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="district" class="form-label">District *</label>
+                                <select class="form-select" id="district" required onchange="loadSectorsAbaragizwa()" disabled>
+                                    <option value="">Select district...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="location-row">
+                            <div class="form-group">
+                                <label for="sector" class="form-label">Sector *</label>
+                                <select class="form-select" id="sector" required onchange="loadCellsAbaragizwa()" disabled>
+                                    <option value="">Select sector...</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cell" class="form-label">Cell *</label>
+                                <select class="form-select" id="cell" required onchange="loadVillagesAbaragizwa()" disabled>
+                                    <option value="">Select cell...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="location-row full">
+                            <div class="form-group">
+                                <label for="village" class="form-label">Village *</label>
+                                <select class="form-select" id="village" name="locationId" required disabled>
+                                    <option value="">Select village...</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Professional Information -->
-                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
+                    <!-- Representative Assignment -->
+                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do) *</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2" required
-                                      minlength="10" maxlength="500"
-                                      oninput="validateTextarea(this)"></textarea>
-                            <div class="form-text">Describe their activities (10-500 characters)</div>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
+                                <option value="">Select representative...</option>
+                                <option th:each="rep : ${representativesList}"
+                                        th:value="${rep.id}"
+                                        th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}">
+                                </option>
+                            </select>
+                            <div class="form-text">Select the representative who will supervise this beneficiary</div>
                         </div>
                     </div>
 
-                    <!-- Contract/Agreement PDF Upload -->
-                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract/Agreement</h5>
+                    <!-- Contract/Agreement PDF Upload - FIXED: Better error handling -->
+                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label class="form-label">Amasezerano (Contract/Agreement) PDF *</label>
@@ -192,53 +212,15 @@
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
-                            <div class="form-text">Upload contract PDF (Max 10MB)</div>
-                        </div>
-                    </div>
-
-                    <!-- Location - Cascading Dropdowns -->
-                    <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="province" class="form-label">Province *</label>
-                            <select class="form-select" id="province" required onchange="loadDistricts()">
-                                <option value="">Select province...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="district" class="form-label">District *</label>
-                            <select class="form-select" id="district" required onchange="loadSectors()" disabled>
-                                <option value="">Select district...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="sector" class="form-label">Sector *</label>
-                            <select class="form-select" id="sector" required onchange="loadCells()" disabled>
-                                <option value="">Select sector...</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="cell" class="form-label">Cell *</label>
-                            <select class="form-select" id="cell" required onchange="loadVillages()" disabled>
-                                <option value="">Select cell...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="village" class="form-label">Village *</label>
-                            <select class="form-select" id="village" required disabled th:field="*{locationIdValue}"
-                                    onchange="validateSelect(this)">
-                                <option value="">Select village...</option>
-                            </select>
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
+                            <div class="form-text">Upload contract PDF (Max 10MB) - Required</div>
+                            <div id="pdfError" class="text-danger mt-2" style="display: none;"></div>
                         </div>
                     </div>
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-register">
@@ -271,170 +253,39 @@
 
     function validateNID(input) {
         input.value = input.value.replace(/\D/g, '').slice(0, 16);
-        const value = input.value;
-        const isValid = /^[0-9]{16}$/.test(value);
-
-        if (value.length === 0) {
-            input.classList.remove('is-invalid', 'is-valid');
-        } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-        }
     }
 
     function validatePhone(input) {
         input.value = input.value.replace(/\D/g, '').slice(0, 10);
-        const value = input.value;
-        const isValid = /^(078|079|072|073)[0-9]{7}$/.test(value);
-
-        if (value.length === 0) {
-            input.classList.remove('is-invalid', 'is-valid');
-        } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-        }
-    }
-
-    function validateEmail(input) {
-        const value = input.value;
-        const isValid = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
-
-        if (value.length === 0) {
-            input.classList.remove('is-invalid', 'is-valid');
-        } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-        }
-    }
-
-    function validateTextarea(input) {
-        const value = input.value.trim();
-        const isValid = value.length >= 10 && value.length <= 500;
-
-        if (value.length === 0) {
-            input.classList.remove('is-invalid', 'is-valid');
-        } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
-        } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
-        }
-    }
-
-    function validateSelect(select) {
-        if (select.value === '' || select.value === null) {
-            select.classList.remove('is-valid');
-            select.classList.add('is-invalid');
-        } else {
-            select.classList.remove('is-invalid');
-            select.classList.add('is-valid');
-        }
     }
 
     // Form submission validation
     document.getElementById('registrationForm').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const form = event.target;
-        let isValid = true;
-        const errors = [];
-
-        // Collect all values
-        const firstName = document.getElementById('firstName').value.trim();
-        const lastName = document.getElementById('lastName').value.trim();
-        const nid = document.getElementById('nid').value.trim();
-        const phone = document.getElementById('phone').value.trim();
-        const email = document.getElementById('email').value.trim();
-        const icyoAkora = document.getElementById('icyoAkora').value.trim();
-        const gender = document.getElementById('gender').value;
-        const maritalStatus = document.getElementById('maritialStatus').value;
-        const village = document.getElementById('village').value;
         const pdfUrl = document.getElementById('pdfUrl').value;
 
-        // Validate each field
-        if (!firstName || !/^[A-Za-z\s]{2,50}$/.test(firstName)) {
-            document.getElementById('firstName').classList.add('is-invalid');
-            errors.push('First name: letters only, 2-50 characters');
-            isValid = false;
-        }
-
-        if (!lastName || !/^[A-Za-z\s]{2,50}$/.test(lastName)) {
-            document.getElementById('lastName').classList.add('is-invalid');
-            errors.push('Last name: letters only, 2-50 characters');
-            isValid = false;
-        }
-
-        if (!nid || !/^[0-9]{16}$/.test(nid)) {
-            document.getElementById('nid').classList.add('is-invalid');
-            errors.push('National ID: exactly 16 digits');
-            isValid = false;
-        }
-
-        if (!phone || !/^(078|079|072|073)[0-9]{7}$/.test(phone)) {
-            document.getElementById('phone').classList.add('is-invalid');
-            errors.push('Phone: 10 digits starting with 078, 079, 072, or 073');
-            isValid = false;
-        }
-
-        if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-            document.getElementById('email').classList.add('is-invalid');
-            errors.push('Email: valid email address required');
-            isValid = false;
-        }
-
-        if (!icyoAkora || icyoAkora.length < 10 || icyoAkora.length > 500) {
-            document.getElementById('icyoAkora').classList.add('is-invalid');
-            errors.push('Activity description: 10-500 characters');
-            isValid = false;
-        }
-
-        if (!gender) {
-            document.getElementById('gender').classList.add('is-invalid');
-            errors.push('Gender: required');
-            isValid = false;
-        }
-
-        if (!maritalStatus) {
-            document.getElementById('maritialStatus').classList.add('is-invalid');
-            errors.push('Marital status: required');
-            isValid = false;
-        }
-
-        if (!village) {
-            document.getElementById('village').classList.add('is-invalid');
-            errors.push('Village: required');
-            isValid = false;
-        }
-
-        if (!pdfUrl) {
-            errors.push('Contract PDF: required');
-            isValid = false;
-        }
-
-        if (!isValid) {
-            alert('Please fix the following errors:\n\n• ' + errors.join('\n• '));
+        if (!pdfUrl || pdfUrl.trim() === '') {
+            event.preventDefault();
+            const errorDiv = document.getElementById('pdfError');
+            errorDiv.textContent = 'Please upload a contract PDF before submitting';
+            errorDiv.style.display = 'block';
+            alert('Please upload a contract PDF before submitting');
             return false;
         }
 
-        // Submit if all valid
-        form.submit();
+        const form = event.target;
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
     });
 
-    // Load provinces
+    // Load provinces on page load
     document.addEventListener('DOMContentLoaded', function() {
-        loadProvinces();
+        loadProvincesAbaragizwa();
     });
 
-    function loadProvinces() {
+    function loadProvincesAbaragizwa() {
         fetch('/api/locations/provinces')
             .then(response => response.json())
             .then(data => {
@@ -447,13 +298,13 @@
             .catch(error => console.error('Error loading provinces:', error));
     }
 
-    function loadDistricts() {
+    function loadDistrictsAbaragizwa() {
         const provinceId = document.getElementById('province').value;
         const districtSelect = document.getElementById('district');
 
         if (!provinceId) {
             districtSelect.disabled = true;
-            resetSelects(['district', 'sector', 'cell', 'village']);
+            resetSelectsAbaragizwa(['district', 'sector', 'cell', 'village']);
             return;
         }
 
@@ -465,18 +316,18 @@
                     districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
                 });
                 districtSelect.disabled = false;
-                resetSelects(['sector', 'cell', 'village']);
+                resetSelectsAbaragizwa(['sector', 'cell', 'village']);
             })
             .catch(error => console.error('Error loading districts:', error));
     }
 
-    function loadSectors() {
+    function loadSectorsAbaragizwa() {
         const districtId = document.getElementById('district').value;
         const sectorSelect = document.getElementById('sector');
 
         if (!districtId) {
             sectorSelect.disabled = true;
-            resetSelects(['sector', 'cell', 'village']);
+            resetSelectsAbaragizwa(['sector', 'cell', 'village']);
             return;
         }
 
@@ -488,18 +339,18 @@
                     sectorSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
                 });
                 sectorSelect.disabled = false;
-                resetSelects(['cell', 'village']);
+                resetSelectsAbaragizwa(['cell', 'village']);
             })
             .catch(error => console.error('Error loading sectors:', error));
     }
 
-    function loadCells() {
+    function loadCellsAbaragizwa() {
         const sectorId = document.getElementById('sector').value;
         const cellSelect = document.getElementById('cell');
 
         if (!sectorId) {
             cellSelect.disabled = true;
-            resetSelects(['cell', 'village']);
+            resetSelectsAbaragizwa(['cell', 'village']);
             return;
         }
 
@@ -511,12 +362,12 @@
                     cellSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
                 });
                 cellSelect.disabled = false;
-                resetSelects(['village']);
+                resetSelectsAbaragizwa(['village']);
             })
             .catch(error => console.error('Error loading cells:', error));
     }
 
-    function loadVillages() {
+    function loadVillagesAbaragizwa() {
         const cellId = document.getElementById('cell').value;
         const villageSelect = document.getElementById('village');
 
@@ -537,7 +388,7 @@
             .catch(error => console.error('Error loading villages:', error));
     }
 
-    function resetSelects(selectIds) {
+    function resetSelectsAbaragizwa(selectIds) {
         selectIds.forEach(id => {
             const select = document.getElementById(id);
             select.innerHTML = `<option value="">Select ${id}...</option>`;
@@ -588,19 +439,23 @@
         });
     }
 
-    // PDF upload
+    // FIXED: PDF upload function - corrected to avoid DOM access errors
     function uploadPdf() {
         const fileInput = document.getElementById('pdfFile');
         const file = fileInput.files[0];
 
         if (!file) return;
 
-        if (file.type !== 'application/pdf') {
-            alert('Please select a PDF file');
+        console.log('PDF File selected:', file.name, file.type, file.size);
+
+        // Validate file name
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            alert('Please select a valid PDF file');
             fileInput.value = '';
             return;
         }
 
+        // Validate file size
         if (file.size > 10 * 1024 * 1024) {
             alert('PDF file size must be less than 10MB');
             fileInput.value = '';
@@ -608,37 +463,51 @@
         }
 
         const preview = document.getElementById('pdfPreview');
-        preview.innerHTML = '<div class="spinner-border text-danger" role="status"></div>';
+        preview.innerHTML = '<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Uploading...</span></div>';
         preview.classList.add('show');
 
         const formData = new FormData();
         formData.append('file', file);
+
+        console.log('Uploading PDF to /api/upload/pdf');
 
         fetch('/api/upload/pdf', {
             method: 'POST',
             body: formData
         })
         .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            console.log('PDF upload response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             return response.json();
         })
         .then(data => {
+            console.log('PDF upload success:', data);
             if (data.success) {
+                // FIXED: Set the URL first, then build the entire HTML at once
                 document.getElementById('pdfUrl').value = data.url;
+                document.getElementById('pdfError').style.display = 'none';
+
+                // Build the entire preview HTML with the file name included
                 preview.innerHTML = `
                     <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
-                    <strong class="ms-2">${data.originalName}</strong>
+                    <strong class="ms-2">${data.originalName || file.name}</strong>
                     <span class="badge bg-success ms-2">✓ Uploaded</span>
                     <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
                         <i class="bi bi-x-circle"></i> Remove
                     </button>
                 `;
+                console.log('PDF uploaded successfully:', data.url);
             } else {
                 throw new Error(data.message || 'Upload failed');
             }
         })
         .catch(error => {
-            console.error('Error uploading PDF:', error);
+            console.error('PDF upload error:', error);
+            const errorDiv = document.getElementById('pdfError');
+            errorDiv.textContent = 'Error uploading PDF: ' + error.message;
+            errorDiv.style.display = 'block';
             alert('Error uploading PDF: ' + error.message);
             preview.classList.remove('show');
             preview.innerHTML = '';
@@ -651,6 +520,7 @@
         document.getElementById('pdfPreview').classList.remove('show');
         document.getElementById('pdfPreview').innerHTML = '';
         document.getElementById('pdfFile').value = '';
+        document.getElementById('pdfError').style.display = 'none';
     }
 </script>
 </body>

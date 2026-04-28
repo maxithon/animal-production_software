@@ -24,8 +24,8 @@ You covered:
 ----_____________________________________________________----
 
 what to do:
-abaragizwa_amatungo → livestock_keeper
-uhagarariye_aborora → farmer_supervisor
+beneficiaries_amatungo → livestock_keeper
+representatives_aborora → farmer_supervisor
 
-if uhagarariye_aborora is farmer_supervisor, why do you name abaragizwa_amatungo as  livestock_keeper
-while uhagarariye_aborora will manage abaragizwa_amatungo in their daily activities?
+if representatives_aborora is farmer_supervisor, why do you name beneficiaries_amatungo as  livestock_keeper
+while representatives_aborora will manage beneficiaries_amatungo in their daily activities?

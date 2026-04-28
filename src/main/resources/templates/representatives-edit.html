@@ -31,7 +31,7 @@
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -41,16 +41,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/update/{id}(id=${uhagarariye.id})}" th:object="${uhagarariye}" method="post" enctype="multipart/form-data">
+                <form th:action="@{/representatives/update/{id}(id=${representatives.id})}" th:object="${representatives}" method="post" enctype="multipart/form-data">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <!-- FIXED: Display current photo if exists -->
-                            <div th:if="${uhagarariye.photo != null and !uhagarariye.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${representatives.photo != null and !representatives.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${uhagarariye.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${representatives.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoInput" name="photo" accept="image/*" style="display: none;">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoInput').click()">
@@ -121,8 +121,8 @@
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do) *</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2" required minlength="10" maxlength="500" oninput="validateTextarea(this)"></textarea>
+                            <label for="occupation" class="form-label">Occupation (What they do) *</label>
+                            <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2" required minlength="10" maxlength="500" oninput="validateTextarea(this)"></textarea>
                             <div class="form-text">Describe their activities (10-500 characters)</div>
                         </div>
                     </div>
@@ -190,9 +190,9 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <!-- FIXED: Display current PDF if exists -->
-                            <div th:if="${uhagarariye.amasezerano != null and !uhagarariye.amasezerano.isEmpty()}" class="mb-2">
+                            <div th:if="${representatives.contractAgreement != null and !representatives.contractAgreement.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Contract PDF:</p>
-                                <a th:href="${uhagarariye.amasezerano}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-file-pdf"></i> View Current PDF
                                 </a>
                             </div>
@@ -207,14 +207,14 @@
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                             <small class="form-text text-muted">Upload contract PDF (Max 10MB) - Leave empty to keep current</small>
                         </div>
                     </div>
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">

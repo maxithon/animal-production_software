@@ -18,9 +18,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,9 +26,7 @@ import java.math.RoundingMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.RoundingMode;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -1618,9 +1613,9 @@ public class LivestockEventsController {
         Map<String, OwnerStats> ownerStatsMap = new LinkedHashMap<>();
 
         for (Livestock animal : allLivestock) {
-            // ✅ CHANGED: Use getAbaragizwaAmatungo() instead of getFarmer()
-            if (animal.getAbaragizwaAmatungo() != null) {
-                AbaragizwaAmatungo owner = animal.getAbaragizwaAmatungo();
+            // ✅ CHANGED: Use getBeneficiary() instead of getFarmer()
+            if (animal.getBeneficiary() != null) {
+                Beneficiary owner = animal.getBeneficiary();
                 String ownerKey = owner.getFullName();
                 OwnerStats stats = ownerStatsMap.getOrDefault(ownerKey,
                         new OwnerStats(ownerKey, owner.getNid(), owner.getPhone()));
@@ -1631,8 +1626,8 @@ public class LivestockEventsController {
         }
 
         for (LivestockSale sale : saleService.getAll()) {
-            if (sale.getLivestock() != null && sale.getLivestock().getAbaragizwaAmatungo() != null) {
-                String ownerKey = sale.getLivestock().getAbaragizwaAmatungo().getFullName();
+            if (sale.getLivestock() != null && sale.getLivestock().getBeneficiary() != null) {
+                String ownerKey = sale.getLivestock().getBeneficiary().getFullName();
                 OwnerStats stats = ownerStatsMap.get(ownerKey);
                 if (stats != null) {
                     stats.salesCount++;
@@ -1642,8 +1637,8 @@ public class LivestockEventsController {
         }
 
         for (LivestockTreatment treatment : treatmentService.getAll()) {
-            if (treatment.getLivestock() != null && treatment.getLivestock().getAbaragizwaAmatungo() != null) {
-                String ownerKey = treatment.getLivestock().getAbaragizwaAmatungo().getFullName();
+            if (treatment.getLivestock() != null && treatment.getLivestock().getBeneficiary() != null) {
+                String ownerKey = treatment.getLivestock().getBeneficiary().getFullName();
                 OwnerStats stats = ownerStatsMap.get(ownerKey);
                 if (stats != null && treatment.getTreatmentCost() != null)
                     stats.treatmentCosts = stats.treatmentCosts.add(treatment.getTreatmentCost());

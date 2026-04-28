@@ -108,31 +108,31 @@
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/config/CustomAuthenticationSuccessHandler.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/config/SecurityConfig.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/config/WebConfig.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/AbaragizwaAmatungoController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/BeneficiaryController.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/DashboardController.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/FileUploadController.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/LocationController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/UhagarariyeAbororaController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/entity/AbaragizwaAmatungo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/controller/RepresentativeController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/entity/Beneficiary.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/entity/Location.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/entity/UhagarariyeAborora.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/repository/AbaragizwaAmatungoRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/entity/Representative.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/repository/BeneficiaryRepository.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/repository/LocationRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/repository/UhagarariyeAbororaRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/AbaragizwaAmatungoService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/repository/RepresentativeRepository.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/BeneficiaryService.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/CustomUserDetailsService.java" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/LocationService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/UhagarariyeAbororaService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/abaragizwa-edit.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/abaragizwa-list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/abaragizwa-register.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/abaragizwa-view.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/rw/animalproduct/animal/production/services/RepresentativeService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/beneficiaries-edit.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/beneficiaries-list.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/beneficiaries-register.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/beneficiaries-view.html" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/resources/templates/access-denied.html" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/resources/templates/admin-dashboard.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/uhagarariye-edit.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/uhagarariye-list.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/uhagarariye-register.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/uhagarariye-view.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/representatives-edit.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/representatives-list.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/representatives-register.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/templates/representatives-view.html" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/resources/templates/user-dashboard.html" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/resources/templates/users-edit.html" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/main/resources/templates/users-list.html" afterDir="false" />
@@ -306,8 +306,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/locations/**", "/api/upload/**").authenticated()
                         .requestMatchers("/register", "/register/new").hasRole("ADMIN")
                         .requestMatchers("/users/**").hasRole("ADMIN")
-                        .requestMatchers("/uhagarariye/**").hasAnyRole("ADMIN", "REGULAR_USER")
-                        .requestMatchers("/abaragizwa/**").hasAnyRole("ADMIN", "REGULAR_USER")
+                        .requestMatchers("/representatives/**").hasAnyRole("ADMIN", "REGULAR_USER")
+                        .requestMatchers("/beneficiaries/**").hasAnyRole("ADMIN", "REGULAR_USER")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers("/user/**").hasAnyRole("ADMIN", "REGULAR_USER")
                         .anyRequest().authenticated()
@@ -367,117 +367,117 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import rw.animalproduct.animal.production.entity.AbaragizwaAmatungo;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
-import rw.animalproduct.animal.production.services.AbaragizwaAmatungoService;
-import rw.animalproduct.animal.production.services.UhagarariyeAbororaService;
+import rw.animalproduct.animal.production.entity.Beneficiary;
+import rw.animalproduct.animal.production.entity.Representative;
+import rw.animalproduct.animal.production.services.BeneficiaryService;
+import rw.animalproduct.animal.production.services.RepresentativeService;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Controller
-@RequestMapping("/abaragizwa")
-public class AbaragizwaAmatungoController {
+@RequestMapping("/beneficiaries")
+public class BeneficiaryController {
 
-    private final AbaragizwaAmatungoService abaragizwaAmatungoService;
-    private final UhagarariyeAbororaService uhagarariyeAbororaService;
+    private final BeneficiaryService beneficiariesAmatungoService;
+    private final RepresentativeService representativesAbororaService;
 
     @Autowired
-    public AbaragizwaAmatungoController(AbaragizwaAmatungoService abaragizwaAmatungoService,
-                                        UhagarariyeAbororaService uhagarariyeAbororaService) {
-        this.abaragizwaAmatungoService = abaragizwaAmatungoService;
-        this.uhagarariyeAbororaService = uhagarariyeAbororaService;
+    public BeneficiaryController(BeneficiaryService beneficiariesAmatungoService,
+                                        RepresentativeService representativesAbororaService) {
+        this.beneficiariesAmatungoService = beneficiariesAmatungoService;
+        this.representativesAbororaService = representativesAbororaService;
     }
 
-    // List all abaragizwa amatungo
+    // List all beneficiaries amatungo
     @GetMapping("/list")
     public String listAll(Model model) {
-        List<AbaragizwaAmatungo> list = abaragizwaAmatungoService.getAll();
-        model.addAttribute("abaragizwaList", list);
-        return "abaragizwa-list";
+        List<Beneficiary> list = beneficiariesAmatungoService.getAll();
+        model.addAttribute("beneficiariesList", list);
+        return "beneficiaries-list";
     }
 
     // Show registration form
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
-        List<UhagarariyeAborora> uhagarariyeList = uhagarariyeAbororaService.getAll();
-        model.addAttribute("uhagarariyeList", uhagarariyeList);
-        model.addAttribute("abaragizwa", new AbaragizwaAmatungo());
-        return "abaragizwa-register";
+        List<Representative> representativesList = representativesAbororaService.getAll();
+        model.addAttribute("representativesList", representativesList);
+        model.addAttribute("beneficiaries", new Beneficiary());
+        return "beneficiaries-register";
     }
 
     // Handle registration
     @PostMapping("/register/new")
-    public String register(@Valid @ModelAttribute("abaragizwa") AbaragizwaAmatungo abaragizwa,
+    public String register(@Valid @ModelAttribute("beneficiaries") Beneficiary beneficiaries,
                            BindingResult result,
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
         // Check for duplicate NID
-        Optional<AbaragizwaAmatungo> existingOpt = abaragizwaAmatungoService.getByNid(abaragizwa.getNid());
+        Optional<Beneficiary> existingOpt = beneficiariesAmatungoService.getByNid(beneficiaries.getNid());
         if (existingOpt.isPresent()) {
             model.addAttribute("error", "NID already exists");
-            List<UhagarariyeAborora> uhagarariyeList = uhagarariyeAbororaService.getAll();
-            model.addAttribute("uhagarariyeList", uhagarariyeList);
-            return "abaragizwa-register";
+            List<Representative> representativesList = representativesAbororaService.getAll();
+            model.addAttribute("representativesList", representativesList);
+            return "beneficiaries-register";
         }
 
         if (result.hasErrors()) {
-            List<UhagarariyeAborora> uhagarariyeList = uhagarariyeAbororaService.getAll();
-            model.addAttribute("uhagarariyeList", uhagarariyeList);
-            return "abaragizwa-register";
+            List<Representative> representativesList = representativesAbororaService.getAll();
+            model.addAttribute("representativesList", representativesList);
+            return "beneficiaries-register";
         }
 
-        abaragizwaAmatungoService.addNew(abaragizwa);
+        beneficiariesAmatungoService.addNew(beneficiaries);
         redirectAttributes.addFlashAttribute("success", "Abaragizwa amatungo registered successfully!");
-        return "redirect:/abaragizwa/list";
+        return "redirect:/beneficiaries/list";
     }
 
     // Show edit form
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") UUID id, Model model) {
-        Optional<AbaragizwaAmatungo> abaragizwaOpt = abaragizwaAmatungoService.getById(id);
-        if (abaragizwaOpt.isEmpty()) {
-            return "redirect:/abaragizwa/list";
+        Optional<Beneficiary> beneficiariesOpt = beneficiariesAmatungoService.getById(id);
+        if (beneficiariesOpt.isEmpty()) {
+            return "redirect:/beneficiaries/list";
         }
 
-        List<UhagarariyeAborora> uhagarariyeList = uhagarariyeAbororaService.getAll();
-        model.addAttribute("abaragizwa", abaragizwaOpt.get());
-        model.addAttribute("uhagarariyeList", uhagarariyeList);
-        return "abaragizwa-edit";
+        List<Representative> representativesList = representativesAbororaService.getAll();
+        model.addAttribute("beneficiaries", beneficiariesOpt.get());
+        model.addAttribute("representativesList", representativesList);
+        return "beneficiaries-edit";
     }
 
     // Handle update
     @PostMapping("/update/{id}")
     public String update(@PathVariable("id") UUID id,
-                         @ModelAttribute AbaragizwaAmatungo abaragizwa,
+                         @ModelAttribute Beneficiary beneficiaries,
                          RedirectAttributes redirectAttributes) {
 
-        abaragizwaAmatungoService.update(id, abaragizwa);
+        beneficiariesAmatungoService.update(id, beneficiaries);
         redirectAttributes.addFlashAttribute("success", "Abaragizwa amatungo updated successfully!");
-        return "redirect:/abaragizwa/list";
+        return "redirect:/beneficiaries/list";
     }
 
     // Delete
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id,
                          RedirectAttributes redirectAttributes) {
-        abaragizwaAmatungoService.delete(id);
+        beneficiariesAmatungoService.delete(id);
         redirectAttributes.addFlashAttribute("success", "Abaragizwa amatungo deleted successfully!");
-        return "redirect:/abaragizwa/list";
+        return "redirect:/beneficiaries/list";
     }
 
     // View details
     @GetMapping("/view/{id}")
     public String viewDetails(@PathVariable("id") UUID id, Model model) {
-        Optional<AbaragizwaAmatungo> abaragizwaOpt = abaragizwaAmatungoService.getById(id);
-        if (abaragizwaOpt.isEmpty()) {
-            return "redirect:/abaragizwa/list";
+        Optional<Beneficiary> beneficiariesOpt = beneficiariesAmatungoService.getById(id);
+        if (beneficiariesOpt.isEmpty()) {
+            return "redirect:/beneficiaries/list";
         }
 
-        model.addAttribute("abaragizwa", abaragizwaOpt.get());
-        return "abaragizwa-view";
+        model.addAttribute("beneficiaries", beneficiariesOpt.get());
+        return "beneficiaries-view";
     }
 }
 package rw.animalproduct.animal.production.controller;
@@ -721,34 +721,34 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Location;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
+import rw.animalproduct.animal.production.entity.Representative;
 import rw.animalproduct.animal.production.services.LocationService;
-import rw.animalproduct.animal.production.services.UhagarariyeAbororaService;
+import rw.animalproduct.animal.production.services.RepresentativeService;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Controller
-@RequestMapping("/uhagarariye")
-public class UhagarariyeAbororaController {
+@RequestMapping("/representatives")
+public class RepresentativeController {
 
-    private final UhagarariyeAbororaService uhagarariyeAbororaService;
+    private final RepresentativeService representativesAbororaService;
     private final LocationService locationService;
 
     @Autowired
-    public UhagarariyeAbororaController(UhagarariyeAbororaService uhagarariyeAbororaService,
+    public RepresentativeController(RepresentativeService representativesAbororaService,
                                         LocationService locationService) {
-        this.uhagarariyeAbororaService = uhagarariyeAbororaService;
+        this.representativesAbororaService = representativesAbororaService;
         this.locationService = locationService;
     }
 
-    // List all uhagarariye aborora
+    // List all representatives aborora
     @GetMapping("/list")
     public String listAll(Model model) {
-        List<UhagarariyeAborora> list = uhagarariyeAbororaService.getAll();
-        model.addAttribute("uhagarariyeList", list);
-        return "uhagarariye-list";
+        List<Representative> list = representativesAbororaService.getAll();
+        model.addAttribute("representativesList", list);
+        return "representatives-list";
     }
 
     // Show registration form
@@ -756,81 +756,81 @@ public class UhagarariyeAbororaController {
     public String showRegistrationForm(Model model) {
         List<Location> locations = locationService.getAllLocations();
         model.addAttribute("locations", locations);
-        model.addAttribute("uhagarariye", new UhagarariyeAborora());
-        return "uhagarariye-register";
+        model.addAttribute("representatives", new Representative());
+        return "representatives-register";
     }
 
     // Handle registration
     @PostMapping("/register/new")
-    public String register(@Valid @ModelAttribute("uhagarariye") UhagarariyeAborora uhagarariye,
+    public String register(@Valid @ModelAttribute("representatives") Representative representatives,
                            BindingResult result,
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
         // Check for duplicate NID
-        Optional<UhagarariyeAborora> existingOpt = uhagarariyeAbororaService.getByNid(uhagarariye.getNid());
+        Optional<Representative> existingOpt = representativesAbororaService.getByNid(representatives.getNid());
         if (existingOpt.isPresent()) {
             model.addAttribute("error", "NID already exists");
             List<Location> locations = locationService.getAllLocations();
             model.addAttribute("locations", locations);
-            return "uhagarariye-register";
+            return "representatives-register";
         }
 
         if (result.hasErrors()) {
             List<Location> locations = locationService.getAllLocations();
             model.addAttribute("locations", locations);
-            return "uhagarariye-register";
+            return "representatives-register";
         }
 
-        uhagarariyeAbororaService.addNew(uhagarariye);
+        representativesAbororaService.addNew(representatives);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora registered successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     // Show edit form
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") UUID id, Model model) {
-        Optional<UhagarariyeAborora> uhagarariyeOpt = uhagarariyeAbororaService.getById(id);
-        if (uhagarariyeOpt.isEmpty()) {
-            return "redirect:/uhagarariye/list";
+        Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
+        if (representativesOpt.isEmpty()) {
+            return "redirect:/representatives/list";
         }
 
         List<Location> locations = locationService.getAllLocations();
-        model.addAttribute("uhagarariye", uhagarariyeOpt.get());
+        model.addAttribute("representatives", representativesOpt.get());
         model.addAttribute("locations", locations);
-        return "uhagarariye-edit";
+        return "representatives-edit";
     }
 
     // Handle update
     @PostMapping("/update/{id}")
     public String update(@PathVariable("id") UUID id,
-                         @ModelAttribute UhagarariyeAborora uhagarariye,
+                         @ModelAttribute Representative representatives,
                          RedirectAttributes redirectAttributes) {
 
-        uhagarariyeAbororaService.update(id, uhagarariye);
+        representativesAbororaService.update(id, representatives);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora updated successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     // Delete
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id,
                          RedirectAttributes redirectAttributes) {
-        uhagarariyeAbororaService.delete(id);
+        representativesAbororaService.delete(id);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora deleted successfully!");
-        return "redirect:/uhagarariye/list";
+        return "redirect:/representatives/list";
     }
 
     // View details
     @GetMapping("/view/{id}")
     public String viewDetails(@PathVariable("id") UUID id, Model model) {
-        Optional<UhagarariyeAborora> uhagarariyeOpt = uhagarariyeAbororaService.getById(id);
-        if (uhagarariyeOpt.isEmpty()) {
-            return "redirect:/uhagarariye/list";
+        Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
+        if (representativesOpt.isEmpty()) {
+            return "redirect:/representatives/list";
         }
 
-        model.addAttribute("uhagarariye", uhagarariyeOpt.get());
-        return "uhagarariye-view";
+        model.addAttribute("representatives", representativesOpt.get());
+        return "representatives-view";
     }
 }
 package rw.animalproduct.animal.production.controller;
@@ -951,8 +951,8 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "abaragizwa_amatungo")
-public class AbaragizwaAmatungo {
+@Table(name = "beneficiaries_amatungo")
+public class Beneficiary {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -976,11 +976,11 @@ public class AbaragizwaAmatungo {
 
     private String phone;
 
-    private String amasezerano; // Contract/Agreement
+    private String contractAgreement; // Contract/Agreement
 
     @ManyToOne
-    @JoinColumn(name = "uhagarariye_aborora_id", referencedColumnName = "id")
-    private UhagarariyeAborora uhagarariyeAborora;
+    @JoinColumn(name = "representatives_aborora_id", referencedColumnName = "id")
+    private Representative representative;
 
     private String photo;
 
@@ -993,15 +993,15 @@ public class AbaragizwaAmatungo {
     private Users createdBy;
 
     @Transient
-    private String uhagarariyeAbororaIdValue;
+    private String representativeIdValue;
 
     // Constructors
-    public AbaragizwaAmatungo() {
+    public Beneficiary() {
     }
 
-    public AbaragizwaAmatungo(UUID id, String firstName, String lastName, String gender,
-                              String maritialStatus, String nid, String phone, String amasezerano,
-                              UhagarariyeAborora uhagarariyeAborora, String photo) {
+    public Beneficiary(UUID id, String firstName, String lastName, String gender,
+                              String maritialStatus, String nid, String phone, String contractAgreement,
+                              Representative representative, String photo) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -1009,8 +1009,8 @@ public class AbaragizwaAmatungo {
         this.maritialStatus = maritialStatus;
         this.nid = nid;
         this.phone = phone;
-        this.amasezerano = amasezerano;
-        this.uhagarariyeAborora = uhagarariyeAborora;
+        this.contractAgreement = contractAgreement;
+        this.representative = representative;
         this.photo = photo;
     }
 
@@ -1072,19 +1072,19 @@ public class AbaragizwaAmatungo {
     }
 
     public String getAmasezerano() {
-        return amasezerano;
+        return contractAgreement;
     }
 
-    public void setAmasezerano(String amasezerano) {
-        this.amasezerano = amasezerano;
+    public void setAmasezerano(String contractAgreement) {
+        this.contractAgreement = contractAgreement;
     }
 
-    public UhagarariyeAborora getUhagarariyeAborora() {
-        return uhagarariyeAborora;
+    public Representative getRepresentative() {
+        return representative;
     }
 
-    public void setUhagarariyeAborora(UhagarariyeAborora uhagarariyeAborora) {
-        this.uhagarariyeAborora = uhagarariyeAborora;
+    public void setRepresentative(Representative representative) {
+        this.representative = representative;
     }
 
     public String getPhoto() {
@@ -1111,17 +1111,17 @@ public class AbaragizwaAmatungo {
         this.createdBy = createdBy;
     }
 
-    public String getUhagarariyeAbororaIdValue() {
-        return uhagarariyeAbororaIdValue;
+    public String getRepresentativeIdValue() {
+        return representativeIdValue;
     }
 
-    public void setUhagarariyeAbororaIdValue(String uhagarariyeAbororaIdValue) {
-        this.uhagarariyeAbororaIdValue = uhagarariyeAbororaIdValue;
+    public void setRepresentativeIdValue(String representativeIdValue) {
+        this.representativeIdValue = representativeIdValue;
     }
 
     @Override
     public String toString() {
-        return "AbaragizwaAmatungo{" +
+        return "Beneficiary{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
@@ -1273,8 +1273,8 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "uhagarariye_aborora")
-public class UhagarariyeAborora {
+@Table(name = "representatives_aborora")
+public class Representative {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -1302,9 +1302,9 @@ public class UhagarariyeAborora {
     private String email;
 
     @Column(name = "icyo_akora")
-    private String icyoAkora; // What they do
+    private String occupation; // What they do
 
-    private String amasezerano; // Contract/Agreement
+    private String contractAgreement; // Contract/Agreement
 
     private String photo;
 
@@ -1324,12 +1324,12 @@ public class UhagarariyeAborora {
     private String locationIdValue;
 
     // Constructors
-    public UhagarariyeAborora() {
+    public Representative() {
     }
 
-    public UhagarariyeAborora(UUID id, String firstName, String lastName, String gender,
+    public Representative(UUID id, String firstName, String lastName, String gender,
                               String maritialStatus, String nid, String phone, String email,
-                              String icyoAkora, String amasezerano, String photo, Location location) {
+                              String occupation, String contractAgreement, String photo, Location location) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -1338,8 +1338,8 @@ public class UhagarariyeAborora {
         this.nid = nid;
         this.phone = phone;
         this.email = email;
-        this.icyoAkora = icyoAkora;
-        this.amasezerano = amasezerano;
+        this.occupation = occupation;
+        this.contractAgreement = contractAgreement;
         this.photo = photo;
         this.location = location;
     }
@@ -1410,19 +1410,19 @@ public class UhagarariyeAborora {
     }
 
     public String getIcyoAkora() {
-        return icyoAkora;
+        return occupation;
     }
 
-    public void setIcyoAkora(String icyoAkora) {
-        this.icyoAkora = icyoAkora;
+    public void setIcyoAkora(String occupation) {
+        this.occupation = occupation;
     }
 
     public String getAmasezerano() {
-        return amasezerano;
+        return contractAgreement;
     }
 
-    public void setAmasezerano(String amasezerano) {
-        this.amasezerano = amasezerano;
+    public void setAmasezerano(String contractAgreement) {
+        this.contractAgreement = contractAgreement;
     }
 
     public String getPhoto() {
@@ -1467,7 +1467,7 @@ public class UhagarariyeAborora {
 
     @Override
     public String toString() {
-        return "UhagarariyeAborora{" +
+        return "Representative{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
@@ -1658,19 +1658,19 @@ public class UsersType {
 package rw.animalproduct.animal.production.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import rw.animalproduct.animal.production.entity.AbaragizwaAmatungo;
+import rw.animalproduct.animal.production.entity.Beneficiary;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface AbaragizwaAmatungoRepository extends JpaRepository<AbaragizwaAmatungo, UUID> {
+public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> {
 
-    Optional<AbaragizwaAmatungo> findByNid(String nid);
+    Optional<Beneficiary> findByNid(String nid);
 
-    List<AbaragizwaAmatungo> findByUhagarariyeAbororaId(UUID uhagarariyeAbororaId);
+    List<Beneficiary> findByRepresentativeId(UUID representativesAbororaId);
 
-    List<AbaragizwaAmatungo> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
+    List<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
 }
 package rw.animalproduct.animal.production.repository;
 
@@ -1694,19 +1694,19 @@ public interface LocationRepository extends JpaRepository<Location, UUID> {
 package rw.animalproduct.animal.production.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
+import rw.animalproduct.animal.production.entity.Representative;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface UhagarariyeAbororaRepository extends JpaRepository<UhagarariyeAborora, UUID> {
+public interface RepresentativeRepository extends JpaRepository<Representative, UUID> {
 
-    Optional<UhagarariyeAborora> findByNid(String nid);
+    Optional<Representative> findByNid(String nid);
 
-    List<UhagarariyeAborora> findByLocationId(UUID locationId);
+    List<Representative> findByLocationId(UUID locationId);
 
-    List<UhagarariyeAborora> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
+    List<Representative> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
 }
 package rw.animalproduct.animal.production.repository;
 
@@ -1734,11 +1734,11 @@ package rw.animalproduct.animal.production.services;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import rw.animalproduct.animal.production.entity.AbaragizwaAmatungo;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
+import rw.animalproduct.animal.production.entity.Beneficiary;
+import rw.animalproduct.animal.production.entity.Representative;
 import rw.animalproduct.animal.production.entity.Users;
-import rw.animalproduct.animal.production.repository.AbaragizwaAmatungoRepository;
-import rw.animalproduct.animal.production.repository.UhagarariyeAbororaRepository;
+import rw.animalproduct.animal.production.repository.BeneficiaryRepository;
+import rw.animalproduct.animal.production.repository.RepresentativeRepository;
 import rw.animalproduct.animal.production.repository.UsersRepository;
 
 import java.util.Date;
@@ -1747,64 +1747,64 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class AbaragizwaAmatungoService {
+public class BeneficiaryService {
 
-    private final AbaragizwaAmatungoRepository abaragizwaAmatungoRepository;
-    private final UhagarariyeAbororaRepository uhagarariyeAbororaRepository;
+    private final BeneficiaryRepository beneficiaryRepository;
+    private final RepresentativeRepository representativeRepository;
     private final UsersRepository usersRepository;
 
-    public AbaragizwaAmatungoService(AbaragizwaAmatungoRepository abaragizwaAmatungoRepository,
-                                     UhagarariyeAbororaRepository uhagarariyeAbororaRepository,
+    public BeneficiaryService(BeneficiaryRepository beneficiaryRepository,
+                                     RepresentativeRepository representativeRepository,
                                      UsersRepository usersRepository) {
-        this.abaragizwaAmatungoRepository = abaragizwaAmatungoRepository;
-        this.uhagarariyeAbororaRepository = uhagarariyeAbororaRepository;
+        this.beneficiaryRepository = beneficiaryRepository;
+        this.representativeRepository = representativeRepository;
         this.usersRepository = usersRepository;
     }
 
-    public List<AbaragizwaAmatungo> getAll() {
-        return abaragizwaAmatungoRepository.findAll();
+    public List<Beneficiary> getAll() {
+        return beneficiaryRepository.findAll();
     }
 
-    public Optional<AbaragizwaAmatungo> getById(UUID id) {
-        return abaragizwaAmatungoRepository.findById(id);
+    public Optional<Beneficiary> getById(UUID id) {
+        return beneficiaryRepository.findById(id);
     }
 
-    public Optional<AbaragizwaAmatungo> getByNid(String nid) {
-        return abaragizwaAmatungoRepository.findByNid(nid);
+    public Optional<Beneficiary> getByNid(String nid) {
+        return beneficiaryRepository.findByNid(nid);
     }
 
-    public List<AbaragizwaAmatungo> getByUhagarariye(UUID uhagarariyeId) {
-        return abaragizwaAmatungoRepository.findByUhagarariyeAbororaId(uhagarariyeId);
+    public List<Beneficiary> getByUhagarariye(UUID representativesId) {
+        return beneficiaryRepository.findByRepresentativeId(representativesId);
     }
 
-    public AbaragizwaAmatungo addNew(AbaragizwaAmatungo abaragizwa) {
-        // Set uhagarariye aborora
-        String uhagarariyeIdString = abaragizwa.getUhagarariyeAbororaIdValue();
-        if (uhagarariyeIdString != null && !uhagarariyeIdString.isEmpty()) {
-            UUID uhagarariyeId = UUID.fromString(uhagarariyeIdString);
-            UhagarariyeAborora uhagarariye = uhagarariyeAbororaRepository.findById(uhagarariyeId)
+    public Beneficiary addNew(Beneficiary beneficiaries) {
+        // Set representatives aborora
+        String representativesIdString = beneficiaries.getRepresentativeIdValue();
+        if (representativesIdString != null && !representativesIdString.isEmpty()) {
+            UUID representativesId = UUID.fromString(representativesIdString);
+            Representative representatives = representativeRepository.findById(representativesId)
                     .orElseThrow(() -> new RuntimeException("Uhagarariye aborora not found"));
-            abaragizwa.setUhagarariyeAborora(uhagarariye);
+            beneficiaries.setRepresentative(representatives);
         }
 
         // Set created date and user
-        abaragizwa.setCreatedDate(new Date());
+        beneficiaries.setCreatedDate(new Date());
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String email = authentication.getName();
             Optional<Users> userOpt = usersRepository.findByEmail(email);
-            userOpt.ifPresent(abaragizwa::setCreatedBy);
+            userOpt.ifPresent(beneficiaries::setCreatedBy);
         }
 
-        return abaragizwaAmatungoRepository.save(abaragizwa);
+        return beneficiaryRepository.save(beneficiaries);
     }
 
-    public AbaragizwaAmatungo update(UUID id, AbaragizwaAmatungo updatedData) {
-        Optional<AbaragizwaAmatungo> existingOpt = abaragizwaAmatungoRepository.findById(id);
+    public Beneficiary update(UUID id, Beneficiary updatedData) {
+        Optional<Beneficiary> existingOpt = beneficiaryRepository.findById(id);
 
         if (existingOpt.isPresent()) {
-            AbaragizwaAmatungo existing = existingOpt.get();
+            Beneficiary existing = existingOpt.get();
 
             existing.setFirstName(updatedData.getFirstName());
             existing.setLastName(updatedData.getLastName());
@@ -1814,27 +1814,27 @@ public class AbaragizwaAmatungoService {
             existing.setPhone(updatedData.getPhone());
             existing.setAmasezerano(updatedData.getAmasezerano());
 
-            // Update uhagarariye aborora
-            String uhagarariyeIdString = updatedData.getUhagarariyeAbororaIdValue();
-            if (uhagarariyeIdString != null && !uhagarariyeIdString.isEmpty()) {
-                UUID uhagarariyeId = UUID.fromString(uhagarariyeIdString);
-                UhagarariyeAborora uhagarariye = uhagarariyeAbororaRepository.findById(uhagarariyeId)
+            // Update representatives aborora
+            String representativesIdString = updatedData.getRepresentativeIdValue();
+            if (representativesIdString != null && !representativesIdString.isEmpty()) {
+                UUID representativesId = UUID.fromString(representativesIdString);
+                Representative representatives = representativeRepository.findById(representativesId)
                         .orElseThrow(() -> new RuntimeException("Uhagarariye aborora not found"));
-                existing.setUhagarariyeAborora(uhagarariye);
+                existing.setRepresentative(representatives);
             }
 
-            return abaragizwaAmatungoRepository.save(existing);
+            return beneficiaryRepository.save(existing);
         }
 
         return null;
     }
 
     public void delete(UUID id) {
-        abaragizwaAmatungoRepository.deleteById(id);
+        beneficiaryRepository.deleteById(id);
     }
 
-    public List<AbaragizwaAmatungo> search(String keyword) {
-        return abaragizwaAmatungoRepository.findByFirstNameContainingOrLastNameContaining(keyword, keyword);
+    public List<Beneficiary> search(String keyword) {
+        return beneficiaryRepository.findByFirstNameContainingOrLastNameContaining(keyword, keyword);
     }
 }
 package rw.animalproduct.animal.production.services;
@@ -1930,10 +1930,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import rw.animalproduct.animal.production.entity.Location;
-import rw.animalproduct.animal.production.entity.UhagarariyeAborora;
+import rw.animalproduct.animal.production.entity.Representative;
 import rw.animalproduct.animal.production.entity.Users;
 import rw.animalproduct.animal.production.repository.LocationRepository;
-import rw.animalproduct.animal.production.repository.UhagarariyeAbororaRepository;
+import rw.animalproduct.animal.production.repository.RepresentativeRepository;
 import rw.animalproduct.animal.production.repository.UsersRepository;
 
 import java.util.Date;
@@ -1942,64 +1942,64 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class UhagarariyeAbororaService {
+public class RepresentativeService {
 
-    private final UhagarariyeAbororaRepository uhagarariyeAbororaRepository;
+    private final RepresentativeRepository representativeRepository;
     private final LocationRepository locationRepository;
     private final UsersRepository usersRepository;
 
-    public UhagarariyeAbororaService(UhagarariyeAbororaRepository uhagarariyeAbororaRepository,
+    public RepresentativeService(RepresentativeRepository representativeRepository,
                                      LocationRepository locationRepository,
                                      UsersRepository usersRepository) {
-        this.uhagarariyeAbororaRepository = uhagarariyeAbororaRepository;
+        this.representativeRepository = representativeRepository;
         this.locationRepository = locationRepository;
         this.usersRepository = usersRepository;
     }
 
-    public List<UhagarariyeAborora> getAll() {
-        return uhagarariyeAbororaRepository.findAll();
+    public List<Representative> getAll() {
+        return representativeRepository.findAll();
     }
 
-    public Optional<UhagarariyeAborora> getById(UUID id) {
-        return uhagarariyeAbororaRepository.findById(id);
+    public Optional<Representative> getById(UUID id) {
+        return representativeRepository.findById(id);
     }
 
-    public Optional<UhagarariyeAborora> getByNid(String nid) {
-        return uhagarariyeAbororaRepository.findByNid(nid);
+    public Optional<Representative> getByNid(String nid) {
+        return representativeRepository.findByNid(nid);
     }
 
-    public List<UhagarariyeAborora> getByLocation(UUID locationId) {
-        return uhagarariyeAbororaRepository.findByLocationId(locationId);
+    public List<Representative> getByLocation(UUID locationId) {
+        return representativeRepository.findByLocationId(locationId);
     }
 
-    public UhagarariyeAborora addNew(UhagarariyeAborora uhagarariye) {
+    public Representative addNew(Representative representatives) {
         // Set location
-        String locationIdString = uhagarariye.getLocationIdValue();
+        String locationIdString = representatives.getLocationIdValue();
         if (locationIdString != null && !locationIdString.isEmpty()) {
             UUID locationId = UUID.fromString(locationIdString);
             Location location = locationRepository.findById(locationId)
                     .orElseThrow(() -> new RuntimeException("Location not found"));
-            uhagarariye.setLocation(location);
+            representatives.setLocation(location);
         }
 
         // Set created date and user
-        uhagarariye.setCreatedDate(new Date());
+        representatives.setCreatedDate(new Date());
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String email = authentication.getName();
             Optional<Users> userOpt = usersRepository.findByEmail(email);
-            userOpt.ifPresent(uhagarariye::setCreatedBy);
+            userOpt.ifPresent(representatives::setCreatedBy);
         }
 
-        return uhagarariyeAbororaRepository.save(uhagarariye);
+        return representativeRepository.save(representatives);
     }
 
-    public UhagarariyeAborora update(UUID id, UhagarariyeAborora updatedData) {
-        Optional<UhagarariyeAborora> existingOpt = uhagarariyeAbororaRepository.findById(id);
+    public Representative update(UUID id, Representative updatedData) {
+        Optional<Representative> existingOpt = representativeRepository.findById(id);
 
         if (existingOpt.isPresent()) {
-            UhagarariyeAborora existing = existingOpt.get();
+            Representative existing = existingOpt.get();
 
             existing.setFirstName(updatedData.getFirstName());
             existing.setLastName(updatedData.getLastName());
@@ -2020,18 +2020,18 @@ public class UhagarariyeAbororaService {
                 existing.setLocation(location);
             }
 
-            return uhagarariyeAbororaRepository.save(existing);
+            return representativeRepository.save(existing);
         }
 
         return null;
     }
 
     public void delete(UUID id) {
-        uhagarariyeAbororaRepository.deleteById(id);
+        representativeRepository.deleteById(id);
     }
 
-    public List<UhagarariyeAborora> search(String keyword) {
-        return uhagarariyeAbororaRepository.findByFirstNameContainingOrLastNameContaining(keyword, keyword);
+    public List<Representative> search(String keyword) {
+        return representativeRepository.findByFirstNameContainingOrLastNameContaining(keyword, keyword);
     }
 }
 package rw.animalproduct.animal.production.services;
@@ -2201,7 +2201,7 @@ public class AnimalProductionApplication {
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Abaragizwa Amatungo</h3>
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -2211,15 +2211,15 @@ public class AnimalProductionApplication {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/abaragizwa/update/{id}(id=${abaragizwa.id})}" th:object="${abaragizwa}" method="post">
+                <form th:action="@{/beneficiaries/update/{id}(id=${beneficiaries.id})}" th:object="${beneficiaries}" method="post">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <div th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${abaragizwa.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${beneficiaries.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
@@ -2286,13 +2286,13 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="uhagarariye" class="form-label">Uhagarariye Aborora (Representative) *</label>
-                            <select class="form-select" id="uhagarariye" th:field="*{uhagarariyeAbororaIdValue}" required>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
-                                <option th:each="rep : ${uhagarariyeList}"
+                                <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
                                         th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}"
-                                        th:selected="${rep.id == abaragizwa.uhagarariyeAborora?.id}">
+                                        th:selected="${rep.id == beneficiaries.representative?.id}">
                                 </option>
                             </select>
                             <div class="form-text">Select the representative who will supervise this beneficiary</div>
@@ -2303,10 +2303,10 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <div th:if="${abaragizwa.amasezerano != null and !abaragizwa.amasezerano.isEmpty()}" class="pdf-preview mb-2">
+                            <div th:if="${beneficiaries.contractAgreement != null and !beneficiaries.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
                                 <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
-                                <a th:href="${abaragizwa.amasezerano}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
+                                <a th:href="${beneficiaries.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </div>
@@ -2321,7 +2321,7 @@ public class AnimalProductionApplication {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
@@ -2331,7 +2331,7 @@ public class AnimalProductionApplication {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">
@@ -2484,7 +2484,7 @@ public class AnimalProductionApplication {
                 <h3><i class="bi bi-people"></i> Manage Abaragizwa Amatungo</h3>
                 <p class="text-muted mb-0">List of all livestock beneficiaries</p>
             </div>
-            <a th:href="@{/abaragizwa/register}" class="btn btn-primary">
+            <a th:href="@{/beneficiaries/register}" class="btn btn-primary">
                 <i class="bi bi-person-plus"></i> Register New
             </a>
         </div>
@@ -2505,7 +2505,7 @@ public class AnimalProductionApplication {
                 </div>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted">Total Records: <strong th:text="${abaragizwaList.size()}">0</strong></span>
+                <span class="text-muted">Total Records: <strong th:text="${beneficiariesList.size()}">0</strong></span>
             </div>
         </div>
 
@@ -2525,13 +2525,13 @@ public class AnimalProductionApplication {
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${abaragizwaList.empty}">
+                <tr th:if="${beneficiariesList.empty}">
                     <td colspan="8" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No beneficiaries registered yet</p>
                     </td>
                 </tr>
-                <tr th:each="item, iterStat : ${abaragizwaList}">
+                <tr th:each="item, iterStat : ${beneficiariesList}">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
                         <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
@@ -2548,25 +2548,25 @@ public class AnimalProductionApplication {
                     <td th:text="${item.nid}">1234567890123456</td>
                     <td th:text="${item.phone}">0781234567</td>
                     <td>
-                        <small th:if="${item.uhagarariyeAborora != null}"
-                               th:text="${item.uhagarariyeAborora.firstName + ' ' + item.uhagarariyeAborora.lastName}">
+                        <small th:if="${item.representative != null}"
+                               th:text="${item.representative.firstName + ' ' + item.representative.lastName}">
                             Representative
                         </small>
-                        <small th:if="${item.uhagarariyeAborora == null}">N/A</small>
+                        <small th:if="${item.representative == null}">N/A</small>
                     </td>
                     <td>
-                        <small th:if="${item.uhagarariyeAborora != null and item.uhagarariyeAborora.location != null}"
-                               th:text="${item.uhagarariyeAborora.location.name}">
+                        <small th:if="${item.representative != null and item.representative.location != null}"
+                               th:text="${item.representative.location.name}">
                             Location
                         </small>
-                        <small th:if="${item.uhagarariyeAborora == null or item.uhagarariyeAborora.location == null}">N/A</small>
+                        <small th:if="${item.representative == null or item.representative.location == null}">N/A</small>
                     </td>
                     <td class="table-actions">
-                        <a th:href="@{/abaragizwa/view/{id}(id=${item.id})}"
+                        <a th:href="@{/beneficiaries/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a th:href="@{/abaragizwa/edit/{id}(id=${item.id})}"
+                        <a th:href="@{/beneficiaries/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -2592,7 +2592,7 @@ public class AnimalProductionApplication {
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/abaragizwa/delete/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <form th:action="@{/beneficiaries/delete/{id}(id=${item.id})}" method="post" class="d-inline">
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
@@ -2653,7 +2653,7 @@ public class AnimalProductionApplication {
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-plus"></i> Register Abaragizwa Amatungo</h3>
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -2663,7 +2663,7 @@ public class AnimalProductionApplication {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/abaragizwa/register/new}" th:object="${abaragizwa}" method="post" class="needs-validation" novalidate>
+                <form th:action="@{/beneficiaries/register/new}" th:object="${beneficiaries}" method="post" class="needs-validation" novalidate>
 
                     <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -2746,10 +2746,10 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="uhagarariye" class="form-label">Uhagarariye Aborora (Representative) *</label>
-                            <select class="form-select" id="uhagarariye" th:field="*{uhagarariyeAbororaIdValue}" required>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
-                                <option th:each="rep : ${uhagarariyeList}"
+                                <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
                                         th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}">
                                 </option>
@@ -2775,7 +2775,7 @@ public class AnimalProductionApplication {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl" required>
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl" required>
                             <div class="form-text">Upload contract PDF (Max 10MB) - Required</div>
                             <div class="invalid-feedback">Please upload a contract PDF</div>
                         </div>
@@ -2783,7 +2783,7 @@ public class AnimalProductionApplication {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-register">
@@ -2979,11 +2979,11 @@ public class AnimalProductionApplication {
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-circle"></i> Beneficiary Details</h3>
                     <div>
-                        <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                        <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                            class="btn btn-warning me-2">
                             <i class="bi bi-pencil"></i> Edit
                         </a>
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -2992,16 +2992,16 @@ public class AnimalProductionApplication {
                 <div class="row">
                     <!-- Left Column: Photo and Basic Info -->
                     <div class="col-md-4 text-center mb-4">
-                        <img th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}"
-                             th:src="${abaragizwa.photo}"
+                        <img th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}"
+                             th:src="${beneficiaries.photo}"
                              class="profile-photo mb-3"
                              alt="Profile Photo">
-                        <div th:if="${abaragizwa.photo == null or abaragizwa.photo.isEmpty()}"
+                        <div th:if="${beneficiaries.photo == null or beneficiaries.photo.isEmpty()}"
                              class="profile-photo mb-3 d-flex align-items-center justify-content-center bg-light">
                             <i class="bi bi-person-circle" style="font-size: 5rem; color: #ccc;"></i>
                         </div>
-                        <h4 th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">Full Name</h4>
-                        <p class="text-muted" th:text="${abaragizwa.nid}">NID</p>
+                        <h4 th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">Full Name</h4>
+                        <p class="text-muted" th:text="${beneficiaries.nid}">NID</p>
                     </div>
 
                     <!-- Right Column: Detailed Information -->
@@ -3012,36 +3012,36 @@ public class AnimalProductionApplication {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="info-label">First Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.firstName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.firstName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Last Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.lastName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.lastName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Gender</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.gender == 'MALE'}" class="badge bg-primary">
+                                        <span th:if="${beneficiaries.gender == 'MALE'}" class="badge bg-primary">
                                             <i class="bi bi-gender-male"></i> Male
                                         </span>
-                                        <span th:if="${abaragizwa.gender == 'FEMALE'}" class="badge bg-danger">
+                                        <span th:if="${beneficiaries.gender == 'FEMALE'}" class="badge bg-danger">
                                             <i class="bi bi-gender-female"></i> Female
                                         </span>
-                                        <span th:if="${abaragizwa.gender == null}">-</span>
+                                        <span th:if="${beneficiaries.gender == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Marital Status</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.maritialStatus != null}"
+                                        <span th:if="${beneficiaries.maritialStatus != null}"
                                               class="badge bg-secondary"
-                                              th:text="${abaragizwa.maritialStatus}">-</span>
-                                        <span th:if="${abaragizwa.maritialStatus == null}">-</span>
+                                              th:text="${beneficiaries.maritialStatus}">-</span>
+                                        <span th:if="${beneficiaries.maritialStatus == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
                                     <div class="info-label">National ID</div>
-                                    <div class="info-value" th:text="${abaragizwa.nid}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.nid}">-</div>
                                 </div>
                             </div>
                         </div>
@@ -3054,7 +3054,7 @@ public class AnimalProductionApplication {
                                     <div class="info-label">Phone Number</div>
                                     <div class="info-value">
                                         <i class="bi bi-phone"></i>
-                                        <span th:text="${abaragizwa.phone != null ? abaragizwa.phone : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.phone != null ? beneficiaries.phone : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -3063,45 +3063,45 @@ public class AnimalProductionApplication {
                         <!-- Representative Information -->
                         <div class="info-section">
                             <h5 class="section-title"><i class="bi bi-person-badge"></i> Representative Information</h5>
-                            <div th:if="${abaragizwa.uhagarariyeAborora != null}" class="representative-card">
+                            <div th:if="${beneficiaries.representative != null}" class="representative-card">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Name</div>
                                         <div class="info-value">
                                             <i class="bi bi-person-fill text-primary"></i>
-                                            <strong th:text="${abaragizwa.uhagarariyeAborora.firstName + ' ' + abaragizwa.uhagarariyeAborora.lastName}">-</strong>
+                                            <strong th:text="${beneficiaries.representative.firstName + ' ' + beneficiaries.representative.lastName}">-</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative NID</div>
-                                        <div class="info-value" th:text="${abaragizwa.uhagarariyeAborora.nid}">-</div>
+                                        <div class="info-value" th:text="${beneficiaries.representative.nid}">-</div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Phone</div>
                                         <div class="info-value">
                                             <i class="bi bi-phone"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.phone != null ? abaragizwa.uhagarariyeAborora.phone : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.phone != null ? beneficiaries.representative.phone : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Email</div>
                                         <div class="info-value">
                                             <i class="bi bi-envelope"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.email != null ? abaragizwa.uhagarariyeAborora.email : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.email != null ? beneficiaries.representative.email : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="info-label">Location</div>
                                         <div class="info-value">
                                             <i class="bi bi-geo-alt-fill text-danger"></i>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location != null}"
-                                                  th:text="${abaragizwa.uhagarariyeAborora.location.name + ' (' + abaragizwa.uhagarariyeAborora.location.locationType + ')'}">-</span>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location == null}">N/A</span>
+                                            <span th:if="${beneficiaries.representative.location != null}"
+                                                  th:text="${beneficiaries.representative.location.name + ' (' + beneficiaries.representative.location.locationType + ')'}">-</span>
+                                            <span th:if="${beneficiaries.representative.location == null}">N/A</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${abaragizwa.uhagarariyeAborora == null}" class="text-muted">
+                            <div th:if="${beneficiaries.representative == null}" class="text-muted">
                                 No representative assigned
                             </div>
                         </div>
@@ -3113,7 +3113,7 @@ public class AnimalProductionApplication {
                                 <div class="col-md-12">
                                     <div class="info-label">Amasezerano (Contract/Agreement)</div>
                                     <div class="info-value"
-                                         th:text="${abaragizwa.amasezerano != null ? abaragizwa.amasezerano : 'N/A'}">-</div>
+                                         th:text="${beneficiaries.contractAgreement != null ? beneficiaries.contractAgreement : 'N/A'}">-</div>
                                 </div>
                             </div>
                         </div>
@@ -3126,14 +3126,14 @@ public class AnimalProductionApplication {
                                     <div class="info-label">Created Date</div>
                                     <div class="info-value">
                                         <i class="bi bi-calendar"></i>
-                                        <span th:text="${#dates.format(abaragizwa.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
+                                        <span th:text="${#dates.format(beneficiaries.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Created By</div>
                                     <div class="info-value">
                                         <i class="bi bi-person"></i>
-                                        <span th:text="${abaragizwa.createdBy != null ? abaragizwa.createdBy.email : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.createdBy != null ? beneficiaries.createdBy.email : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -3143,10 +3143,10 @@ public class AnimalProductionApplication {
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end mt-4 pt-3 border-top">
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
-                    <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                    <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                        class="btn btn-warning me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
@@ -3171,12 +3171,12 @@ public class AnimalProductionApplication {
             </div>
             <div class="modal-body">
                 Are you sure you want to delete
-                <strong th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">this beneficiary</strong>?
+                <strong th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">this beneficiary</strong>?
                 <br><small class="text-danger">This action cannot be undone.</small>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form th:action="@{/abaragizwa/delete/{id}(id=${abaragizwa.id})}" method="post">
+                <form th:action="@{/beneficiaries/delete/{id}(id=${beneficiaries.id})}" method="post">
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Delete
                     </button>
@@ -3843,10 +3843,10 @@ public class AnimalProductionApplication {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill"></i> Register Representative
                 </a>
-                <a th:href="@{/uhagarariye/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Representatives
                 </a>
             </div>
@@ -3859,10 +3859,10 @@ public class AnimalProductionApplication {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus"></i> Register Beneficiary
                 </a>
-                <a th:href="@{/abaragizwa/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Beneficiaries
                 </a>
             </div>
@@ -3950,11 +3950,11 @@ public class AnimalProductionApplication {
                     <i class="bi bi-person-plus text-primary"></i>
                     <strong>Register User</strong>
                 </a>
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill text-success"></i>
                     <strong>Register Representative</strong>
                 </a>
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
                     <i class="bi bi-person-check text-warning"></i>
                     <strong>Register Beneficiary</strong>
                 </a>
@@ -4310,7 +4310,7 @@ public class AnimalProductionApplication {
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -4320,15 +4320,15 @@ public class AnimalProductionApplication {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/update/{id}(id=${uhagarariye.id})}" th:object="${uhagarariye}" method="post">
+                <form th:action="@{/representatives/update/{id}(id=${representatives.id})}" th:object="${representatives}" method="post">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <div th:if="${uhagarariye.photo != null and !uhagarariye.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${representatives.photo != null and !representatives.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${uhagarariye.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${representatives.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
@@ -4399,8 +4399,8 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do)</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2"></textarea>
+                            <label for="occupation" class="form-label">Occupation (What they do)</label>
+                            <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2"></textarea>
                         </div>
                     </div>
 
@@ -4408,10 +4408,10 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract/Agreement</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <div th:if="${uhagarariye.amasezerano != null and !uhagarariye.amasezerano.isEmpty()}" class="pdf-preview mb-2">
+                            <div th:if="${representatives.contractAgreement != null and !representatives.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
                                 <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
-                                <a th:href="${uhagarariye.amasezerano}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
+                                <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </div>
@@ -4426,7 +4426,7 @@ public class AnimalProductionApplication {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
@@ -4440,7 +4440,7 @@ public class AnimalProductionApplication {
                                 <option th:each="loc : ${locations}"
                                         th:value="${loc.id}"
                                         th:text="${loc.name + ' (' + loc.locationType + ')'}"
-                                        th:selected="${loc.id == uhagarariye.location?.id}">
+                                        th:selected="${loc.id == representatives.location?.id}">
                                 </option>
                             </select>
                         </div>
@@ -4451,7 +4451,7 @@ public class AnimalProductionApplication {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">
@@ -4604,7 +4604,7 @@ public class AnimalProductionApplication {
                 <h3><i class="bi bi-people-fill"></i> Manage Uhagarariye Aborora</h3>
                 <p class="text-muted mb-0">List of all livestock representatives</p>
             </div>
-            <a th:href="@{/uhagarariye/register}" class="btn btn-primary">
+            <a th:href="@{/representatives/register}" class="btn btn-primary">
                 <i class="bi bi-person-plus-fill"></i> Register New
             </a>
         </div>
@@ -4625,7 +4625,7 @@ public class AnimalProductionApplication {
                 </div>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted">Total Records: <strong th:text="${uhagarariyeList.size()}">0</strong></span>
+                <span class="text-muted">Total Records: <strong th:text="${representativesList.size()}">0</strong></span>
             </div>
         </div>
 
@@ -4641,18 +4641,18 @@ public class AnimalProductionApplication {
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Location</th>
-                    <th>Icyo Akora</th>
+                    <th>Occupation</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${uhagarariyeList.empty}">
+                <tr th:if="${representativesList.empty}">
                     <td colspan="9" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No representatives registered yet</p>
                     </td>
                 </tr>
-                <tr th:each="item, iterStat : ${uhagarariyeList}">
+                <tr th:each="item, iterStat : ${representativesList}">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
                         <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
@@ -4673,14 +4673,14 @@ public class AnimalProductionApplication {
                         <small th:text="${item.location != null ? item.location.name : 'N/A'}">Location</small>
                     </td>
                     <td>
-                        <small th:text="${item.icyoAkora != null ? item.icyoAkora : 'N/A'}">Activity</small>
+                        <small th:text="${item.occupation != null ? item.occupation : 'N/A'}">Activity</small>
                     </td>
                     <td class="table-actions">
-                        <a th:href="@{/uhagarariye/view/{id}(id=${item.id})}"
+                        <a th:href="@{/representatives/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a th:href="@{/uhagarariye/edit/{id}(id=${item.id})}"
+                        <a th:href="@{/representatives/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -4706,7 +4706,7 @@ public class AnimalProductionApplication {
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/uhagarariye/delete/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <form th:action="@{/representatives/delete/{id}(id=${item.id})}" method="post" class="d-inline">
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
@@ -4767,7 +4767,7 @@ public class AnimalProductionApplication {
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-plus-fill"></i> Register Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -4777,7 +4777,7 @@ public class AnimalProductionApplication {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/register/new}" th:object="${uhagarariye}" method="post" onsubmit="return validateForm()">
+                <form th:action="@{/representatives/register/new}" th:object="${representatives}" method="post" onsubmit="return validateForm()">
 
                     <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -4866,8 +4866,8 @@ public class AnimalProductionApplication {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do) *</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2" required
+                            <label for="occupation" class="form-label">Occupation (What they do) *</label>
+                            <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2" required
                                       minlength="10" maxlength="500"></textarea>
                             <div class="invalid-feedback">Please describe what they do (10-500 characters)</div>
                         </div>
@@ -4888,7 +4888,7 @@ public class AnimalProductionApplication {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                             <div class="form-text">Upload contract PDF (Max 10MB)</div>
                         </div>
                     </div>
@@ -4938,7 +4938,7 @@ public class AnimalProductionApplication {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-register">
@@ -5734,10 +5734,10 @@ public class AnimalProductionApplication {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill"></i> Register Representative
                 </a>
-                <a th:href="@{/uhagarariye/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Representatives
                 </a>
             </div>
@@ -5750,10 +5750,10 @@ public class AnimalProductionApplication {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus"></i> Register Beneficiary
                 </a>
-                <a th:href="@{/abaragizwa/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Beneficiaries
                 </a>
             </div>
@@ -6266,7 +6266,7 @@ class AnimalProductionApplicationTests {
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Abaragizwa Amatungo</h3>
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -6276,15 +6276,15 @@ class AnimalProductionApplicationTests {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/abaragizwa/update/{id}(id=${abaragizwa.id})}" th:object="${abaragizwa}" method="post">
+                <form th:action="@{/beneficiaries/update/{id}(id=${beneficiaries.id})}" th:object="${beneficiaries}" method="post">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <div th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${abaragizwa.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${beneficiaries.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
@@ -6351,13 +6351,13 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="uhagarariye" class="form-label">Uhagarariye Aborora (Representative) *</label>
-                            <select class="form-select" id="uhagarariye" th:field="*{uhagarariyeAbororaIdValue}" required>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
-                                <option th:each="rep : ${uhagarariyeList}"
+                                <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
                                         th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}"
-                                        th:selected="${rep.id == abaragizwa.uhagarariyeAborora?.id}">
+                                        th:selected="${rep.id == beneficiaries.representative?.id}">
                                 </option>
                             </select>
                             <div class="form-text">Select the representative who will supervise this beneficiary</div>
@@ -6368,10 +6368,10 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <div th:if="${abaragizwa.amasezerano != null and !abaragizwa.amasezerano.isEmpty()}" class="pdf-preview mb-2">
+                            <div th:if="${beneficiaries.contractAgreement != null and !beneficiaries.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
                                 <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
-                                <a th:href="${abaragizwa.amasezerano}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
+                                <a th:href="${beneficiaries.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </div>
@@ -6386,7 +6386,7 @@ class AnimalProductionApplicationTests {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
@@ -6396,7 +6396,7 @@ class AnimalProductionApplicationTests {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">
@@ -6549,7 +6549,7 @@ class AnimalProductionApplicationTests {
                 <h3><i class="bi bi-people"></i> Manage Abaragizwa Amatungo</h3>
                 <p class="text-muted mb-0">List of all livestock beneficiaries</p>
             </div>
-            <a th:href="@{/abaragizwa/register}" class="btn btn-primary">
+            <a th:href="@{/beneficiaries/register}" class="btn btn-primary">
                 <i class="bi bi-person-plus"></i> Register New
             </a>
         </div>
@@ -6570,7 +6570,7 @@ class AnimalProductionApplicationTests {
                 </div>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted">Total Records: <strong th:text="${abaragizwaList.size()}">0</strong></span>
+                <span class="text-muted">Total Records: <strong th:text="${beneficiariesList.size()}">0</strong></span>
             </div>
         </div>
 
@@ -6590,13 +6590,13 @@ class AnimalProductionApplicationTests {
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${abaragizwaList.empty}">
+                <tr th:if="${beneficiariesList.empty}">
                     <td colspan="8" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No beneficiaries registered yet</p>
                     </td>
                 </tr>
-                <tr th:each="item, iterStat : ${abaragizwaList}">
+                <tr th:each="item, iterStat : ${beneficiariesList}">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
                         <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
@@ -6613,25 +6613,25 @@ class AnimalProductionApplicationTests {
                     <td th:text="${item.nid}">1234567890123456</td>
                     <td th:text="${item.phone}">0781234567</td>
                     <td>
-                        <small th:if="${item.uhagarariyeAborora != null}"
-                               th:text="${item.uhagarariyeAborora.firstName + ' ' + item.uhagarariyeAborora.lastName}">
+                        <small th:if="${item.representative != null}"
+                               th:text="${item.representative.firstName + ' ' + item.representative.lastName}">
                             Representative
                         </small>
-                        <small th:if="${item.uhagarariyeAborora == null}">N/A</small>
+                        <small th:if="${item.representative == null}">N/A</small>
                     </td>
                     <td>
-                        <small th:if="${item.uhagarariyeAborora != null and item.uhagarariyeAborora.location != null}"
-                               th:text="${item.uhagarariyeAborora.location.name}">
+                        <small th:if="${item.representative != null and item.representative.location != null}"
+                               th:text="${item.representative.location.name}">
                             Location
                         </small>
-                        <small th:if="${item.uhagarariyeAborora == null or item.uhagarariyeAborora.location == null}">N/A</small>
+                        <small th:if="${item.representative == null or item.representative.location == null}">N/A</small>
                     </td>
                     <td class="table-actions">
-                        <a th:href="@{/abaragizwa/view/{id}(id=${item.id})}"
+                        <a th:href="@{/beneficiaries/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a th:href="@{/abaragizwa/edit/{id}(id=${item.id})}"
+                        <a th:href="@{/beneficiaries/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -6657,7 +6657,7 @@ class AnimalProductionApplicationTests {
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/abaragizwa/delete/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <form th:action="@{/beneficiaries/delete/{id}(id=${item.id})}" method="post" class="d-inline">
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
@@ -6718,7 +6718,7 @@ class AnimalProductionApplicationTests {
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-plus"></i> Register Abaragizwa Amatungo</h3>
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -6728,7 +6728,7 @@ class AnimalProductionApplicationTests {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/abaragizwa/register/new}" th:object="${abaragizwa}" method="post" class="needs-validation" novalidate>
+                <form th:action="@{/beneficiaries/register/new}" th:object="${beneficiaries}" method="post" class="needs-validation" novalidate>
 
                     <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -6811,10 +6811,10 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="uhagarariye" class="form-label">Uhagarariye Aborora (Representative) *</label>
-                            <select class="form-select" id="uhagarariye" th:field="*{uhagarariyeAbororaIdValue}" required>
+                            <label for="representatives" class="form-label">Uhagarariye Aborora (Representative) *</label>
+                            <select class="form-select" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
-                                <option th:each="rep : ${uhagarariyeList}"
+                                <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
                                         th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}">
                                 </option>
@@ -6840,7 +6840,7 @@ class AnimalProductionApplicationTests {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl" required>
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl" required>
                             <div class="form-text">Upload contract PDF (Max 10MB) - Required</div>
                             <div class="invalid-feedback">Please upload a contract PDF</div>
                         </div>
@@ -6848,7 +6848,7 @@ class AnimalProductionApplicationTests {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-register">
@@ -7044,11 +7044,11 @@ class AnimalProductionApplicationTests {
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-circle"></i> Beneficiary Details</h3>
                     <div>
-                        <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                        <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                            class="btn btn-warning me-2">
                             <i class="bi bi-pencil"></i> Edit
                         </a>
-                        <a th:href="@{/abaragizwa/list}" class="btn btn-secondary">
+                        <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -7057,16 +7057,16 @@ class AnimalProductionApplicationTests {
                 <div class="row">
                     <!-- Left Column: Photo and Basic Info -->
                     <div class="col-md-4 text-center mb-4">
-                        <img th:if="${abaragizwa.photo != null and !abaragizwa.photo.isEmpty()}"
-                             th:src="${abaragizwa.photo}"
+                        <img th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}"
+                             th:src="${beneficiaries.photo}"
                              class="profile-photo mb-3"
                              alt="Profile Photo">
-                        <div th:if="${abaragizwa.photo == null or abaragizwa.photo.isEmpty()}"
+                        <div th:if="${beneficiaries.photo == null or beneficiaries.photo.isEmpty()}"
                              class="profile-photo mb-3 d-flex align-items-center justify-content-center bg-light">
                             <i class="bi bi-person-circle" style="font-size: 5rem; color: #ccc;"></i>
                         </div>
-                        <h4 th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">Full Name</h4>
-                        <p class="text-muted" th:text="${abaragizwa.nid}">NID</p>
+                        <h4 th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">Full Name</h4>
+                        <p class="text-muted" th:text="${beneficiaries.nid}">NID</p>
                     </div>
 
                     <!-- Right Column: Detailed Information -->
@@ -7077,36 +7077,36 @@ class AnimalProductionApplicationTests {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="info-label">First Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.firstName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.firstName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Last Name</div>
-                                    <div class="info-value" th:text="${abaragizwa.lastName}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.lastName}">-</div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Gender</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.gender == 'MALE'}" class="badge bg-primary">
+                                        <span th:if="${beneficiaries.gender == 'MALE'}" class="badge bg-primary">
                                             <i class="bi bi-gender-male"></i> Male
                                         </span>
-                                        <span th:if="${abaragizwa.gender == 'FEMALE'}" class="badge bg-danger">
+                                        <span th:if="${beneficiaries.gender == 'FEMALE'}" class="badge bg-danger">
                                             <i class="bi bi-gender-female"></i> Female
                                         </span>
-                                        <span th:if="${abaragizwa.gender == null}">-</span>
+                                        <span th:if="${beneficiaries.gender == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Marital Status</div>
                                     <div class="info-value">
-                                        <span th:if="${abaragizwa.maritialStatus != null}"
+                                        <span th:if="${beneficiaries.maritialStatus != null}"
                                               class="badge bg-secondary"
-                                              th:text="${abaragizwa.maritialStatus}">-</span>
-                                        <span th:if="${abaragizwa.maritialStatus == null}">-</span>
+                                              th:text="${beneficiaries.maritialStatus}">-</span>
+                                        <span th:if="${beneficiaries.maritialStatus == null}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-12">
                                     <div class="info-label">National ID</div>
-                                    <div class="info-value" th:text="${abaragizwa.nid}">-</div>
+                                    <div class="info-value" th:text="${beneficiaries.nid}">-</div>
                                 </div>
                             </div>
                         </div>
@@ -7119,7 +7119,7 @@ class AnimalProductionApplicationTests {
                                     <div class="info-label">Phone Number</div>
                                     <div class="info-value">
                                         <i class="bi bi-phone"></i>
-                                        <span th:text="${abaragizwa.phone != null ? abaragizwa.phone : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.phone != null ? beneficiaries.phone : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -7128,45 +7128,45 @@ class AnimalProductionApplicationTests {
                         <!-- Representative Information -->
                         <div class="info-section">
                             <h5 class="section-title"><i class="bi bi-person-badge"></i> Representative Information</h5>
-                            <div th:if="${abaragizwa.uhagarariyeAborora != null}" class="representative-card">
+                            <div th:if="${beneficiaries.representative != null}" class="representative-card">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Name</div>
                                         <div class="info-value">
                                             <i class="bi bi-person-fill text-primary"></i>
-                                            <strong th:text="${abaragizwa.uhagarariyeAborora.firstName + ' ' + abaragizwa.uhagarariyeAborora.lastName}">-</strong>
+                                            <strong th:text="${beneficiaries.representative.firstName + ' ' + beneficiaries.representative.lastName}">-</strong>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative NID</div>
-                                        <div class="info-value" th:text="${abaragizwa.uhagarariyeAborora.nid}">-</div>
+                                        <div class="info-value" th:text="${beneficiaries.representative.nid}">-</div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Phone</div>
                                         <div class="info-value">
                                             <i class="bi bi-phone"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.phone != null ? abaragizwa.uhagarariyeAborora.phone : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.phone != null ? beneficiaries.representative.phone : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-label">Representative Email</div>
                                         <div class="info-value">
                                             <i class="bi bi-envelope"></i>
-                                            <span th:text="${abaragizwa.uhagarariyeAborora.email != null ? abaragizwa.uhagarariyeAborora.email : 'N/A'}">-</span>
+                                            <span th:text="${beneficiaries.representative.email != null ? beneficiaries.representative.email : 'N/A'}">-</span>
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="info-label">Location</div>
                                         <div class="info-value">
                                             <i class="bi bi-geo-alt-fill text-danger"></i>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location != null}"
-                                                  th:text="${abaragizwa.uhagarariyeAborora.location.name + ' (' + abaragizwa.uhagarariyeAborora.location.locationType + ')'}">-</span>
-                                            <span th:if="${abaragizwa.uhagarariyeAborora.location == null}">N/A</span>
+                                            <span th:if="${beneficiaries.representative.location != null}"
+                                                  th:text="${beneficiaries.representative.location.name + ' (' + beneficiaries.representative.location.locationType + ')'}">-</span>
+                                            <span th:if="${beneficiaries.representative.location == null}">N/A</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <div th:if="${abaragizwa.uhagarariyeAborora == null}" class="text-muted">
+                            <div th:if="${beneficiaries.representative == null}" class="text-muted">
                                 No representative assigned
                             </div>
                         </div>
@@ -7178,7 +7178,7 @@ class AnimalProductionApplicationTests {
                                 <div class="col-md-12">
                                     <div class="info-label">Amasezerano (Contract/Agreement)</div>
                                     <div class="info-value"
-                                         th:text="${abaragizwa.amasezerano != null ? abaragizwa.amasezerano : 'N/A'}">-</div>
+                                         th:text="${beneficiaries.contractAgreement != null ? beneficiaries.contractAgreement : 'N/A'}">-</div>
                                 </div>
                             </div>
                         </div>
@@ -7191,14 +7191,14 @@ class AnimalProductionApplicationTests {
                                     <div class="info-label">Created Date</div>
                                     <div class="info-value">
                                         <i class="bi bi-calendar"></i>
-                                        <span th:text="${#dates.format(abaragizwa.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
+                                        <span th:text="${#dates.format(beneficiaries.createdDate, 'dd-MM-yyyy HH:mm')}">-</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="info-label">Created By</div>
                                     <div class="info-value">
                                         <i class="bi bi-person"></i>
-                                        <span th:text="${abaragizwa.createdBy != null ? abaragizwa.createdBy.email : 'N/A'}">-</span>
+                                        <span th:text="${beneficiaries.createdBy != null ? beneficiaries.createdBy.email : 'N/A'}">-</span>
                                     </div>
                                 </div>
                             </div>
@@ -7208,10 +7208,10 @@ class AnimalProductionApplicationTests {
 
                 <!-- Action Buttons -->
                 <div class="d-flex justify-content-end mt-4 pt-3 border-top">
-                    <a th:href="@{/abaragizwa/list}" class="btn btn-secondary me-2">
+                    <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
-                    <a th:href="@{/abaragizwa/edit/{id}(id=${abaragizwa.id})}"
+                    <a th:href="@{/beneficiaries/edit/{id}(id=${beneficiaries.id})}"
                        class="btn btn-warning me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
@@ -7236,12 +7236,12 @@ class AnimalProductionApplicationTests {
             </div>
             <div class="modal-body">
                 Are you sure you want to delete
-                <strong th:text="${abaragizwa.firstName + ' ' + abaragizwa.lastName}">this beneficiary</strong>?
+                <strong th:text="${beneficiaries.firstName + ' ' + beneficiaries.lastName}">this beneficiary</strong>?
                 <br><small class="text-danger">This action cannot be undone.</small>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form th:action="@{/abaragizwa/delete/{id}(id=${abaragizwa.id})}" method="post">
+                <form th:action="@{/beneficiaries/delete/{id}(id=${beneficiaries.id})}" method="post">
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Delete
                     </button>
@@ -7908,10 +7908,10 @@ class AnimalProductionApplicationTests {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill"></i> Register Representative
                 </a>
-                <a th:href="@{/uhagarariye/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Representatives
                 </a>
             </div>
@@ -7924,10 +7924,10 @@ class AnimalProductionApplicationTests {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus"></i> Register Beneficiary
                 </a>
-                <a th:href="@{/abaragizwa/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Beneficiaries
                 </a>
             </div>
@@ -8015,11 +8015,11 @@ class AnimalProductionApplicationTests {
                     <i class="bi bi-person-plus text-primary"></i>
                     <strong>Register User</strong>
                 </a>
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill text-success"></i>
                     <strong>Register Representative</strong>
                 </a>
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="quick-action-btn" onclick="loadContent(event)">
                     <i class="bi bi-person-check text-warning"></i>
                     <strong>Register Beneficiary</strong>
                 </a>
@@ -8375,7 +8375,7 @@ class AnimalProductionApplicationTests {
             <div class="edit-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-pencil-square"></i> Edit Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -8385,15 +8385,15 @@ class AnimalProductionApplicationTests {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/update/{id}(id=${uhagarariye.id})}" th:object="${uhagarariye}" method="post">
+                <form th:action="@{/representatives/update/{id}(id=${representatives.id})}" th:object="${representatives}" method="post">
 
                     <!-- Photo Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <div th:if="${uhagarariye.photo != null and !uhagarariye.photo.isEmpty()}" class="mb-2">
+                            <div th:if="${representatives.photo != null and !representatives.photo.isEmpty()}" class="mb-2">
                                 <p class="text-muted">Current Photo:</p>
-                                <img th:src="${uhagarariye.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <img th:src="${representatives.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
@@ -8464,8 +8464,8 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do)</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2"></textarea>
+                            <label for="occupation" class="form-label">Occupation (What they do)</label>
+                            <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2"></textarea>
                         </div>
                     </div>
 
@@ -8473,10 +8473,10 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract/Agreement</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <div th:if="${uhagarariye.amasezerano != null and !uhagarariye.amasezerano.isEmpty()}" class="pdf-preview mb-2">
+                            <div th:if="${representatives.contractAgreement != null and !representatives.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
                                 <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
-                                <a th:href="${uhagarariye.amasezerano}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
+                                <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
                             </div>
@@ -8491,7 +8491,7 @@ class AnimalProductionApplicationTests {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
@@ -8505,7 +8505,7 @@ class AnimalProductionApplicationTests {
                                 <option th:each="loc : ${locations}"
                                         th:value="${loc.id}"
                                         th:text="${loc.name + ' (' + loc.locationType + ')'}"
-                                        th:selected="${loc.id == uhagarariye.location?.id}">
+                                        th:selected="${loc.id == representatives.location?.id}">
                                 </option>
                             </select>
                         </div>
@@ -8516,7 +8516,7 @@ class AnimalProductionApplicationTests {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-update">
@@ -8669,7 +8669,7 @@ class AnimalProductionApplicationTests {
                 <h3><i class="bi bi-people-fill"></i> Manage Uhagarariye Aborora</h3>
                 <p class="text-muted mb-0">List of all livestock representatives</p>
             </div>
-            <a th:href="@{/uhagarariye/register}" class="btn btn-primary">
+            <a th:href="@{/representatives/register}" class="btn btn-primary">
                 <i class="bi bi-person-plus-fill"></i> Register New
             </a>
         </div>
@@ -8690,7 +8690,7 @@ class AnimalProductionApplicationTests {
                 </div>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted">Total Records: <strong th:text="${uhagarariyeList.size()}">0</strong></span>
+                <span class="text-muted">Total Records: <strong th:text="${representativesList.size()}">0</strong></span>
             </div>
         </div>
 
@@ -8706,18 +8706,18 @@ class AnimalProductionApplicationTests {
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Location</th>
-                    <th>Icyo Akora</th>
+                    <th>Occupation</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${uhagarariyeList.empty}">
+                <tr th:if="${representativesList.empty}">
                     <td colspan="9" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No representatives registered yet</p>
                     </td>
                 </tr>
-                <tr th:each="item, iterStat : ${uhagarariyeList}">
+                <tr th:each="item, iterStat : ${representativesList}">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
                         <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
@@ -8738,14 +8738,14 @@ class AnimalProductionApplicationTests {
                         <small th:text="${item.location != null ? item.location.name : 'N/A'}">Location</small>
                     </td>
                     <td>
-                        <small th:text="${item.icyoAkora != null ? item.icyoAkora : 'N/A'}">Activity</small>
+                        <small th:text="${item.occupation != null ? item.occupation : 'N/A'}">Activity</small>
                     </td>
                     <td class="table-actions">
-                        <a th:href="@{/uhagarariye/view/{id}(id=${item.id})}"
+                        <a th:href="@{/representatives/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a th:href="@{/uhagarariye/edit/{id}(id=${item.id})}"
+                        <a th:href="@{/representatives/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
@@ -8771,7 +8771,7 @@ class AnimalProductionApplicationTests {
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/uhagarariye/delete/{id}(id=${item.id})}" method="post" class="d-inline">
+                                        <form th:action="@{/representatives/delete/{id}(id=${item.id})}" method="post" class="d-inline">
                                             <button type="submit" class="btn btn-danger">
                                                 <i class="bi bi-trash"></i> Delete
                                             </button>
@@ -8832,7 +8832,7 @@ class AnimalProductionApplicationTests {
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-plus-fill"></i> Register Uhagarariye Aborora</h3>
-                    <a th:href="@{/uhagarariye/list}" class="btn btn-secondary">
+                    <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
@@ -8842,7 +8842,7 @@ class AnimalProductionApplicationTests {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/uhagarariye/register/new}" th:object="${uhagarariye}" method="post" onsubmit="return validateForm()">
+                <form th:action="@{/representatives/register/new}" th:object="${representatives}" method="post" onsubmit="return validateForm()">
 
                     <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -8931,8 +8931,8 @@ class AnimalProductionApplicationTests {
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-briefcase"></i> Professional Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="icyoAkora" class="form-label">Icyo Akora (What they do) *</label>
-                            <textarea class="form-control" id="icyoAkora" th:field="*{icyoAkora}" rows="2" required
+                            <label for="occupation" class="form-label">Occupation (What they do) *</label>
+                            <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2" required
                                       minlength="10" maxlength="500"></textarea>
                             <div class="invalid-feedback">Please describe what they do (10-500 characters)</div>
                         </div>
@@ -8953,7 +8953,7 @@ class AnimalProductionApplicationTests {
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
-                            <input type="hidden" th:field="*{amasezerano}" id="pdfUrl">
+                            <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                             <div class="form-text">Upload contract PDF (Max 10MB)</div>
                         </div>
                     </div>
@@ -9003,7 +9003,7 @@ class AnimalProductionApplicationTests {
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/uhagarariye/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
                         <button type="submit" class="btn btn-register">
@@ -9799,10 +9799,10 @@ class AnimalProductionApplicationTests {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/uhagarariye/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus-fill"></i> Register Representative
                 </a>
-                <a th:href="@{/uhagarariye/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/representatives/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Representatives
                 </a>
             </div>
@@ -9815,10 +9815,10 @@ class AnimalProductionApplicationTests {
                 <i class="bi bi-chevron-right arrow"></i>
             </div>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/abaragizwa/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/register}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-person-plus"></i> Register Beneficiary
                 </a>
-                <a th:href="@{/abaragizwa/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
+                <a th:href="@{/beneficiaries/list}" target="contentFrame" class="submenu-item" onclick="loadContent(event)">
                     <i class="bi bi-list-ul"></i> View All Beneficiaries
                 </a>
             </div>

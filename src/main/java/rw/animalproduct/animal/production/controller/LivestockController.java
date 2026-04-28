@@ -13,7 +13,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.*;
-import rw.animalproduct.animal.production.repository.AbaragizwaAmatungoRepository;
+import rw.animalproduct.animal.production.repository.BeneficiaryRepository;
 import rw.animalproduct.animal.production.repository.LivestockAbortionRepository;
 import rw.animalproduct.animal.production.repository.LivestockBirthRepository;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
@@ -23,7 +23,6 @@ import rw.animalproduct.animal.production.repository.LocationRepository;
 import rw.animalproduct.animal.production.services.LivestockCategoryService;
 import rw.animalproduct.animal.production.services.LivestockService;
 
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Comparator;
@@ -34,7 +33,7 @@ public class LivestockController {
 
     private final LivestockService              livestockService;
     private final LivestockCategoryService      livestockCategoryService;
-    private final AbaragizwaAmatungoRepository  abaragizwaAmatungoRepository;
+    private final BeneficiaryRepository         beneficiaryRepository;
     private final LocationRepository            locationRepository;
     private final LivestockRepository           livestockRepository;
     private final LivestockBirthRepository      birthRepository;
@@ -45,7 +44,7 @@ public class LivestockController {
     @Autowired
     public LivestockController(LivestockService livestockService,
                                LivestockCategoryService livestockCategoryService,
-                               AbaragizwaAmatungoRepository abaragizwaAmatungoRepository,
+                               BeneficiaryRepository beneficiaryRepository,
                                LocationRepository locationRepository,
                                LivestockRepository livestockRepository,
                                LivestockBirthRepository birthRepository,
@@ -54,7 +53,7 @@ public class LivestockController {
                                LivestockAbortionRepository abortionRepository) {
         this.livestockService             = livestockService;
         this.livestockCategoryService     = livestockCategoryService;
-        this.abaragizwaAmatungoRepository = abaragizwaAmatungoRepository;
+        this.beneficiaryRepository        = beneficiaryRepository;
         this.locationRepository           = locationRepository;
         this.livestockRepository          = livestockRepository;
         this.birthRepository              = birthRepository;
@@ -190,7 +189,7 @@ public class LivestockController {
     }
 
     // =====================================================================
-    // LIVESTOCK LIST
+    // LIVESTOCK LIST - COMPLETELY FIXED
     // =====================================================================
 
     @GetMapping("/list")
@@ -199,38 +198,183 @@ public class LivestockController {
                           @RequestParam(value = "sort", defaultValue = "tagNumber") String sort,
                           Model model) {
 
+        // Get ALL livestock for accurate totals (before pagination)
+        List<Livestock> allLivestock = livestockService.getAll();
+
+        // Log for debugging
+        System.out.println("=== DEBUGGING LIVESTOCK DATA ===");
+        System.out.println("Total livestock in database: " + allLivestock.size());
+
+        // ─────────────────────────────────────────────────────────────────
+        // CALCULATE SUMMARY STATISTICS FROM ALL LIVESTOCK
+        // ─────────────────────────────────────────────────────────────────
+
+        // Total items
+        long totalAllItems = allLivestock.size();
+        System.out.println("totalAllItems: " + totalAllItems);
+
+        // Active count - animals with status "ACTIVE"
+        long totalActive = allLivestock.stream()
+                .filter(l -> "ACTIVE".equals(l.getStatus()))
+                .count();
+        System.out.println("totalActive: " + totalActive);
+
+        // Sold count - animals with status "SOLD"
+        long totalSold = allLivestock.stream()
+                .filter(l -> "SOLD".equals(l.getStatus()))
+                .count();
+        System.out.println("totalSold: " + totalSold);
+
+        // Sick count - animals with status "SICK"
+        long totalSick = allLivestock.stream()
+                .filter(l -> "SICK".equals(l.getStatus()))
+                .count();
+        System.out.println("totalSick: " + totalSick);
+
+        // Dead count - animals with status "DEAD"
+        long totalDead = allLivestock.stream()
+                .filter(l -> "DEAD".equals(l.getStatus()))
+                .count();
+        System.out.println("totalDead: " + totalDead);
+
+        // Born on Farm count - animals that have a birth record
+        long totalBornOnFarm = 0;
+        for (Livestock livestock : allLivestock) {
+            Optional<LivestockBirth> birth = birthRepository.findByChildAnimalId(livestock.getId());
+            if (birth.isPresent()) {
+                totalBornOnFarm++;
+            }
+        }
+        System.out.println("totalBornOnFarm: " + totalBornOnFarm);
+
+        // Treatments count - total number of treatment records
+        long totalTreatments = treatmentRepository.countByIsDeletedFalse();
+        System.out.println("totalTreatments: " + totalTreatments);
+
+        // Abortions count - total number of abortion records
+        long totalAbortions = abortionRepository.findAllActive().size();
+        System.out.println("totalAbortions: " + totalAbortions);
+
+        System.out.println("================================");
+
+        // ─────────────────────────────────────────────────────────────────
+        // GET PAGINATED LIST FOR TABLE DISPLAY
+        // ─────────────────────────────────────────────────────────────────
+
         List<Livestock> currentPageList;
-        long totalItems = 0;
+        long totalItems = totalAllItems;  // Use total from all livestock
         int totalPages = 1;
+        int currentPage = page;
+        int pageSize = size;
 
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, sort);
             Page<Livestock> pageContent = livestockRepository.findAll(pageable);
             currentPageList = pageContent.getContent();
-            totalItems = pageContent.getTotalElements();
             totalPages = pageContent.getTotalPages();
+            currentPage = page;
+            pageSize = size;
         } catch (Exception e) {
-            currentPageList = livestockService.getAll();
-            totalItems = currentPageList.size();
+            currentPageList = allLivestock;
             totalPages = 1;
-            page = 0;
+            currentPage = 0;
+            pageSize = size;
         }
 
         model.addAttribute("livestockList", currentPageList);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("currentPage", currentPage);
         model.addAttribute("totalPages", totalPages);
-        model.addAttribute("totalItems", totalItems);
-        model.addAttribute("pageSize", size);
+        model.addAttribute("totalItems", totalAllItems);  // Use total from all livestock
+        model.addAttribute("pageSize", pageSize);
 
-        model.addAttribute("birthMap", new HashMap<>());
-        model.addAttribute("motherMap", new HashMap<>());
-        model.addAttribute("saleMap", new HashMap<>());
-        model.addAttribute("treatmentMap", new HashMap<>());
-        model.addAttribute("treatmentCountMap", new HashMap<>());
-        model.addAttribute("abortionMap", new HashMap<>());
-        model.addAttribute("abortionCountMap", new HashMap<>());
+        // ─────────────────────────────────────────────────────────────────
+        // POPULATE BIRTH MAP
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, LivestockBirth> birthMap = new HashMap<>();
+        for (Livestock livestock : currentPageList) {
+            Optional<LivestockBirth> birth = birthRepository.findByChildAnimalId(livestock.getId());
+            if (birth.isPresent()) {
+                birthMap.put(livestock.getId(), birth.get());
+            }
+        }
+        model.addAttribute("birthMap", birthMap);
+
+        // ─────────────────────────────────────────────────────────────────
+        // POPULATE MOTHER MAP
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, Boolean> motherMap = new HashMap<>();
+        for (Livestock livestock : currentPageList) {
+            List<LivestockBirth> births = birthRepository.findByLivestockId(livestock.getId());
+            if (births != null && !births.isEmpty()) {
+                motherMap.put(livestock.getId(), true);
+            }
+        }
+        model.addAttribute("motherMap", motherMap);
+
+        // ─────────────────────────────────────────────────────────────────
+        // POPULATE SALE MAP
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, LivestockSale> saleMap = new HashMap<>();
+        for (Livestock livestock : currentPageList) {
+            List<LivestockSale> sales = saleRepository.findByLivestockId(livestock.getId());
+            if (sales != null && !sales.isEmpty()) {
+                sales.stream()
+                        .max(Comparator.comparing(LivestockSale::getSaleDate))
+                        .ifPresent(sale -> saleMap.put(livestock.getId(), sale));
+            }
+        }
+        model.addAttribute("saleMap", saleMap);
+
+        // ─────────────────────────────────────────────────────────────────
+        // POPULATE TREATMENT MAP & COUNT MAP
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, LivestockTreatment> treatmentMap = new HashMap<>();
+        Map<UUID, Long> treatmentCountMap = new HashMap<>();
+        for (Livestock livestock : currentPageList) {
+            List<LivestockTreatment> treatments = treatmentRepository.findByLivestock_Id(livestock.getId());
+            if (treatments != null && !treatments.isEmpty()) {
+                treatments.stream()
+                        .max(Comparator.comparing(LivestockTreatment::getTreatmentDate))
+                        .ifPresent(treatment -> treatmentMap.put(livestock.getId(), treatment));
+                treatmentCountMap.put(livestock.getId(), (long) treatments.size());
+            }
+        }
+        model.addAttribute("treatmentMap", treatmentMap);
+        model.addAttribute("treatmentCountMap", treatmentCountMap);
+
+        // ─────────────────────────────────────────────────────────────────
+        // POPULATE ABORTION MAP & COUNT MAP
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, LivestockAbortion> abortionMap = new HashMap<>();
+        Map<UUID, Long> abortionCountMap = new HashMap<>();
+        for (Livestock livestock : currentPageList) {
+            List<LivestockAbortion> abortions = abortionRepository.findByLivestockId(livestock.getId());
+            if (abortions != null && !abortions.isEmpty()) {
+                abortions.stream()
+                        .max(Comparator.comparing(LivestockAbortion::getAbortionDate))
+                        .ifPresent(abortion -> abortionMap.put(livestock.getId(), abortion));
+                abortionCountMap.put(livestock.getId(), (long) abortions.size());
+            }
+        }
+        model.addAttribute("abortionMap", abortionMap);
+        model.addAttribute("abortionCountMap", abortionCountMap);
+
+        // ─────────────────────────────────────────────────────────────────
+        // SICK MAPS (placeholder)
+        // ─────────────────────────────────────────────────────────────────
         model.addAttribute("sickMap", new HashMap<>());
         model.addAttribute("sickCountMap", new HashMap<>());
+
+        // ─────────────────────────────────────────────────────────────────
+        // ADD ALL SUMMARY STATISTICS TO MODEL
+        // ─────────────────────────────────────────────────────────────────
+        model.addAttribute("totalActive", totalActive);
+        model.addAttribute("totalSold", totalSold);
+        model.addAttribute("totalSick", totalSick);
+        model.addAttribute("totalDead", totalDead);
+        model.addAttribute("totalBornOnFarm", totalBornOnFarm);
+        model.addAttribute("totalTreatments", totalTreatments);
+        model.addAttribute("totalAbortions", totalAbortions);
 
         return "livestock-list";
     }
@@ -243,7 +387,7 @@ public class LivestockController {
     public String showRegisterForm(Model model) {
         model.addAttribute("livestock", new Livestock());
         model.addAttribute("categories", livestockCategoryService.getAll());
-        model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+        model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
         model.addAttribute("locationList", locationRepository.findAll());
 
         String lastTag = findLastTagNumber();
@@ -268,7 +412,7 @@ public class LivestockController {
             model.addAttribute("suggestedTag", suggestNextTag(livestock.getTagNumber()));
         }
 
-        // Handle pregnancy logic using plain String values
+        // Handle pregnancy logic
         if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
             livestock.setStatus(Livestock.STATUS_PREGNANT);
             livestock.setPregnancyStatus("PREGNANT");
@@ -289,7 +433,7 @@ public class LivestockController {
                     .collect(Collectors.joining(", "));
             model.addAttribute("error", errorMessages);
             model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
             model.addAttribute("locationList", locationRepository.findAll());
             return "livestock-register";
         }
@@ -304,7 +448,7 @@ public class LivestockController {
         } catch (Exception e) {
             model.addAttribute("error", "Error registering livestock: " + e.getMessage());
             model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
             model.addAttribute("locationList", locationRepository.findAll());
             return "livestock-register";
         }
@@ -327,13 +471,13 @@ public class LivestockController {
         if (livestock.getLivestockCategory() != null) {
             livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
         }
-        if (livestock.getAbaragizwaAmatungo() != null) {
-            livestock.setAbaragizwaAmatungoIdValue(livestock.getAbaragizwaAmatungo().getId().toString());
+        if (livestock.getBeneficiary() != null) {
+            livestock.setBeneficiaryIdValue(livestock.getBeneficiary().getId().toString());
         }
 
         model.addAttribute("livestock", livestock);
         model.addAttribute("categories", livestockCategoryService.getAll());
-        model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+        model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
         model.addAttribute("locationList", locationRepository.findAll());
 
         return "livestock-edit";
@@ -347,7 +491,7 @@ public class LivestockController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
-        // Handle pregnancy logic using plain String values
+        // Handle pregnancy logic
         if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
             livestock.setStatus(Livestock.STATUS_PREGNANT);
             livestock.setPregnancyStatus("PREGNANT");
@@ -363,7 +507,7 @@ public class LivestockController {
                     .collect(Collectors.joining(", "));
             model.addAttribute("error", errorMessages);
             model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
             model.addAttribute("locationList", locationRepository.findAll());
             return "livestock-edit";
         }
@@ -378,7 +522,7 @@ public class LivestockController {
         } catch (Exception e) {
             model.addAttribute("error", "Error updating livestock: " + e.getMessage());
             model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("abaragizwaList", abaragizwaAmatungoRepository.findAll());
+            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
             model.addAttribute("locationList", locationRepository.findAll());
             return "livestock-edit";
         }

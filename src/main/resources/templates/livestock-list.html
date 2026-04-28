@@ -11,922 +11,282 @@
         body { background: #f8f9fa; padding: 20px; font-family: 'DM Sans', sans-serif; }
         .list-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .table-actions { white-space: nowrap; }
-
-        /* ── Photo ── */
         .animal-photo { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; border: 2px solid #dee2e6; }
-        .animal-photo-placeholder {
-            width: 42px; height: 42px; border-radius: 8px;
-            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            display: inline-flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.1rem;
-        }
-
-        /* ── Status badges ── */
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 10px; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 700; white-space: nowrap;
-        }
-        .status-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .status-sold     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .status-dead     { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-        .status-sick     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .animal-photo-placeholder { width: 42px; height: 42px; border-radius: 8px; background: linear-gradient(135deg, #1a5f7a, #2e8b9e); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 1.1rem; }
+        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+        .status-active { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-sold { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .status-dead { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .status-sick { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
         .status-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
-        .status-unknown  { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
-
-        /* ── Lifecycle column ── */
+        .status-unknown { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
         .lifecycle-cell { min-width: 170px; }
-        .lc-row {
-            display: flex; align-items: flex-start; gap: 6px;
-            font-size: 0.78rem; margin-bottom: 4px; line-height: 1.3;
-        }
-        .lc-row:last-child { margin-bottom: 0; }
+        .lc-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.78rem; margin-bottom: 4px; line-height: 1.3; }
         .lc-icon { font-size: 0.85rem; flex-shrink: 0; margin-top: 1px; }
         .lc-label { font-weight: 700; color: #64748b; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; }
         .lc-value { color: #1e293b; font-weight: 500; }
-        .lc-sub   { color: #64748b; font-size: 0.72rem; }
+        .lc-sub { color: #64748b; font-size: 0.72rem; }
         .lc-price { color: #059669; font-weight: 700; }
-        .lc-none  { color: #94a3b8; font-style: italic; font-size: 0.75rem; }
-
-        /* section head inside lifecycle */
-        .lc-section-head {
-            font-size: 0.63rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.08em; padding: 2px 6px; border-radius: 4px;
-            margin-bottom: 4px; display: inline-block;
-        }
+        .lc-none { color: #94a3b8; font-style: italic; font-size: 0.75rem; }
+        .lc-section-head { font-size: 0.63rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; display: inline-block; }
         .lc-head-health { background: #fef9c3; color: #854d0e; }
-        .lc-head-sale   { background: #d1fae5; color: #065f46; }
-
-        /* count pills inside lifecycle */
-        .lc-count {
-            display: inline-flex; align-items: center; gap: 3px;
-            background: #f1f5f9; border: 1px solid #e2e8f0;
-            border-radius: 12px; padding: 1px 7px;
-            font-size: 0.7rem; font-weight: 700; color: #475569;
-            white-space: nowrap;
-        }
+        .lc-head-sale { background: #d1fae5; color: #065f46; }
+        .lc-count { display: inline-flex; align-items: center; gap: 3px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1px 7px; font-size: 0.7rem; font-weight: 700; color: #475569; white-space: nowrap; }
         .lc-count.treatment { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
-        .lc-count.abortion  { background: #fff1f2; color: #be123c; border-color: #fda4af; }
-
-        /* ── Born on Farm badge ── */
-        .born-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #e0f2fe; color: #0369a1;
-            border: 1px solid #bae6fd; border-radius: 20px;
-            padding: 2px 8px; font-size: 0.68rem; font-weight: 700;
-            white-space: nowrap;
-        }
-        .sold-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #fef2f2; color: #dc2626;
-            border: 1px solid #fecaca; border-radius: 20px;
-            padding: 2px 8px; font-size: 0.68rem; font-weight: 700;
-            white-space: nowrap;
-        }
-
-        /* ── Tag number cell ── */
+        .lc-count.abortion { background: #fff1f2; color: #be123c; border-color: #fda4af; }
+        .born-badge { display: inline-flex; align-items: center; gap: 4px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 20px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
+        .sold-badge { display: inline-flex; align-items: center; gap: 4px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 20px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; }
         .tag-cell { min-width: 120px; }
         .tag-badges { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
-
-        /* ── Row highlight for sold / dead animals ── */
         tr.row-sold { background: #fff5f5 !important; }
         tr.row-dead { background: #f9fafb !important; opacity: 0.8; }
-
-        /* ── Pagination ── */
-        .pagination-wrap {
-            display: flex; align-items: center; justify-content: space-between;
-            flex-wrap: wrap; gap: 12px; padding-top: 16px;
-            border-top: 2px solid #f0f2f5;
-        }
-        .pagination-info {
-            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-        }
+        .pagination-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 16px; border-top: 2px solid #f0f2f5; }
+        .pagination-info { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
         .showing-text { font-size: 0.85rem; color: #64748b; }
-        .showing-text strong { color: #1e293b; }
         .page-size-wrap { display: flex; align-items: center; gap: 6px; }
-        .page-size-label { font-size: 0.8rem; font-weight: 600; color: #64748b; white-space: nowrap; }
-        .page-size-select {
-            padding: 4px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px;
-            font-size: 0.82rem; cursor: pointer; outline: none; background: #fafcff;
-            transition: border-color 0.2s; color: #1e293b;
-        }
-        .page-size-select:focus { border-color: #1a5f7a; }
-        .pagination-list {
-            display: flex; align-items: center; gap: 4px;
-            list-style: none; margin: 0; padding: 0; flex-wrap: wrap;
-        }
-        .pg-btn {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 6px 12px; border-radius: 8px; font-size: 0.82rem;
-            font-weight: 600; color: #475569; background: #f8f9fb;
-            border: 1.5px solid #e2e8f0; text-decoration: none;
-            transition: all 0.2s; white-space: nowrap; cursor: pointer;
-        }
-        .pg-btn:hover:not(.disabled) {
-            background: #1a5f7a; color: white; border-color: #1a5f7a;
-        }
-        .pg-btn.disabled {
-            opacity: 0.4; pointer-events: none; cursor: not-allowed;
-        }
-        .pg-edge { padding: 6px 9px; }
-        .pg-active .pg-btn {
-            background: #1a5f7a; color: white;
-            border-color: #1a5f7a; box-shadow: 0 2px 6px rgba(26,95,122,0.3);
-        }
-        .pg-disabled .pg-btn { opacity: 0.4; pointer-events: none; }
-        .pg-ellipsis {
-            padding: 6px 4px; color: #94a3b8; font-size: 0.85rem; font-weight: 700;
-        }
-        .filter-btn {
-            padding: 5px 14px; border-radius: 20px; font-size: 0.8rem;
-            font-weight: 600; border: 2px solid #e2e8f0; cursor: pointer;
-            transition: all 0.2s; background: #f8f9fb; color: #4a5568;
-        }
-        .filter-btn:hover { background: #e2e8f0; }
+        .page-size-label { font-size: 0.8rem; font-weight: 600; color: #64748b; }
+        .page-size-select { padding: 4px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 0.82rem; cursor: pointer; background: #fafcff; }
+        .pagination-list { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+        .pg-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: #475569; background: #f8f9fb; border: 1.5px solid #e2e8f0; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+        .pg-btn:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; }
+        .pg-active .pg-btn { background: #1a5f7a; color: white; border-color: #1a5f7a; }
+        .filter-btn { padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 2px solid #e2e8f0; cursor: pointer; background: #f8f9fb; }
         .filter-btn.active { background: #1a5f7a; color: white; border-color: #1a5f7a; }
-
-        /* ── Summary mini-cards ── */
-        .summary-strip {
-            display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap;
-        }
-        .sum-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
-            border: 1.5px solid;
-        }
-        .sum-pill.all        { background: #f1f5f9; color: #1e293b; border-color: #cbd5e0; }
-        .sum-pill.active     { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .sum-pill.sold       { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
-        .sum-pill.sick       { background: #fef9c3; color: #854d0e; border-color: #fde047; }
-        .sum-pill.dead       { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
-        .sum-pill.born       { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+        .summary-strip { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+        .sum-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; border: 1.5px solid; }
+        .sum-pill.all { background: #f1f5f9; color: #1e293b; border-color: #cbd5e0; }
+        .sum-pill.active { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+        .sum-pill.sold { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .sum-pill.sick { background: #fef9c3; color: #854d0e; border-color: #fde047; }
+        .sum-pill.dead { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+        .sum-pill.born { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
         .sum-pill.treatments { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
-        .sum-pill.abortions  { background: #fff1f2; color: #be123c; border-color: #fda4af; }
-
-        /* ── QR / Print additions ── */
-        .qr-btn {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 30px; height: 30px; border-radius: 7px;
-            border: 1.5px solid #e2e8f0; background: #f8f9fb;
-            color: #475569; font-size: 0.85rem; cursor: pointer;
-            transition: all 0.18s; text-decoration: none;
-        }
-        .qr-btn:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; transform: translateY(-1px); }
-        .qr-btn.print-btn:hover { background: #0f766e; border-color: #0f766e; color: white; }
-
-        /* Checkbox column */
+        .sum-pill.abortions { background: #fff1f2; color: #be123c; border-color: #fda4af; }
+        .qr-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 7px; border: 1.5px solid #e2e8f0; background: #f8f9fb; color: #475569; text-decoration: none; }
+        .qr-btn:hover { background: #1a5f7a; color: white; }
         .check-col { width: 36px; text-align: center; }
         .row-checkbox { width: 16px; height: 16px; cursor: pointer; accent-color: #1a5f7a; }
-
-        /* Bulk actions bar */
-        .bulk-bar {
-            display: none;
-            align-items: center; gap: 12px;
-            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            border-radius: 10px; padding: 10px 18px;
-            margin-bottom: 14px; flex-wrap: wrap;
-        }
+        .bulk-bar { display: none; align-items: center; gap: 12px; background: linear-gradient(135deg, #1a5f7a, #2e8b9e); border-radius: 10px; padding: 10px 18px; margin-bottom: 14px; }
         .bulk-bar.visible { display: flex; }
-        .bulk-bar-text { color: white; font-weight: 700; font-size: 0.88rem; }
-        .bulk-bar-count {
-            background: rgba(255,255,255,0.2); color: white;
-            padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 700;
-        }
-        .btn-bulk {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 700;
-            border: none; cursor: pointer; transition: all 0.2s; text-decoration: none;
-        }
-        .btn-bulk.teal  { background: white; color: #1a5f7a; }
-        .btn-bulk.teal:hover  { background: #e0f7fa; color: #155e75; }
-        .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .btn-bulk.clear:hover { background: rgba(255,255,255,0.25); }
-
-        /* Print-all button style */
-        .btn-print-all {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 8px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600;
-            border: 1.5px solid #0f766e; background: #f0fdfa; color: #0f766e;
-            cursor: pointer; transition: all 0.2s; text-decoration: none;
-        }
-        .btn-print-all:hover { background: #0f766e; color: white; transform: translateY(-1px); }
+        .bulk-bar-text { color: white; font-weight: 700; }
+        .bulk-bar-count { background: rgba(255,255,255,0.2); color: white; padding: 2px 10px; border-radius: 20px; }
+        .btn-bulk { padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; border: none; cursor: pointer; }
+        .btn-bulk.teal { background: white; color: #1a5f7a; }
+        .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; }
+        .btn-print-all { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 8px; border: 1.5px solid #0f766e; background: #f0fdfa; color: #0f766e; text-decoration: none; }
+        .btn-print-all:hover { background: #0f766e; color: white; }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="list-card">
-
-        <!-- ── Header ── -->
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3><i class="bi bi-grid-fill text-success"></i> Livestock</h3>
-                <p class="text-muted mb-0">All registered livestock animals</p>
-            </div>
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <!-- Print All Ear Tags -->
-                <a href="/livestock/qr/eartags/print-all"
-                   class="btn-print-all"
-                   target="_blank"
-                   title="Print ear tags for all animals">
-                    <i class="bi bi-printer-fill"></i> Print All Ear Tags
-                </a>
-                <a th:href="@{/livestock/register}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle-fill"></i> Register Livestock
-                </a>
+            <div><h3><i class="bi bi-grid-fill text-success"></i> Livestock</h3><p class="text-muted mb-0">All registered livestock animals</p></div>
+            <div class="d-flex gap-2">
+                <a href="/livestock/qr/eartags/print-all" class="btn-print-all" target="_blank"><i class="bi bi-printer-fill"></i> Print All Ear Tags</a>
+                <a th:href="@{/livestock/register}" class="btn btn-primary"><i class="bi bi-plus-circle-fill"></i> Register Livestock</a>
             </div>
         </div>
 
-        <!-- ── Alerts ── -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        <div th:if="${success}" class="alert alert-success"><i class="bi bi-check-circle"></i> <span th:text="${success}"></span></div>
+        <div th:if="${error}" class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span></div>
 
-        <!-- ── Summary strip ── -->
         <div class="summary-strip">
-            <span class="sum-pill all">
-                <i class="bi bi-list-ul"></i>
-                Total: <strong th:text="${totalItems != null ? totalItems : 0}">0</strong>
-            </span>
-            <span class="sum-pill active">
-                <i class="bi bi-house-heart-fill"></i>
-                Active: <strong th:text="${totalActive != null ? totalActive : 0}">0</strong>
-            </span>
-            <span class="sum-pill sold">
-                <i class="bi bi-cash-stack"></i>
-                Sold: <strong th:text="${totalSold != null ? totalSold : 0}">0</strong>
-            </span>
-            <span class="sum-pill sick">
-                <i class="bi bi-bandaid-fill"></i>
-                Sick: <strong th:text="${totalSick != null ? totalSick : 0}">0</strong>
-            </span>
-            <span class="sum-pill dead">
-                <i class="bi bi-x-circle-fill"></i>
-                Dead: <strong th:text="${totalDead != null ? totalDead : 0}">0</strong>
-            </span>
-            <span class="sum-pill born">
-                <i class="bi bi-stars"></i>
-                Born on Farm: <strong th:text="${totalBornOnFarm != null ? totalBornOnFarm : 0}">0</strong>
-            </span>
-            <span class="sum-pill treatments">
-                <i class="bi bi-capsule-pill"></i>
-                Treatments: <strong th:text="${totalTreatments != null ? totalTreatments : 0}">0</strong>
-            </span>
-            <span class="sum-pill abortions">
-                <i class="bi bi-heartbreak-fill"></i>
-                Abortions: <strong th:text="${totalAbortions != null ? totalAbortions : 0}">0</strong>
-            </span>
+            <span class="sum-pill all">Total: <strong th:text="${totalItems}">0</strong></span>
+            <span class="sum-pill active">Active: <strong th:text="${totalActive}">0</strong></span>
+            <span class="sum-pill sold">Sold: <strong th:text="${totalSold}">0</strong></span>
+            <span class="sum-pill sick">Sick: <strong th:text="${totalSick}">0</strong></span>
+            <span class="sum-pill dead">Dead: <strong th:text="${totalDead}">0</strong></span>
+            <span class="sum-pill born">Born on Farm: <strong th:text="${totalBornOnFarm}">0</strong></span>
+            <span class="sum-pill treatments">Treatments: <strong th:text="${totalTreatments}">0</strong></span>
+            <span class="sum-pill abortions">Abortions: <strong th:text="${totalAbortions}">0</strong></span>
         </div>
 
-        <!-- ── Bulk actions bar (shown when checkboxes selected) ── -->
         <div class="bulk-bar" id="bulkBar">
-            <span class="bi bi-check2-square" style="color:white;font-size:1.1rem;"></span>
+            <span class="bi bi-check2-square" style="color:white"></span>
             <span class="bulk-bar-text">Selected:</span>
             <span class="bulk-bar-count" id="selectedCount">0</span>
-            <button class="btn-bulk teal" onclick="printSelected()">
-                <i class="bi bi-printer-fill"></i> Print Ear Tags
-            </button>
-            <button class="btn-bulk teal" onclick="viewQRSelected()">
-                <i class="bi bi-qr-code"></i> View QR Codes
-            </button>
-            <button class="btn-bulk clear" onclick="clearSelection()">
-                <i class="bi bi-x-lg"></i> Clear
-            </button>
+            <button class="btn-bulk teal" onclick="printSelected()"><i class="bi bi-printer-fill"></i> Print Ear Tags</button>
+            <button class="btn-bulk teal" onclick="viewQRSelected()"><i class="bi bi-qr-code"></i> View QR Codes</button>
+            <button class="btn-bulk clear" onclick="clearSelection()"><i class="bi bi-x-lg"></i> Clear</button>
         </div>
 
-        <!-- ── Search + Filter ── -->
-        <div class="row mb-3 align-items-center g-2">
+        <div class="row mb-3">
             <div class="col-md-5">
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="searchInput"
-                           placeholder="Search by tag, category, beneficiary...">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Search...">
                 </div>
             </div>
             <div class="col-md-7">
                 <div class="d-flex gap-2 flex-wrap">
                     <button class="filter-btn active" onclick="filterByStatus('ALL', this)">All</button>
-                    <button class="filter-btn" onclick="filterByStatus('ACTIVE', this)">
-                        <i class="bi bi-house-heart me-1"></i>Active
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('SOLD', this)">
-                        <i class="bi bi-cash-stack me-1"></i>Sold
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('SICK', this)">
-                        <i class="bi bi-bandaid me-1"></i>Sick
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('DEAD', this)">
-                        <i class="bi bi-x-circle me-1"></i>Dead
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('BORN', this)">
-                        <i class="bi bi-stars me-1"></i>Born on Farm
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('TREATED', this)">
-                        <i class="bi bi-capsule-pill me-1"></i>Treated
-                    </button>
-                    <button class="filter-btn" onclick="filterByStatus('ABORTION', this)">
-                        <i class="bi bi-heartbreak me-1"></i>Abortions
-                    </button>
+                    <button class="filter-btn" onclick="filterByStatus('ACTIVE', this)">Active</button>
+                    <button class="filter-btn" onclick="filterByStatus('SOLD', this)">Sold</button>
+                    <button class="filter-btn" onclick="filterByStatus('SICK', this)">Sick</button>
+                    <button class="filter-btn" onclick="filterByStatus('DEAD', this)">Dead</button>
+                    <button class="filter-btn" onclick="filterByStatus('BORN', this)">Born on Farm</button>
+                    <button class="filter-btn" onclick="filterByStatus('TREATED', this)">Treated</button>
+                    <button class="filter-btn" onclick="filterByStatus('ABORTION', this)">Abortions</button>
                 </div>
             </div>
         </div>
 
-        <!-- ── Table ── -->
         <div class="table-responsive">
             <table class="table table-hover align-middle" id="dataTable">
                 <thead class="table-light">
                 <tr>
-                    <!-- Checkbox select-all -->
-                    <th class="check-col">
-                        <input type="checkbox" class="row-checkbox" id="selectAll"
-                               title="Select all visible" onchange="toggleSelectAll(this)">
-                    </th>
-                    <th>#</th>
-                    <th>Photo</th>
-                    <th>Tag Number</th>
-                    <th>Category</th>
-                    <th>Gender</th>
-                    <th>Pregnant</th>
-                    <th>Beneficiary</th>
-                    <th>Location</th>
-                    <th>Status</th>
-                    <th>Current Value</th>
-                    <th>Birth, Health &amp; Sale</th>
-                    <th>Actions</th>
+                    <th class="check-col"><input type="checkbox" class="row-checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                    <th>#</th><th>Photo</th><th>Tag Number</th><th>Category</th><th>Gender</th>
+                    <th>Pregnant</th><th>Beneficiary</th><th>Location</th><th>Status</th>
+                    <th>Current Value</th><th>Birth, Health &amp; Sale</th><th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-
-                <!-- Empty state -->
                 <tr th:if="${livestockList == null or livestockList.empty}">
-                    <td colspan="13" class="text-center text-muted py-4">
-                        <i class="bi bi-inbox fs-1"></i>
-                        <p class="mt-2">No livestock registered yet</p>
-                    </td>
+                    <td colspan="13" class="text-center text-muted py-4">No livestock registered yet</td>
                 </tr>
-
                 <tr th:each="item, iterStat : ${livestockList}"
                     th:classappend="${item.status == 'SOLD'} ? 'row-sold' : (${item.status == 'DEAD'} ? 'row-dead' : '')"
-                    th:attr="
-                        data-status=${item.status},
-                        data-born=${birthMap != null and birthMap.containsKey(item.id)} ? 'true' : 'false',
-                        data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false',
-                        data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false',
-                        data-id=${item.id}
-                    ">
+                    th:attr="data-status=${item.status}, data-born=${birthMap != null and birthMap.containsKey(item.id)} ? 'true' : 'false', data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false', data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false'">
 
-                    <!-- Checkbox -->
-                    <td class="check-col">
-                        <input type="checkbox" class="row-checkbox animal-check"
-                               th:value="${item.id}"
-                               onchange="updateBulkBar()">
-                    </td>
-
-                    <!-- # -->
-                    <td th:text="${currentPage != null ? (currentPage * pageSize) + iterStat.count : iterStat.count}">1</td>
-
-                    <!-- Photo -->
-                    <td>
-                        <img th:if="${item.photo != null and !item.photo.isEmpty()}"
-                             th:src="${item.photo}" class="animal-photo" alt="Photo">
-                        <span th:if="${item.photo == null or item.photo.isEmpty()}"
-                              class="animal-photo-placeholder">
-                            <i class="bi bi-box2-heart"></i>
-                        </span>
-                    </td>
-
-                    <!-- Tag Number + badges -->
-                    <td class="tag-cell">
-                        <strong th:text="${item.tagNumber}">TAG-001</strong>
+                    <td class="check-col"><input type="checkbox" class="row-checkbox animal-check" th:value="${item.id}" onchange="updateBulkBar()"></td>
+                    <td th:text="${iterStat.count}"></td>
+                    <td><img th:if="${item.photo != null and !item.photo.isEmpty()}" th:src="${item.photo}" class="animal-photo"><span th:unless="${item.photo != null and !item.photo.isEmpty()}" class="animal-photo-placeholder"><i class="bi bi-box2-heart"></i></span></td>
+                    <td><strong th:text="${item.tagNumber}"></strong>
                         <div class="tag-badges">
-                            <span th:if="${birthMap != null and birthMap.containsKey(item.id)}"
-                                  class="born-badge">
-                                <i class="bi bi-stars"></i> Born on Farm
-                            </span>
-                            <span th:if="${item.status == 'SOLD'}" class="sold-badge">
-                                <i class="bi bi-cash-stack"></i> Sold
-                            </span>
-                            <span th:if="${motherMap != null and motherMap.containsKey(item.id)}"
-                                  style="display:inline-flex;align-items:center;gap:4px;background:#fce7f3;color:#be185d;border:1px solid #fbcfe8;border-radius:20px;padding:2px 8px;font-size:0.68rem;font-weight:700;">
-                                <i class="bi bi-heart-fill"></i> Mother
-                            </span>
+                            <span th:if="${birthMap != null and birthMap.containsKey(item.id)}" class="born-badge"><i class="bi bi-stars"></i> Born on Farm</span>
+                            <span th:if="${item.status == 'SOLD'}" class="sold-badge"><i class="bi bi-cash-stack"></i> Sold</span>
                         </div>
                     </td>
-
-                    <!-- Category -->
+                    <td><span th:if="${item.livestockCategory != null}" class="badge bg-info" th:text="${item.livestockCategory.name}"></span><span th:unless="${item.livestockCategory != null}" class="text-muted">N/A</span></td>
+                    <td><span th:if="${item.gender == 'MALE'}" class="badge bg-primary">Male</span><span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger">Female</span><span th:if="${item.gender == null}" class="badge bg-secondary">N/A</span></td>
+                    <td><span th:if="${item.isPregnant}" class="badge bg-warning text-dark">Yes</span><span th:unless="${item.isPregnant}" class="badge bg-light text-dark">No</span></td>
+                    <td><small th:if="${item.beneficiary != null}" th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></small><small th:unless="${item.beneficiary != null}" class="text-muted">N/A</small></td>
+                    <td><small th:text="${item.location != null ? item.location.name : 'N/A'}"></small></td>
                     <td>
-                        <span th:if="${item.livestockCategory != null}"
-                              class="badge bg-info"
-                              th:text="${item.livestockCategory.name}">Category</span>
-                        <span th:if="${item.livestockCategory == null}" class="text-muted">N/A</span>
+                        <span th:if="${item.status == 'ACTIVE'}" class="status-badge status-active">Active</span>
+                        <span th:if="${item.status == 'SOLD'}" class="status-badge status-sold">Sold</span>
+                        <span th:if="${item.status == 'DEAD'}" class="status-badge status-dead">Dead</span>
+                        <span th:if="${item.status == 'SICK'}" class="status-badge status-sick">Sick</span>
+                        <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
                     </td>
+                    <td><span th:if="${item.currentValue != null}" th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span><span th:unless="${item.currentValue != null}" class="text-muted">Not set</span></td>
 
-                    <!-- Gender -->
-                    <td>
-                        <span th:if="${item.gender == 'MALE'}" class="badge bg-primary">
-                            <i class="bi bi-gender-male"></i> Male
-                        </span>
-                        <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger">
-                            <i class="bi bi-gender-female"></i> Female
-                        </span>
-                        <span th:if="${item.gender == null}" class="badge bg-secondary">N/A</span>
-                    </td>
-
-                    <!-- Pregnant - FIXED: Handle null case -->
-                    <td>
-                        <th:block th:with="isPregnantValue=${item.isPregnant != null ? item.isPregnant : false}">
-                            <span th:if="${isPregnantValue}" class="badge bg-warning text-dark">
-                                <i class="bi bi-heart-fill"></i> Yes
-                                <span th:if="${item.pregnancyMonths != null}"
-                                      th:text="' (' + ${item.pregnancyMonths} + ' mo)'"></span>
-                            </span>
-                            <span th:if="${!isPregnantValue}" class="badge bg-light text-dark">No</span>
-                        </th:block>
-                    </td>
-
-                    <!-- Beneficiary -->
-                    <td>
-                        <small th:if="${item.abaragizwaAmatungo != null}"
-                               th:text="${item.abaragizwaAmatungo.firstName + ' ' + item.abaragizwaAmatungo.lastName}">
-                        </small>
-                        <small th:if="${item.abaragizwaAmatungo == null}" class="text-muted">N/A</small>
-                    </td>
-
-                    <!-- Location -->
-                    <td>
-                        <small th:text="${item.location != null ? item.location.name : 'N/A'}">Location</small>
-                    </td>
-
-                    <!-- Status -->
-                    <td>
-                        <span th:if="${item.status == 'ACTIVE'}"   class="status-badge status-active">
-                            <i class="bi bi-check-circle-fill"></i> Active
-                        </span>
-                        <span th:if="${item.status == 'SOLD'}"     class="status-badge status-sold">
-                            <i class="bi bi-cash-stack"></i> Sold
-                        </span>
-                        <span th:if="${item.status == 'DEAD'}"     class="status-badge status-dead">
-                            <i class="bi bi-x-circle-fill"></i> Dead
-                        </span>
-                        <span th:if="${item.status == 'SICK'}"     class="status-badge status-sick">
-                            <i class="bi bi-bandaid-fill"></i> Sick
-                        </span>
-                        <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">
-                            <i class="bi bi-heart-fill"></i> Pregnant
-                        </span>
-                        <span th:if="${item.status == null}"       class="status-badge status-unknown">
-                            <i class="bi bi-question-circle"></i> Unknown
-                        </span>
-                    </td>
-
-                    <!-- Current Value -->
-                    <td>
-                        <span th:if="${item.currentValue != null}"
-                              style="display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 10px;border-radius:20px;font-size:0.8rem;font-weight:700;color:#15803d;">
-                            <i class="bi bi-gem"></i>
-                            <span th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
-                        </span>
-                        <span th:if="${item.currentValue == null}"
-                              style="color:#94a3b8;font-style:italic;font-size:0.78rem;">
-                            Not set
-                        </span>
-                    </td>
-
-                    <!-- ══ Birth, Health & Sale column ══ -->
                     <td class="lifecycle-cell">
-
-                        <!-- 1. BIRTH ORIGIN -->
                         <div th:if="${birthMap != null and birthMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-stars lc-icon text-info"></i>
-                                <div>
-                                    <div class="lc-label">Born on Farm</div>
-                                    <div class="lc-value"
-                                         th:text="${#temporals.format(birthMap[item.id], 'dd-MM-yyyy')}"></div>
-                                </div>
-                            </div>
+                            <div class="lc-row"><i class="bi bi-stars lc-icon text-info"></i><div><div class="lc-label">Born on Farm</div><div class="lc-value" th:text="${#temporals.format(birthMap[item.id].birthDate, 'dd-MM-yyyy')}"></div></div></div>
                         </div>
-                        <div th:if="${birthMap == null or !birthMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-box-arrow-in-down lc-icon text-secondary"></i>
-                                <span class="lc-none">Purchased / External</span>
-                            </div>
+                        <div th:unless="${birthMap != null and birthMap.containsKey(item.id)}">
+                            <div class="lc-row"><i class="bi bi-box-arrow-in-down lc-icon text-secondary"></i><span class="lc-none">Purchased / External</span></div>
                         </div>
 
-                        <!-- 2. HEALTH section header -->
-                        <div th:if="${(treatmentMap != null and treatmentMap.containsKey(item.id)) or (abortionMap != null and abortionMap.containsKey(item.id))}">
-                            <div style="border-top:1px dashed #e2e8f0; margin:5px 0;"></div>
-                            <span class="lc-section-head lc-head-health">
-                                <i class="bi bi-heart-pulse-fill"></i> Health
-                            </span>
-                        </div>
-
-                        <!-- TREATMENTS -->
                         <div th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-capsule-pill lc-icon" style="color:#7c3aed;"></i>
-                                <div>
-                                    <div class="lc-label">Last Treatment</div>
-                                    <div class="lc-value"
-                                         th:text="${#temporals.format(treatmentMap[item.id].treatmentDate, 'dd-MM-yyyy')}"></div>
-                                    <div class="lc-sub"
-                                         th:if="${treatmentMap[item.id].medication != null}"
-                                         th:text="${treatmentMap[item.id].medication}"></div>
-                                    <span th:if="${treatmentCountMap != null
-                                                  and treatmentCountMap[item.id] != null
-                                                  and treatmentCountMap[item.id] > 1}"
-                                          class="lc-count treatment mt-1">
-                                        <i class="bi bi-capsule-pill"></i>
-                                        <span th:text="${treatmentCountMap[item.id]} + ' treatments'"></span>
-                                    </span>
-                                </div>
-                            </div>
+                            <div style="border-top:1px dashed #e2e8f0; margin:5px 0;"></div>
+                            <span class="lc-section-head lc-head-health">Health</span>
+                            <div class="lc-row"><i class="bi bi-capsule-pill lc-icon"></i><div><div class="lc-label">Last Treatment</div><div class="lc-value" th:text="${#temporals.format(treatmentMap[item.id].treatmentDate, 'dd-MM-yyyy')}"></div></div></div>
                         </div>
 
-                        <!-- ABORTIONS -->
                         <div th:if="${abortionMap != null and abortionMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-heartbreak-fill lc-icon" style="color:#be123c;"></i>
-                                <div>
-                                    <div class="lc-label">Last Abortion</div>
-                                    <div class="lc-value"
-                                         th:text="${#temporals.format(abortionMap[item.id].abortionDate, 'dd-MM-yyyy')}"></div>
-                                    <div class="lc-sub"
-                                         th:if="${abortionMap[item.id].pregnancyNumber != null}"
-                                         th:text="'Pregnancy #' + ${abortionMap[item.id].pregnancyNumber}"></div>
-                                    <span th:if="${abortionCountMap != null
-                                                  and abortionCountMap[item.id] != null
-                                                  and abortionCountMap[item.id] > 1}"
-                                          class="lc-count abortion mt-1">
-                                        <i class="bi bi-heartbreak"></i>
-                                        <span th:text="${abortionCountMap[item.id]} + ' abortions'"></span>
-                                    </span>
-                                </div>
-                            </div>
+                            <div style="border-top:1px dashed #e2e8f0; margin:5px 0;"></div>
+                            <span class="lc-section-head lc-head-health">Health</span>
+                            <div class="lc-row"><i class="bi bi-heartbreak-fill lc-icon"></i><div><div class="lc-label">Last Abortion</div><div class="lc-value" th:text="${#temporals.format(abortionMap[item.id].abortionDate, 'dd-MM-yyyy')}"></div></div></div>
                         </div>
 
-                        <!-- No health events -->
-                        <div th:if="${(treatmentMap == null or !treatmentMap.containsKey(item.id)) and (abortionMap == null or !abortionMap.containsKey(item.id))}">
-                            <div class="lc-row">
-                                <i class="bi bi-shield-check lc-icon text-success"></i>
-                                <span class="lc-none">No health events</span>
-                            </div>
+                        <div th:unless="${(treatmentMap != null and treatmentMap.containsKey(item.id)) or (abortionMap != null and abortionMap.containsKey(item.id))}">
+                            <div class="lc-row"><i class="bi bi-shield-check lc-icon text-success"></i><span class="lc-none">No health events</span></div>
                         </div>
 
-                        <!-- 3. SALE / EXIT section -->
                         <div style="border-top:1px dashed #e2e8f0; margin:5px 0;"></div>
-                        <span class="lc-section-head lc-head-sale">
-                            <i class="bi bi-cash-stack"></i> Exit
-                        </span>
+                        <span class="lc-section-head lc-head-sale">Exit</span>
 
-                        <!-- Has a sale record -->
                         <div th:if="${saleMap != null and saleMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-cash-stack lc-icon text-success"></i>
-                                <div>
-                                    <div class="lc-label">Sold</div>
-                                    <div class="lc-value"
-                                         th:text="${#temporals.format(saleMap[item.id].saleDate, 'dd-MM-yyyy')}"></div>
-                                </div>
-                            </div>
-                            <div class="lc-row" th:if="${saleMap[item.id].salePrice != null}">
-                                <i class="bi bi-currency-dollar lc-icon text-success"></i>
-                                <div>
-                                    <div class="lc-label">Sale Price</div>
-                                    <div class="lc-price"
-                                         th:text="${#numbers.formatDecimal(saleMap[item.id].salePrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></div>
-                                </div>
-                            </div>
+                            <div class="lc-row"><i class="bi bi-cash-stack lc-icon text-success"></i><div><div class="lc-label">Sold</div><div class="lc-value" th:text="${#temporals.format(saleMap[item.id].saleDate, 'dd-MM-yyyy')}"></div></div></div>
+                            <div class="lc-row" th:if="${saleMap[item.id].salePrice != null}"><i class="bi bi-currency-dollar lc-icon"></i><div><div class="lc-label">Sale Price</div><div class="lc-price" th:text="${#numbers.formatDecimal(saleMap[item.id].salePrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></div></div></div>
                         </div>
-
-                        <!-- Dead — no sale -->
-                        <div th:if="${(saleMap == null or !saleMap.containsKey(item.id)) and item.status == 'DEAD'}">
-                            <div class="lc-row">
-                                <i class="bi bi-x-circle-fill lc-icon text-secondary"></i>
-                                <span class="lc-none">Deceased</span>
-                            </div>
+                        <div th:unless="${saleMap != null and saleMap.containsKey(item.id)}">
+                            <div class="lc-row" th:if="${item.status == 'DEAD'}"><i class="bi bi-x-circle-fill lc-icon text-secondary"></i><span class="lc-none">Deceased</span></div>
+                            <div class="lc-row" th:unless="${item.status == 'DEAD'}"><i class="bi bi-house-heart lc-icon text-primary"></i><span class="lc-none">Still on farm</span></div>
                         </div>
-
-                        <!-- Still on farm -->
-                        <div th:if="${(saleMap == null or !saleMap.containsKey(item.id)) and item.status != 'DEAD'}">
-                            <div class="lc-row">
-                                <i class="bi bi-house-heart lc-icon text-primary"></i>
-                                <span class="lc-none">Still on farm</span>
-                            </div>
-                        </div>
-
                     </td>
-                    <!-- ══ END Birth, Health & Sale column ══ -->
 
-                    <!-- ══ Actions column ══ -->
                     <td class="table-actions">
-                        <!-- View -->
-                        <a th:href="@{/livestock/view/{id}(id=${item.id})}"
-                           class="btn btn-sm btn-info" title="View">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <!-- Edit -->
-                        <a th:href="@{/livestock/edit/{id}(id=${item.id})}"
-                           class="btn btn-sm btn-warning" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <!-- Record Sale -->
-                        <a th:if="${item.status == 'ACTIVE' or item.status == 'SICK'}"
-                           th:href="@{/livestock/sales}"
-                           class="btn btn-sm btn-success" title="Record Sale">
-                            <i class="bi bi-cash-stack"></i>
-                        </a>
-                        <!-- Family Tree -->
-                        <a th:if="${birthMap != null and birthMap.containsKey(item.id)}"
-                           th:href="@{/livestock/births/family/{id}(id=${item.id})}"
-                           class="btn btn-sm btn-outline-info" title="View Family Tree">
-                            <i class="bi bi-diagram-3"></i>
-                        </a>
-
-                        <!-- ★ QR Code / Ear Tag button -->
-                        <a th:href="@{/livestock/qr/eartag/{id}(id=${item.id})}"
-                           class="qr-btn"
-                           title="View QR Code &amp; Ear Tag">
-                            <i class="bi bi-qr-code"></i>
-                        </a>
-
-                        <!-- ★ Print Ear Tag button -->
-                        <a th:href="@{/livestock/qr/eartags/print(ids=${item.id})}"
-                           class="qr-btn print-btn"
-                           title="Print Ear Tag"
-                           target="_blank">
-                            <i class="bi bi-printer-fill"></i>
-                        </a>
-
-                        <!-- Delete -->
-                        <button type="button" class="btn btn-sm btn-danger"
-                                data-bs-toggle="modal"
-                                th:data-bs-target="'#deleteModal' + ${item.id}"
-                                title="Delete">
-                            <i class="bi bi-trash"></i>
-                        </button>
-
-                        <!-- Delete Modal -->
+                        <a th:href="@{/livestock/view/{id}(id=${item.id})}" class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
+                        <a th:href="@{/livestock/edit/{id}(id=${item.id})}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/livestock/qr/eartag/{id}(id=${item.id})}" class="qr-btn"><i class="bi bi-qr-code"></i></a>
+                        <a th:href="@{/livestock/qr/eartags/print(ids=${item.id})}" class="qr-btn print-btn" target="_blank"><i class="bi bi-printer-fill"></i></a>
+                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" th:data-bs-target="'#deleteModal' + ${item.id}"><i class="bi bi-trash"></i></button>
                         <div class="modal fade" th:id="'deleteModal' + ${item.id}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Confirm Delete</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Are you sure you want to delete livestock
-                                        <strong th:text="${item.tagNumber}">TAG</strong>?
-                                        <br><small class="text-danger">This action cannot be undone.</small>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/livestock/delete/{id}(id=${item.id})}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
+                            <div class="modal-dialog"><div class="modal-content">
+                                <div class="modal-header"><h5 class="modal-title">Confirm Delete</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">Delete <strong th:text="${item.tagNumber}"></strong>? This cannot be undone.</div>
+                                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><form th:action="@{/livestock/delete/{id}(id=${item.id})}" method="post"><button type="submit" class="btn btn-danger">Delete</button></form></div>
+                            </div></div>
                         </div>
                     </td>
-                    <!-- ══ END Actions ══ -->
-
                 </tr>
                 </tbody>
             </table>
         </div>
-
-        <!-- ══ PAGINATION ════════════════════════════════════════════ -->
-        <div th:if="${totalPages != null and totalItems != null and totalItems > 0}"
-             class="pagination-wrap mt-4">
-
-            <div class="pagination-info">
-                <span class="showing-text">
-                    Showing
-                    <strong th:text="${(currentPage * pageSize) + 1}">1</strong>
-                    –
-                    <strong th:text="${(currentPage * pageSize) + pageSize > totalItems ? totalItems : (currentPage * pageSize) + pageSize}">10</strong>
-                    of
-                    <strong th:text="${totalItems}">0</strong>
-                    animals
-                </span>
-                <span class="page-size-wrap">
-                    <label class="page-size-label">Per page:</label>
-                    <select class="page-size-select" onchange="changePageSize(this.value)"
-                            th:attr="data-page=${currentPage}">
-                        <option value="5"  th:selected="${pageSize == 5}">5</option>
-                        <option value="10" th:selected="${pageSize == 10}">10</option>
-                        <option value="15" th:selected="${pageSize == 15}">15</option>
-                        <option value="20" th:selected="${pageSize == 20}">20</option>
-                        <option value="25" th:selected="${pageSize == 25}">25</option>
-                        <option value="50" th:selected="${pageSize == 50}">50</option>
-                    </select>
-                </span>
-            </div>
-
-            <nav th:if="${totalPages > 1}">
-                <ul class="pagination-list">
-
-                    <li th:classappend="${currentPage == 0} ? 'pg-disabled'">
-                        <a class="pg-btn pg-edge"
-                           th:href="@{/livestock/list(page=0, size=${pageSize})}"
-                           th:classappend="${currentPage == 0} ? 'disabled'"
-                           title="First page">
-                            <i class="bi bi-chevron-double-left"></i>
-                        </a>
-                    </li>
-
-                    <li th:classappend="${currentPage == 0} ? 'pg-disabled'">
-                        <a class="pg-btn"
-                           th:href="@{/livestock/list(page=${currentPage - 1}, size=${pageSize})}"
-                           th:classappend="${currentPage == 0} ? 'disabled'"
-                           title="Previous">
-                            <i class="bi bi-chevron-left"></i> Prev
-                        </a>
-                    </li>
-
-                    <th:block th:with="
-                        startPage=${currentPage > 2 ? currentPage - 2 : 0},
-                        endPage=${currentPage + 2 < totalPages - 1 ? currentPage + 2 : totalPages - 1}">
-
-                        <li th:if="${startPage > 0}">
-                            <a class="pg-btn"
-                               th:href="@{/livestock/list(page=0, size=${pageSize})}">1</a>
-                        </li>
-                        <li th:if="${startPage > 1}">
-                            <span class="pg-ellipsis">…</span>
-                        </li>
-
-                        <li th:each="i : ${#numbers.sequence(startPage, endPage)}"
-                            th:classappend="${i == currentPage} ? 'pg-active'">
-                            <a class="pg-btn"
-                               th:href="@{/livestock/list(page=${i}, size=${pageSize})}"
-                               th:text="${i + 1}">1</a>
-                        </li>
-
-                        <li th:if="${endPage < totalPages - 2}">
-                            <span class="pg-ellipsis">…</span>
-                        </li>
-                        <li th:if="${endPage < totalPages - 1}">
-                            <a class="pg-btn"
-                               th:href="@{/livestock/list(page=${totalPages - 1}, size=${pageSize})}"
-                               th:text="${totalPages}">N</a>
-                        </li>
-                    </th:block>
-
-                    <li th:classappend="${currentPage == totalPages - 1} ? 'pg-disabled'">
-                        <a class="pg-btn"
-                           th:href="@{/livestock/list(page=${currentPage + 1}, size=${pageSize})}"
-                           th:classappend="${currentPage == totalPages - 1} ? 'disabled'"
-                           title="Next">
-                            Next <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-
-                    <li th:classappend="${currentPage == totalPages - 1} ? 'pg-disabled'">
-                        <a class="pg-btn pg-edge"
-                           th:href="@{/livestock/list(page=${totalPages - 1}, size=${pageSize})}"
-                           th:classappend="${currentPage == totalPages - 1} ? 'disabled'"
-                           title="Last page">
-                            <i class="bi bi-chevron-double-right"></i>
-                        </a>
-                    </li>
-
-                </ul>
-            </nav>
-
-            <div th:if="${totalPages == 1}" class="text-muted" style="font-size:0.85rem;">
-                <i class="bi bi-check-circle text-success me-1"></i>
-                All <strong th:text="${totalItems}"></strong> animals shown
-            </div>
-
-        </div>
-        <!-- ══ END PAGINATION ═════════════════════════════════════════ -->
-
-    </div><!-- end list-card -->
+    </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    /* ── Page size ── */
-    function changePageSize(size) {
-        window.location.href = '/livestock/list?page=0&size=' + size;
-    }
-
-    /* ── Text search ── */
-    document.getElementById('searchInput').addEventListener('keyup', function () {
-        const v = this.value.toLowerCase();
-        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
+    function changePageSize(size) { window.location.href = '/livestock/list?page=0&size=' + size; }
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        var v = this.value.toLowerCase();
+        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(function(row) {
             row.style.display = row.textContent.toLowerCase().includes(v) ? '' : 'none';
         });
         updateBulkBar();
     });
-
-    /* ── Status filter ── */
     function filterByStatus(status, btn) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-
-        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
-            if (status === 'ALL') {
-                row.style.display = '';
-            } else if (status === 'BORN') {
-                row.style.display = row.getAttribute('data-born') === 'true' ? '' : 'none';
-            } else if (status === 'TREATED') {
-                row.style.display = row.getAttribute('data-treated') === 'true' ? '' : 'none';
-            } else if (status === 'ABORTION') {
-                row.style.display = row.getAttribute('data-abortion') === 'true' ? '' : 'none';
-            } else {
-                row.style.display = row.getAttribute('data-status') === status ? '' : 'none';
-            }
-        });
-
-        // Uncheck hidden rows
-        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
-            if (row.style.display === 'none') {
-                const cb = row.querySelector('.animal-check');
-                if (cb) cb.checked = false;
-            }
+        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(function(row) {
+            if (status === 'ALL') row.style.display = '';
+            else if (status === 'BORN') row.style.display = row.getAttribute('data-born') === 'true' ? '' : 'none';
+            else if (status === 'TREATED') row.style.display = row.getAttribute('data-treated') === 'true' ? '' : 'none';
+            else if (status === 'ABORTION') row.style.display = row.getAttribute('data-abortion') === 'true' ? '' : 'none';
+            else row.style.display = row.getAttribute('data-status') === status ? '' : 'none';
         });
         updateBulkBar();
     }
-
-    /* ── Select all checkbox ── */
     function toggleSelectAll(masterCb) {
-        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(row => {
+        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(function(row) {
             if (row.style.display !== 'none') {
-                const cb = row.querySelector('.animal-check');
+                var cb = row.querySelector('.animal-check');
                 if (cb) cb.checked = masterCb.checked;
             }
         });
         updateBulkBar();
     }
-
-    /* ── Update bulk action bar ── */
     function updateBulkBar() {
-        const checked = document.querySelectorAll('.animal-check:checked');
-        const bar     = document.getElementById('bulkBar');
-        const count   = document.getElementById('selectedCount');
+        var checked = document.querySelectorAll('.animal-check:checked');
+        var bar = document.getElementById('bulkBar');
+        var count = document.getElementById('selectedCount');
         count.textContent = checked.length;
-        bar.classList.toggle('visible', checked.length > 0);
-
-        // Sync master checkbox state
-        const masterCb     = document.getElementById('selectAll');
-        const allVisible   = Array.from(document.querySelectorAll('#dataTable tbody tr[data-status]'))
-                                  .filter(r => r.style.display !== 'none');
-        const allChecked   = allVisible.every(r => {
-            const cb = r.querySelector('.animal-check');
-            return cb && cb.checked;
-        });
-        masterCb.checked       = allChecked && allVisible.length > 0;
-        masterCb.indeterminate = checked.length > 0 && !allChecked;
+        if (checked.length > 0) bar.classList.add('visible');
+        else bar.classList.remove('visible');
     }
-
-    /* ── Clear selection ── */
     function clearSelection() {
-        document.querySelectorAll('.animal-check').forEach(cb => cb.checked = false);
-        document.getElementById('selectAll').checked       = false;
-        document.getElementById('selectAll').indeterminate = false;
+        document.querySelectorAll('.animal-check').forEach(function(cb) { cb.checked = false; });
+        document.getElementById('selectAll').checked = false;
         updateBulkBar();
     }
-
-    /* ── Get selected IDs ── */
     function getSelectedIds() {
-        return Array.from(document.querySelectorAll('.animal-check:checked'))
-                    .map(cb => cb.value);
+        return Array.from(document.querySelectorAll('.animal-check:checked')).map(function(cb) { return cb.value; });
     }
-
-    /* ── Print selected ear tags ── */
     function printSelected() {
-        const ids = getSelectedIds();
-        if (ids.length === 0) {
-            alert('Please select at least one animal first.');
-            return;
-        }
-        const url = '/livestock/qr/eartags/print?' + ids.map(id => 'ids=' + id).join('&');
-        window.open(url, '_blank');
+        var ids = getSelectedIds();
+        if (ids.length === 0) { alert('Select at least one animal.'); return; }
+        window.open('/livestock/qr/eartags/print?' + ids.map(function(id) { return 'ids=' + id; }).join('&'), '_blank');
     }
-
-    /* ── View QR codes for selected (opens first animal's tag page) ── */
     function viewQRSelected() {
-        const ids = getSelectedIds();
-        if (ids.length === 0) {
-            alert('Please select at least one animal first.');
-            return;
-        }
-        if (ids.length === 1) {
-            window.open('/livestock/qr/eartag/' + ids[0], '_blank');
-        } else {
-            // Multiple: open print page (shows all QR codes)
-            const url = '/livestock/qr/eartags/print?' + ids.map(id => 'ids=' + id).join('&');
-            window.open(url, '_blank');
-        }
+        var ids = getSelectedIds();
+        if (ids.length === 0) { alert('Select at least one animal.'); return; }
+        if (ids.length === 1) window.open('/livestock/qr/eartag/' + ids[0], '_blank');
+        else window.open('/livestock/qr/eartags/print?' + ids.map(function(id) { return 'ids=' + id; }).join('&'), '_blank');
     }
 </script>
 </body>

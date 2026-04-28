@@ -16,7 +16,9 @@ public interface MalesReadyToBreedRepository extends JpaRepository<Livestock, UU
             SELECT
                 id,
                 tag_number,
+                category_id,
                 category_name,
+                category_code,
                 age_months,
                 total_breedings,
                 successful_breedings,
@@ -35,7 +37,9 @@ public interface MalesReadyToBreedRepository extends JpaRepository<Livestock, UU
             SELECT
                 id,
                 tag_number,
+                category_id,
                 category_name,
+                category_code,
                 age_months,
                 total_breedings,
                 successful_breedings,

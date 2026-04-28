@@ -35,8 +35,11 @@
 
 <div class="container-fluid px-4">
 
-    <!-- Check if there are any notifications -->
-    <div th:if="${overdueAnimals.empty and dueSoonAnimals.empty and newbornAnimals.empty and readyToBreed.empty}"
+    <!-- Check if there are any notifications - using safe null checks -->
+    <div th:if="${overdueAnimals != null and overdueAnimals.empty}
+                and ${dueSoonAnimals != null and dueSoonAnimals.empty}
+                and ${newbornAnimals != null and newbornAnimals.empty}
+                and ${readyToBreed != null and readyToBreed.empty}"
          class="alert alert-success d-flex gap-3 align-items-center">
         <i class="bi bi-check-circle-fill fs-3"></i>
         <div>
@@ -46,7 +49,7 @@
     </div>
 
     <!-- 1. Overdue Births -->
-    <div class="notif-section" th:if="${!overdueAnimals.empty}">
+    <div class="notif-section" th:if="${overdueAnimals != null and !overdueAnimals.empty}">
         <div class="notif-section-header" style="background:#fef2f2;color:#dc2626;">
             <i class="bi bi-exclamation-octagon-fill"></i>
             OVERDUE — Expected to Give Birth
@@ -72,7 +75,7 @@
     </div>
 
     <!-- 2. Due Soon -->
-    <div class="notif-section" th:if="${!dueSoonAnimals.empty}">
+    <div class="notif-section" th:if="${dueSoonAnimals != null and !dueSoonAnimals.empty}">
         <div class="notif-section-header" style="background:#fdf2f8;color:#db2777;">
             <i class="bi bi-calendar-heart"></i>
             Due to Give Birth Soon (within 14 days)
@@ -95,7 +98,7 @@
     </div>
 
     <!-- 3. Newborn Animals -->
-    <div class="notif-section" th:if="${!newbornAnimals.empty}">
+    <div class="notif-section" th:if="${newbornAnimals != null and !newbornAnimals.empty}">
         <div class="notif-section-header" style="background:#f0fdf4;color:#16a34a;">
             <i class="bi bi-stars"></i>
             Recently Born (Newborns)
@@ -116,7 +119,7 @@
     </div>
 
     <!-- 4. Ready to Breed -->
-    <div class="notif-section" th:if="${!readyToBreed.empty}">
+    <div class="notif-section" th:if="${readyToBreed != null and !readyToBreed.empty}">
         <div class="notif-section-header" style="background:#faf5ff;color:#7c3aed;">
             <i class="bi bi-heart-arrow"></i>
             Ready to Breed

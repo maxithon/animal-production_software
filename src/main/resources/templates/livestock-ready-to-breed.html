@@ -2,259 +2,331 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Ready to Breed</title>
+    <title>Ready to Breed by Category</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body { background: #f0f4f8; }
         .page-header { background: linear-gradient(135deg,#7c3aed,#a855f7); color:white; padding:24px 32px; margin-bottom:24px; }
-        .sum-card { background:white; border-radius:10px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.07); }
-        .card-panel { background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.07); overflow:hidden; margin-bottom:20px; }
-        .card-panel-header { padding:14px 20px; font-weight:700; border-bottom:1px solid #f0f2f5; display:flex; align-items:center; gap:8px; }
+        .sum-card { background:white; border-radius:10px; padding:20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.07); transition: transform 0.2s; }
+        .sum-card:hover { transform: translateY(-2px); }
+        .category-section { margin-bottom: 32px; }
+        .category-header {
+            background: white;
+            border-radius: 12px 12px 0 0;
+            padding: 16px 24px;
+            margin-bottom: 0;
+            border-left: 4px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,.07);
+        }
+        .category-header.goat { border-left-color: #10b981; }
+        .category-header.pig { border-left-color: #f59e0b; }
+        .category-header.cattle { border-left-color: #3b82f6; }
+        .category-header.default { border-left-color: #8b5cf6; }
+
+        .card-panel {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .card-panel-header {
+            padding: 14px 20px;
+            font-weight: 700;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8fafc;
+        }
         .table thead th { background:#f8fafc; font-size:0.75rem; font-weight:700; text-transform:uppercase; }
         .rate-bar { height:8px; border-radius:4px; background:#e2e8f0; overflow:hidden; margin-top:4px; }
         .rate-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,#16a34a,#4ade80); }
         .badge-experienced { background:#dbeafe; color:#1e40af; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; display:inline-block; }
         .badge-untested    { background:#fef9c3; color:#92400e; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; display:inline-block; }
         .badge-bred        { background:#dcfce7; color:#166534; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; display:inline-block; }
-        .nav-tabs .nav-link { font-weight:600; }
-        .nav-tabs .nav-link.active { background:#7c3aed; color:white; border-color:#7c3aed; }
+        .category-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .category-goat { background: #d1fae5; color: #065f46; }
+        .category-pig { background: #fed7aa; color: #92400e; }
+        .category-cattle { background: #dbeafe; color: #1e40af; }
+        .nav-pills .nav-link {
+            color: #4b5563;
+            border-radius: 8px;
+            padding: 8px 20px;
+        }
+        .nav-pills .nav-link.active {
+            background: #7c3aed;
+            color: white;
+        }
+        .empty-state {
+            padding: 60px 20px;
+            text-align: center;
+            color: #94a3b8;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h4 class="mb-1"><i class="bi bi-heart-arrow me-2"></i>Ready to Breed</h4>
-        <small style="opacity:.85">Active animals aged 12+ months eligible for breeding</small>
-    </div>
-    <div class="d-flex gap-2">
-        <a th:href="@{/livestock/lifecycle/dashboard}"  class="btn btn-light btn-sm">← Dashboard</a>
-        <a th:href="@{/livestock/breeding/register}"    class="btn btn-dark  btn-sm fw-bold">
-            <i class="bi bi-plus-circle me-1"></i>Register Breeding
-        </a>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1"><i class="bi bi-heart-arrow me-2"></i>Ready to Breed</h4>
+            <small style="opacity:.85">Active animals aged 12+ months eligible for breeding - Grouped by Category</small>
+        </div>
+        <div class="d-flex gap-2">
+            <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-light btn-sm">← Dashboard</a>
+            <a th:href="@{/livestock/breeding/register}" class="btn btn-dark btn-sm fw-bold">
+                <i class="bi bi-plus-circle me-1"></i>Register Breeding
+            </a>
+        </div>
     </div>
 </div>
 
 <div class="container-fluid px-4">
 
-    <!-- Summary Cards - FIXED: Handle null values -->
+    <!-- Summary Cards -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="sum-card">
-                <div style="font-size:2rem;font-weight:800;color:#2563eb;"
-                     th:text="${maleTotal != null ? maleTotal : 0}">0</div>
-                <div class="text-muted small"><i class="bi bi-gender-male text-primary"></i> Eligible Males</div>
+                <div style="font-size:2rem;font-weight:800;color:#2563eb;" th:text="${maleTotal}">0</div>
+                <div class="text-muted small"><i class="bi bi-gender-male text-primary"></i> Total Eligible Males</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sum-card">
-                <div style="font-size:2rem;font-weight:800;color:#db2777;"
-                     th:text="${femaleTotal != null ? femaleTotal : 0}">0</div>
-                <div class="text-muted small"><i class="bi bi-gender-female text-danger"></i> Eligible Females</div>
+                <div style="font-size:2rem;font-weight:800;color:#db2777;" th:text="${femaleTotal}">0</div>
+                <div class="text-muted small"><i class="bi bi-gender-female text-danger"></i> Total Eligible Females</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sum-card">
-                <div style="font-size:2rem;font-weight:800;color:#16a34a;"
-                     th:text="${maleAvgSuccessRate != null ? maleAvgSuccessRate + '%' : '0%'}">0%</div>
+                <div style="font-size:2rem;font-weight:800;color:#16a34a;" th:text="${maleAvgSuccessRate != null ? maleAvgSuccessRate + '%' : '0%'}">0%</div>
                 <div class="text-muted small">Male Avg. Success Rate</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="sum-card">
-                <div style="font-size:2rem;font-weight:800;color:#7c3aed;"
-                     th:text="${(maleNeverBred != null ? maleNeverBred : 0) + (femaleNeverBred != null ? femaleNeverBred : 0)}">0</div>
+                <div style="font-size:2rem;font-weight:800;color:#7c3aed;" th:text="${maleNeverBred + femaleNeverBred}">0</div>
                 <div class="text-muted small">Never Bred (Total)</div>
             </div>
         </div>
     </div>
 
-    <!-- Search -->
-    <form th:action="@{/livestock/lifecycle/ready-to-breed}" method="get" class="mb-3 d-flex gap-2">
-        <input type="hidden" name="tab" th:value="${activeTab}">
-        <input type="text" name="search" class="form-control" style="max-width:320px;"
-               placeholder="Search by tag or category…" th:value="${search}">
-        <button class="btn fw-bold" style="background:#7c3aed;color:white;" type="submit">
-            <i class="bi bi-search me-1"></i>Search
-        </button>
-        <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="btn btn-outline-secondary">Clear</a>
-    </form>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs mb-0" style="border-bottom:none;">
-        <li class="nav-item">
-            <a class="nav-link"
-               th:classappend="${activeTab == 'both' or activeTab == null} ? 'active' : ''"
-               th:href="@{/livestock/lifecycle/ready-to-breed(tab='both', search=${search})}">
-                <i class="bi bi-gender-ambiguous me-1"></i>Both
-                <span class="badge bg-secondary ms-1" th:text="${(maleTotal != null ? maleTotal : 0) + (femaleTotal != null ? femaleTotal : 0)}">0</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link"
-               th:classappend="${activeTab == 'males'} ? 'active' : ''"
-               th:href="@{/livestock/lifecycle/ready-to-breed(tab='males', search=${search})}">
-                <i class="bi bi-gender-male me-1"></i>Males
-                <span class="badge bg-primary ms-1" th:text="${maleTotal != null ? maleTotal : 0}">0</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link"
-               th:classappend="${activeTab == 'females'} ? 'active' : ''"
-               th:href="@{/livestock/lifecycle/ready-to-breed(tab='females', search=${search})}">
-                <i class="bi bi-gender-female me-1"></i>Females
-                <span class="badge ms-1" style="background:#db2777;color:white;" th:text="${femaleTotal != null ? femaleTotal : 0}">0</span>
-            </a>
-        </li>
-    </ul>
-
-    <!-- ══ MALES TABLE ══════════════════════════════════════════════ -->
-    <div class="card-panel"
-         th:if="${activeTab == 'both' or activeTab == 'males' or activeTab == null}"
-         style="border-radius:0 12px 12px 12px;">
-        <div class="card-panel-header" style="background:#eff6ff;color:#1e40af;">
-            <i class="bi bi-gender-male"></i>
-            Eligible Breeding Males
-            <span class="badge bg-primary ms-2" th:text="${maleTotal != null ? maleTotal : 0}">0</span>
-        </div>
-
-        <div th:if="${males == null or males.empty}"
-             style="padding:50px;text-align:center;color:#94a3b8;">
-            <i class="bi bi-inbox" style="font-size:3rem;"></i>
-            <p class="mt-2">No eligible males found</p>
-        </div>
-
-        <div class="table-responsive" th:if="${males != null and !males.empty}">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Tag</th>
-                    <th>Category</th>
-                    <th>Age</th>
-                    <th>Total Breedings</th>
-                    <th>Successful</th>
-                    <th>Success Rate</th>
-                    <th>Experience</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="male, stat : ${males}">
-                    <td class="text-muted small" th:text="${stat.index + 1}">1</td>
-                    <td><strong th:text="${male.tagNumber}">TAG</strong></td>
-                    <td>
-                        <span th:if="${male.categoryName != null}"
-                              class="badge bg-info text-dark" th:text="${male.categoryName}"></span>
-                        <span th:if="${male.categoryName == null}" class="badge bg-secondary">N/A</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark border"
-                              th:text="${male.ageMonths != null ? male.ageMonths + ' months' : 'N/A'}"></span>
-                    </td>
-                    <td class="text-center fw-bold" th:text="${male.totalBreedings != null ? male.totalBreedings : 0}">0</td>
-                    <td class="text-center fw-bold text-success" th:text="${male.successfulBreedings != null ? male.successfulBreedings : 0}">0</td>
-                    <td style="min-width:130px;">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="small fw-bold"
-                                  th:text="${male.successRate != null ? #numbers.formatDecimal(male.successRate,1,1) + '%' : '0%'}">0%</span>
-                            <div class="rate-bar flex-grow-1">
-                                <div class="rate-fill" th:style="'width:' + (male.successRate != null ? male.successRate : 0) + '%'"></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span th:if="${male.totalBreedings != null and male.totalBreedings > 0}" class="badge-experienced">🐂 Experienced</span>
-                        <span th:if="${male.totalBreedings == null or male.totalBreedings == 0}" class="badge-untested">🌱 Untested</span>
-                    </td>
-                    <td>
-                        <a th:href="@{/livestock/breeding/register}"
-                           class="btn btn-sm btn-primary fw-bold">
-                            <i class="bi bi-heart-fill me-1"></i>Use
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+    <!-- Search Bar -->
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <form th:action="@{/livestock/lifecycle/ready-to-breed}" method="get" class="d-flex gap-2">
+                <input type="hidden" name="category" th:value="${selectedCategory}">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Search by tag number or category..."
+                       th:value="${search}" style="border-radius: 8px;">
+                <button class="btn btn-primary px-4" type="submit" style="background:#7c3aed; border:none;">
+                    <i class="bi bi-search me-1"></i>Search
+                </button>
+                <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle me-1"></i>Clear
+                </a>
+            </form>
         </div>
     </div>
 
-    <!-- ══ FEMALES TABLE ════════════════════════════════════════════ -->
-    <div class="card-panel"
-         th:if="${activeTab == 'both' or activeTab == 'females' or activeTab == null}">
-        <div class="card-panel-header" style="background:#fdf2f8;color:#9d174d;">
-            <i class="bi bi-gender-female"></i>
-            Eligible Breeding Females
-            <span class="badge ms-2" style="background:#db2777;color:white;" th:text="${femaleTotal != null ? femaleTotal : 0}">0</span>
+    <!-- Category Filter Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-pills justify-content-center gap-2">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${selectedCategory == 'all'} ? 'active' : ''"
+                       th:href="@{/livestock/lifecycle/ready-to-breed(category='all', search=${search})}">
+                        <i class="bi bi-grid-3x3-gap-fill me-1"></i> All Categories
+                    </a>
+                </li>
+                <li class="nav-item" th:each="cat : ${allCategories}">
+                    <a class="nav-link" th:classappend="${selectedCategory == cat} ? 'active' : ''"
+                       th:href="@{/livestock/lifecycle/ready-to-breed(category=${cat}, search=${search})}">
+                        <i class="bi bi-tag-fill me-1"></i> <span th:text="${cat}"></span>
+                    </a>
+                </li>
+            </ul>
         </div>
+    </div>
 
-        <div th:if="${females == null or females.empty}"
-             style="padding:50px;text-align:center;color:#94a3b8;">
-            <i class="bi bi-inbox" style="font-size:3rem;"></i>
-            <p class="mt-2">No eligible females found</p>
+    <!-- Display by Category -->
+    <div th:each="categoryEntry : ${malesByCategory.entrySet()}"
+         th:with="categoryName=${categoryEntry.key}, males=${categoryEntry.value}, females=${femalesByCategory.get(categoryName)}">
+
+        <div class="category-section">
+            <!-- Category Header -->
+            <div class="category-header"
+                 th:classappend="${categoryName == 'Goats' ? 'goat' : (categoryName == 'Pigs' ? 'pig' : (categoryName == 'Cattle' ? 'cattle' : 'default'))}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="bi bi-folder2-open me-2"></i>
+                            <span th:text="${categoryName}"></span>
+                        </h5>
+                        <small class="text-muted">
+                            <i class="bi bi-gender-male me-1"></i> <span th:text="${males.size()}"></span> males &nbsp;|&nbsp;
+                            <i class="bi bi-gender-female me-1"></i> <span th:text="${females != null ? females.size() : 0}"></span> females
+                        </small>
+                    </div>
+                    <div>
+                        <span class="category-badge"
+                              th:classappend="${categoryName == 'Goats' ? 'category-goat' : (categoryName == 'Pigs' ? 'category-pig' : 'category-cattle')}"
+                              th:text="${categoryName}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Males Table -->
+            <div class="card-panel">
+                <div class="card-panel-header" style="background:#eff6ff;color:#1e40af;">
+                    <i class="bi bi-gender-male"></i>
+                    Eligible Breeding Males - <span th:text="${categoryName}"></span>
+                    <span class="badge bg-primary ms-2" th:text="${males.size()}">0</span>
+                </div>
+
+                <div th:if="${males.empty}" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No eligible males found for <span th:text="${categoryName}"></span></p>
+                </div>
+
+                <div class="table-responsive" th:if="${not males.empty}">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tag</th>
+                            <th>Age</th>
+                            <th>Total Breedings</th>
+                            <th>Successful</th>
+                            <th>Success Rate</th>
+                            <th>Experience</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="male, stat : ${males}">
+                            <td class="text-muted small" th:text="${stat.index + 1}">1</td>
+                            <td><strong th:text="${male.tagNumber}">TAG</strong></td>
+                            <td>
+                                    <span class="badge bg-light text-dark border"
+                                          th:text="${male.ageMonths != null ? male.ageMonths + ' months' : 'N/A'}"></span>
+                            </td>
+                            <td class="text-center fw-bold" th:text="${male.totalBreedings != null ? male.totalBreedings : 0}">0</td>
+                            <td class="text-center fw-bold text-success" th:text="${male.successfulBreedings != null ? male.successfulBreedings : 0}">0</td>
+                            <td style="min-width:130px;">
+                                <div class="d-flex align-items-center gap-2">
+                                        <span class="small fw-bold"
+                                              th:text="${male.successRate != null ? #numbers.formatDecimal(male.successRate,1,1) + '%' : '0%'}">0%</span>
+                                    <div class="rate-bar flex-grow-1">
+                                        <div class="rate-fill" th:style="'width:' + (male.successRate != null ? male.successRate : 0) + '%'"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                    <span th:if="${male.totalBreedings != null and male.totalBreedings > 0}"
+                                          class="badge-experienced">🐂 Experienced</span>
+                                <span th:if="${male.totalBreedings == null or male.totalBreedings == 0}"
+                                      class="badge-untested">🌱 Untested</span>
+                            </td>
+                            <td>
+                                <a th:href="@{/livestock/breeding/register}" class="btn btn-sm btn-primary fw-bold">
+                                    <i class="bi bi-heart-fill me-1"></i>Use
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Females Table (if exists) -->
+            <div class="card-panel" th:if="${females != null and not females.empty}">
+                <div class="card-panel-header" style="background:#fdf2f8;color:#9d174d;">
+                    <i class="bi bi-gender-female"></i>
+                    Eligible Breeding Females - <span th:text="${categoryName}"></span>
+                    <span class="badge ms-2" style="background:#db2777;color:white;" th:text="${females.size()}">0</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tag</th>
+                            <th>Age</th>
+                            <th>Offspring</th>
+                            <th>Last Bred</th>
+                            <th>Status</th>
+                            <th>Experience</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="female, stat : ${females}">
+                            <td class="text-muted small" th:text="${stat.index + 1}">1</td>
+                            <td><strong th:text="${female.tagNumber}">TAG</strong></td>
+                            <td>
+                                    <span class="badge bg-light text-dark border"
+                                          th:text="${female.ageMonths != null ? female.ageMonths + ' months' : 'N/A'}"></span>
+                            </td>
+                            <td class="text-center fw-bold text-success" th:text="${female.offspringCount != null ? female.offspringCount : 0}">0</td>
+                            <td>
+                                    <span th:if="${female.lastBreedingDate != null}" class="small"
+                                          th:text="${#temporals.format(female.lastBreedingDate,'dd-MM-yyyy')}"></span>
+                                <span th:if="${female.lastBreedingDate == null}" class="text-muted small">Never</span>
+                            </td>
+                            <td>
+                                    <span class="badge" th:classappend="${female.status == 'ACTIVE'} ? 'bg-success' : 'bg-warning text-dark'"
+                                          th:text="${female.status != null ? female.status : 'UNKNOWN'}"></span>
+                            </td>
+                            <td>
+                                <th:block th:with="neverBred=${female.isNeverBred != null ? female.isNeverBred : true}">
+                                    <span th:if="${!neverBred}" class="badge-bred">✅ Has bred</span>
+                                    <span th:if="${neverBred}" class="badge-untested">🌱 Never bred</span>
+                                </th:block>
+                            </td>
+                            <td>
+                                <a th:href="@{/livestock/breeding/register}" class="btn btn-sm fw-bold"
+                                   style="background:#db2777;color:white;">
+                                    <i class="bi bi-heart-fill me-1"></i>Breed
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+    </div>
 
-        <div class="table-responsive" th:if="${females != null and !females.empty}">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Tag</th>
-                    <th>Category</th>
-                    <th>Age</th>
-                    <th>Offspring</th>
-                    <th>Last Bred</th>
-                    <th>Status</th>
-                    <th>Experience</th>
-                    <th>Action</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="female, stat : ${females}">
-                    <td class="text-muted small" th:text="${stat.index + 1}">1</td>
-                    <td><strong th:text="${female.tagNumber}">TAG</strong></td>
-                    <td>
-                        <span th:if="${female.categoryName != null}"
-                              class="badge bg-info text-dark" th:text="${female.categoryName}"></span>
-                        <span th:if="${female.categoryName == null}" class="badge bg-secondary">N/A</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-light text-dark border"
-                              th:text="${female.ageMonths != null ? female.ageMonths + ' months' : 'N/A'}"></span>
-                    </td>
-                    <td class="text-center fw-bold text-success"
-                        th:text="${female.offspringCount != null ? female.offspringCount : 0}">0</td>
-                    <td>
-                        <span th:if="${female.lastBreedingDate != null}" class="small"
-                              th:text="${#temporals.format(female.lastBreedingDate,'dd-MM-yyyy')}"></span>
-                        <span th:if="${female.lastBreedingDate == null}" class="text-muted small">Never</span>
-                    </td>
-                    <td>
-                        <span class="badge"
-                              th:classappend="${female.status == 'ACTIVE'} ? 'bg-success' : 'bg-warning text-dark'"
-                              th:text="${female.status != null ? female.status : 'UNKNOWN'}"></span>
-                    </td>
-                    <td>
-                        <!-- FIXED: Handle null for isNeverBred method -->
-                        <th:block th:with="neverBred=${female.isNeverBred != null ? female.isNeverBred : true}">
-                            <span th:if="${!neverBred}" class="badge-bred">✅ Has bred</span>
-                            <span th:if="${neverBred}" class="badge-untested">🌱 Never bred</span>
-                        </th:block>
-                    </td>
-                    <td>
-                        <a th:href="@{/livestock/breeding/register}"
-                           class="btn btn-sm fw-bold" style="background:#db2777;color:white;">
-                            <i class="bi bi-heart-fill me-1"></i>Breed
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+    <!-- Show message if no categories have data -->
+    <div th:if="${malesByCategory.empty and femalesByCategory.empty}" class="text-center py-5">
+        <div class="empty-state">
+            <i class="bi bi-heart-broken"></i>
+            <h5>No eligible animals found</h5>
+            <p class="text-muted">There are no animals currently meeting the breeding criteria.<br>
+                Animals need to be at least 12 months old, active, and not pregnant (for females).</p>
+            <a th:href="@{/livestock/lifecycle/dashboard}" class="btn btn-primary mt-3">
+                <i class="bi bi-arrow-left me-1"></i>Return to Dashboard
+            </a>
         </div>
     </div>
 
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

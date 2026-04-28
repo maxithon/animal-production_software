@@ -79,9 +79,10 @@ public class Livestock {
     @JoinColumn(name = "livestock_category_id")
     private LivestockCategory livestockCategory;
 
+    // ✅ FIXED: Changed column name to match database (beneficiary_id)
     @ManyToOne
-    @JoinColumn(name = "abaragizwa_amatungo_id")
-    private AbaragizwaAmatungo abaragizwaAmatungo;
+    @JoinColumn(name = "beneficiary_id")
+    private Beneficiary beneficiary;
 
     @ManyToOne
     @JoinColumn(name = "mother_id")
@@ -102,7 +103,7 @@ public class Livestock {
     private String livestockCategoryIdValue;
 
     @Transient
-    private String abaragizwaAmatungoIdValue;
+    private String beneficiaryIdValue;
 
     @PrePersist
     protected void onCreate() {
@@ -176,9 +177,9 @@ public class Livestock {
         this.livestockCategory = livestockCategory;
     }
 
-    public AbaragizwaAmatungo getAbaragizwaAmatungo() { return abaragizwaAmatungo; }
-    public void setAbaragizwaAmatungo(AbaragizwaAmatungo abaragizwaAmatungo) {
-        this.abaragizwaAmatungo = abaragizwaAmatungo;
+    public Beneficiary getBeneficiary() { return beneficiary; }
+    public void setBeneficiary(Beneficiary beneficiary) {
+        this.beneficiary = beneficiary;
     }
 
     public Livestock getMother() { return mother; }
@@ -198,8 +199,8 @@ public class Livestock {
         this.livestockCategoryIdValue = livestockCategoryIdValue;
     }
 
-    public String getAbaragizwaAmatungoIdValue() { return abaragizwaAmatungoIdValue; }
-    public void setAbaragizwaAmatungoIdValue(String abaragizwaAmatungoIdValue) {
-        this.abaragizwaAmatungoIdValue = abaragizwaAmatungoIdValue;
+    public String getBeneficiaryIdValue() { return beneficiaryIdValue; }
+    public void setBeneficiaryIdValue(String beneficiaryIdValue) {
+        this.beneficiaryIdValue = beneficiaryIdValue;
     }
 }

@@ -1,0 +1,62 @@
+package rw.animalproduct.animal.production.repository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import rw.animalproduct.animal.production.entity.Beneficiary;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> {
+
+    Optional<Beneficiary> findByNid(String nid);
+
+    List<Beneficiary> findByRepresentativeId(UUID representativesAbororaId);
+
+    List<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
+
+    // Find all beneficiaries by location
+    List<Beneficiary> findByLocationId(UUID locationId);
+
+    // Find beneficiaries by location with a custom query (alternative method)
+    @Query("SELECT a FROM Beneficiary a WHERE a.location.id = :locationId")
+    List<Beneficiary> findBeneficiariesByLocation(@Param("locationId") UUID locationId);
+
+    // Find beneficiaries by representative and location
+    @Query("SELECT a FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.location.id = :locationId")
+    List<Beneficiary> findByUhagarariyeAndLocation(@Param("representativesId") UUID representativesId,
+                                                   @Param("locationId") UUID locationId);
+
+    // Count beneficiaries by location
+    @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.location.id = :locationId")
+    long countByLocation(@Param("locationId") UUID locationId);
+
+    // Count beneficiaries by representative and location
+    @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.location.id = :locationId")
+    long countByUhagarariyeAndLocation(@Param("representativesId") UUID representativesId,
+                                       @Param("locationId") UUID locationId);
+
+    // Pagination support
+    Page<Beneficiary> findAll(Pageable pageable);
+
+    Page<Beneficiary> findByLocationId(UUID locationId, Pageable pageable);
+
+    @Query("SELECT a FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.location.id = :locationId")
+    Page<Beneficiary> findByUhagarariyeAndLocation(@Param("representativesId") UUID representativesId,
+                                                   @Param("locationId") UUID locationId,
+                                                   Pageable pageable);
+
+    Page<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName, Pageable pageable);
+
+    @Query("""
+    SELECT a.representative.id, COUNT(a)
+    FROM Beneficiary a
+    WHERE a.representative IS NOT NULL
+    GROUP BY a.representative.id
+""")
+    List<Object[]> countByEachSupervisor();
+}

@@ -1,16 +1,16 @@
 package rw.animalproduct.animal.production.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * LivestockBreeding entity - represents breeding events
- * Database schema: id, livestock_id, breeding_date, breeding_method, male_livestock_id,
- * veterinarian_id, status, expected_pregnancy_check_date, expected_due_date, notes,
- * created_at, created_by, is_deleted
+ * LivestockBreeding entity — maps to the livestock_breeding table.
+ *
+ * IMPORTANT: Every @Column name is explicit to prevent Hibernate from
+ * accidentally inheriting field names from a parent/joined entity.
  */
 @Entity
 @Table(name = "livestock_breeding")
@@ -18,30 +18,36 @@ public class LivestockBreeding {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id", nullable = false, updatable = false)
     private UUID id;
 
+    /**
+     * The female animal being bred.
+     * livestock_id FK — NOT NULL enforced via livestockIdValue transient field.
+     */
     @ManyToOne
-    @JoinColumn(name = "livestock_id", referencedColumnName = "id")
-    @NotNull(message = "Female livestock is required")
+    @JoinColumn(name = "livestock_id", referencedColumnName = "id", nullable = false)
     private Livestock livestock;
 
-    @NotNull(message = "Breeding date is required")
-    @Column(name = "breeding_date")
+    @Column(name = "breeding_date", nullable = false)
     private LocalDate breedingDate;
 
+    /** NATURAL | ARTIFICIAL_INSEMINATION | EMBRYO_TRANSFER */
     @Column(name = "breeding_method", length = 50)
-    private String breedingMethod; // NATURAL, ARTIFICIAL_INSEMINATION, etc.
+    private String breedingMethod;
 
+    /** Male sire — optional for AI / Embryo Transfer */
     @ManyToOne
-    @JoinColumn(name = "male_livestock_id", referencedColumnName = "id")
+    @JoinColumn(name = "male_livestock_id", referencedColumnName = "id", nullable = true)
     private Livestock maleLivestock;
 
     @ManyToOne
-    @JoinColumn(name = "veterinarian_id", referencedColumnName = "id")
+    @JoinColumn(name = "veterinarian_id", referencedColumnName = "id", nullable = true)
     private Veterinarian veterinarian;
 
+    /** PENDING | CONFIRMED_PREGNANT | FAILED | COMPLETED */
     @Column(name = "status", length = 30)
-    private String status; // PENDING, CONFIRMED_PREGNANT, FAILED, COMPLETED
+    private String status;
 
     @Column(name = "expected_pregnancy_check_date")
     private LocalDate expectedPregnancyCheckDate;
@@ -56,14 +62,16 @@ public class LivestockBreeding {
     private LocalDateTime createdAt;
 
     @ManyToOne
-    @JoinColumn(name = "created_by", referencedColumnName = "user_id")
+    @JoinColumn(name = "created_by", referencedColumnName = "user_id", nullable = true)
     private Users createdBy;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "boolean default false")
     private Boolean isDeleted = false;
 
-    // Transient fields for form binding
+    // ── Transient form-binding fields (never persisted) ───────────────────────
+
     @Transient
+    @NotBlank(message = "Female livestock is required")
     private String livestockIdValue;
 
     @Transient
@@ -72,16 +80,18 @@ public class LivestockBreeding {
     @Transient
     private String veterinarianIdValue;
 
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
+
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (isDeleted == null) isDeleted = false;
     }
 
     public LivestockBreeding() {}
 
-    // Getters and Setters
+    // ── Getters & Setters ─────────────────────────────────────────────────────
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -104,9 +114,7 @@ public class LivestockBreeding {
     public void setStatus(String status) { this.status = status; }
 
     public LocalDate getExpectedPregnancyCheckDate() { return expectedPregnancyCheckDate; }
-    public void setExpectedPregnancyCheckDate(LocalDate expectedPregnancyCheckDate) {
-        this.expectedPregnancyCheckDate = expectedPregnancyCheckDate;
-    }
+    public void setExpectedPregnancyCheckDate(LocalDate d) { this.expectedPregnancyCheckDate = d; }
 
     public LocalDate getExpectedDueDate() { return expectedDueDate; }
     public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
@@ -124,25 +132,22 @@ public class LivestockBreeding {
     public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 
     public String getLivestockIdValue() { return livestockIdValue; }
-    public void setLivestockIdValue(String livestockIdValue) { this.livestockIdValue = livestockIdValue; }
+    public void setLivestockIdValue(String v) { this.livestockIdValue = v; }
 
     public String getMaleLivestockIdValue() { return maleLivestockIdValue; }
-    public void setMaleLivestockIdValue(String maleLivestockIdValue) {
-        this.maleLivestockIdValue = maleLivestockIdValue;
-    }
+    public void setMaleLivestockIdValue(String v) { this.maleLivestockIdValue = v; }
 
     public String getVeterinarianIdValue() { return veterinarianIdValue; }
-    public void setVeterinarianIdValue(String veterinarianIdValue) {
-        this.veterinarianIdValue = veterinarianIdValue;
-    }
+    public void setVeterinarianIdValue(String v) { this.veterinarianIdValue = v; }
 
-    // Constants for breeding methods
-    public static final String METHOD_NATURAL = "NATURAL";
+    // ── Constants ─────────────────────────────────────────────────────────────
+
+    public static final String METHOD_NATURAL    = "NATURAL";
     public static final String METHOD_ARTIFICIAL = "ARTIFICIAL_INSEMINATION";
+    public static final String METHOD_EMBRYO     = "EMBRYO_TRANSFER";
 
-    // Constants for status
-    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_PENDING   = "PENDING";
     public static final String STATUS_CONFIRMED = "CONFIRMED_PREGNANT";
-    public static final String STATUS_FAILED = "FAILED";
+    public static final String STATUS_FAILED    = "FAILED";
     public static final String STATUS_COMPLETED = "COMPLETED";
 }

@@ -53,11 +53,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name, ' ', a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name, ' ', b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         ORDER BY v.created_at DESC
         """,
             countQuery = "SELECT COUNT(*) FROM v_livestock_with_age",
@@ -93,11 +93,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name, ' ', a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name, ' ', b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.id = :id
         """, nativeQuery = true)
     Optional<Object[]> findByIdFromView(@Param("id") UUID id);
@@ -132,11 +132,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.lifecycle_stage = :stage
         ORDER BY v.created_at DESC
         """, nativeQuery = true)
@@ -168,11 +168,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.lifecycle_stage = :stage
         ORDER BY v.created_at DESC
         """,
@@ -210,11 +210,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.status = :status
         ORDER BY v.created_at DESC
         """, nativeQuery = true)
@@ -255,11 +255,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.livestock_category_id = :categoryId
         ORDER BY v.created_at DESC
         """, nativeQuery = true)
@@ -295,11 +295,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.gender = :gender
         ORDER BY v.created_at DESC
         """, nativeQuery = true)
@@ -340,11 +340,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE LOWER(v.tag_number) LIKE LOWER(CONCAT('%', :tag, '%'))
         ORDER BY v.created_at DESC
         """, nativeQuery = true)
@@ -403,11 +403,11 @@ public interface LivestockWithAgeRepository extends JpaRepository<Livestock, UUI
             v.category_code,
             v.gestation_period_months,
             v.lifecycle_stage,
-            CONCAT(a.first_name,' ',a.last_name) AS beneficiary_name,
+            CONCAT(b.first_name,' ',b.last_name) AS beneficiary_name,
             loc.name AS location_name
         FROM v_livestock_with_age v
-        LEFT JOIN abaragizwa_amatungo a ON a.id = v.abaragizwa_amatungo_id
-        LEFT JOIN a_location loc ON loc.id = v.location_id
+        LEFT JOIN beneficiaries b ON b.id = v.beneficiary_id
+        LEFT JOIN location loc ON loc.id = v.location_id
         WHERE v.expected_due_date IS NOT NULL
           AND v.expected_due_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + INTERVAL ':days days')
         ORDER BY v.expected_due_date ASC

@@ -8,8 +8,8 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "abaragizwa_amatungo")
-public class AbaragizwaAmatungo {
+@Table(name = "beneficiaries")
+public class Beneficiary {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -41,12 +41,12 @@ public class AbaragizwaAmatungo {
     @Pattern(regexp = "^(078|079|072|073)[0-9]{7}$", message = "Phone number must be 10 digits starting with 078, 079, 072, or 073")
     private String phone;
 
-    @Column(name = "amasezerano")
-    private String amasezerano;
+    @Column(name = "contract_agreement")
+    private String contractAgreement;
 
     @ManyToOne
-    @JoinColumn(name = "uhagarariye_aborora_id", referencedColumnName = "id")
-    private UhagarariyeAborora uhagarariyeAborora;
+    @JoinColumn(name = "representative_id", referencedColumnName = "id")
+    private Representative representative;
 
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "id")
@@ -67,10 +67,10 @@ public class AbaragizwaAmatungo {
     private Boolean isDeleted = false;
 
     @Transient
-    private String uhagarariyeAbororaIdValue;
+    private String representativeIdValue;
 
     // Constructors
-    public AbaragizwaAmatungo() {
+    public Beneficiary() {
     }
 
     // Getters and Setters
@@ -130,20 +130,20 @@ public class AbaragizwaAmatungo {
         this.phone = phone;
     }
 
-    public String getAmasezerano() {
-        return amasezerano;
+    public String getContractAgreement() {
+        return contractAgreement;
     }
 
-    public void setAmasezerano(String amasezerano) {
-        this.amasezerano = amasezerano;
+    public void setContractAgreement(String contractAgreement) {
+        this.contractAgreement = contractAgreement;
     }
 
-    public UhagarariyeAborora getUhagarariyeAborora() {
-        return uhagarariyeAborora;
+    public Representative getRepresentative() {
+        return representative;
     }
 
-    public void setUhagarariyeAborora(UhagarariyeAborora uhagarariyeAborora) {
-        this.uhagarariyeAborora = uhagarariyeAborora;
+    public void setRepresentative(Representative representative) {
+        this.representative = representative;
     }
 
     public Location getLocation() {
@@ -186,12 +186,12 @@ public class AbaragizwaAmatungo {
         this.isDeleted = isDeleted;
     }
 
-    public String getUhagarariyeAbororaIdValue() {
-        return uhagarariyeAbororaIdValue;
+    public String getRepresentativeIdValue() {
+        return representativeIdValue;
     }
 
-    public void setUhagarariyeAbororaIdValue(String uhagarariyeAbororaIdValue) {
-        this.uhagarariyeAbororaIdValue = uhagarariyeAbororaIdValue;
+    public void setRepresentativeIdValue(String representativeIdValue) {
+        this.representativeIdValue = representativeIdValue;
     }
 
     public String getFullName() {
@@ -208,7 +208,7 @@ public class AbaragizwaAmatungo {
 
     @Override
     public String toString() {
-        return "AbaragizwaAmatungo{" +
+        return "Beneficiary{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
