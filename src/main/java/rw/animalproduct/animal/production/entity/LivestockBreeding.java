@@ -147,7 +147,13 @@ public class LivestockBreeding {
     public static final String METHOD_EMBRYO     = "EMBRYO_TRANSFER";
 
     public static final String STATUS_PENDING   = "PENDING";
-    public static final String STATUS_CONFIRMED = "CONFIRMED_PREGNANT";
+    public static final String STATUS_CONFIRMED = "CONFIRMED";   // keep if used elsewhere
     public static final String STATUS_FAILED    = "FAILED";
     public static final String STATUS_COMPLETED = "COMPLETED";
+
+
+    public static final String STATUS_CONFIRMED_PREGNANT = "CONFIRMED_PREGNANT";
+
+
+
 }

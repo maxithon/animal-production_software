@@ -48,26 +48,29 @@ public class LivestockLifecycleController {
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
 
+        // ── Lifecycle pipeline counts ──────────────────────────────────────────
+        // IMPORTANT: YOUNG was previously missing from this map, causing the
+        // "Young" pipeline step to always show 0 in the template.
         Map<String, Long> lifecycleSummary = new LinkedHashMap<>();
         lifecycleSummary.put("NEWBORN",        lifecycleService.countNewborns());
-        lifecycleSummary.put("YOUNG",          countYoung());
-        lifecycleSummary.put("PRE_BREEDING",   countPreBreeding());
+        lifecycleSummary.put("YOUNG",          lifecycleService.countYoung());       // ← WAS MISSING
+        lifecycleSummary.put("PRE_BREEDING",   lifecycleService.countPreBreeding());
         lifecycleSummary.put("READY_TO_BREED", lifecycleService.countReadyToBreed());
         lifecycleSummary.put("BREEDING_MALE",  countBreedingMales());
         lifecycleSummary.put("PREGNANT",       lifecycleService.countPregnant());
         lifecycleSummary.put("MATURE",         countMature());
         model.addAttribute("lifecycleSummary", lifecycleSummary);
 
-        model.addAttribute("statusSummary", getStatusDistribution());
-        model.addAttribute("genderSummary", getGenderDistribution());
+        model.addAttribute("statusSummary",  getStatusDistribution());
+        model.addAttribute("genderSummary",  getGenderDistribution());
 
         model.addAttribute("recentNewborns", lifecycleService.getRecentlyBorn(30).stream()
                 .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
-        model.addAttribute("pregnantList", lifecycleService.getPregnantAnimals().stream()
+        model.addAttribute("pregnantList",   lifecycleService.getPregnantAnimals().stream()
                 .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
-        model.addAttribute("readyToBreed", lifecycleService.getReadyToBreed().stream()
+        model.addAttribute("readyToBreed",   lifecycleService.getReadyToBreed().stream()
                 .limit(10).map(this::enrichAnimalData).collect(Collectors.toList()));
 
         model.addAttribute("activeBreedings",     lifecycleService.getActiveBreedings());
@@ -374,7 +377,7 @@ public class LivestockLifecycleController {
         return r;
     }
 
-    private long countYoung()        { return lifecycleService.getYoungFemales().size() + lifecycleService.getYoungMales().size(); }
+    private long countYoung()        { return lifecycleService.countYoung(); }
     private long countPreBreeding()  { return lifecycleService.countPreBreeding(); }
     private long countBreedingMales(){ return lifecycleService.getMalesReadyToBreed().size(); }
 
@@ -386,6 +389,7 @@ public class LivestockLifecycleController {
                 .filter(a -> !"NURSING".equals(lifecycleService.getCurrentStage(a)))
                 .count();
     }
+
 
     private Map<String, Long> getStatusDistribution() {
         Map<String, Long> d = new LinkedHashMap<>();

@@ -1,18 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Livestock Lifecycle Dashboard | Herd Management</title>
-    <!-- Bootstrap 5 + Icons + Google Fonts -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         :root {
             --green-deep: #0d4a2f;
             --green-mid: #1a6b45;
@@ -41,7 +37,6 @@
             --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
             --shadow-md: 0 4px 16px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
         }
-
         body {
             font-family: 'Sora', sans-serif;
             background: #eef2ee;
@@ -50,8 +45,6 @@
             min-height: 100vh;
             color: var(--slate-800);
         }
-
-        /* header */
         .page-header {
             background: linear-gradient(135deg, var(--green-deep) 0%, var(--green-mid) 55%, #1d8a50 100%);
             position: relative;
@@ -80,20 +73,8 @@
             color: white;
             backdrop-filter: blur(6px);
         }
-        .header-title {
-            color: white;
-            font-size: 1.4rem;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            margin: 0;
-        }
-        .header-subtitle {
-            color: rgba(255,255,255,.7);
-            font-size: 0.75rem;
-            margin-top: 4px;
-        }
-
-        /* pipeline (lifecycle) */
+        .header-title { color: white; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; margin: 0; }
+        .header-subtitle { color: rgba(255,255,255,.7); font-size: 0.75rem; margin-top: 4px; }
         .pipeline {
             background: var(--white);
             border-radius: var(--card-radius);
@@ -111,36 +92,12 @@
             transition: all 0.2s;
             min-width: 100px;
         }
-        .pipeline-step:hover {
-            background: var(--slate-50);
-            transform: translateY(-2px);
-        }
+        .pipeline-step:hover { background: var(--slate-50); transform: translateY(-2px); }
         .pipeline-step:last-child { border-right: none; }
-        .step-icon {
-            font-size: 1.7rem;
-            display: block;
-            margin-bottom: 6px;
-        }
-        .step-num {
-            font-size: 2rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
-            line-height: 1;
-        }
-        .step-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--slate-600);
-            margin-top: 6px;
-        }
-        .step-sub {
-            font-size: 0.6rem;
-            color: var(--slate-400);
-        }
-
-        /* metric cards */
+        .step-icon { font-size: 1.7rem; display: block; margin-bottom: 6px; }
+        .step-num { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; }
+        .step-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate-600); margin-top: 6px; }
+        .step-sub { font-size: 0.6rem; color: var(--slate-400); }
         .metric-grid {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
@@ -162,32 +119,18 @@
         .metric-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 4px;
             border-radius: 4px 4px 0 0;
         }
-        .mc-newborn::before { background: var(--amber); }
-        .mc-young::before { background: var(--green-bright); }
-        .mc-ready::before { background: var(--violet); }
+        .mc-newborn::before  { background: var(--amber); }
+        .mc-young::before    { background: var(--green-bright); }
+        .mc-ready::before    { background: var(--violet); }
         .mc-breeding::before { background: var(--sky); }
         .mc-pregnant::before { background: var(--rose); }
-        .mc-mature::before { background: var(--orange); }
-        .metric-num {
-            font-size: 2.3rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .metric-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--slate-500);
-            margin-top: 6px;
-        }
-
-        /* panels */
+        .mc-mature::before   { background: var(--orange); }
+        .metric-num { font-size: 2.3rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .metric-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; color: var(--slate-500); margin-top: 6px; }
         .panel {
             background: var(--white);
             border-radius: var(--card-radius);
@@ -204,20 +147,8 @@
             border-bottom: 1px solid var(--slate-100);
             background: var(--slate-50);
         }
-        .panel-title {
-            font-weight: 700;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .panel-badge {
-            background: var(--slate-200);
-            padding: 2px 8px;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 700;
-        }
+        .panel-title { font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; }
+        .panel-badge { background: var(--slate-200); padding: 2px 8px; border-radius: 30px; font-size: 0.7rem; font-weight: 700; }
         .panel-row {
             display: flex;
             align-items: center;
@@ -227,21 +158,9 @@
             transition: background 0.1s;
         }
         .panel-row:hover { background: var(--slate-50); }
-        .panel-row-tag {
-            font-weight: 700;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-        }
-        .panel-row-sub {
-            font-size: 0.7rem;
-            color: var(--slate-500);
-            margin-top: 2px;
-        }
-        .empty-state {
-            padding: 32px 20px;
-            text-align: center;
-            color: var(--slate-400);
-        }
+        .panel-row-tag { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+        .panel-row-sub { font-size: 0.7rem; color: var(--slate-500); margin-top: 2px; }
+        .empty-state { padding: 32px 20px; text-align: center; color: var(--slate-400); }
         .pill {
             display: inline-flex;
             align-items: center;
@@ -264,28 +183,13 @@
             display: inline-flex;
             align-items: center;
             gap: 5px;
+            color: var(--slate-700);
         }
         .btn-xs:hover { background: var(--slate-100); transform: translateY(-1px); }
         .stat-bar-row { margin-bottom: 12px; }
-        .stat-bar-top {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-        .stat-bar-track {
-            height: 6px;
-            background: var(--slate-100);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .stat-bar-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 4px;
-            transition: width 0.3s;
-        }
+        .stat-bar-top { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: 600; margin-bottom: 4px; }
+        .stat-bar-track { height: 6px; background: var(--slate-100); border-radius: 4px; overflow: hidden; }
+        .stat-bar-fill { height: 100%; width: 0%; border-radius: 4px; transition: width 0.8s ease; }
         .section-label {
             font-size: 0.7rem;
             font-weight: 700;
@@ -294,22 +198,9 @@
             color: var(--slate-500);
             margin: 1rem 0 0.6rem 0;
         }
-        .birth-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .birth-table th {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            background: var(--slate-50);
-            padding: 10px 12px;
-            color: var(--slate-600);
-        }
-        .birth-table td {
-            padding: 10px 12px;
-            font-size: 0.75rem;
-            border-bottom: 1px solid var(--slate-100);
-        }
+        .birth-table { width: 100%; border-collapse: collapse; }
+        .birth-table th { font-size: 0.65rem; text-transform: uppercase; background: var(--slate-50); padding: 10px 12px; color: var(--slate-600); }
+        .birth-table td { padding: 10px 12px; font-size: 0.75rem; border-bottom: 1px solid var(--slate-100); }
         .table-scroll { overflow-x: auto; }
     </style>
 </head>
@@ -324,14 +215,15 @@
                 <div class="header-subtitle">Newborn → Young → Pre-Breeding → Ready → Breeding → Pregnancy → Offspring</div>
             </div>
         </div>
-        <div class="header-actions">
-            <a href="#" class="btn-header-ghost" style="background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; border-radius:9px; padding:8px 14px; text-decoration:none;">
-                <i class="bi bi-bell-fill"></i> Alerts <span class="badge bg-danger ms-1" style="font-size:0.6rem;">3</span>
+        <div class="header-actions d-flex gap-2 flex-wrap">
+            <a href="#" class="btn-xs" style="background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; border-radius:9px; padding:8px 14px;">
+                <i class="bi bi-bell-fill"></i> Alerts
+                <span class="badge bg-danger ms-1" style="font-size:0.6rem;" th:text="${dueSoonCount != null ? dueSoonCount : 0}">0</span>
             </a>
-            <a href="#" class="btn-header-ghost" style="background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; border-radius:9px; padding:8px 14px; text-decoration:none;">
+            <a href="/livestock/birth/record" class="btn-xs" style="background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:white; border-radius:9px; padding:8px 14px;">
                 <i class="bi bi-stars"></i> Record Birth
             </a>
-            <a href="#" class="btn-header-primary" style="background:var(--amber); color:#1e293b; border-radius:9px; padding:8px 18px; font-weight:700; text-decoration:none;">
+            <a href="/livestock/lifecycle/breeding-management" class="btn-xs" style="background:var(--amber); color:#1e293b; border-radius:9px; padding:8px 18px; font-weight:700; border:none;">
                 <i class="bi bi-plus-circle-fill"></i> Record Breeding
             </a>
         </div>
@@ -340,337 +232,392 @@
 
 <div class="container-fluid px-3 px-md-4 py-4">
 
-    <!-- LIFECYCLE PIPELINE (all numbers now properly displayed) -->
+    <!-- ═══════════════════════════════════════════════════════
+         LIFECYCLE PIPELINE — numbers from lifecycleSummary map
+         ═══════════════════════════════════════════════════════ -->
     <div class="section-label"><i class="bi bi-arrow-repeat me-1"></i> Lifecycle Pipeline</div>
     <div class="pipeline mb-4">
+
         <div class="pipeline-step">
             <span class="step-icon">🐄🍼</span>
-            <div class="step-num" style="color:#d97706;" id="newbornCount">0</div>
+            <div class="step-num" style="color:#d97706;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['NEWBORN'] != null ? lifecycleSummary['NEWBORN'] : 0}">0</div>
             <div class="step-label">Newborn</div>
             <div class="step-sub">0–30 days</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">🐂🌱</span>
-            <div class="step-num" style="color:#16a34a;" id="youngCount">0</div>
+            <div class="step-num" style="color:#16a34a;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['YOUNG'] != null ? lifecycleSummary['YOUNG'] : 0}">0</div>
             <div class="step-label">Young</div>
             <div class="step-sub">31–180 days</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">📈🐏</span>
-            <div class="step-num" style="color:#2563eb;" id="preBreedingCount">0</div>
+            <div class="step-num" style="color:#2563eb;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['PRE_BREEDING'] != null ? lifecycleSummary['PRE_BREEDING'] : 0}">0</div>
             <div class="step-label">Pre-Breeding</div>
             <div class="step-sub">181–365 days</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">❤️🐑</span>
-            <div class="step-num" style="color:#7c3aed;" id="readyToBreedCount">0</div>
+            <div class="step-num" style="color:#7c3aed;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['READY_TO_BREED'] != null ? lifecycleSummary['READY_TO_BREED'] : 0}">0</div>
             <div class="step-label">Ready to Breed</div>
             <div class="step-sub">12+ months</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">🔗🐃</span>
-            <div class="step-num" style="color:#ea580c;" id="breedingCount">0</div>
+            <div class="step-num" style="color:#ea580c;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['BREEDING_MALE'] != null ? lifecycleSummary['BREEDING_MALE'] : 0}">0</div>
             <div class="step-label">In Breeding</div>
             <div class="step-sub">Active records</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">🤰🐄</span>
-            <div class="step-num" style="color:#db2777;" id="pregnantCount">0</div>
+            <div class="step-num" style="color:#db2777;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['PREGNANT'] != null ? lifecycleSummary['PREGNANT'] : 0}">0</div>
             <div class="step-label">Pregnant</div>
             <div class="step-sub">Confirmed</div>
         </div>
+
         <div class="pipeline-step">
             <span class="step-icon">🍼🐮</span>
-            <div class="step-num" style="color:#059669;" id="nursingCount">0</div>
-            <div class="step-label">Nursing</div>
-            <div class="step-sub">Post-birth 90d</div>
+            <div class="step-num" style="color:#059669;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['MATURE'] != null ? lifecycleSummary['MATURE'] : 0}">0</div>
+            <div class="step-label">Mature</div>
+            <div class="step-sub">1+ year</div>
         </div>
+
     </div>
 
-    <!-- SUMMARY CARDS (Numbers everywhere!) -->
+    <!-- ═══════════════════════════════════════════════════════
+         HERD SNAPSHOT CARDS — also from lifecycleSummary
+         ═══════════════════════════════════════════════════════ -->
     <div class="section-label"><i class="bi bi-bar-chart-steps me-1"></i> Herd Snapshot</div>
     <div class="metric-grid mb-4">
-        <div class="metric-card mc-newborn"><div class="metric-num" style="color:#d97706;" id="cardNewborn">0</div><div class="metric-label">Newborns</div></div>
-        <div class="metric-card mc-young"><div class="metric-num" style="color:#16a34a;" id="cardYoung">0</div><div class="metric-label">Young Stock</div></div>
-        <div class="metric-card mc-ready"><div class="metric-num" style="color:#7c3aed;" id="cardReady">0</div><div class="metric-label">Ready to Breed</div></div>
-        <div class="metric-card mc-breeding"><div class="metric-num" style="color:#0ea5e9;" id="cardBreeding">0</div><div class="metric-label">Breeding Males</div></div>
-        <div class="metric-card mc-pregnant"><div class="metric-num" style="color:#e11d48;" id="cardPregnant">0</div><div class="metric-label">Pregnant</div></div>
-        <div class="metric-card mc-mature"><div class="metric-num" style="color:#ea580c;" id="cardMature">0</div><div class="metric-label">Mature Stock</div></div>
+
+        <div class="metric-card mc-newborn">
+            <div class="metric-num" style="color:#d97706;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['NEWBORN'] != null ? lifecycleSummary['NEWBORN'] : 0}">0</div>
+            <div class="metric-label">Newborns</div>
+        </div>
+
+        <div class="metric-card mc-young">
+            <div class="metric-num" style="color:#16a34a;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['YOUNG'] != null ? lifecycleSummary['YOUNG'] : 0}">0</div>
+            <div class="metric-label">Young Stock</div>
+        </div>
+
+        <div class="metric-card mc-ready">
+            <div class="metric-num" style="color:#7c3aed;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['READY_TO_BREED'] != null ? lifecycleSummary['READY_TO_BREED'] : 0}">0</div>
+            <div class="metric-label">Ready to Breed</div>
+        </div>
+
+        <div class="metric-card mc-breeding">
+            <div class="metric-num" style="color:#0ea5e9;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['BREEDING_MALE'] != null ? lifecycleSummary['BREEDING_MALE'] : 0}">0</div>
+            <div class="metric-label">Breeding Males</div>
+        </div>
+
+        <div class="metric-card mc-pregnant">
+            <div class="metric-num" style="color:#e11d48;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['PREGNANT'] != null ? lifecycleSummary['PREGNANT'] : 0}">0</div>
+            <div class="metric-label">Pregnant</div>
+        </div>
+
+        <div class="metric-card mc-mature">
+            <div class="metric-num" style="color:#ea580c;"
+                 th:text="${lifecycleSummary != null and lifecycleSummary['MATURE'] != null ? lifecycleSummary['MATURE'] : 0}">0</div>
+            <div class="metric-label">Mature Stock</div>
+        </div>
+
     </div>
 
     <div class="row g-4">
-        <!-- LEFT COLUMN : dynamic lists -->
-        <div class="col-lg-8">
-            <!-- Recent Newborns -->
-            <div class="section-label"><i class="bi bi-stars me-1"></i> Recent Newborns</div>
-            <div class="panel" id="recentNewbornsPanel">
-                <div class="panel-header"><div class="panel-title"><i class="bi bi-cup-straw"></i> Latest calves / kids</div><a href="#" class="btn-xs">View all</a></div>
-                <div id="recentNewbornsList"></div>
-            </div>
 
-            <!-- Birth records table (livestock births) -->
-            <div class="section-label mt-2"><i class="bi bi-journal-medical me-1"></i> Birth Records</div>
+        <!-- ════════════════════════════════════════════
+             LEFT COLUMN — dynamic lists from model
+             ════════════════════════════════════════════ -->
+        <div class="col-lg-8">
+
+            <!-- Recent Newborns — from recentNewborns model attribute -->
+            <div class="section-label"><i class="bi bi-stars me-1"></i> Recent Newborns</div>
             <div class="panel">
-                <div class="panel-header"><div class="panel-title"><i class="bi bi-table"></i> Registered births</div><a href="#" class="btn-xs">Record birth</a></div>
-                <div class="table-scroll">
-                    <table class="birth-table">
-                        <thead><tr><th>Animal Tag</th><th>Birth Date</th><th>Offspring</th><th>Gender</th><th>Weaning</th><th>Source</th></tr></thead>
-                        <tbody id="birthTableBody"></tbody>
-                    </table>
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-cup-straw"></i> Latest calves / kids
+                        <span class="panel-badge" th:text="${recentNewborns != null ? #lists.size(recentNewborns) : 0}">0</span>
+                    </div>
+                    <a href="/livestock/lifecycle/notifications" class="btn-xs">View all</a>
+                </div>
+
+                <!-- Empty state -->
+                <div th:if="${recentNewborns == null or #lists.isEmpty(recentNewborns)}"
+                     class="empty-state">
+                    <i class="bi bi-egg" style="font-size:2rem;"></i>
+                    <p class="mt-2 mb-0">No recent newborns in the last 30 days</p>
+                </div>
+
+                <!-- Populated list -->
+                <div th:each="animal : ${recentNewborns}" class="panel-row">
+                    <div>
+                        <div class="panel-row-tag" th:text="${animal['tagNumber']}">—</div>
+                        <div class="panel-row-sub">
+                            <span th:text="${animal['ageDisplay']}">—</span>
+                            · <span th:text="${animal['gender']}">—</span>
+                            <span th:if="${animal['categoryName'] != null}">
+                                · <span th:text="${animal['categoryName']}">—</span>
+                            </span>
+                        </div>
+                    </div>
+                    <a th:href="@{/livestock/lifecycle/animal/{id}(id=${animal['id']})}" class="btn-xs">
+                        <i class="bi bi-eye"></i> View
+                    </a>
                 </div>
             </div>
 
-            <!-- Pregnant Animals -->
-            <div class="section-label mt-2"><i class="bi bi-heart-fill me-1" style="color:#db2777;"></i> Pregnant Animals</div>
-            <div class="panel" id="pregnantPanel"><div class="panel-header"><div class="panel-title"><i class="bi bi-heart-fill"></i> Gestating females</div><a href="#" class="btn-xs">Track all</a></div><div id="pregnantList"></div></div>
+            <!-- Pregnant Animals — from pregnantList model attribute -->
+            <div class="section-label mt-2">
+                <i class="bi bi-heart-fill me-1" style="color:#db2777;"></i> Pregnant Animals
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-heart-fill"></i> Gestating females
+                        <span class="panel-badge" th:text="${pregnantList != null ? #lists.size(pregnantList) : 0}">0</span>
+                    </div>
+                    <a href="/livestock/lifecycle/pregnancy-tracking" class="btn-xs">Track all</a>
+                </div>
 
-            <!-- Ready to Breed -->
-            <div class="section-label mt-2"><i class="bi bi-heart-arrow me-1" style="color:#7c3aed;"></i> Ready to Breed</div>
-            <div class="panel" id="readyPanel"><div class="panel-header"><div class="panel-title"><i class="bi bi-flower1"></i> Eligible for mating</div><a href="#" class="btn-xs">Breed now</a></div><div id="readyList"></div></div>
+                <div th:if="${pregnantList == null or #lists.isEmpty(pregnantList)}"
+                     class="empty-state">
+                    <i class="bi bi-heart" style="font-size:2rem;"></i>
+                    <p class="mt-2 mb-0">No pregnant animals recorded</p>
+                </div>
+
+                <div th:each="animal : ${pregnantList}" class="panel-row">
+                    <div>
+                        <div class="panel-row-tag" th:text="${animal['tagNumber']}">—</div>
+                        <div class="panel-row-sub">
+                            <span th:if="${animal['expectedDueDate'] != null}">
+                                Due: <span th:text="${animal['expectedDueDate']}">—</span>
+                            </span>
+                            <span th:if="${animal['daysUntilDue'] != null}">
+                                &nbsp;(<span th:text="${animal['daysUntilDue']}">—</span> days left)
+                            </span>
+                        </div>
+                    </div>
+                    <span class="pill" style="background:#ffe4e6;color:#be123c;">Pregnant</span>
+                </div>
+            </div>
+
+            <!-- Ready to Breed — from readyToBreed model attribute -->
+            <div class="section-label mt-2">
+                <i class="bi bi-heart-arrow me-1" style="color:#7c3aed;"></i> Ready to Breed
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-flower1"></i> Eligible for mating
+                        <span class="panel-badge" th:text="${readyToBreed != null ? #lists.size(readyToBreed) : 0}">0</span>
+                    </div>
+                    <a href="/livestock/lifecycle/ready-to-breed" class="btn-xs">Breed now</a>
+                </div>
+
+                <div th:if="${readyToBreed == null or #lists.isEmpty(readyToBreed)}"
+                     class="empty-state">
+                    <i class="bi bi-flower1" style="font-size:2rem;"></i>
+                    <p class="mt-2 mb-0">None ready yet</p>
+                </div>
+
+                <div th:each="animal : ${readyToBreed}" class="panel-row">
+                    <div>
+                        <div class="panel-row-tag" th:text="${animal['tagNumber']}">—</div>
+                        <div class="panel-row-sub">
+                            Age: <span th:text="${animal['ageDisplay']}">—</span>
+                            · <span th:text="${animal['gender']}">—</span>
+                            <span th:if="${animal['categoryName'] != null}">
+                                · <span th:text="${animal['categoryName']}">—</span>
+                            </span>
+                        </div>
+                    </div>
+                    <a href="/livestock/lifecycle/ready-to-breed" class="btn-xs"
+                       style="background:#7c3aed10; border-color:#c4b5fd;">
+                        <i class="bi bi-heart-fill"></i> Breed
+                    </a>
+                </div>
+            </div>
+
         </div>
 
-        <!-- RIGHT COLUMN : stats & quick links -->
+        <!-- ════════════════════════════════════════════
+             RIGHT COLUMN — stats & quick links
+             ════════════════════════════════════════════ -->
         <div class="col-lg-4">
-            <div class="panel"><div class="panel-header"><div class="panel-title"><i class="bi bi-pie-chart"></i> Status Distribution</div></div><div style="padding:14px 18px;" id="statusBars"></div></div>
-            <div class="panel"><div class="panel-header"><div class="panel-title"><i class="bi bi-gender-ambiguous"></i> Gender Split</div></div><div style="padding:14px 18px;" id="genderBars"></div></div>
-            <div class="panel" id="dueSoonPanel"><div class="panel-header"><div class="panel-title"><i class="bi bi-alarm"></i> Due Soon (30d)</div></div><div id="dueSoonList"></div></div>
-            <div class="panel"><div class="panel-header"><div class="panel-title"><i class="bi bi-diagram-2"></i> Offspring Summary</div></div><div style="padding:14px 18px;" id="offspringSummary"></div></div>
-            <div class="panel"><div class="panel-header"><div class="panel-title"><i class="bi bi-link"></i> Quick Links</div></div>
-                <div><a href="#" class="panel-row text-decoration-none text-dark"><i class="bi bi-grid"></i> All Livestock</a>
-                    <a href="#" class="panel-row text-decoration-none text-dark"><i class="bi bi-list-ul"></i> Breeding Records</a>
-                    <a href="#" class="panel-row text-decoration-none text-dark"><i class="bi bi-stars"></i> Birth Reports</a>
-                    <a href="#" class="panel-row text-decoration-none text-dark"><i class="bi bi-bell"></i> Health Alerts</a></div>
+
+            <!-- Status Distribution — from statusSummary -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-pie-chart"></i> Status Distribution</div>
+                </div>
+                <div style="padding:14px 18px;">
+                    <div th:if="${statusSummary != null}" th:each="entry : ${statusSummary}">
+                        <div class="stat-bar-row">
+                            <div class="stat-bar-top">
+                                <span th:text="${entry.key}">—</span>
+                                <span th:text="${entry.value}">0</span>
+                            </div>
+                            <div class="stat-bar-track">
+                                <!-- width computed by JS below using data attributes -->
+                                <div class="stat-bar-fill js-bar"
+                                     th:attr="data-value=${entry.value}, data-color='#22c55e'"
+                                     style="width:0%;background:#22c55e;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${statusSummary == null or statusSummary.isEmpty()}"
+                         class="empty-state py-3"><p class="mb-0 small">No data</p></div>
+                </div>
             </div>
+
+            <!-- Gender Split — from genderSummary -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-gender-ambiguous"></i> Gender Split</div>
+                </div>
+                <div style="padding:14px 18px;">
+                    <div th:if="${genderSummary != null}" th:each="entry : ${genderSummary}">
+                        <div class="stat-bar-row">
+                            <div class="stat-bar-top">
+                                <span th:text="${entry.key}">—</span>
+                                <span th:text="${entry.value}">0</span>
+                            </div>
+                            <div class="stat-bar-track">
+                                <div class="stat-bar-fill js-bar"
+                                     th:attr="data-value=${entry.value},
+                                              data-color=${entry.key == 'MALE' ? '#0ea5e9' : '#db2777'}"
+                                     style="width:0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div th:if="${genderSummary == null or genderSummary.isEmpty()}"
+                         class="empty-state py-3"><p class="mb-0 small">No data</p></div>
+                </div>
+            </div>
+
+            <!-- Due Soon -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-alarm"></i> Due Soon (30d)
+                        <span class="panel-badge" th:text="${dueSoonCount != null ? dueSoonCount : 0}">0</span>
+                    </div>
+                </div>
+                <div th:if="${pregnantList == null or #lists.isEmpty(pregnantList)}"
+                     class="empty-state py-3">
+                    <i class="bi bi-calendar"></i><p class="mb-0 small mt-1">No upcoming due dates</p>
+                </div>
+                <!-- Show up to 5 pregnant animals sorted by due date -->
+                <div th:each="animal,iterStat : ${pregnantList}"
+                     th:if="${iterStat.index < 5 and animal['daysUntilDue'] != null and animal['daysUntilDue'] <= 30}"
+                     class="panel-row">
+                    <div>
+                        <div class="panel-row-tag" th:text="${animal['tagNumber']}">—</div>
+                        <div class="panel-row-sub">Due <span th:text="${animal['expectedDueDate']}">—</span></div>
+                    </div>
+                    <span class="pill" style="background:#fff7ed;color:#c2410c;">⚠️ Soon</span>
+                </div>
+            </div>
+
+            <!-- Key Stats -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-diagram-2"></i> Key Stats</div>
+                </div>
+                <div style="padding:14px 18px;">
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="small">Total Animals</span>
+                        <strong th:text="${totalAnimals != null ? totalAnimals : 0}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="small">Breeding Success Rate</span>
+                        <strong th:text="${breedingSuccessRate != null ? breedingSuccessRate : '—'}">—</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="small">Due Soon (14d)</span>
+                        <strong th:text="${dueSoonCount != null ? dueSoonCount : 0}">0</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-1">
+                        <span class="small">Overdue</span>
+                        <strong class="text-danger" th:text="${overdueCount != null ? overdueCount : 0}">0</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="bi bi-link"></i> Quick Links</div>
+                </div>
+                <div>
+                    <a href="/livestock" class="panel-row text-decoration-none text-dark">
+                        <span><i class="bi bi-grid me-2"></i> All Livestock</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                    <a href="/livestock/lifecycle/breeding-management" class="panel-row text-decoration-none text-dark">
+                        <span><i class="bi bi-list-ul me-2"></i> Breeding Records</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                    <a href="/livestock/lifecycle/pregnancy-tracking" class="panel-row text-decoration-none text-dark">
+                        <span><i class="bi bi-heart-fill me-2"></i> Pregnancy Tracking</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                    <a href="/livestock/lifecycle/ready-to-breed" class="panel-row text-decoration-none text-dark">
+                        <span><i class="bi bi-flower1 me-2"></i> Ready to Breed</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                    <a href="/livestock/lifecycle/notifications" class="panel-row text-decoration-none text-dark">
+                        <span><i class="bi bi-bell me-2"></i> Lifecycle Alerts</span>
+                        <i class="bi bi-chevron-right small text-muted"></i>
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
-<script>
-    // --------------------------------------------------------------
-    // MOCK DATA (simulating backend with full numbers on all icons)
-    // All lifecycle numbers and counters are displayed correctly.
-    // --------------------------------------------------------------
-    const livestockData = {
-        newborns: [
-            { tag: "AN-1024", ageDays: 5, gender: "Female", stage: "NEWBORN", birthDate: "2026-03-28" },
-            { tag: "AN-1025", ageDays: 12, gender: "Male", stage: "NEWBORN", birthDate: "2026-03-21" },
-            { tag: "AN-1031", ageDays: 8, gender: "Female", stage: "NEWBORN", birthDate: "2026-03-25" }
-        ],
-        young: [
-            { tag: "AN-956", ageDays: 65, gender: "Female", stage: "YOUNG" }, { tag: "AN-972", ageDays: 112, gender: "Male", stage: "YOUNG" },
-            { tag: "AN-988", ageDays: 150, gender: "Female", stage: "YOUNG" }, { tag: "AN-999", ageDays: 88, gender: "Male", stage: "YOUNG" }
-        ],
-        preBreeding: [
-            { tag: "AN-812", ageDays: 210, gender: "Female" }, { tag: "AN-815", ageDays: 275, gender: "Female" },
-            { tag: "AN-820", ageDays: 300, gender: "Male" }
-        ],
-        readyToBreed: [
-            { tag: "AN-701", ageMonths: 14, gender: "Female" }, { tag: "AN-709", ageMonths: 15, gender: "Female" },
-            { tag: "AN-715", ageMonths: 13, gender: "Female" }, { tag: "AN-722", ageMonths: 18, gender: "Male" }
-        ],
-        breedingMales: [{ tag: "BULL-01", status: "Active" }, { tag: "BULL-03", status: "Active" }],
-        pregnant: [
-            { tag: "COW-401", dueDate: "2026-05-12", daysLeft: 32 }, { tag: "COW-412", dueDate: "2026-05-28", daysLeft: 48 },
-            { tag: "COW-425", dueDate: "2026-06-05", daysLeft: 56 }
-        ],
-        nursing: [
-            { tag: "COW-389", lastBirth: "2026-02-10", offspring: 2 }, { tag: "COW-392", lastBirth: "2026-02-22", offspring: 1 }
-        ],
-        matureStock: 14
-    };
-
-    // Birth records (livestock_births table)
-    const birthRecords = [
-        { tag: "COW-389", birthDate: "2026-02-10", offspringCount: 2, gender: "Mixed", weaningDate: null, source: "On Farm" },
-        { tag: "COW-392", birthDate: "2026-02-22", offspringCount: 1, gender: "Female", weaningDate: null, source: "On Farm" },
-        { tag: "EX-001", birthDate: "2026-01-15", offspringCount: 1, gender: "Male", weaningDate: "2026-03-20", source: "External" }
-    ];
-
-    // Helper: update all UI counters (every icon will show the right number)
-    function updateAllCounters() {
-        const newbornLen = livestockData.newborns.length;
-        const youngLen = livestockData.young.length;
-        const preBreedLen = livestockData.preBreeding.length;
-        const readyLen = livestockData.readyToBreed.length;
-        const breedingMaleLen = livestockData.breedingMales.length;
-        const pregnantLen = livestockData.pregnant.length;
-        const nursingLen = livestockData.nursing.length;
-        const matureTotal = livestockData.matureStock;
-
-        // Pipeline numbers
-        document.getElementById('newbornCount').innerText = newbornLen;
-        document.getElementById('youngCount').innerText = youngLen;
-        document.getElementById('preBreedingCount').innerText = preBreedLen;
-        document.getElementById('readyToBreedCount').innerText = readyLen;
-        document.getElementById('breedingCount').innerText = breedingMaleLen;
-        document.getElementById('pregnantCount').innerText = pregnantLen;
-        document.getElementById('nursingCount').innerText = nursingLen;
-
-        // Metric cards
-        document.getElementById('cardNewborn').innerText = newbornLen;
-        document.getElementById('cardYoung').innerText = youngLen;
-        document.getElementById('cardReady').innerText = readyLen;
-        document.getElementById('cardBreeding').innerText = breedingMaleLen;
-        document.getElementById('cardPregnant').innerText = pregnantLen;
-        document.getElementById('cardMature').innerText = matureTotal;
-    }
-
-    function renderRecentNewborns() {
-        const container = document.getElementById('recentNewbornsList');
-        if (!livestockData.newborns.length) {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-egg"></i><p>No recent newborns</p></div>';
-            return;
-        }
-        let html = '';
-        livestockData.newborns.forEach(animal => {
-            html += `<div class="panel-row">
-                        <div><div class="panel-row-tag">${animal.tag}</div>
-                        <div class="panel-row-sub">Age: ${animal.ageDays} days · ${animal.gender} · Stage: ${animal.stage}</div></div>
-                        <a href="#" class="btn-xs"><i class="bi bi-eye"></i> View</a>
-                    </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function renderBirthTable() {
-        const tbody = document.getElementById('birthTableBody');
-        if (!birthRecords.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No birth records</td></tr>';
-            return;
-        }
-        let rows = '';
-        birthRecords.forEach(b => {
-            rows += `<tr>
-                        <td><span class="fw-bold">${b.tag}</span></td>
-                        <td>${b.birthDate}</td>
-                        <td><span class="pill">${b.offspringCount} born</span></td>
-                        <td>${b.gender || '—'}</td>
-                        <td>${b.weaningDate || 'Not set'}</td>
-                        <td><span class="pill" style="background:#dcfce7;">${b.source}</span></td>
-                     </tr>`;
-        });
-        tbody.innerHTML = rows;
-    }
-
-    function renderPregnantList() {
-        const container = document.getElementById('pregnantList');
-        if (!livestockData.pregnant.length) {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-heart"></i><p>No pregnant animals</p></div>';
-            return;
-        }
-        let html = '';
-        livestockData.pregnant.forEach(p => {
-            html += `<div class="panel-row">
-                        <div><div class="panel-row-tag">${p.tag}</div>
-                        <div class="panel-row-sub">Due: ${p.dueDate} (${p.daysLeft} days left)</div></div>
-                        <span class="pill" style="background:#ffe4e6;color:#be123c;">Pregnant</span>
-                    </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function renderReadyList() {
-        const container = document.getElementById('readyList');
-        if (!livestockData.readyToBreed.length) {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-flower1"></i><p>None ready yet</p></div>';
-            return;
-        }
-        let html = '';
-        livestockData.readyToBreed.forEach(r => {
-            html += `<div class="panel-row">
-                        <div><div class="panel-row-tag">${r.tag}</div>
-                        <div class="panel-row-sub">Age: ${r.ageMonths} months · ${r.gender}</div></div>
-                        <a href="#" class="btn-xs" style="background:#7c3aed10; border-color:#c4b5fd;"><i class="bi bi-heart-fill"></i> Breed</a>
-                    </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function renderDueSoon() {
-        const dueAnimals = [
-            { tag: "COW-401", dueDate: "2026-05-12" }, { tag: "COW-412", dueDate: "2026-05-28" }
-        ];
-        const container = document.getElementById('dueSoonList');
-        if (!dueAnimals.length) {
-            container.innerHTML = '<div class="empty-state"><i class="bi bi-calendar"></i><p>No due dates soon</p></div>';
-            return;
-        }
-        let html = '';
-        dueAnimals.forEach(a => {
-            html += `<div class="panel-row">
-                        <div><div class="panel-row-tag">${a.tag}</div><div class="panel-row-sub">Due ${a.dueDate}</div></div>
-                        <span class="pill" style="background:#fff7ed;color:#c2410c;">⚠️ Soon</span>
-                    </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function renderStatusBars() {
-        const statusMap = { "Active": 28, "Pregnant": livestockData.pregnant.length, "Breeding": livestockData.breedingMales.length };
-        const total = Object.values(statusMap).reduce((a,b)=>a+b,1);
-        let html = '';
-        for (let [key, val] of Object.entries(statusMap)) {
-            let percent = (val / total) * 100;
-            html += `<div class="stat-bar-row">
-                        <div class="stat-bar-top"><span>${key}</span><span>${val}</span></div>
-                        <div class="stat-bar-track"><div class="stat-bar-fill" style="width:${percent}%; background:#22c55e;"></div></div>
-                    </div>`;
-        }
-        document.getElementById('statusBars').innerHTML = html;
-    }
-
-    function renderGenderBars() {
-        const maleCount = livestockData.young.filter(a=>a.gender==='Male').length + livestockData.breedingMales.length + 4;
-        const femaleCount = livestockData.newborns.filter(a=>a.gender==='Female').length + livestockData.young.filter(a=>a.gender==='Female').length + livestockData.pregnant.length + livestockData.readyToBreed.filter(a=>a.gender==='Female').length + 10;
-        const total = maleCount+femaleCount;
-        let html = `<div class="stat-bar-row"><div class="stat-bar-top"><span>Male</span><span>${maleCount}</span></div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(maleCount/total)*100}%; background:#0ea5e9;"></div></div></div>
-                    <div class="stat-bar-row"><div class="stat-bar-top"><span>Female</span><span>${femaleCount}</span></div><div class="stat-bar-track"><div class="stat-bar-fill" style="width:${(femaleCount/total)*100}%; background:#db2777;"></div></div></div>`;
-        document.getElementById('genderBars').innerHTML = html;
-    }
-
-    function renderOffspringSummary() {
-        const totalBirths = birthRecords.length;
-        const onFarm = birthRecords.filter(b=>b.source==="On Farm").length;
-        const external = birthRecords.filter(b=>b.source==="External").length;
-        const nursingTotal = livestockData.nursing.length;
-        document.getElementById('offspringSummary').innerHTML = `
-            <div class="d-flex justify-content-between py-1"><span>Total Births</span><strong>${totalBirths}</strong></div>
-            <div class="d-flex justify-content-between py-1"><span>On-Farm births</span><strong>${onFarm}</strong></div>
-            <div class="d-flex justify-content-between py-1"><span>External births</span><strong>${external}</strong></div>
-            <div class="d-flex justify-content-between py-1"><span>Currently Nursing</span><strong>${nursingTotal}</strong></div>
-        `;
-    }
-
-    // additional updates: due soon panel, nursing data
-    function updateNursingAndExtra() {
-        const nursingContainer = document.getElementById('dueSoonPanel');
-        if (nursingContainer && livestockData.nursing.length) {
-            // just ensure due soon panel shows something else? we already render due soon
-        }
-        // also fill nursing maybe in extra but dueSoon is separate
-    }
-
-    // Call all renderers
-    function initDashboard() {
-        updateAllCounters();
-        renderRecentNewborns();
-        renderBirthTable();
-        renderPregnantList();
-        renderReadyList();
-        renderDueSoon();
-        renderStatusBars();
-        renderGenderBars();
-        renderOffspringSummary();
-        // optional extra: show nursing section inside right column (already part of offspring summary)
-        // ensure no human icons anywhere — all icons are bovine/animal related.
-        // we replaced previous human icons with livestock friendly: cow, bull, calf, etc.
-        document.querySelectorAll('.step-icon, .metric-card .bi, .panel-title .bi').forEach(el => {
-            // just enforcing animal theme (already done in html)
-        });
-    }
-
-    initDashboard();
-</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /**
+     * Animate the status/gender bar widths after page load.
+     * Each .js-bar element has data-value set by Thymeleaf.
+     * We group bars by their parent container and compute percentages
+     * relative to the maximum value in that group.
+     */
+    document.addEventListener('DOMContentLoaded', function () {
+        // Find all bar groups (each panel's stat section)
+        const panels = document.querySelectorAll('.panel');
+        panels.forEach(panel => {
+            const bars = panel.querySelectorAll('.js-bar');
+            if (!bars.length) return;
+
+            const values = Array.from(bars).map(b => parseInt(b.getAttribute('data-value') || 0, 10));
+            const max = Math.max(...values, 1); // avoid divide-by-zero
+
+            bars.forEach(bar => {
+                const val = parseInt(bar.getAttribute('data-value') || 0, 10);
+                const color = bar.getAttribute('data-color') || '#22c55e';
+                const pct = Math.round((val / max) * 100);
+                bar.style.background = color;
+                // Trigger animation after a short delay
+                setTimeout(() => { bar.style.width = pct + '%'; }, 150);
+            });
+        });
+    });
+</script>
 </body>
 </html>
