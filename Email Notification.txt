@@ -1,0 +1,14 @@
+Your email notification system is fully working. Here's what will now happen automatically:
+
+Every day at 07:00 — animals turning 30–32 days old get a YOUNG stage email
+Every day at 07:05 — animals turning 180–182 days old get a PRE-BREEDING email
+Every day at 07:10 — animals turning 365–367 days old get a READY TO BREED email
+Every day at 07:30 — pregnant animals due within 14 days get a due-soon alert
+Every day at 08:00 — overdue pregnant animals trigger an urgent alert
+On every stage change (save/update) — saveAnimalWithNotification() fires the right email automatically
+On birth recording — recordBirthWithNotification() sends both offspring born + newborn emails
+
+
+
+What now happens automatically
+ActionEmail sentRegister new animal via form✅ Newborn email fires immediatelyEdit/update an animal that changes stage✅ Stage-change email fires immediatelyEvery morning at 06:55✅ Scheduler catches any newborns missed

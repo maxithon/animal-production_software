@@ -1,7 +1,6 @@
 package rw.animalproduct.animal.production.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,6 +10,12 @@ import java.util.UUID;
  *
  * IMPORTANT: Every @Column name is explicit to prevent Hibernate from
  * accidentally inheriting field names from a parent/joined entity.
+ *
+ * FIX: @NotBlank removed from livestockIdValue transient field.
+ * Hibernate's BeanValidationEventListener fires on the existing DB entity
+ * at commit time — that entity never has transient fields populated,
+ * so @NotBlank always fails on UPDATE. Validation is handled in the
+ * controller via BindingResult instead.
  */
 @Entity
 @Table(name = "livestock_breeding")
@@ -23,7 +28,7 @@ public class LivestockBreeding {
 
     /**
      * The female animal being bred.
-     * livestock_id FK — NOT NULL enforced via livestockIdValue transient field.
+     * livestock_id FK — NOT NULL enforced via controller validation.
      */
     @ManyToOne
     @JoinColumn(name = "livestock_id", referencedColumnName = "id", nullable = false)
@@ -69,9 +74,9 @@ public class LivestockBreeding {
     private Boolean isDeleted = false;
 
     // ── Transient form-binding fields (never persisted) ───────────────────────
+    // ✅ @NotBlank intentionally removed — see class-level JavaDoc above.
 
     @Transient
-    @NotBlank(message = "Female livestock is required")
     private String livestockIdValue;
 
     @Transient
@@ -146,14 +151,9 @@ public class LivestockBreeding {
     public static final String METHOD_ARTIFICIAL = "ARTIFICIAL_INSEMINATION";
     public static final String METHOD_EMBRYO     = "EMBRYO_TRANSFER";
 
-    public static final String STATUS_PENDING   = "PENDING";
-    public static final String STATUS_CONFIRMED = "CONFIRMED";   // keep if used elsewhere
-    public static final String STATUS_FAILED    = "FAILED";
-    public static final String STATUS_COMPLETED = "COMPLETED";
-
-
+    public static final String STATUS_PENDING            = "PENDING";
+    public static final String STATUS_CONFIRMED          = "CONFIRMED";
+    public static final String STATUS_FAILED             = "FAILED";
+    public static final String STATUS_COMPLETED          = "COMPLETED";
     public static final String STATUS_CONFIRMED_PREGNANT = "CONFIRMED_PREGNANT";
-
-
-
 }

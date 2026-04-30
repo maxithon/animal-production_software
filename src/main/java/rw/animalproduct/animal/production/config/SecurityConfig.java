@@ -21,6 +21,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/email-diagnostic/**").permitAll()  // ← ADDED
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         .requestMatchers("/", "/login").permitAll()
                         .requestMatchers("/api/upload/**").authenticated()
@@ -55,7 +56,16 @@ public class SecurityConfig {
                         .frameOptions(frame -> frame.sameOrigin())
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/upload/**")
+                        .ignoringRequestMatchers(
+                                "/api/upload/**",
+                                "/email-diagnostic/**",               // ← ADDED
+                                "/livestock/lifecycle/test-newborn",
+                                "/livestock/lifecycle/test-ready-to-breed",
+                                "/livestock/lifecycle/test-due-soon",
+                                "/livestock/lifecycle/test-overdue",
+                                "/livestock/lifecycle/test-email",
+                                "/livestock/lifecycle/test-breeding"
+                        )
                 );
 
         return http.build();

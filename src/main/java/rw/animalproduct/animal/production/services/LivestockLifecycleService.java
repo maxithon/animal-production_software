@@ -13,29 +13,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * LivestockLifecycleService — FIXED VERSION
- *
- * Root causes of all-zeros dashboard (3 bugs fixed):
- *
- * BUG 1 — getAgeInDays() only used dateReceived, but most animals have
- *          dateReceived = NULL and use birthDate instead.
- *          FIX: fall back to birthDate when dateReceived is null.
- *
- * BUG 2 — countPregnant() only checked livestock.status = 'PREGNANT',
- *          but confirmed pregnancies live in livestock_breeding.status = 'CONFIRMED_PREGNANT'.
- *          The livestock row itself is never updated to PREGNANT in the current workflow.
- *          FIX: also count animals that have a CONFIRMED_PREGNANT breeding record.
- *
- * BUG 3 — getRecentlyBorn() required mother != null OR acquisitionMethod == "BORN",
- *          which excluded recently purchased newborns (GOA-007, GOA-008 have
- *          acquisition_method = 'PURCHASE' but dateReceived within last 30 days).
- *          FIX: use age-based detection (same as v_newborn_animals view does).
- */
 @Service
 public class LivestockLifecycleService {
 
-    // ── Age thresholds (days) ─────────────────────────────────────────
+    // Age thresholds (days)
     private static final int NEWBORN_DAYS       = 30;
     private static final int YOUNG_DAYS         = 180;
     private static final int PRE_BREEDING_DAYS  = 365;
@@ -44,34 +25,27 @@ public class LivestockLifecycleService {
 
     private final LivestockRepository        livestockRepository;
     private final LivestockBreedingRepository breedingRepository;
+    private final LifecycleEmailService      emailService;  // ADDED
 
     @Autowired
     public LivestockLifecycleService(LivestockRepository livestockRepository,
-                                     LivestockBreedingRepository breedingRepository) {
+                                     LivestockBreedingRepository breedingRepository,
+                                     LifecycleEmailService emailService) {
         this.livestockRepository = livestockRepository;
         this.breedingRepository  = breedingRepository;
+        this.emailService        = emailService;
     }
 
     // =========================================================================
-    // AGE HELPERS  ← BUG 1 FIX: use birthDate as fallback for dateReceived
+    // AGE HELPERS
     // =========================================================================
 
-    /**
-     * Returns the animal's age in days.
-     *
-     * Priority:
-     *   1. dateReceived  (set when the animal was received / registered)
-     *   2. birthDate     (set for animals born on-farm or with known DOB)
-     *
-     * Previously only dateReceived was used, causing age = 0 for most animals
-     * whose dateReceived is NULL in the database.
-     */
     public long getAgeInDays(Livestock animal) {
         if (animal == null) return 0;
 
         LocalDate referenceDate = animal.getDateReceived() != null
                 ? animal.getDateReceived()
-                : animal.getBirthDate();   // ← FIXED: fall back to birthDate
+                : animal.getBirthDate();
 
         if (referenceDate == null) return 0;
 
@@ -84,7 +58,7 @@ public class LivestockLifecycleService {
 
         LocalDate referenceDate = animal.getDateReceived() != null
                 ? animal.getDateReceived()
-                : animal.getBirthDate();   // ← FIXED: fall back to birthDate
+                : animal.getBirthDate();
 
         if (referenceDate == null) return 0;
 
@@ -101,27 +75,23 @@ public class LivestockLifecycleService {
         if (Livestock.STATUS_DEAD.equals(animal.getStatus()))  return "DECEASED";
         if (Livestock.STATUS_SOLD.equals(animal.getStatus()))  return "SOLD";
 
-        // Pregnant check — status field OR confirmed breeding record
         if (Livestock.STATUS_PREGNANT.equals(animal.getStatus())) return "PREGNANT";
         if (Boolean.TRUE.equals(animal.getIsPregnant()))           return "PREGNANT";
-        if (hasConfirmedPregnancy(animal))                         return "PREGNANT"; // ← FIXED
+        if (hasConfirmedPregnancy(animal))                         return "PREGNANT";
 
         long ageDays = getAgeInDays(animal);
 
-        // In active breeding?
         boolean inBreeding = breedingRepository
                 .findByLivestockId(animal.getId())
                 .stream()
                 .anyMatch(b -> LivestockBreeding.STATUS_PENDING.equals(b.getStatus()));
         if (inBreeding) return "IN_BREEDING";
 
-        // Nursing?
         if (animal.getLastBirthDate() != null) {
             long daysSinceBirth = ChronoUnit.DAYS.between(animal.getLastBirthDate(), LocalDate.now());
             if (daysSinceBirth >= 0 && daysSinceBirth <= NURSING_DAYS) return "NURSING";
         }
 
-        // Age-based stages
         if (ageDays <= NEWBORN_DAYS)       return "NEWBORN";
         if (ageDays <= YOUNG_DAYS)         return "YOUNG";
         if (ageDays <= PRE_BREEDING_DAYS)  return "PRE_BREEDING";
@@ -149,7 +119,6 @@ public class LivestockLifecycleService {
                             ? "Expected to give birth in " + days + " days"
                             : "Overdue by " + Math.abs(days) + " days";
                 }
-                // Check breeding record for due date
                 return getPregnantAnimals().stream()
                         .filter(b -> b.getId().equals(animal.getId()))
                         .findFirst()
@@ -165,6 +134,86 @@ public class LivestockLifecycleService {
                 return "Nursing period";
             default:
                 return "—";
+        }
+    }
+
+    // =========================================================================
+    // MAIN METHODS WITH EMAIL NOTIFICATIONS
+    // =========================================================================
+
+    /**
+     * Save animal with automatic email notification on stage change
+     */
+    @Transactional
+    public Livestock saveAnimalWithNotification(Livestock animal) {
+        boolean isNew = animal.getId() == null;
+
+        String oldStage = null;
+        if (!isNew) {
+            Livestock existing = livestockRepository.findById(animal.getId()).orElse(null);
+            if (existing != null) {
+                oldStage = getCurrentStage(existing);
+            }
+        }
+
+        Livestock saved = livestockRepository.save(animal);
+        String newStage = getCurrentStage(saved);
+
+        if (isNew) {
+            sendStageNotification(saved, newStage);
+        } else if (oldStage != null && !oldStage.equals(newStage)) {
+            sendStageNotification(saved, newStage);
+        }
+
+        return saved;
+    }
+
+    /**
+     * Record birth with email notifications
+     */
+    @Transactional
+    public Livestock recordBirthWithNotification(Livestock mother, Livestock offspring) {
+        Livestock savedOffspring = livestockRepository.save(offspring);
+
+        mother.setLastBirthDate(LocalDate.now());
+        mother.setOffspringCount((mother.getOffspringCount() != null ? mother.getOffspringCount() : 0) + 1);
+        mother.setStatus(Livestock.STATUS_ACTIVE);
+        mother.setIsPregnant(false);
+        livestockRepository.save(mother);
+
+        // Send notifications
+        emailService.sendOffspringBornNotification(mother, savedOffspring);
+        emailService.sendNewbornNotification(savedOffspring);
+
+        return savedOffspring;
+    }
+
+    /**
+     * Get animal by ID
+     */
+    public Livestock getAnimalById(UUID id) {
+        return livestockRepository.findById(id).orElse(null);
+    }
+
+    /**
+     * Send notification based on stage
+     */
+    private void sendStageNotification(Livestock animal, String stage) {
+        switch (stage) {
+            case "NEWBORN":
+                emailService.sendNewbornNotification(animal);
+                break;
+            case "YOUNG":
+                emailService.sendYoungStageNotification(animal);
+                break;
+            case "PRE_BREEDING":
+                emailService.sendPreBreedingNotification(animal);
+                break;
+            case "READY_TO_BREED":
+                emailService.sendReadyToBreedNotification(animal);
+                break;
+            default:
+                break;
         }
     }
 
@@ -185,9 +234,6 @@ public class LivestockLifecycleService {
                 .count();
     }
 
-    /**
-     * YOUNG: 31–180 days (returned separately from pre-breeding now)
-     */
     public long countYoung() {
         return getActiveAnimals().stream()
                 .filter(l -> {
@@ -214,23 +260,13 @@ public class LivestockLifecycleService {
         return breedingRepository.findByStatus(LivestockBreeding.STATUS_PENDING).size();
     }
 
-    /**
-     * BUG 2 FIX: count pregnant animals from BOTH sources:
-     *   - livestock.status = 'PREGNANT'  (manually set)
-     *   - livestock_breeding.status = 'CONFIRMED_PREGNANT'  (set by breeding workflow)
-     *
-     * Previously only the first source was checked, missing all confirmed pregnancies
-     * because the livestock row status was never updated to 'PREGNANT'.
-     */
     public long countPregnant() {
-        // IDs from livestock.status = 'PREGNANT'
         Set<UUID> fromStatus = livestockRepository.findByStatus(Livestock.STATUS_PREGNANT)
                 .stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .map(Livestock::getId)
                 .collect(Collectors.toSet());
 
-        // IDs from confirmed breeding records
         Set<UUID> fromBreeding = breedingRepository.findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
                 .stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
@@ -238,7 +274,6 @@ public class LivestockLifecycleService {
                 .map(b -> b.getLivestock().getId())
                 .collect(Collectors.toSet());
 
-        // Union of both sets (no double counting)
         Set<UUID> all = new HashSet<>(fromStatus);
         all.addAll(fromBreeding);
         return all.size();
@@ -258,7 +293,7 @@ public class LivestockLifecycleService {
     }
 
     // =========================================================================
-    // LISTS — age-based  (all now use the fixed getAgeInDays)
+    // LISTS — age-based
     // =========================================================================
 
     public List<Livestock> getYoungFemales() {
@@ -310,7 +345,7 @@ public class LivestockLifecycleService {
                 .filter(l -> "FEMALE".equalsIgnoreCase(l.getGender()))
                 .filter(l -> getAgeInDays(l) > PRE_BREEDING_DAYS)
                 .filter(l -> !Livestock.STATUS_PREGNANT.equals(l.getStatus()))
-                .filter(l -> !confirmedPregnant.contains(l.getId()))  // ← FIXED: exclude confirmed pregnancies
+                .filter(l -> !confirmedPregnant.contains(l.getId()))
                 .filter(l -> !inBreeding.contains(l.getId()))
                 .filter(l -> !isCurrentlyNursing(l))
                 .sorted(Comparator.comparingLong(this::getAgeInDays).reversed())
@@ -331,14 +366,6 @@ public class LivestockLifecycleService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * BUG 3 FIX: use age-based detection (≤ NEWBORN_DAYS) instead of
-     * requiring mother != null OR acquisitionMethod == "BORN".
-     *
-     * Your recently added animals (GOA-007, GOA-008) are PURCHASE method
-     * but were received/born within the last 30 days — they should appear
-     * as newborns. The v_newborn_animals view already does this correctly.
-     */
     public List<Livestock> getRecentlyBorn(int withinDays) {
         return getActiveAnimals().stream()
                 .filter(l -> {
@@ -350,16 +377,10 @@ public class LivestockLifecycleService {
     }
 
     // =========================================================================
-    // LISTS — pregnancy  (BUG 2 FIX applied here too)
+    // LISTS — pregnancy
     // =========================================================================
 
-    /**
-     * Returns all pregnant animals from both sources:
-     *   1. livestock.status = 'PREGNANT'
-     *   2. livestock_breeding.status = 'CONFIRMED_PREGNANT'
-     */
     public List<Livestock> getPregnantAnimals() {
-        // Animals explicitly marked PREGNANT in livestock table
         Set<UUID> alreadyIncluded = new HashSet<>();
         List<Livestock> result = new ArrayList<>();
 
@@ -370,14 +391,12 @@ public class LivestockLifecycleService {
                     alreadyIncluded.add(l.getId());
                 });
 
-        // Animals with confirmed pregnancy in breeding table
         breedingRepository.findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
                 .filter(b -> b.getLivestock() != null)
                 .forEach(b -> {
                     Livestock l = b.getLivestock();
                     if (!alreadyIncluded.contains(l.getId())) {
-                        // Enrich with due date from breeding record if not set on livestock
                         if (l.getExpectedDueDate() == null && b.getExpectedDueDate() != null) {
                             l.setExpectedDueDate(b.getExpectedDueDate());
                         }
@@ -392,10 +411,9 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getDueSoon(int withinDays) {
-        LocalDate today  = LocalDate.now();
+        LocalDate today = LocalDate.now();
         LocalDate cutoff = today.plusDays(withinDays);
 
-        // Also check breeding records for due dates
         Set<UUID> dueSoonFromBreeding = breedingRepository
                 .findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
@@ -642,13 +660,15 @@ public class LivestockLifecycleService {
     }
 
     // =========================================================================
-    // MANUAL STAGE UPDATE
+    // MANUAL STAGE UPDATE WITH EMAIL
     // =========================================================================
 
     @Transactional
     public void updateStage(UUID id, String stage, String notes) {
         Livestock animal = livestockRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Animal not found: " + id));
+
+        String oldStage = getCurrentStage(animal);
 
         switch (stage.toUpperCase()) {
             case "PREGNANT":
@@ -668,6 +688,11 @@ public class LivestockLifecycleService {
                 break;
         }
         livestockRepository.save(animal);
+
+        String newStage = getCurrentStage(animal);
+        if (!oldStage.equals(newStage)) {
+            sendStageNotification(animal, newStage);
+        }
     }
 
     // =========================================================================
@@ -688,14 +713,18 @@ public class LivestockLifecycleService {
         return daysSinceBirth >= 0 && daysSinceBirth <= NURSING_DAYS;
     }
 
-    /**
-     * Returns true if this animal has a CONFIRMED_PREGNANT breeding record.
-     * Used to detect pregnancies that were recorded via the breeding workflow
-     * but where livestock.status was never updated to 'PREGNANT'.
-     */
     private boolean hasConfirmedPregnancy(Livestock animal) {
         return breedingRepository.findByLivestockId(animal.getId()).stream()
                 .anyMatch(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
                         && !Boolean.TRUE.equals(b.getIsDeleted()));
+    }
+
+    public List<Livestock> getActiveAnimalsByAgeRange(int minDays, int maxDays) {
+        return getActiveAnimals().stream()
+                .filter(l -> {
+                    long d = getAgeInDays(l);
+                    return d >= minDays && (maxDays == Integer.MAX_VALUE || d <= maxDays);
+                })
+                .collect(Collectors.toList());
     }
 }

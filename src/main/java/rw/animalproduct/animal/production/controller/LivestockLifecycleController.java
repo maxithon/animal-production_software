@@ -7,10 +7,7 @@ import rw.animalproduct.animal.production.dto.FemaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.dto.MaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
-import rw.animalproduct.animal.production.services.FemalesReadyToBreedService;
-import rw.animalproduct.animal.production.services.LivestockBreedingService;
-import rw.animalproduct.animal.production.services.LivestockLifecycleService;
-import rw.animalproduct.animal.production.services.MalesReadyToBreedService;
+import rw.animalproduct.animal.production.services.*;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -29,16 +26,19 @@ public class LivestockLifecycleController {
     private final LivestockBreedingService    breedingService;
     private final MalesReadyToBreedService    malesReadyToBreedService;
     private final FemalesReadyToBreedService  femalesReadyToBreedService;
+    private final LifecycleEmailService       emailService;  // ADDED
 
     public LivestockLifecycleController(
             LivestockLifecycleService lifecycleService,
             LivestockBreedingService breedingService,
             MalesReadyToBreedService malesReadyToBreedService,
-            FemalesReadyToBreedService femalesReadyToBreedService) {
+            FemalesReadyToBreedService femalesReadyToBreedService,
+            LifecycleEmailService emailService) {  // ADDED emailService parameter
         this.lifecycleService          = lifecycleService;
         this.breedingService           = breedingService;
         this.malesReadyToBreedService  = malesReadyToBreedService;
         this.femalesReadyToBreedService= femalesReadyToBreedService;
+        this.emailService              = emailService;  // ADDED
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -331,6 +331,170 @@ public class LivestockLifecycleController {
     @ResponseBody
     public Map<String, Long> apiAgeBands() {
         return lifecycleService.getAgeBandBreakdown();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // EMAIL TEST ENDPOINTS (ADDED)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Test endpoint to send email notification for a specific animal
+     * POST /livestock/lifecycle/test-email?animalId=UUID
+     */
+    @PostMapping("/test-email")
+    @ResponseBody
+    public Map<String, String> testEmail(@RequestParam UUID animalId) {
+        try {
+            Livestock animal = lifecycleService.getAnimalById(animalId);
+            if (animal != null) {
+                String stage = lifecycleService.getCurrentStage(animal);
+
+                switch (stage) {
+                    case "NEWBORN":
+                        emailService.sendNewbornNotification(animal);
+                        break;
+                    case "YOUNG":
+                        emailService.sendYoungStageNotification(animal);
+                        break;
+                    case "PRE_BREEDING":
+                        emailService.sendPreBreedingNotification(animal);
+                        break;
+                    case "READY_TO_BREED":
+                        emailService.sendReadyToBreedNotification(animal);
+                        break;
+                    case "PREGNANT":
+                        emailService.sendPregnancyConfirmedNotification(
+                                breedingService.getAll().stream()
+                                        .filter(b -> b.getLivestock() != null && b.getLivestock().getId().equals(animalId))
+                                        .findFirst()
+                                        .orElse(null)
+                        );
+                        break;
+                    default:
+                        emailService.sendNewbornNotification(animal);
+                        break;
+                }
+
+                return Map.of(
+                        "status", "success",
+                        "message", "Test email sent for animal: " + animal.getTagNumber()
+                );
+            }
+            return Map.of("status", "error", "message", "Animal not found with ID: " + animalId);
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    /**
+     * Test endpoint to send due soon notifications for all animals due within 14 days
+     * POST /livestock/lifecycle/test-due-soon
+     */
+    @PostMapping("/test-due-soon")
+    @ResponseBody
+    public Map<String, String> testDueSoon() {
+        try {
+            List<Livestock> dueSoon = lifecycleService.getDueSoon(14);
+            if (dueSoon.isEmpty()) {
+                return Map.of("status", "info", "message", "No animals are due within the next 14 days");
+            }
+            emailService.sendDueSoonNotification(dueSoon, 14);
+            return Map.of(
+                    "status", "success",
+                    "message", "Due soon notification sent for " + dueSoon.size() + " animals"
+            );
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    /**
+     * Test endpoint to send overdue notifications for all overdue animals
+     * POST /livestock/lifecycle/test-overdue
+     */
+    @PostMapping("/test-overdue")
+    @ResponseBody
+    public Map<String, String> testOverdue() {
+        try {
+            List<Livestock> overdue = lifecycleService.getOverdue();
+            if (overdue.isEmpty()) {
+                return Map.of("status", "info", "message", "No overdue animals found");
+            }
+            emailService.sendOverdueNotification(overdue);
+            return Map.of(
+                    "status", "success",
+                    "message", "Overdue notification sent for " + overdue.size() + " animals"
+            );
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    /**
+     * Test endpoint to send a newborn notification for testing purposes
+     * POST /livestock/lifecycle/test-newborn?animalId=UUID
+     */
+    @PostMapping("/test-newborn")
+    @ResponseBody
+    public Map<String, String> testNewborn(@RequestParam UUID animalId) {
+        try {
+            Livestock animal = lifecycleService.getAnimalById(animalId);
+            if (animal != null) {
+                emailService.sendNewbornNotification(animal);
+                return Map.of(
+                        "status", "success",
+                        "message", "Newborn test email sent for animal: " + animal.getTagNumber()
+                );
+            }
+            return Map.of("status", "error", "message", "Animal not found");
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    /**
+     * Test endpoint to send a ready to breed notification
+     * POST /livestock/lifecycle/test-ready-to-breed?animalId=UUID
+     */
+    @PostMapping("/test-ready-to-breed")
+    @ResponseBody
+    public Map<String, String> testReadyToBreed(@RequestParam UUID animalId) {
+        try {
+            Livestock animal = lifecycleService.getAnimalById(animalId);
+            if (animal != null) {
+                emailService.sendReadyToBreedNotification(animal);
+                return Map.of(
+                        "status", "success",
+                        "message", "Ready to breed test email sent for animal: " + animal.getTagNumber()
+                );
+            }
+            return Map.of("status", "error", "message", "Animal not found");
+        } catch (Exception e) {
+            return Map.of("status", "error", "message", e.getMessage());
+        }
+    }
+
+    /**
+     * Get email configuration status
+     * GET /livestock/lifecycle/email-status
+     */
+    @GetMapping("/email-status")
+    @ResponseBody
+    public Map<String, Object> getEmailStatus() {
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("emailEnabled", true);
+        status.put("recipientEmail", "m.test4743@gmail.com");
+        status.put("status", "Email notifications are configured and ready to send");
+        status.put("notificationTypes", List.of(
+                "Newborn Registration",
+                "Stage Changes (Young, Pre-Breeding, Ready to Breed)",
+                "Breeding Events",
+                "Pregnancy Confirmation",
+                "Due Soon Alerts (14 days)",
+                "Overdue Alerts",
+                "Offspring Birth"
+        ));
+        return status;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

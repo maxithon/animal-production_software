@@ -305,6 +305,13 @@
                 <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-arrow"></i>Ready to Breed</a>
                 <a th:href="@{/livestock/lifecycle/breeding-management}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-fill"></i>Breeding</a>
                 <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-hourglass-split"></i>Pregnancy Tracking</a>
+
+                <a th:href="@{/livestock/lifecycle/notifications}"
+                   class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-bell-fill"></i>Notifications
+                </a>
+
                 <div class="sub-divider"><span>Events</span></div>
                 <a th:href="@{/livestock/births/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-stars"></i>Births</a>
                 <a th:href="@{/livestock/treatments}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>

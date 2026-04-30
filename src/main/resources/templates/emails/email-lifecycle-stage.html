@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${title}">Lifecycle Stage Update</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f6f9;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0"
+             style="background:#ffffff;border-radius:12px;overflow:hidden;
+                    box-shadow:0 4px 20px rgba(0,0,0,0.10);max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#1a5f7a,#2e8b9e);padding:28px 32px;color:#ffffff;">
+            <div style="font-size:2.5rem;line-height:1;" th:text="${emoji}">🐄</div>
+            <h2 style="margin:10px 0 4px;font-size:1.3rem;font-weight:700;"
+                th:text="${title}">Lifecycle Stage Update</h2>
+            <p style="margin:0;opacity:0.80;font-size:0.85rem;">
+              Animal Livestock Management System &mdash; Auto Notification
+            </p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:28px 32px;">
+
+            <p style="margin:0 0 20px;color:#374151;font-size:1rem;line-height:1.6;"
+               th:text="${message}">Message here.</p>
+
+            <!-- Animal card -->
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;
+                          padding:16px 20px;margin-bottom:20px;">
+              <tr>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Tag Number</span>
+                  <strong style="font-size:1rem;" th:text="${tagNumber}">—</strong>
+                </td>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Current Stage</span>
+                  <strong style="color:#1a5f7a;" th:text="${stageName}">—</strong>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Category</span>
+                  <span th:text="${category}">—</span>
+                </td>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Gender</span>
+                  <span th:text="${gender}">—</span>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Age</span>
+                  <span>
+                    <span th:text="${ageDays}">0</span> days
+                    (<span th:text="${ageMonths}">0</span> months)
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="2" style="padding:5px 0;border-top:1px solid #bae6fd;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;margin-top:8px;">Next Stage</span>
+                  <span style="color:#0369a1;font-weight:600;" th:text="${nextStage}">—</span>
+                </td>
+              </tr>
+            </table>
+
+            <p style="color:#9ca3af;font-size:0.80rem;margin:0;">
+              Notification date: <span th:text="${today}">—</span>
+            </p>
+
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f9fafb;padding:16px 32px;text-align:center;
+                     border-top:1px solid #e5e7eb;">
+            <p style="color:#9ca3af;font-size:0.75rem;margin:0;">
+              Livestock Lifecycle Management &bull; Automated Notification
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

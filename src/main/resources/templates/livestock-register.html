@@ -40,8 +40,8 @@
                 </div>
 
                 <form th:action="@{/livestock/register/new}" th:object="${livestock}" method="post" id="registerForm">
-                    <!--  hidden field to ensure pregnancy_status is never null -->
-                    <input type="hidden" th:field="*{pregnancyStatus}" th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
+                    <input type="hidden" th:field="*{pregnancyStatus}"
+                           th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
 
                     <!-- Photo Upload -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
@@ -65,10 +65,6 @@
                     <!-- Basic Information -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-info-circle"></i> Basic Information</h5>
                     <div class="row">
-                        <!-- PURPOSE: The placeholder shows the global last-tag hint on first load.     -->
-                        <!-- Once the user picks a category, fetchTagSuggestion() updates all three     -->
-                        <!-- hint elements below (lastTagInfo, suggestedTagPill, noTagsYet).            -->
-
                         <div class="col-md-4 mb-3">
                             <label for="tagNumber" class="form-label">Tag Number *</label>
                             <input type="text" class="form-control" id="tagNumber"
@@ -76,20 +72,16 @@
                                    th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
                                    required>
 
-                            <!-- Shows the last registered tag for this category (filled by JS) -->
-                            <!-- Hidden on load; JS shows it after a category is selected -->
                             <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none;">
                                 <i class="bi bi-tag-fill"></i>
                                 Last in this category: <code id="lastTagValue"></code>
                             </div>
 
-                            <!-- Clickable pill — click it to auto-fill the next suggested tag -->
-                            <!-- data-tag is set by JS; onclick reads it to avoid Thymeleaf security error -->
                             <div id="suggestedTagPill"
                                  style="display:none; margin-top:6px; align-items:center; gap:6px;
-                background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
-                border-radius:20px; font-size:0.8rem; font-weight:600;
-                color:#0369a1; cursor:pointer;"
+                                        background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
+                                        border-radius:20px; font-size:0.8rem; font-weight:600;
+                                        color:#0369a1; cursor:pointer;"
                                  onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
                                  title="Click to use this tag number">
                                 <i class="bi bi-arrow-right-circle-fill"></i>
@@ -97,7 +89,6 @@
                                 <span style="font-size:0.72rem; opacity:0.75;">(click to use)</span>
                             </div>
 
-                            <!-- Shown when the selected category has no animals registered yet -->
                             <div id="noTagsYet"
                                  style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
                                 <i class="bi bi-info-circle"></i>
@@ -181,10 +172,6 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="livestockCategoryIdValue" class="form-label">Livestock Category *</label>
-                            <!-- PURPOSE: Every time the user picks a different category, the browser       -->
-                            <!-- calls fetchTagSuggestion() which hits /livestock/api/suggest-tag and       -->
-                            <!-- updates the tag hints below the input to match THAT category's last tag.   -->
-
                             <select class="form-select" id="livestockCategoryIdValue"
                                     th:field="*{livestockCategoryIdValue}"
                                     onchange="fetchTagSuggestion(this.value)"
@@ -197,9 +184,10 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="beneficiariesAmatungoIdValue" class="form-label">Beneficiary (Abaragizwa) *</label>
-                            <select class="form-select" id="beneficiariesAmatungoIdValue"
-                                    th:field="*{beneficiariesAmatungoIdValue}" required>
+                            <!-- ↓ FIXED: was beneficiariesAmatungoIdValue, now matches Livestock.java -->
+                            <label for="beneficiaryIdValue" class="form-label">Beneficiary (Abaragizwa) *</label>
+                            <select class="form-select" id="beneficiaryIdValue"
+                                    th:field="*{beneficiaryIdValue}" required>
                                 <option value="">Select beneficiary...</option>
                                 <option th:each="ab : ${beneficiariesList}"
                                         th:value="${ab.id}"
@@ -267,19 +255,14 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 
-    // ── On page load ──────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
-        // Load provinces into the first dropdown
         loadProvinces();
-
-        // Restore pregnancy row if editing an existing record
         const cb = document.getElementById('isPregnant');
         if (cb && cb.checked) {
             document.getElementById('pregnancyMonthsRow').style.display = 'flex';
         }
     });
 
-    // ── Pregnancy toggle ──────────────────────────────────────────────────────
     function togglePregnancy(checkbox) {
         const row = document.getElementById('pregnancyMonthsRow');
         row.style.display = checkbox.checked ? 'flex' : 'none';
@@ -288,19 +271,11 @@
         }
     }
 
-    // ── Photo upload ──────────────────────────────────────────────────────────
     function uploadPhoto() {
         const file = document.getElementById('photoFile').files[0];
         if (!file) return;
-
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
-            return;
-        }
+        if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
 
         const preview = document.getElementById('photoPreview');
         preview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
@@ -325,10 +300,9 @@
             });
     }
 
-    // ── Cascading location dropdowns ──────────────────────────────────────────
     function loadProvinces() {
         fetch('/api/locations/provinces')
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 const select = document.getElementById('province');
                 select.innerHTML = '<option value="">Select province...</option>';
@@ -336,86 +310,66 @@
                     select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
                 });
             })
-            .catch(error => console.error('Error loading provinces:', error));
+            .catch(e => console.error('Error loading provinces:', e));
     }
 
     function loadDistricts() {
         const provinceId = document.getElementById('province').value;
-        if (!provinceId) {
-            resetSelects(['district', 'sector', 'cell', 'village']);
-            return;
-        }
+        if (!provinceId) { resetSelects(['district', 'sector', 'cell', 'village']); return; }
         fetch(`/api/locations/districts/${provinceId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 const select = document.getElementById('district');
                 select.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
+                data.forEach(item => select.innerHTML += `<option value="${item.id}">${item.name}</option>`);
                 select.disabled = false;
                 resetSelects(['sector', 'cell', 'village']);
             })
-            .catch(error => console.error('Error loading districts:', error));
+            .catch(e => console.error('Error loading districts:', e));
     }
 
     function loadSectors() {
         const districtId = document.getElementById('district').value;
-        if (!districtId) {
-            resetSelects(['sector', 'cell', 'village']);
-            return;
-        }
+        if (!districtId) { resetSelects(['sector', 'cell', 'village']); return; }
         fetch(`/api/locations/sectors/${districtId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 const select = document.getElementById('sector');
                 select.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
+                data.forEach(item => select.innerHTML += `<option value="${item.id}">${item.name}</option>`);
                 select.disabled = false;
                 resetSelects(['cell', 'village']);
             })
-            .catch(error => console.error('Error loading sectors:', error));
+            .catch(e => console.error('Error loading sectors:', e));
     }
 
     function loadCells() {
         const sectorId = document.getElementById('sector').value;
-        if (!sectorId) {
-            resetSelects(['cell', 'village']);
-            return;
-        }
+        if (!sectorId) { resetSelects(['cell', 'village']); return; }
         fetch(`/api/locations/cells/${sectorId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 const select = document.getElementById('cell');
                 select.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
+                data.forEach(item => select.innerHTML += `<option value="${item.id}">${item.name}</option>`);
                 select.disabled = false;
                 resetSelects(['village']);
             })
-            .catch(error => console.error('Error loading cells:', error));
+            .catch(e => console.error('Error loading cells:', e));
     }
 
     function loadVillages() {
         const cellId = document.getElementById('cell').value;
-        if (!cellId) {
-            resetSelects(['village']);
-            return;
-        }
+        if (!cellId) { resetSelects(['village']); return; }
         fetch(`/api/locations/villages/${cellId}`)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
                 const select = document.getElementById('village');
                 select.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
+                data.forEach(item => select.innerHTML += `<option value="${item.id}">${item.name}</option>`);
                 select.disabled = false;
             })
-            .catch(error => console.error('Error loading villages:', error));
+            .catch(e => console.error('Error loading villages:', e));
     }
 
     function resetSelects(selectIds) {
@@ -426,59 +380,37 @@
         });
     }
 
-    <!-- PURPOSE: Handles the per-category tag suggestion logic entirely in the     -->
-<!-- browser. When the user changes the category dropdown, it calls the         -->
-<!-- /livestock/api/suggest-tag endpoint and updates the hint elements.         -->
-<!-- The DOMContentLoaded block re-triggers the suggestion if the form          -->
-<!-- re-renders after a validation error (category is already pre-selected).    -->
-
     function fetchTagSuggestion(categoryId) {
-        const pill      = document.getElementById('suggestedTagPill');
-        const lastInfo  = document.getElementById('lastTagInfo');
-        const noTags    = document.getElementById('noTagsYet');
-        const tagInput  = document.getElementById('tagNumber');
+        const pill     = document.getElementById('suggestedTagPill');
+        const lastInfo = document.getElementById('lastTagInfo');
+        const noTags   = document.getElementById('noTagsYet');
+        const tagInput = document.getElementById('tagNumber');
 
-        // Hide all hint elements while the fetch is in progress
-        pill.style.display    = 'none';
+        pill.style.display     = 'none';
         lastInfo.style.display = 'none';
-        noTags.style.display  = 'none';
+        noTags.style.display   = 'none';
 
-        // Do nothing if no category is selected yet
         if (!categoryId) return;
 
-        // Call the per-category API endpoint added in LivestockController.java
         fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-
-                // Always show the last tag for context ("Last in this category: GTS001000005")
                 document.getElementById('lastTagValue').textContent = data.lastTag;
                 lastInfo.style.display = 'block';
 
                 if (data.suggestedTag) {
-                    // Category has existing animals — show the next tag pill
                     document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
-                    // Store the value in data-tag so onclick can read it safely
-                    // (avoids Thymeleaf's security restriction on strings in event handlers)
                     pill.setAttribute('data-tag', data.suggestedTag);
                     pill.style.display = 'inline-flex';
-                    // Update the placeholder to match the expected format for this category
                     tagInput.placeholder = data.suggestedTag;
                 } else {
-                    // Category has no animals yet — prompt user to enter the first tag
                     noTags.style.display = 'block';
                     tagInput.placeholder = 'Enter first tag for this category...';
                 }
             })
-            .catch(() => {
-                // Silently fail — just reset the placeholder
-                tagInput.placeholder = 'Enter tag number...';
-            });
+            .catch(() => { tagInput.placeholder = 'Enter tag number...'; });
     }
 
-    // When the page loads, check if a category is already selected.
-    // This happens when the form re-renders after a validation error —
-    // the category dropdown keeps its value but the JS hints need to be rebuilt.
     document.addEventListener('DOMContentLoaded', function () {
         const select = document.getElementById('livestockCategoryIdValue');
         if (select && select.value) {

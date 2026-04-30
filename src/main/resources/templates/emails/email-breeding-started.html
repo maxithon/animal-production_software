@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Breeding Event Recorded</title>
+</head>
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#f4f6f9;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0"
+             style="background:#ffffff;border-radius:12px;overflow:hidden;
+                    box-shadow:0 4px 20px rgba(0,0,0,0.10);max-width:600px;width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:28px 32px;color:#ffffff;">
+            <div style="font-size:2.5rem;line-height:1;">🔗</div>
+            <h2 style="margin:10px 0 4px;font-size:1.3rem;font-weight:700;">Breeding Event Recorded</h2>
+            <p style="margin:0;opacity:0.80;font-size:0.85rem;">Animal Livestock Management System</p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="padding:28px 32px;">
+
+            <table width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;
+                          padding:16px 20px;margin-bottom:20px;">
+              <tr>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Female (Dam)</span>
+                  <strong th:text="${tagNumber}">—</strong>
+                </td>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Category</span>
+                  <span th:text="${category}">—</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Sire (Male)</span>
+                  <span th:text="${sire}">—</span>
+                </td>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Method</span>
+                  <span th:text="${method}">Natural</span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Breeding Date</span>
+                  <span th:text="${breedingDate}">—</span>
+                </td>
+                <td style="padding:5px 0;">
+                  <span style="color:#6b7280;font-size:0.82rem;display:block;">Pregnancy Check Due</span>
+                  <strong style="color:#7c3aed;" th:text="${checkDate}">—</strong>
+                </td>
+              </tr>
+            </table>
+
+            <p style="color:#374151;line-height:1.6;font-size:0.9rem;">
+              Please schedule a pregnancy check on <strong th:text="${checkDate}">the date above</strong>.
+              Pregnancy can typically be confirmed 30–45 days after breeding.
+            </p>
+
+            <p style="color:#9ca3af;font-size:0.80rem;margin:16px 0 0;">
+              Notification date: <span th:text="${today}">—</span>
+            </p>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#f9fafb;padding:16px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+            <p style="color:#9ca3af;font-size:0.75rem;margin:0;">
+              Livestock Lifecycle Management &bull; Automated Notification
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

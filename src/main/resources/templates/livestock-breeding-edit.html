@@ -6,203 +6,527 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f8f9fa; }
-        .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
-        .content-card {
-            background: white; border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0,0,0,0.08);
-            padding: 28px; max-width: 860px; margin: 0 auto 32px;
-        }
-        .section-title {
-            font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .05em; color: #6c757d;
-            border-bottom: 1px solid #e9ecef; padding-bottom: 6px;
-            margin-bottom: 16px; margin-top: 8px;
+        :root {
+            --primary:   #f59e0b;
+            --primary-d: #d97706;
+            --surface:   #ffffff;
+            --bg:        #f1f5f9;
+            --border:    #e2e8f0;
+            --text:      #1e293b;
+            --muted:     #64748b;
+            --danger:    #ef4444;
+            --info-bg:   #eff6ff;
+            --info-bd:   #bfdbfe;
+            --info-tx:   #1d4ed8;
+            --success-bg:#f0fdf4;
+            --success-bd:#bbf7d0;
+            --success-tx:#15803d;
         }
 
-        /* FIX 2: male section disabled for AI / Embryo Transfer */
-        #maleSection { transition: opacity .2s; }
-        #maleSection.hidden-method { opacity: .45; pointer-events: none; }
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+        }
+
+        /* ── TOP NAV BAR ── */
+        .top-bar {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .top-bar-left { display: flex; align-items: center; gap: 14px; }
+        .top-bar-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: #fef3c7;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: var(--primary-d);
+        }
+        .top-bar h5 { margin: 0; font-size: 1rem; font-weight: 700; color: var(--text); }
+        .top-bar small { color: var(--muted); font-size: 0.78rem; }
+        .breadcrumb-bar {
+            font-size: 0.75rem; color: var(--muted);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .breadcrumb-bar a { color: var(--muted); text-decoration: none; }
+        .breadcrumb-bar a:hover { color: var(--primary-d); }
+        .breadcrumb-bar .sep { opacity: .4; }
+
+        /* ── LAYOUT ── */
+        .page-body { max-width: 920px; margin: 32px auto; padding: 0 20px 80px; }
+
+        /* ── SECTION CARDS ── */
+        .form-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .form-card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            background: #fafafa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-card-header .card-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+        }
+        .form-card-header h6 {
+            margin: 0; font-size: 0.82rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+        }
+        .form-card-body { padding: 24px; }
+
+        /* ── FORM CONTROLS ── */
+        .form-label {
+            font-size: 0.82rem; font-weight: 600;
+            color: var(--text); margin-bottom: 6px; display: block;
+        }
+        .form-label .req { color: var(--danger); }
+        .form-label .opt {
+            font-weight: 400; color: var(--muted);
+            font-size: 0.75rem; margin-left: 4px;
+        }
+
+        .form-control, .form-select {
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.88rem;
+            padding: 9px 12px;
+            color: var(--text);
+            transition: border-color .15s, box-shadow .15s;
+            width: 100%;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(245,158,11,.15);
+            outline: none;
+        }
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: var(--danger);
+        }
+        .form-control.is-invalid:focus, .form-select.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(239,68,68,.15);
+        }
+
+        .input-icon-wrap { position: relative; }
+        .input-icon-wrap .bi {
+            position: absolute; left: 11px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted); font-size: 0.9rem; pointer-events: none;
+        }
+        .input-icon-wrap .form-control,
+        .input-icon-wrap .form-select { padding-left: 34px; }
+
+        .invalid-feedback, .field-error {
+            font-size: 0.78rem; color: var(--danger); margin-top: 4px;
+        }
+
+        /* ── STATUS BADGES ── */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .status-option { position: relative; }
+        .status-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .status-label {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; border-radius: 10px;
+            border: 2px solid var(--border);
+            cursor: pointer; transition: all .15s;
+            font-size: 0.85rem; font-weight: 500;
+        }
+        .status-label:hover { border-color: #cbd5e1; background: #f8fafc; }
+        .status-option input:checked + .status-label {
+            border-color: var(--primary);
+            background: #fef9ee;
+        }
+        .status-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .dot-pending  { background: #f59e0b; }
+        .dot-pregnant { background: #10b981; }
+        .dot-failed   { background: #ef4444; }
+        .dot-complete { background: #6366f1; }
+
+        /* ── METHOD NOTE ── */
         .method-note {
             display: none; font-size: 0.82rem;
-            background: #ebf8ff; border: 1px solid #bee3f8;
-            border-radius: 8px; padding: 8px 14px; color: #2b6cb0; margin-top: 6px;
+            background: var(--info-bg); border: 1px solid var(--info-bd);
+            border-radius: 8px; padding: 10px 14px; color: var(--info-tx);
+            margin-top: 8px; gap: 8px; align-items: flex-start;
         }
-        .method-note.visible { display: block; }
+        .method-note.visible { display: flex; }
+
+        #maleSection { transition: opacity .2s, filter .2s; }
+        #maleSection.hidden-method { opacity: .45; pointer-events: none; filter: grayscale(.3); }
+
+        /* ── STICKY FOOTER ── */
+        .sticky-footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 14px 32px;
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 99;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+        }
+        .sticky-footer .record-id {
+            font-size: 0.78rem; color: var(--muted);
+        }
+        .sticky-footer .record-id strong { color: var(--text); }
+
+        .btn-save {
+            background: var(--primary); border: none; color: white;
+            padding: 10px 24px; border-radius: 9px; font-weight: 600;
+            font-size: 0.88rem; cursor: pointer; transition: background .15s, transform .1s;
+            display: inline-flex; align-items: center; gap: 7px;
+        }
+        .btn-save:hover { background: var(--primary-d); }
+        .btn-save:active { transform: scale(.98); }
+
+        .btn-cancel {
+            background: transparent; border: 1.5px solid var(--border);
+            color: var(--muted); padding: 10px 20px; border-radius: 9px;
+            font-weight: 500; font-size: 0.88rem; cursor: pointer;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+            transition: border-color .15s, color .15s;
+        }
+        .btn-cancel:hover { border-color: #94a3b8; color: var(--text); }
+
+        /* ── ERROR BANNER ── */
+        .error-banner {
+            background: #fef2f2; border: 1.5px solid #fecaca;
+            border-radius: 10px; padding: 14px 18px;
+            display: flex; align-items: flex-start; gap: 12px;
+            margin-bottom: 20px; color: #991b1b; font-size: 0.88rem;
+        }
+        .error-banner .bi { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
+
+        textarea.form-control { resize: vertical; min-height: 90px; }
+
+        @media (max-width: 600px) {
+            .status-grid { grid-template-columns: 1fr; }
+            .top-bar { padding: 0 16px; }
+            .page-body { padding: 0 12px 100px; }
+            .sticky-footer { padding: 12px 16px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h4 class="mb-1"><i class="bi bi-pencil-square text-warning me-2"></i>Edit Breeding Record</h4>
-        <small class="text-muted">Update breeding event details</small>
+<!-- ── TOP BAR ── -->
+<div class="top-bar">
+    <div class="top-bar-left">
+        <div class="top-bar-icon"><i class="bi bi-pencil-square"></i></div>
+        <div>
+            <h5>Edit Breeding Record</h5>
+            <div class="breadcrumb-bar">
+                <a th:href="@{/livestock/breeding}">Dashboard</a>
+                <span class="sep">›</span>
+                <a th:href="@{/livestock/breeding/list}">Records</a>
+                <span class="sep">›</span>
+                <span>Edit</span>
+            </div>
+        </div>
     </div>
     <div class="d-flex gap-2">
-        <a th:href="@{/livestock/breeding}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-arrow-left me-1"></i> Dashboard
+        <a th:href="@{/livestock/breeding}" class="btn-cancel">
+            <i class="bi bi-speedometer2"></i> Dashboard
         </a>
-        <a th:href="@{/livestock/breeding/list}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-list me-1"></i> View All
+        <a th:href="@{/livestock/breeding/list}" class="btn-cancel">
+            <i class="bi bi-list-ul"></i> All Records
         </a>
     </div>
 </div>
 
-<div class="container-fluid px-4">
-    <div class="content-card">
+<!-- ── MAIN FORM ── -->
+<div class="page-body">
 
-        <!-- Validation errors summary -->
-        <div th:if="${#fields.hasAnyErrors()}" class="alert alert-danger mb-3">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            Please correct the errors below before saving.
+    <form id="editForm"
+          th:action="@{/livestock/breeding/update/{id}(id=${breeding.id})}"
+          th:object="${breeding}" method="post">
+
+        <!-- ✅ Error banner inside th:object scope -->
+        <div th:if="${#fields.hasAnyErrors()}" class="error-banner">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            <div>
+                <strong>Please fix the following errors before saving.</strong>
+                <ul class="mb-0 mt-1 ps-3">
+                    <li th:each="err : ${#fields.allErrors()}" th:text="${err.defaultMessage}"></li>
+                </ul>
+            </div>
         </div>
 
-        <form th:action="@{/livestock/breeding/update/{id}(id=${breeding.id})}"
-              th:object="${breeding}" method="post">
-
-            <p class="section-title">Animal &amp; Breeding Details</p>
-            <div class="row g-3 mb-4">
-
-                <!-- FIX 1: Bind to livestockIdValue, not livestock -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Female Animal <span class="text-danger">*</span></label>
-                    <select th:field="*{livestockIdValue}"
-                            class="form-select"
-                            th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
-                            required>
-                        <option value="">— Select Female Animal —</option>
-                        <option th:each="ls : ${femaleLivestock}"
-                                th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
-                        </option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('livestockIdValue')}"
-                         class="invalid-feedback" th:errors="*{livestockIdValue}"></div>
+        <!-- ── CARD 1: Animals ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="card-icon" style="background:#fef3c7; color:#b45309;">
+                    <i class="bi bi-gender-ambiguous"></i>
                 </div>
+                <h6>Animal Pairing</h6>
+            </div>
+            <div class="form-card-body">
+                <div class="row g-3">
 
-                <!-- FIX 2: Male section with method-aware hiding -->
-                <div class="col-md-6" id="maleSection">
-                    <label class="form-label fw-semibold">Male Animal (Sire)</label>
-                    <select th:field="*{maleLivestockIdValue}" class="form-select" id="maleSelect">
-                        <option value="">— Select Male Animal (optional) —</option>
-                        <option th:each="ls : ${allMaleLivestock}"
-                                th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
-                        </option>
-                    </select>
-                    <div id="methodNote" class="method-note">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        <span id="methodNoteText">Male animal is not required for this breeding method.</span>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Female Animal <span class="req">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-gender-female"></i>
+                            <select th:field="*{livestockIdValue}"
+                                    class="form-select"
+                                    th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
+                                    required>
+                                <option value="">— Select Female Animal —</option>
+                                <option th:each="ls : ${femaleLivestock}"
+                                        th:value="${ls.id}"
+                                        th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
+                                </option>
+                            </select>
+                        </div>
+                        <div th:if="${#fields.hasErrors('livestockIdValue')}"
+                             class="invalid-feedback d-block" th:errors="*{livestockIdValue}"></div>
                     </div>
-                    <div th:if="${#fields.hasErrors('maleLivestockIdValue')}"
-                         class="text-danger small mt-1" th:errors="*{maleLivestockIdValue}"></div>
-                </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Breeding Date <span class="text-danger">*</span></label>
-                    <input th:field="*{breedingDate}" type="date" class="form-control" required>
-                </div>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Breeding Method
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-diagram-3"></i>
+                            <select th:field="*{breedingMethod}" class="form-select" id="methodSelect">
+                                <option value="">— Select Method —</option>
+                                <option value="NATURAL">🐄 Natural Mating</option>
+                                <option value="ARTIFICIAL_INSEMINATION">🧪 Artificial Insemination (AI)</option>
+                                <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer</option>
+                            </select>
+                        </div>
+                    </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Breeding Method</label>
-                    <select th:field="*{breedingMethod}" class="form-select" id="methodSelect">
-                        <option value="">— Select Method —</option>
-                        <option value="NATURAL">Natural Mating</option>
-                        <option value="ARTIFICIAL_INSEMINATION">Artificial Insemination (AI)</option>
-                        <option value="EMBRYO_TRANSFER">Embryo Transfer</option>
-                    </select>
-                </div>
+                    <div class="col-md-6" id="maleSection">
+                        <label class="form-label">
+                            Male Animal (Sire) <span class="opt">(optional)</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-gender-male"></i>
+                            <select th:field="*{maleLivestockIdValue}" class="form-select" id="maleSelect">
+                                <option value="">— Select Male Animal —</option>
+                                <option th:each="ls : ${allMaleLivestock}"
+                                        th:value="${ls.id}"
+                                        th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
+                                </option>
+                            </select>
+                        </div>
+                        <div id="methodNote" class="method-note">
+                            <i class="bi bi-info-circle-fill" style="flex-shrink:0;margin-top:1px;"></i>
+                            <span id="methodNoteText"></span>
+                        </div>
+                        <div th:if="${#fields.hasErrors('maleLivestockIdValue')}"
+                             class="field-error" th:errors="*{maleLivestockIdValue}"></div>
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Breeding Date <span class="req">*</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-calendar-event"></i>
+                            <input th:field="*{breedingDate}" type="date" class="form-control" required>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+        </div>
 
-            <p class="section-title">Expected Dates</p>
-            <div class="row g-3 mb-4">
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Expected Pregnancy Check Date</label>
-                    <input th:field="*{expectedPregnancyCheckDate}" type="date" class="form-control">
+        <!-- ── CARD 2: Expected Dates ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="card-icon" style="background:#eff6ff; color:#1d4ed8;">
+                    <i class="bi bi-calendar-range"></i>
                 </div>
-
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Expected Due / Birth Date</label>
-                    <input th:field="*{expectedDueDate}" type="date" class="form-control">
-                </div>
-
+                <h6>Expected Dates</h6>
             </div>
+            <div class="form-card-body">
+                <div class="row g-3">
 
-            <p class="section-title">Veterinarian &amp; Status</p>
-            <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Pregnancy Check Date <span class="opt">(optional)</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-clipboard2-pulse"></i>
+                            <input th:field="*{expectedPregnancyCheckDate}" type="date" class="form-control">
+                        </div>
+                    </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Attending Veterinarian</label>
-                    <select th:field="*{veterinarianIdValue}" class="form-select">
-                        <option value="">— Select Veterinarian (optional) —</option>
-                        <option th:each="v : ${vets}"
-                                th:value="${v.id}"
-                                th:text="${v.fullName + (v.licenseNumber != null ? ' (' + v.licenseNumber + ')' : '')}">
-                        </option>
-                    </select>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Expected Due / Birth Date <span class="opt">(optional)</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-calendar-heart"></i>
+                            <input th:field="*{expectedDueDate}" type="date" class="form-control">
+                        </div>
+                    </div>
+
                 </div>
+            </div>
+        </div>
 
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Status</label>
-                    <select th:field="*{status}" class="form-select">
-                        <option value="PENDING">Pending</option>
-                        <option value="CONFIRMED_PREGNANT">Confirmed Pregnant</option>
-                        <option value="FAILED">Failed</option>
-                        <option value="COMPLETED">Completed</option>
-                    </select>
+        <!-- ── CARD 3: Veterinarian & Status ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="card-icon" style="background:#f0fdf4; color:#15803d;">
+                    <i class="bi bi-person-badge"></i>
                 </div>
-
+                <h6>Veterinarian &amp; Status</h6>
             </div>
+            <div class="form-card-body">
+                <div class="row g-3">
 
-            <p class="section-title">Additional Notes</p>
-            <div class="mb-4">
-                <textarea th:field="*{notes}" class="form-control" rows="3"
-                          placeholder="Observations, semen batch info…"></textarea>
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Attending Veterinarian <span class="opt">(optional)</span>
+                        </label>
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-person-vcard"></i>
+                            <select th:field="*{veterinarianIdValue}" class="form-select">
+                                <option value="">— Select Veterinarian —</option>
+                                <option th:each="v : ${vets}"
+                                        th:value="${v.id}"
+                                        th:text="${v.fullName + (v.licenseNumber != null ? ' (' + v.licenseNumber + ')' : '')}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Breeding Status</label>
+                        <!-- Radio-style status selector -->
+                        <div class="status-grid" id="statusGrid">
+
+                            <div class="status-option">
+                                <input type="radio" th:field="*{status}" value="PENDING" id="st_pending">
+                                <label class="status-label" for="st_pending">
+                                    <span class="status-dot dot-pending"></span> Pending
+                                </label>
+                            </div>
+
+                            <div class="status-option">
+                                <input type="radio" th:field="*{status}" value="CONFIRMED_PREGNANT" id="st_confirmed">
+                                <label class="status-label" for="st_confirmed">
+                                    <span class="status-dot dot-pregnant"></span> Confirmed Pregnant
+                                </label>
+                            </div>
+
+                            <div class="status-option">
+                                <input type="radio" th:field="*{status}" value="FAILED" id="st_failed">
+                                <label class="status-label" for="st_failed">
+                                    <span class="status-dot dot-failed"></span> Failed
+                                </label>
+                            </div>
+
+                            <div class="status-option">
+                                <input type="radio" th:field="*{status}" value="COMPLETED" id="st_complete">
+                                <label class="status-label" for="st_complete">
+                                    <span class="status-dot dot-complete"></span> Completed
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
             </div>
+        </div>
 
+        <!-- ── CARD 4: Notes ── -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <div class="card-icon" style="background:#fdf4ff; color:#7e22ce;">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <h6>Additional Notes</h6>
+            </div>
+            <div class="form-card-body">
+                <label class="form-label">
+                    Observations <span class="opt">(optional)</span>
+                </label>
+                <textarea th:field="*{notes}" class="form-control" rows="4"
+                          placeholder="Semen batch details, donor/recipient info, observations from the vet…"></textarea>
+            </div>
+        </div>
+
+        <!-- ── STICKY SAVE BAR ── -->
+        <div class="sticky-footer">
+            <div class="record-id">
+                Editing record <strong th:text="${breeding.id != null ? '#' + breeding.id.toString().substring(0,8).toUpperCase() : 'New'}">—</strong>
+            </div>
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-warning">
-                    <i class="bi bi-save me-1"></i> Update Record
+                <a th:href="@{/livestock/breeding/list}" class="btn-cancel">
+                    <i class="bi bi-x-lg"></i> Cancel
+                </a>
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-floppy2-fill"></i> Save Changes
                 </button>
-                <a th:href="@{/livestock/breeding/list}" class="btn btn-outline-secondary">Cancel</a>
             </div>
+        </div>
 
-        </form>
-    </div>
+    </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     (function () {
         const NO_MALE_METHODS = ['ARTIFICIAL_INSEMINATION', 'EMBRYO_TRANSFER'];
-        const methodSelect  = document.getElementById('methodSelect');
-        const maleSelect    = document.getElementById('maleSelect');
-        const maleSection   = document.getElementById('maleSection');
-        const methodNote    = document.getElementById('methodNote');
+        const methodSelect   = document.getElementById('methodSelect');
+        const maleSelect     = document.getElementById('maleSelect');
+        const maleSection    = document.getElementById('maleSection');
+        const methodNote     = document.getElementById('methodNote');
         const methodNoteText = document.getElementById('methodNoteText');
+
+        const NOTES = {
+            ARTIFICIAL_INSEMINATION: 'AI does not require selecting an on-farm male. Record the semen batch details in the Notes field below.',
+            EMBRYO_TRANSFER: 'Embryo Transfer does not require selecting a male animal. Record donor and recipient details in Notes.'
+        };
 
         function updateMaleSection() {
             if (!methodSelect || !maleSection) return;
-            const noMale = NO_MALE_METHODS.includes(methodSelect.value);
+            const val    = methodSelect.value;
+            const noMale = NO_MALE_METHODS.includes(val);
+
+            maleSection.classList.toggle('hidden-method', noMale);
+            methodNote.classList.toggle('visible', noMale);
+
             if (noMale) {
-                maleSection.classList.add('hidden-method');
                 if (maleSelect) maleSelect.value = '';
-                methodNote.classList.add('visible');
-                methodNoteText.textContent = methodSelect.value === 'ARTIFICIAL_INSEMINATION'
-                    ? 'Artificial Insemination does not require selecting a male animal on-farm. Record the semen batch in Notes.'
-                    : 'Embryo Transfer does not require selecting a male animal. Record donor/recipient details in Notes.';
-            } else {
-                maleSection.classList.remove('hidden-method');
-                methodNote.classList.remove('visible');
+                methodNoteText.textContent = NOTES[val] || 'Male animal is not required for this breeding method.';
             }
         }
 
         methodSelect && methodSelect.addEventListener('change', updateMaleSection);
-
-        // Apply on page load (covers pre-filled edit forms)
-        updateMaleSection();
+        updateMaleSection(); // apply on page load for pre-filled edit forms
     })();
 </script>
 </body>
