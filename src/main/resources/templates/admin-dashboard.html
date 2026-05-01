@@ -156,6 +156,146 @@
         .kpi-lbl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);}
         .chart-wrap{position:relative;height:240px;}
 
+        /* ── Report section shared styles ── */
+        .report-page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+        .report-page-header h3{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:10px;margin:0;}
+        .btn-back-dash{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:8px 18px;font-size:.8rem;font-weight:600;color:var(--text-primary);cursor:pointer;text-decoration:none;transition:background .18s,border-color .18s;}
+        .btn-back-dash:hover{background:var(--green-50);border-color:var(--green-400);color:var(--green-700);}
+        .report-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-sm);}
+        .report-section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #f0f2f5;}
+        .report-section-header h4{font-size:1rem;font-weight:700;color:#1a202c;display:flex;align-items:center;gap:8px;margin:0;}
+        .report-tabs{display:flex;flex-wrap:wrap;gap:6px;}
+        .report-tab{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:99px;border:none;background:#f1f5f9;color:#475569;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .18s;text-decoration:none;}
+        .report-tab:hover{background:#e2e8f0;color:#1a202c;}
+        .report-tab.active{background:var(--green-700);color:#fff;}
+        .export-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#f8f9fb;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:16px;flex-wrap:wrap;}
+        .export-label{font-size:.75rem;font-weight:600;color:#475569;}
+        .export-info{font-size:.72rem;color:#94a3b8;margin-left:auto;}
+        .btn-export{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;transition:all .18s;}
+        .btn-export.pdf{background:#fee2e2;color:#dc2626;}
+        .btn-export.pdf:hover{background:#dc2626;color:#fff;}
+        .btn-export.excel{background:#dcfce7;color:#16a34a;}
+        .btn-export.excel:hover{background:#16a34a;color:#fff;}
+        .btn-export.print{background:#dbeafe;color:#2563eb;}
+        .btn-export.print:hover{background:#2563eb;color:#fff;}
+        .search-placeholder{text-align:center;padding:32px;color:#94a3b8;}
+        .search-placeholder i{font-size:2rem;display:block;margin-bottom:8px;}
+        .no-results-msg{padding:20px;text-align:center;color:#64748b;}
+
+        /* ── TREATMENT REPORT CSS ── */
+        .submenu-item.treatment-report{color:#8b5cf6;font-weight:500;}
+        .submenu-item.treatment-report:hover{background:#f5f3ff;border-left-color:#8b5cf6;color:#6d28d9;}
+        #treatment-report-view{padding:30px;overflow-y:auto;}
+        .tr-summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+        .tr-sum-card{background:white;border-radius:10px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-left:4px solid transparent;display:flex;align-items:center;gap:12px;}
+        .tr-sum-card.c1{border-left-color:#8b5cf6;} .tr-sum-card.c1 .ts-icon{color:#8b5cf6;}
+        .tr-sum-card.c2{border-left-color:#10b981;} .tr-sum-card.c2 .ts-icon{color:#10b981;}
+        .tr-sum-card.c3{border-left-color:#f59e0b;} .tr-sum-card.c3 .ts-icon{color:#f59e0b;}
+        .tr-sum-card.c4{border-left-color:#0ea5e9;} .tr-sum-card.c4 .ts-icon{color:#0ea5e9;}
+        .tr-sum-card.c5{border-left-color:#ef4444;} .tr-sum-card.c5 .ts-icon{color:#ef4444;}
+        .tr-sum-card.c6{border-left-color:#f97316;} .tr-sum-card.c6 .ts-icon{color:#f97316;}
+        .tr-sum-card .ts-icon{font-size:1.8rem;flex-shrink:0;}
+        .tr-sum-card .ts-text{display:flex;flex-direction:column;}
+        .tr-sum-card .ts-num{font-size:1.8rem;font-weight:800;line-height:1;color:#1a202c;}
+        .tr-sum-card.c3 .ts-num{font-size:1.1rem;word-break:break-all;}
+        .tr-sum-card .ts-lbl{font-size:.75rem;color:#6c757d;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+        .tr-tab-panel{display:none;}
+        .tr-tab-panel.active{display:block;}
+        .tr-table{width:100%;border-collapse:collapse;}
+        .tr-table thead th{background:#f8f9fb;padding:10px 14px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
+        .tr-table tbody td{padding:10px 14px;font-size:.87rem;color:#374151;border-bottom:1px solid #f0f2f5;vertical-align:middle;}
+        .tr-table tbody tr:hover{background:#faf5ff;}
+        .bdg-treat{display:inline-flex;align-items:center;gap:4px;background:#f3e8ff;color:#6d28d9;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-upcoming{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-overdue{display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-done{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-status-ongoing{background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-status-completed{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-status-failed{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-status-scheduled{background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-type-curative{background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-type-preventive{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-type-vaccination{background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .bdg-type-deworming{background:#fce7f3;color:#9d174d;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;display:inline-block;}
+        .row-upcoming td{background:#fffbeb;}
+        .row-overdue td{background:#fff5f5;}
+        .med-group-card{border:2px solid #ede9fe;border-radius:10px;overflow:hidden;margin-bottom:16px;}
+        .med-group-header{background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+        .med-group-header .mgh-name{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+        .med-group-header .mgh-meta{display:flex;gap:16px;font-size:.8rem;opacity:.9;}
+        .tr-search-wrap{position:relative;display:flex;align-items:center;margin-bottom:16px;}
+        .tr-search-wrap .si{position:absolute;left:14px;color:#94a3b8;pointer-events:none;}
+        .tr-search-input{width:100%;padding:12px 44px 12px 42px;border:2px solid #e2e8f0;border-radius:10px;font-size:.95rem;outline:none;transition:border-color .2s;background:#fafcff;}
+        .tr-search-input:focus{border-color:#8b5cf6;background:white;box-shadow:0 0 0 3px rgba(139,92,246,.1);}
+        .tr-clear-btn{position:absolute;right:12px;background:none;border:none;color:#cbd5e0;cursor:pointer;font-size:1.1rem;padding:0;}
+        .tr-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+        .tr-empty i{font-size:2.8rem;display:block;margin-bottom:12px;}
+        .upcoming-explainer{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;padding:16px 18px;background:#fafcff;border:1.5px solid #e2e8f0;border-radius:10px;}
+        .upcoming-explainer-title{width:100%;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:4px;}
+        .uex-item{display:flex;align-items:flex-start;gap:10px;flex:1 1 200px;background:white;border-radius:8px;padding:12px 14px;border-left:3px solid;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+        .uex-item.overdue{border-left-color:#ef4444;} .uex-item.overdue .uex-icon{color:#ef4444;}
+        .uex-item.upcoming{border-left-color:#f59e0b;} .uex-item.upcoming .uex-icon{color:#f59e0b;}
+        .uex-item.done{border-left-color:#10b981;} .uex-item.done .uex-icon{color:#10b981;}
+        .uex-item.days{border-left-color:#0ea5e9;} .uex-item.days .uex-icon{color:#0ea5e9;}
+        .uex-item .uex-icon{font-size:1.4rem;margin-top:1px;flex-shrink:0;}
+        .uex-item .uex-label{font-weight:700;font-size:.85rem;color:#1a202c;display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+        .uex-item .uex-desc{font-size:.78rem;color:#64748b;line-height:1.45;}
+        .uex-row-swatch{display:inline-block;width:30px;height:10px;border-radius:3px;vertical-align:middle;}
+        .uex-row-swatch.overdue{background:#fee2e2;} .uex-row-swatch.upcoming{background:#fffbeb;} .uex-row-swatch.done{background:#f0fdf4;}
+
+        /* ── ABORTION REPORT CSS ── */
+        .submenu-item.abortion-report{color:#dc2626;font-weight:500;}
+        .submenu-item.abortion-report:hover{background:#fff5f5;border-left-color:#dc2626;color:#991b1b;}
+        #abortion-report-view{padding:30px;overflow-y:auto;}
+        .ab-summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+        .ab-sum-card{background:white;border-radius:10px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-left:4px solid transparent;display:flex;align-items:center;gap:12px;}
+        .ab-sum-card.c1{border-left-color:#dc2626;} .ab-sum-card.c1 .ab-icon{color:#dc2626;}
+        .ab-sum-card.c2{border-left-color:#f59e0b;} .ab-sum-card.c2 .ab-icon{color:#f59e0b;}
+        .ab-sum-card.c3{border-left-color:#8b5cf6;} .ab-sum-card.c3 .ab-icon{color:#8b5cf6;}
+        .ab-sum-card.c4{border-left-color:#0ea5e9;} .ab-sum-card.c4 .ab-icon{color:#0ea5e9;}
+        .ab-sum-card .ab-icon{font-size:1.8rem;flex-shrink:0;}
+        .ab-sum-card .ab-text{display:flex;flex-direction:column;}
+        .ab-sum-card .ab-num{font-size:1.8rem;font-weight:800;line-height:1;color:#1a202c;}
+        .ab-sum-card.c3 .ab-num{font-size:1.1rem;word-break:break-all;}
+        .ab-sum-card .ab-lbl{font-size:.75rem;color:#6c757d;font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+        .ab-tab-panel{display:none;}
+        .ab-tab-panel.active{display:block;}
+        .ab-table{width:100%;border-collapse:collapse;}
+        .ab-table thead th{background:#f8f9fb;padding:10px 14px;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#64748b;border-bottom:2px solid #e2e8f0;white-space:nowrap;}
+        .ab-table tbody td{padding:10px 14px;font-size:.87rem;color:#374151;border-bottom:1px solid #f0f2f5;vertical-align:middle;}
+        .ab-table tbody tr:hover{background:#fff5f5;}
+        .bdg-abortion{display:inline-flex;align-items:center;gap:4px;background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-expected{display:inline-flex;align-items:center;gap:4px;background:#fef3c7;color:#92400e;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-past{display:inline-flex;align-items:center;gap:4px;background:#f3f4f6;color:#374151;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .bdg-today{display:inline-flex;align-items:center;gap:4px;background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700;}
+        .row-upcoming-birth td{background:#fffbeb;}
+        .row-past-birth td{background:#f9fafb;}
+        .cat-group-card{border:2px solid #fee2e2;border-radius:10px;overflow:hidden;margin-bottom:16px;}
+        .cat-group-header{background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+        .cat-group-header .cgh-name{font-size:1rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+        .cat-group-header .cgh-meta{display:flex;gap:16px;font-size:.8rem;opacity:.9;}
+        .ab-search-wrap{position:relative;display:flex;align-items:center;margin-bottom:16px;}
+        .ab-search-wrap .si{position:absolute;left:14px;color:#94a3b8;pointer-events:none;}
+        .ab-search-input{width:100%;padding:12px 44px 12px 42px;border:2px solid #e2e8f0;border-radius:10px;font-size:.95rem;color:#1a202c;outline:none;transition:border-color .2s;background:#fafcff;}
+        .ab-search-input:focus{border-color:#dc2626;background:white;box-shadow:0 0 0 3px rgba(220,38,38,.1);}
+        .ab-clear-btn{position:absolute;right:12px;background:none;border:none;color:#cbd5e0;cursor:pointer;font-size:1.1rem;padding:0;transition:color .2s;}
+        .ab-clear-btn:hover{color:#64748b;}
+        .ab-empty{text-align:center;padding:48px 20px;color:#94a3b8;}
+        .ab-empty i{font-size:2.8rem;display:block;margin-bottom:12px;}
+        .upcoming-births-explainer{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;padding:16px 18px;background:#fafcff;border:1.5px solid #e2e8f0;border-radius:10px;}
+        .upcoming-births-explainer-title{width:100%;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#64748b;margin-bottom:4px;}
+        .ubex-item{display:flex;align-items:flex-start;gap:10px;flex:1 1 200px;background:white;border-radius:8px;padding:12px 14px;border-left:3px solid;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+        .ubex-item.upcoming{border-left-color:#f59e0b;} .ubex-item.upcoming .ubex-icon{color:#f59e0b;}
+        .ubex-item.past{border-left-color:#6b7280;} .ubex-item.past .ubex-icon{color:#6b7280;}
+        .ubex-item.today{border-left-color:#10b981;} .ubex-item.today .ubex-icon{color:#10b981;}
+        .ubex-item.none{border-left-color:#94a3b8;} .ubex-item.none .ubex-icon{color:#94a3b8;}
+        .ubex-item .ubex-icon{font-size:1.4rem;margin-top:1px;flex-shrink:0;}
+        .ubex-item .ubex-label{font-weight:700;font-size:.85rem;color:#1a202c;display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+        .ubex-item .ubex-desc{font-size:.78rem;color:#64748b;line-height:1.45;}
+        .ubex-row-swatch{display:inline-block;width:30px;height:10px;border-radius:3px;vertical-align:middle;}
+        .ubex-row-swatch.upcoming{background:#fffbeb;}
+        .ubex-row-swatch.past{background:#f9fafb;}
+
         .report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
         .report-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:800;color:var(--text-primary);display:flex;align-items:center;gap:10px;}
         .report-title i{color:var(--green-600);}
@@ -173,13 +313,6 @@
         .badge-warning{background:#fef3c7;color:#92400e;}
         .badge-danger{background:#ffe4e6;color:#9f1239;}
         .badge-info{background:#e0f2fe;color:#0369a1;}
-
-        .export-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface-2);border-radius:var(--radius-sm);margin-bottom:16px;flex-wrap:wrap;}
-        .export-label{font-size:.75rem;font-weight:600;color:var(--text-muted);}
-        .btn-exp{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:99px;font-size:.75rem;font-weight:600;border:none;cursor:pointer;transition:opacity .18s;}
-        .btn-exp:hover{opacity:.85;}
-        .btn-exp.excel{background:#d1fae5;color:#065f46;}
-        .btn-exp.print{background:#dbeafe;color:#1d4ed8;}
 
         .loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--text-muted);gap:10px;}
         .spin{animation:spin 1s linear infinite;}
@@ -202,9 +335,12 @@
             .main-content{margin-left:0;padding:20px 16px;}.stats-grid{grid-template-columns:1fr 1fr;}
             .activity-grid{grid-template-columns:repeat(2,1fr);}.analytics-kpi-row{grid-template-columns:1fr 1fr;}
             .hero-date{display:none;}.logo-sub{display:none;}
+            #treatment-report-view,#abortion-report-view{padding:20px 15px;}
+            .tr-summary-row,.ab-summary-row{grid-template-columns:1fr 1fr;}
+            .uex-item,.ubex-item{flex:1 1 100%;}
         }
-        @media(max-width:480px){.stats-grid{grid-template-columns:1fr;}.activity-grid{grid-template-columns:1fr 1fr;}.analytics-kpi-row{grid-template-columns:1fr;}}
-        @media print{.sidebar,.top-header,.btn-back,.export-bar,.no-print{display:none!important;}.main-content{margin-left:0!important;padding:0!important;}.view{display:block!important;}}
+        @media(max-width:480px){.stats-grid{grid-template-columns:1fr;}.activity-grid{grid-template-columns:1fr 1fr;}.analytics-kpi-row{grid-template-columns:1fr;}.tr-summary-row,.ab-summary-row{grid-template-columns:1fr;}}
+        @media print{.sidebar,.top-header,.btn-back,.btn-back-dash,.export-bar,.no-print{display:none!important;}.main-content{margin-left:0!important;padding:0!important;}.view{display:block!important;}}
     </style>
 </head>
 <body>
@@ -237,41 +373,24 @@
         <div class="nav-section-label">People</div>
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('representatives',this)">
-                <div class="nav-btn-inner">
-                    <div class="nav-icon"><i class="bi bi-person-badge"></i></div>
-                    Representatives
-                </div>
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/representatives/register}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-person-plus-fill"></i>Register
-                </a>
-                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-list-ul"></i>View All
-                </a>
+                <a th:href="@{/representatives/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus-fill"></i>Register</a>
+                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
             </div>
         </div>
-
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('beneficiaries',this)">
-                <div class="nav-btn-inner">
-                    <div class="nav-icon"><i class="bi bi-person-check"></i></div>
-                    Beneficiaries
-                </div>
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/beneficiaries/register}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-person-plus"></i>Register
-                </a>
-                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-list-ul"></i>View All
-                </a>
+                <a th:href="@{/beneficiaries/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus"></i>Register</a>
+                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
             </div>
         </div>
-
-
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('buyers',this)">
                 <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers</div>
@@ -305,13 +424,7 @@
                 <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-arrow"></i>Ready to Breed</a>
                 <a th:href="@{/livestock/lifecycle/breeding-management}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-fill"></i>Breeding</a>
                 <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-hourglass-split"></i>Pregnancy Tracking</a>
-
-                <a th:href="@{/livestock/lifecycle/notifications}"
-                   class="submenu-link"
-                   onclick="navigateTo(event,this)">
-                    <i class="bi bi-bell-fill"></i>Notifications
-                </a>
-
+                <a th:href="@{/livestock/lifecycle/notifications}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-bell-fill"></i>Notifications</a>
                 <div class="sub-divider"><span>Events</span></div>
                 <a th:href="@{/livestock/births/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-stars"></i>Births</a>
                 <a th:href="@{/livestock/treatments}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
@@ -341,6 +454,7 @@
                 <div class="sub-divider"><span>Executive</span></div>
                 <a href="#" class="submenu-link" id="overviewReportLink" onclick="showOverviewReport(event,this)"><i class="bi bi-graph-up-arrow"></i>Business Overview</a>
                 <a th:href="@{/livestock/summary-report}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-file-earmark-bar-graph-fill"></i>Summary Report</a>
+                <a th:href="@{/livestock/financial-summary}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-calculator-fill"></i> Financial Summary</a>
                 <div class="sub-divider"><span>Analysis</span></div>
                 <div class="submenu-link" style="cursor:pointer;" onclick="toggleNested('category-reports')">
                     <i class="bi bi-grid-3x2-gap-fill"></i>Category Reports
@@ -369,6 +483,7 @@
 
 <main class="main-content" id="mainContent">
 
+    <!-- ══ DASHBOARD VIEW ══════════════════════════════════════════════ -->
     <div id="dashboard-view" class="view active">
         <div class="hero-banner">
             <div>
@@ -456,6 +571,7 @@
         </div>
     </div>
 
+    <!-- ══ BIRTH REPORT VIEW ══════════════════════════════════════════ -->
     <div id="report-view" class="view">
         <div class="report-header">
             <div class="report-title"><i class="bi bi-stars"></i> Birth Report</div>
@@ -463,13 +579,274 @@
         </div>
         <div class="card" id="birthReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
+
+    <!-- ══ TREATMENT REPORT VIEW — FULL TABBED UI ═════════════════════ -->
     <div id="treatment-report-view" class="view">
-        <div class="report-header">
-            <div class="report-title"><i class="bi bi-heart-pulse-fill"></i> Treatment Report</div>
-            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+
+        <div class="report-page-header">
+            <h3><i class="bi bi-heart-pulse-fill" style="color:#8b5cf6;"></i> Livestock Treatments Report</h3>
+            <button class="btn-back-dash" onclick="showDashboard(document.getElementById('dashMenuHeader'))">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </button>
         </div>
-        <div class="card" id="treatmentReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
-    </div>
+
+        <!-- 6 Summary Cards -->
+        <div class="tr-summary-row">
+            <div class="tr-sum-card c1">
+                <div class="ts-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${totalTreatments != null ? totalTreatments : 0}">0</div>
+                    <div class="ts-lbl">Total Treatments</div>
+                </div>
+            </div>
+            <div class="tr-sum-card c2">
+                <div class="ts-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${totalTreatmentCost != null ? #numbers.formatDecimal(totalTreatmentCost,1,'COMMA',0,'POINT') : 0}">0</div>
+                    <div class="ts-lbl">Total Cost (RWF)</div>
+                </div>
+            </div>
+            <div class="tr-sum-card c3">
+                <div class="ts-icon"><i class="bi bi-award-fill"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${mostTreatedAnimalTag != null ? mostTreatedAnimalTag : '—'}">—</div>
+                    <div class="ts-lbl">Most Treated Animal</div>
+                </div>
+            </div>
+            <div class="tr-sum-card c4">
+                <div class="ts-icon"><i class="bi bi-calendar-month-fill"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${treatmentsThisMonth != null ? treatmentsThisMonth : 0}">0</div>
+                    <div class="ts-lbl">Treatments This Month</div>
+                </div>
+            </div>
+            <div class="tr-sum-card c5">
+                <div class="ts-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${unpaidTreatmentCount != null ? unpaidTreatmentCount : 0}">0</div>
+                    <div class="ts-lbl">Unpaid Treatments</div>
+                </div>
+            </div>
+            <div class="tr-sum-card c6">
+                <div class="ts-icon"><i class="bi bi-arrow-repeat"></i></div>
+                <div class="ts-text">
+                    <div class="ts-num" th:text="${ongoingTreatmentCount != null ? ongoingTreatmentCount : 0}">0</div>
+                    <div class="ts-lbl">Ongoing</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="report-section-header">
+                <h4><i class="bi bi-table"></i> Report Data</h4>
+                <div class="report-tabs">
+                    <button class="report-tab active" onclick="trSwitchTab('all', this)"><i class="bi bi-grid-3x3-gap-fill"></i> All Treatments</button>
+                    <button class="report-tab" onclick="trSwitchTab('search', this)"><i class="bi bi-search"></i> Search by Tag</button>
+                    <button class="report-tab" onclick="trSwitchTab('medication', this)"><i class="bi bi-capsule"></i> By Medication</button>
+                    <button class="report-tab" onclick="trSwitchTab('upcoming', this)"><i class="bi bi-calendar-check"></i> Upcoming</button>
+                    <a th:href="@{/livestock/treatments}" class="report-tab" style="text-decoration:none;" onclick="navigateTo(event, this)">
+                        <i class="bi bi-box-arrow-up-right"></i> Full List
+                    </a>
+                </div>
+            </div>
+
+            <div class="export-bar">
+                <span class="export-label"><i class="bi bi-download"></i> Export:</span>
+                <button class="btn-export pdf"   onclick="trExportPDF()"><i class="bi bi-file-pdf-fill"></i> PDF</button>
+                <button class="btn-export excel" onclick="trExportExcel()"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button>
+                <button class="btn-export print" onclick="trPrint()"><i class="bi bi-printer-fill"></i> Print</button>
+                <span class="export-info" id="trExportInfo">Showing all treatment records</span>
+            </div>
+
+            <!-- TAB: ALL -->
+            <div id="tr-tab-all" class="tr-tab-panel active">
+                <div th:if="${treatmentList == null or treatmentList.empty}" class="tr-empty">
+                    <i class="bi bi-heart-pulse"></i><p>No treatment records found yet.</p>
+                </div>
+                <div th:if="${treatmentList != null and !treatmentList.empty}" class="table-responsive">
+                    <table class="tr-table" id="trTableAll">
+                        <thead>
+                        <tr>
+                            <th>#</th><th>Animal Tag</th><th>Animal Category</th><th>Treatment Date</th>
+                            <th>Medication</th><th>Med. Category</th><th>Dosage</th>
+                            <th>Treat. Type</th><th>Treat. Status</th>
+                            <th>Frequency</th><th>Duration</th><th>Vet</th>
+                            <th>Cost (RWF)</th><th>Paid</th><th>Next Treatment</th><th>Next Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t, i : ${treatmentList}"
+                            th:classappend="${t.nextTreatmentDate != null and #temporals.createToday().isAfter(t.nextTreatmentDate)} ? 'row-overdue' : (${t.nextTreatmentDate != null} ? 'row-upcoming' : '')">
+                            <td th:text="${i.count}"></td>
+                            <td>
+                                <span class="bdg-treat"><i class="bi bi-heart-pulse-fill"></i></span>
+                                <strong class="ms-1" th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>
+                            </td>
+                            <td>
+                                <span th:if="${t.livestock?.livestockCategory != null}" class="badge bg-info text-white" th:text="${t.livestock.livestockCategory.name}"></span>
+                                <span th:if="${t.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${t.treatmentDate != null ? #temporals.format(t.treatmentDate,'dd-MM-yyyy') : '—'}"></td>
+                            <td>
+                                <span th:if="${t.medication != null}">
+                                    <strong th:text="${t.medication.name}"></strong>
+                                    <span th:if="${t.medication.genericName != null}" class="text-muted small d-block" th:text="${t.medication.genericName}"></span>
+                                </span>
+                                <span th:if="${t.medication == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.medication?.category != null}" class="text-muted small"
+                                      th:text="${#strings.replace(t.medication.category.name(),'_',' ')}"></span>
+                                <span th:if="${t.medication?.category == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.dosage != null}" th:text="${t.dosage}"></span>
+                                <span th:if="${t.dosageUnit != null}" th:text="${' '+t.dosageUnit}" class="text-muted small"></span>
+                                <span th:if="${t.dosage == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.treatmentType != null}"
+                                      th:class="${'bdg-type-' + #strings.toLowerCase(t.treatmentType.name())}"
+                                      th:text="${t.treatmentType}"></span>
+                                <span th:if="${t.treatmentType == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.treatmentStatus != null}"
+                                      th:class="${'bdg-status-' + #strings.toLowerCase(t.treatmentStatus.name())}"
+                                      th:text="${t.treatmentStatus}"></span>
+                                <span th:if="${t.treatmentStatus == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.frequency != null}" th:text="${t.frequency.label}" class="small"></span>
+                                <span th:if="${t.frequency == null}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${t.treatmentDuration != null ? t.treatmentDuration : '—'}"></td>
+                            <td th:text="${t.vetName != null ? t.vetName : '—'}"></td>
+                            <td>
+                                <span th:if="${t.treatmentCost != null}" th:text="${#numbers.formatDecimal(t.treatmentCost,1,'COMMA',0,'POINT')}"></span>
+                                <span th:if="${t.treatmentCost == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.isPaid}" class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Yes</span>
+                                <span th:if="${!t.isPaid}" class="badge bg-warning text-dark"><i class="bi bi-clock"></i> No</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.nextTreatmentDate != null}" th:text="${#temporals.format(t.nextTreatmentDate,'dd-MM-yyyy')}"></span>
+                                <span th:if="${t.nextTreatmentDate == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${t.nextTreatmentDate != null and #temporals.createToday().isAfter(t.nextTreatmentDate)}" class="bdg-overdue"><i class="bi bi-exclamation-circle-fill"></i> Overdue</span>
+                                <span th:if="${t.nextTreatmentDate != null and !#temporals.createToday().isAfter(t.nextTreatmentDate)}" class="bdg-upcoming"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                <span th:if="${t.nextTreatmentDate == null}" class="bdg-done"><i class="bi bi-check-circle-fill"></i> Done</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: SEARCH -->
+            <div id="tr-tab-search" class="tr-tab-panel">
+                <div class="tr-search-wrap">
+                    <i class="bi bi-search si"></i>
+                    <input type="text" id="trSearchInput" class="tr-search-input"
+                           placeholder="Type animal tag (e.g. TAG-001)..."
+                           oninput="trFilterByTag(this.value)">
+                    <button class="tr-clear-btn" onclick="trClearSearch()"><i class="bi bi-x-circle-fill"></i></button>
+                </div>
+                <div class="search-hint" style="margin-bottom:16px;font-size:.82rem;color:#94a3b8;">Start typing a tag number to filter treatment records</div>
+                <div id="trSearchResults">
+                    <div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its treatment history</p></div>
+                </div>
+            </div>
+
+            <!-- TAB: BY MEDICATION -->
+            <div id="tr-tab-medication" class="tr-tab-panel">
+                <div th:if="${treatmentList == null or treatmentList.empty}" class="tr-empty">
+                    <i class="bi bi-capsule"></i><p>No treatment records to group.</p>
+                </div>
+                <div id="trMedGroupContainer">
+                    <div class="tr-empty"><i class="bi bi-capsule"></i><p>Switch to this tab to load medication groups.</p></div>
+                </div>
+            </div>
+
+            <!-- TAB: UPCOMING -->
+            <div id="tr-tab-upcoming" class="tr-tab-panel">
+                <div class="upcoming-explainer">
+                    <div class="upcoming-explainer-title"><i class="bi bi-info-circle me-1"></i> How to read this table</div>
+                    <div class="uex-item overdue">
+                        <div class="uex-icon"><i class="bi bi-exclamation-circle-fill"></i></div>
+                        <div><div class="uex-label"><span class="bdg-overdue"><i class="bi bi-exclamation-circle-fill"></i> Overdue</span></div>
+                            <div class="uex-desc">The scheduled next-treatment date has <strong>already passed</strong>.<br>
+                                <span class="uex-row-swatch overdue"></span><em style="font-size:.73rem;color:#94a3b8;"> Row highlighted in red</em></div></div>
+                    </div>
+                    <div class="uex-item upcoming">
+                        <div class="uex-icon"><i class="bi bi-clock-fill"></i></div>
+                        <div><div class="uex-label"><span class="bdg-upcoming"><i class="bi bi-clock-fill"></i> Upcoming</span></div>
+                            <div class="uex-desc">A next-treatment date is set and is <strong>still in the future</strong>.<br>
+                                <span class="uex-row-swatch upcoming"></span><em style="font-size:.73rem;color:#94a3b8;"> Row highlighted in yellow</em></div></div>
+                    </div>
+                    <div class="uex-item days">
+                        <div class="uex-icon"><i class="bi bi-calendar2-range-fill"></i></div>
+                        <div><div class="uex-label">Days Until / Overdue</div>
+                            <div class="uex-desc">Calculated automatically from today's date.</div></div>
+                    </div>
+                </div>
+
+                <div th:if="${treatmentList == null or treatmentList.empty}" class="tr-empty">
+                    <i class="bi bi-calendar-check"></i><p>No treatment records found.</p>
+                </div>
+                <div th:if="${treatmentList != null and !treatmentList.empty}" class="table-responsive">
+                    <table class="tr-table" id="trTableUpcoming">
+                        <thead>
+                        <tr><th>#</th><th>Animal Tag</th><th>Animal Category</th><th>Last Treatment</th>
+                            <th>Medication</th><th>Type</th><th>Status</th>
+                            <th>Next Treatment</th><th>Days Until / Overdue</th><th>Next Status</th></tr>
+                        </thead>
+                        <tbody>
+                        <th:block th:each="t, i : ${treatmentList}">
+                            <tr th:if="${t.nextTreatmentDate != null}"
+                                th:classappend="${#temporals.createToday().isAfter(t.nextTreatmentDate)} ? 'row-overdue' : 'row-upcoming'">
+                                <td th:text="${i.count}"></td>
+                                <td><strong th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong></td>
+                                <td>
+                                    <span th:if="${t.livestock?.livestockCategory != null}" class="badge bg-info text-white" th:text="${t.livestock.livestockCategory.name}"></span>
+                                    <span th:if="${t.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${t.treatmentDate != null ? #temporals.format(t.treatmentDate,'dd-MM-yyyy') : '—'}"></td>
+                                <td>
+                                    <span th:if="${t.medication != null}" th:text="${t.medication.name}"></span>
+                                    <span th:if="${t.medication == null}" class="text-muted">—</span>
+                                </td>
+                                <td>
+                                    <span th:if="${t.treatmentType != null}" th:class="${'bdg-type-' + #strings.toLowerCase(t.treatmentType.name())}" th:text="${t.treatmentType}"></span>
+                                    <span th:if="${t.treatmentType == null}" class="text-muted">—</span>
+                                </td>
+                                <td>
+                                    <span th:if="${t.treatmentStatus != null}" th:class="${'bdg-status-' + #strings.toLowerCase(t.treatmentStatus.name())}" th:text="${t.treatmentStatus}"></span>
+                                    <span th:if="${t.treatmentStatus == null}" class="text-muted">—</span>
+                                </td>
+                                <td><strong th:text="${#temporals.format(t.nextTreatmentDate,'dd-MM-yyyy')}"></strong></td>
+                                <td class="tr-days-cell" th:attr="data-next=${t.nextTreatmentDate}">—</td>
+                                <td>
+                                    <span th:if="${#temporals.createToday().isAfter(t.nextTreatmentDate)}" class="bdg-overdue"><i class="bi bi-exclamation-circle-fill"></i> Overdue</span>
+                                    <span th:if="${!#temporals.createToday().isAfter(t.nextTreatmentDate)}" class="bdg-upcoming"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                </td>
+                            </tr>
+                        </th:block>
+                        <tr id="trUpcomingEmptyRow" style="display:none;">
+                            <td colspan="10" class="text-center text-muted py-4">
+                                <i class="bi bi-check-circle me-2 text-success"></i>No upcoming or overdue treatments.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div><!-- /report-section -->
+    </div><!-- /treatment-report-view -->
+
+    <!-- ══ SICK REPORT VIEW ════════════════════════════════════════════ -->
     <div id="sick-report-view" class="view">
         <div class="report-header">
             <div class="report-title"><i class="bi bi-bandaid-fill"></i> Sick Livestock Report</div>
@@ -477,13 +854,256 @@
         </div>
         <div class="card" id="sickReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
+
+    <!-- ══ ABORTION REPORT VIEW — FULL TABBED UI ══════════════════════ -->
     <div id="abortion-report-view" class="view">
-        <div class="report-header">
-            <div class="report-title"><i class="bi bi-heartbreak-fill"></i> Abortion Report</div>
-            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+
+        <div class="report-page-header">
+            <h3><i class="bi bi-heartbreak-fill" style="color:#dc2626;"></i> Livestock Abortions Report</h3>
+            <button class="btn-back-dash" onclick="showDashboard(document.getElementById('dashMenuHeader'))">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </button>
         </div>
-        <div class="card" id="abortionReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
-    </div>
+
+        <!-- Summary Cards -->
+        <div class="ab-summary-row">
+            <div class="ab-sum-card c1">
+                <div class="ab-icon"><i class="bi bi-heartbreak-fill"></i></div>
+                <div class="ab-text">
+                    <div class="ab-num" th:text="${totalAbortions != null ? totalAbortions : 0}">0</div>
+                    <div class="ab-lbl">Total Abortions</div>
+                </div>
+            </div>
+            <div class="ab-sum-card c2">
+                <div class="ab-icon"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+                <div class="ab-text">
+                    <div class="ab-num" th:text="${totalAnimalsAffected != null ? totalAnimalsAffected : 0}">0</div>
+                    <div class="ab-lbl">Animals Affected</div>
+                </div>
+            </div>
+            <div class="ab-sum-card c3">
+                <div class="ab-icon"><i class="bi bi-award-fill"></i></div>
+                <div class="ab-text">
+                    <div class="ab-num" th:text="${mostAffectedAnimalTag != null ? mostAffectedAnimalTag : '—'}">—</div>
+                    <div class="ab-lbl">Most Affected Animal</div>
+                </div>
+            </div>
+            <div class="ab-sum-card c4">
+                <div class="ab-icon"><i class="bi bi-calendar-month-fill"></i></div>
+                <div class="ab-text">
+                    <div class="ab-num" th:text="${abortionsThisMonth != null ? abortionsThisMonth : 0}">0</div>
+                    <div class="ab-lbl">Abortions This Month</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="report-section-header">
+                <h4><i class="bi bi-table"></i> Report Data</h4>
+                <div class="report-tabs">
+                    <button class="report-tab active" onclick="abSwitchTab('all', this)">
+                        <i class="bi bi-grid-3x3-gap-fill"></i> All Abortions
+                    </button>
+                    <button class="report-tab" onclick="abSwitchTab('search', this)">
+                        <i class="bi bi-search"></i> Search by Tag
+                    </button>
+                    <button class="report-tab" onclick="abSwitchTab('category', this)">
+                        <i class="bi bi-tag-fill"></i> By Category
+                    </button>
+                    <button class="report-tab" onclick="abSwitchTab('upcoming', this)">
+                        <i class="bi bi-calendar-check"></i> Expected Births
+                    </button>
+                    <a th:href="@{/livestock/abortions}" class="report-tab" style="text-decoration:none;"
+                       onclick="navigateTo(event, this)">
+                        <i class="bi bi-box-arrow-up-right"></i> Full List
+                    </a>
+                </div>
+            </div>
+
+            <div class="export-bar">
+                <span class="export-label"><i class="bi bi-download"></i> Export:</span>
+                <button class="btn-export pdf"   onclick="abExportPDF()"><i class="bi bi-file-pdf-fill"></i> PDF</button>
+                <button class="btn-export excel" onclick="abExportExcel()"><i class="bi bi-file-earmark-excel-fill"></i> Excel</button>
+                <button class="btn-export print" onclick="abPrint()"><i class="bi bi-printer-fill"></i> Print</button>
+                <span class="export-info" id="abExportInfo">Showing all abortion records</span>
+            </div>
+
+            <!-- TAB: ALL ABORTIONS -->
+            <div id="ab-tab-all" class="ab-tab-panel active">
+                <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                    <i class="bi bi-heartbreak"></i>
+                    <p>No abortion records found yet.</p>
+                </div>
+                <div th:if="${abortionList != null and !abortionList.empty}" class="table-responsive">
+                    <table class="ab-table" id="abTableAll">
+                        <thead>
+                        <tr>
+                            <th>#</th><th>Animal Tag</th><th>Category</th><th>Abortion Date</th>
+                            <th>Pregnancy #</th><th>Expected Birth</th><th>Birth Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="a, i : ${abortionList}"
+                            th:classappend="${a.expectedBirthDate != null and !#temporals.createToday().isAfter(a.expectedBirthDate)} ? 'row-upcoming-birth' : (${a.expectedBirthDate != null} ? 'row-past-birth' : '')">
+                            <td th:text="${i.count}">1</td>
+                            <td>
+                                <span class="bdg-abortion"><i class="bi bi-heartbreak-fill"></i></span>
+                                <strong class="ms-1" th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}">TAG-001</strong>
+                            </td>
+                            <td>
+                                <span th:if="${a.livestock?.livestockCategory != null}"
+                                      class="badge bg-info text-white"
+                                      th:text="${a.livestock.livestockCategory.name}">Cat</span>
+                                <span th:if="${a.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                            </td>
+                            <td th:text="${a.abortionDate != null ? #temporals.format(a.abortionDate,'dd-MM-yyyy') : '—'}">—</td>
+                            <td>
+                                <span th:if="${a.pregnancyNumber != null}" th:text="${a.pregnancyNumber}">—</span>
+                                <span th:if="${a.pregnancyNumber == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${a.expectedBirthDate != null}"
+                                      th:text="${#temporals.format(a.expectedBirthDate,'dd-MM-yyyy')}">—</span>
+                                <span th:if="${a.expectedBirthDate == null}" class="text-muted">—</span>
+                            </td>
+                            <td>
+                                <span th:if="${a.expectedBirthDate != null and !#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                      class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                <span th:if="${a.expectedBirthDate != null and #temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                      class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span>
+                                <span th:if="${a.expectedBirthDate == null}"
+                                      class="text-muted" style="font-size:.82rem;">—</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB: SEARCH BY TAG -->
+            <div id="ab-tab-search" class="ab-tab-panel">
+                <div class="ab-search-wrap">
+                    <i class="bi bi-search si"></i>
+                    <input type="text" id="abSearchInput" class="ab-search-input"
+                           placeholder="Type animal tag (e.g. TAG-001)..."
+                           oninput="abFilterByTag(this.value)">
+                    <button class="ab-clear-btn" onclick="abClearSearch()" title="Clear">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </button>
+                </div>
+                <div class="search-hint" style="margin-bottom:16px;font-size:.82rem;color:#94a3b8;">Start typing a tag number to filter abortion records</div>
+                <div id="abSearchResults">
+                    <div class="search-placeholder">
+                        <i class="bi bi-search"></i>
+                        <p>Enter an animal tag number to see its abortion history</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: GROUP BY CATEGORY -->
+            <div id="ab-tab-category" class="ab-tab-panel">
+                <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                    <i class="bi bi-tag"></i>
+                    <p>No abortion records to group.</p>
+                </div>
+                <div id="abCatGroupContainer">
+                    <div class="ab-empty">
+                        <i class="bi bi-tag"></i>
+                        <p>Switch to this tab to load category groups.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: UPCOMING EXPECTED BIRTHS -->
+            <div id="ab-tab-upcoming" class="ab-tab-panel">
+                <div class="upcoming-births-explainer">
+                    <div class="upcoming-births-explainer-title">
+                        <i class="bi bi-info-circle me-1"></i> How to read this table
+                    </div>
+                    <div class="ubex-item upcoming">
+                        <div class="ubex-icon"><i class="bi bi-clock-fill"></i></div>
+                        <div>
+                            <div class="ubex-label"><span class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span></div>
+                            <div class="ubex-desc">The expected birth date is <strong>still in the future</strong>.
+                                Monitor the animal closely.<br>
+                                <span class="ubex-row-swatch upcoming"></span>
+                                <em style="font-size:.73rem;color:#94a3b8;"> Row highlighted in yellow</em>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ubex-item past">
+                        <div class="ubex-icon"><i class="bi bi-calendar-x-fill"></i></div>
+                        <div>
+                            <div class="ubex-label"><span class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span></div>
+                            <div class="ubex-desc">The expected birth date has <strong>already passed</strong>.<br>
+                                <span class="ubex-row-swatch past"></span>
+                                <em style="font-size:.73rem;color:#94a3b8;"> Row in light gray</em>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ubex-item none">
+                        <div class="ubex-icon"><i class="bi bi-dash-circle-fill"></i></div>
+                        <div>
+                            <div class="ubex-label">Days Until / Since</div>
+                            <div class="ubex-desc">Shows how many days remain until the expected birth date,
+                                or how many days have passed since it was due.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${abortionList == null or abortionList.empty}" class="ab-empty">
+                    <i class="bi bi-calendar-check"></i>
+                    <p>No abortion records found.</p>
+                </div>
+                <div th:if="${abortionList != null and !abortionList.empty}" class="table-responsive">
+                    <table class="ab-table" id="abTableUpcoming">
+                        <thead>
+                        <tr>
+                            <th>#</th><th>Animal Tag</th><th>Category</th><th>Abortion Date</th>
+                            <th>Pregnancy #</th><th>Expected Birth</th><th>Days Until / Since</th><th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <th:block th:each="a, i : ${abortionList}">
+                            <tr th:if="${a.expectedBirthDate != null}"
+                                th:classappend="${!#temporals.createToday().isAfter(a.expectedBirthDate)} ? 'row-upcoming-birth' : 'row-past-birth'">
+                                <td th:text="${i.count}">1</td>
+                                <td><strong th:text="${a.livestock != null ? a.livestock.tagNumber : 'N/A'}">TAG-001</strong></td>
+                                <td>
+                                    <span th:if="${a.livestock?.livestockCategory != null}"
+                                          class="badge bg-info text-white"
+                                          th:text="${a.livestock.livestockCategory.name}">Cat</span>
+                                    <span th:if="${a.livestock?.livestockCategory == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${a.abortionDate != null ? #temporals.format(a.abortionDate,'dd-MM-yyyy') : '—'}">—</td>
+                                <td>
+                                    <span th:if="${a.pregnancyNumber != null}" th:text="${a.pregnancyNumber}">—</span>
+                                    <span th:if="${a.pregnancyNumber == null}" class="text-muted">—</span>
+                                </td>
+                                <td><strong th:text="${#temporals.format(a.expectedBirthDate,'dd-MM-yyyy')}">—</strong></td>
+                                <td class="ab-days-cell" th:attr="data-expected=${a.expectedBirthDate}">—</td>
+                                <td>
+                                    <span th:if="${!#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                          class="bdg-expected"><i class="bi bi-clock-fill"></i> Upcoming</span>
+                                    <span th:if="${#temporals.createToday().isAfter(a.expectedBirthDate)}"
+                                          class="bdg-past"><i class="bi bi-calendar-x-fill"></i> Past</span>
+                                </td>
+                            </tr>
+                        </th:block>
+                        <tr id="abUpcomingEmptyRow" style="display:none;">
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="bi bi-calendar-check me-2 text-success"></i>No expected birth dates recorded.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div><!-- /ab-tab-upcoming -->
+
+        </div><!-- /report-section -->
+    </div><!-- /abortion-report-view -->
+
+    <!-- ══ SALES REPORT VIEW ══════════════════════════════════════════ -->
     <div id="sales-report-view" class="view">
         <div class="report-header">
             <div class="report-title"><i class="bi bi-cash-stack"></i> Sales Report</div>
@@ -491,6 +1111,8 @@
         </div>
         <div class="card" id="salesReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
+
+    <!-- ══ DEATHS REPORT VIEW ════════════════════════════════════════ -->
     <div id="deaths-report-view" class="view">
         <div class="report-header">
             <div class="report-title"><i class="bi bi-x-circle-fill"></i> Deaths Report</div>
@@ -498,6 +1120,8 @@
         </div>
         <div class="card" id="deathsReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
+
+    <!-- ══ OVERVIEW REPORT VIEW ═══════════════════════════════════════ -->
     <div id="overview-report-view" class="view">
         <div class="report-header">
             <div class="report-title"><i class="bi bi-graph-up-arrow"></i> Business Overview</div>
@@ -505,12 +1129,14 @@
         </div>
         <div id="overviewReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
+
+    <!-- ══ IFRAME VIEW ════════════════════════════════════════════════ -->
     <div id="iframe-view" class="view iframe-view">
         <iframe id="contentFrame" class="content-frame" src="about:blank" title="Content"></iframe>
     </div>
 </main>
 
-<!-- Hidden div to pass data from server to JavaScript -->
+<!-- Hidden data div -->
 <div id="serverData" style="display:none;"
      th:data-total-livestock="${totalLivestock}"
      th:data-total-representatives="${totalRepresentatives}"
@@ -554,214 +1180,227 @@
 </div>
 
 <script th:inline="none">
-    // Helper function to safely parse JSON data
+    // ── DATA PARSING ─────────────────────────────────
     function parseServerData(str) {
-        if (!str || str === 'null' || str === 'undefined' || str === '') {
-            return null;
-        }
-        try {
-            // Handle HTML escaped characters
-            var cleaned = str.replace(/&quot;/g, '"');
-            return JSON.parse(cleaned);
-        } catch(e) {
-            console.warn('Failed to parse:', str);
-            return null;
-        }
+        if (!str || str === 'null' || str === 'undefined' || str === '') return null;
+        try { return JSON.parse(str.replace(/&quot;/g, '"')); } catch(e) { return null; }
     }
 
-    // Get the server data div
     var serverDiv = document.getElementById('serverData');
 
-    // Parse all monthly data with fallback defaults
-    var monthlyBirthsRaw = serverDiv.dataset.monthlyBirths;
-    var monthlySalesRaw = serverDiv.dataset.monthlySales;
-    var monthlyDeathsRaw = serverDiv.dataset.monthlyDeaths;
-    var monthlyTreatmentsRaw = serverDiv.dataset.monthlyTreatments;
-    var monthlyRevenueRaw = serverDiv.dataset.monthlyRevenue;
-    var monthlyCostsRaw = serverDiv.dataset.monthlyCosts;
+    var monthlyBirthsRaw     = serverDiv ? serverDiv.dataset.monthlyBirths     : null;
+    var monthlySalesRaw      = serverDiv ? serverDiv.dataset.monthlySales      : null;
+    var monthlyDeathsRaw     = serverDiv ? serverDiv.dataset.monthlyDeaths     : null;
+    var monthlyTreatmentsRaw = serverDiv ? serverDiv.dataset.monthlyTreatments : null;
+    var monthlyRevenueRaw    = serverDiv ? serverDiv.dataset.monthlyRevenue    : null;
+    var monthlyCostsRaw      = serverDiv ? serverDiv.dataset.monthlyCosts      : null;
 
-    // Default monthly data (12 months)
-    var DEFAULT_MONTHLY_BIRTHS = [8,5,12,9,14,7,11,6,10,13,8,5];
-    var DEFAULT_MONTHLY_SALES = [4,3,6,5,8,4,7,3,5,9,6,4];
-    var DEFAULT_MONTHLY_DEATHS = [1,0,2,1,1,0,2,1,0,2,1,0];
+    var DEFAULT_MONTHLY_BIRTHS     = [8,5,12,9,14,7,11,6,10,13,8,5];
+    var DEFAULT_MONTHLY_SALES      = [4,3,6,5,8,4,7,3,5,9,6,4];
+    var DEFAULT_MONTHLY_DEATHS     = [1,0,2,1,1,0,2,1,0,2,1,0];
     var DEFAULT_MONTHLY_TREATMENTS = [6,4,8,7,10,5,9,4,7,11,7,5];
-    var DEFAULT_MONTHLY_REVENUE = [320000,210000,480000,390000,560000,280000,450000,240000,400000,520000,380000,210000];
-    var DEFAULT_MONTHLY_COSTS = [80000,60000,95000,85000,110000,70000,100000,65000,90000,115000,88000,72000];
+    var DEFAULT_MONTHLY_REVENUE    = [320000,210000,480000,390000,560000,280000,450000,240000,400000,520000,380000,210000];
+    var DEFAULT_MONTHLY_COSTS      = [80000,60000,95000,85000,110000,70000,100000,65000,90000,115000,88000,72000];
 
-    // Try to parse server data, use defaults if parsing fails
-    var monthlyBirths = parseServerData(monthlyBirthsRaw);
-    var monthlySales = parseServerData(monthlySalesRaw);
-    var monthlyDeaths = parseServerData(monthlyDeathsRaw);
+    var monthlyBirths     = parseServerData(monthlyBirthsRaw);
+    var monthlySales      = parseServerData(monthlySalesRaw);
+    var monthlyDeaths     = parseServerData(monthlyDeathsRaw);
     var monthlyTreatments = parseServerData(monthlyTreatmentsRaw);
-    var monthlyRevenue = parseServerData(monthlyRevenueRaw);
-    var monthlyCosts = parseServerData(monthlyCostsRaw);
+    var monthlyRevenue    = parseServerData(monthlyRevenueRaw);
+    var monthlyCosts      = parseServerData(monthlyCostsRaw);
 
-    // Use defaults if parsing failed or data is not array of 12
-    if (!Array.isArray(monthlyBirths) || monthlyBirths.length !== 12) monthlyBirths = DEFAULT_MONTHLY_BIRTHS;
-    if (!Array.isArray(monthlySales) || monthlySales.length !== 12) monthlySales = DEFAULT_MONTHLY_SALES;
-    if (!Array.isArray(monthlyDeaths) || monthlyDeaths.length !== 12) monthlyDeaths = DEFAULT_MONTHLY_DEATHS;
+    if (!Array.isArray(monthlyBirths)     || monthlyBirths.length     !== 12) monthlyBirths     = DEFAULT_MONTHLY_BIRTHS;
+    if (!Array.isArray(monthlySales)      || monthlySales.length      !== 12) monthlySales      = DEFAULT_MONTHLY_SALES;
+    if (!Array.isArray(monthlyDeaths)     || monthlyDeaths.length     !== 12) monthlyDeaths     = DEFAULT_MONTHLY_DEATHS;
     if (!Array.isArray(monthlyTreatments) || monthlyTreatments.length !== 12) monthlyTreatments = DEFAULT_MONTHLY_TREATMENTS;
-    if (!Array.isArray(monthlyRevenue) || monthlyRevenue.length !== 12) monthlyRevenue = DEFAULT_MONTHLY_REVENUE;
-    if (!Array.isArray(monthlyCosts) || monthlyCosts.length !== 12) monthlyCosts = DEFAULT_MONTHLY_COSTS;
+    if (!Array.isArray(monthlyRevenue)    || monthlyRevenue.length    !== 12) monthlyRevenue    = DEFAULT_MONTHLY_REVENUE;
+    if (!Array.isArray(monthlyCosts)      || monthlyCosts.length      !== 12) monthlyCosts      = DEFAULT_MONTHLY_COSTS;
 
-    // Debug log to verify data
-    console.log('Monthly Births:', monthlyBirths);
-    console.log('Monthly Sales:', monthlySales);
-    console.log('Monthly Deaths:', monthlyDeaths);
-    console.log('Monthly Treatments:', monthlyTreatments);
-    console.log('Monthly Revenue:', monthlyRevenue);
-    console.log('Monthly Costs:', monthlyCosts);
-
-    // Build dashboard data object
     var dashboardData = {
-        totalLivestock: parseInt(serverDiv.dataset.totalLivestock) || 248,
-        totalRepresentatives: parseInt(serverDiv.dataset.totalRepresentatives) || 12,
-        totalBeneficiaries: parseInt(serverDiv.dataset.totalBeneficiaries) || 38,
-        totalUsers: parseInt(serverDiv.dataset.totalUsers) || 6,
-        activeUsers: parseInt(serverDiv.dataset.activeUsers) || 5,
-        inactiveUsers: parseInt(serverDiv.dataset.inactiveUsers) || 1,
-        totalBirths: parseInt(serverDiv.dataset.totalBirths) || 98,
-        totalMothers: parseInt(serverDiv.dataset.totalMothers) || 44,
-        totalLinkedChildren: parseInt(serverDiv.dataset.totalLinkedChildren) || 82,
-        totalSales: parseInt(serverDiv.dataset.totalSales) || 45,
-        totalTreatments: parseInt(serverDiv.dataset.totalTreatments) || 83,
-        totalSick: parseInt(serverDiv.dataset.totalSick) || 20,
-        criticalCount: parseInt(serverDiv.dataset.criticalCount) || 3,
-        recoveredCount: parseInt(serverDiv.dataset.recoveredCount) || 15,
-        totalAbortions: parseInt(serverDiv.dataset.totalAbortions) || 7,
-        totalAnimalsAffected: parseInt(serverDiv.dataset.totalAnimalsAffected) || 7,
-        totalDeaths: parseInt(serverDiv.dataset.totalDeaths) || 11,
-        distinctCausesCount: parseInt(serverDiv.dataset.distinctCausesCount) || 4,
-        totalTreatmentCost: parseInt(serverDiv.dataset.totalTreatmentCost) || 680000,
-        totalSaleRevenue: parseInt(serverDiv.dataset.totalSaleRevenue) || 4200000,
-        totalSickTreatmentCost: parseInt(serverDiv.dataset.totalSickTreatmentCost) || 420000,
-        recoveryRate: parseInt(serverDiv.dataset.recoveryRate) || 87,
-        mostTreatedAnimalTag: serverDiv.dataset.mostTreatedAnimalTag || 'LV-042',
-        mostSickAnimalTag: serverDiv.dataset.mostSickAnimalTag || 'LV-019',
-        mostAffectedAnimalTag: serverDiv.dataset.mostAffectedAnimalTag || 'LV-031',
-        mostSoldAnimalTag: serverDiv.dataset.mostSoldAnimalTag || 'LV-007',
-        mostCommonCause: serverDiv.dataset.mostCommonCause || 'Disease',
-        recentBirths: parseServerData(serverDiv.dataset.recentBirths) || [],
-        treatmentList: parseServerData(serverDiv.dataset.treatmentList) || [],
-        sickList: parseServerData(serverDiv.dataset.sickList) || [],
-        abortionList: parseServerData(serverDiv.dataset.abortionList) || [],
-        salesList: parseServerData(serverDiv.dataset.salesList) || [],
-        deathsList: parseServerData(serverDiv.dataset.deathsList) || [],
-        monthlyBirths: monthlyBirths,
-        monthlySales: monthlySales,
-        monthlyDeaths: monthlyDeaths,
+        totalLivestock:          parseInt(serverDiv ? serverDiv.dataset.totalLivestock          : 0) || 0,
+        totalRepresentatives:    parseInt(serverDiv ? serverDiv.dataset.totalRepresentatives    : 0) || 0,
+        totalBeneficiaries:      parseInt(serverDiv ? serverDiv.dataset.totalBeneficiaries      : 0) || 0,
+        totalUsers:              parseInt(serverDiv ? serverDiv.dataset.totalUsers              : 0) || 0,
+        activeUsers:             parseInt(serverDiv ? serverDiv.dataset.activeUsers             : 0) || 0,
+        inactiveUsers:           parseInt(serverDiv ? serverDiv.dataset.inactiveUsers           : 0) || 0,
+        totalBirths:             parseInt(serverDiv ? serverDiv.dataset.totalBirths             : 0) || 0,
+        totalMothers:            parseInt(serverDiv ? serverDiv.dataset.totalMothers            : 0) || 0,
+        totalLinkedChildren:     parseInt(serverDiv ? serverDiv.dataset.totalLinkedChildren     : 0) || 0,
+        avgOffspringPerBirth:    parseInt(serverDiv ? serverDiv.dataset.avgOffspringPerBirth    : 0) || 0,
+        totalSales:              parseInt(serverDiv ? serverDiv.dataset.totalSales              : 0) || 0,
+        salesThisMonth:          parseInt(serverDiv ? serverDiv.dataset.salesThisMonth          : 0) || 0,
+        totalTreatments:         parseInt(serverDiv ? serverDiv.dataset.totalTreatments         : 0) || 0,
+        treatmentsThisMonth:     parseInt(serverDiv ? serverDiv.dataset.treatmentsThisMonth     : 0) || 0,
+        unpaidTreatmentCount:    parseInt(serverDiv ? serverDiv.dataset.unpaidTreatmentCount    : 0) || 0,
+        ongoingTreatmentCount:   parseInt(serverDiv ? serverDiv.dataset.ongoingTreatmentCount   : 0) || 0,
+        totalSick:               parseInt(serverDiv ? serverDiv.dataset.totalSick               : 0) || 0,
+        currentlySick:           parseInt(serverDiv ? serverDiv.dataset.currentlySick           : 0) || 0,
+        criticalCount:           parseInt(serverDiv ? serverDiv.dataset.criticalCount           : 0) || 0,
+        recoveringCount:         parseInt(serverDiv ? serverDiv.dataset.recoveringCount         : 0) || 0,
+        recoveredCount:          parseInt(serverDiv ? serverDiv.dataset.recoveredCount          : 0) || 0,
+        sickThisMonth:           parseInt(serverDiv ? serverDiv.dataset.sickThisMonth           : 0) || 0,
+        lifeThreatCount:         parseInt(serverDiv ? serverDiv.dataset.lifeThreatCount         : 0) || 0,
+        totalAbortions:          parseInt(serverDiv ? serverDiv.dataset.totalAbortions          : 0) || 0,
+        totalAnimalsAffected:    parseInt(serverDiv ? serverDiv.dataset.totalAnimalsAffected    : 0) || 0,
+        abortionsThisMonth:      parseInt(serverDiv ? serverDiv.dataset.abortionsThisMonth      : 0) || 0,
+        totalDeaths:             parseInt(serverDiv ? serverDiv.dataset.totalDeaths             : 0) || 0,
+        deathsThisMonth:         parseInt(serverDiv ? serverDiv.dataset.deathsThisMonth         : 0) || 0,
+        distinctCausesCount:     parseInt(serverDiv ? serverDiv.dataset.distinctCausesCount     : 0) || 0,
+        totalTreatmentCost:      parseFloat(serverDiv ? serverDiv.dataset.totalTreatmentCost    : 0) || 0,
+        totalSaleRevenue:        parseFloat(serverDiv ? serverDiv.dataset.totalSaleRevenue      : 0) || 0,
+        totalSickTreatmentCost:  parseFloat(serverDiv ? serverDiv.dataset.totalSickTreatmentCost: 0) || 0,
+        recoveryRate:            parseInt(serverDiv ? serverDiv.dataset.recoveryRate            : 0) || 0,
+        yearSickCount:           parseInt(serverDiv ? serverDiv.dataset.yearSickCount           : 0) || 0,
+        yearCriticalCount:       parseInt(serverDiv ? serverDiv.dataset.yearCriticalCount       : 0) || 0,
+        yearRecoveredCount:      parseInt(serverDiv ? serverDiv.dataset.yearRecoveredCount      : 0) || 0,
+        mostTreatedAnimalTag:    serverDiv ? (serverDiv.dataset.mostTreatedAnimalTag  || '—') : '—',
+        mostSickAnimalTag:       serverDiv ? (serverDiv.dataset.mostSickAnimalTag     || '—') : '—',
+        mostAffectedAnimalTag:   serverDiv ? (serverDiv.dataset.mostAffectedAnimalTag || '—') : '—',
+        mostSoldAnimalTag:       serverDiv ? (serverDiv.dataset.mostSoldAnimalTag     || '—') : '—',
+        mostCommonCause:         serverDiv ? (serverDiv.dataset.mostCommonCause       || '—') : '—',
+        recentBirths:            parseServerData(serverDiv ? serverDiv.dataset.recentBirths    : null) || [],
+        treatmentList:           parseServerData(serverDiv ? serverDiv.dataset.treatmentList   : null) || [],
+        sickList:                parseServerData(serverDiv ? serverDiv.dataset.sickList        : null) || [],
+        abortionList:            parseServerData(serverDiv ? serverDiv.dataset.abortionList    : null) || [],
+        salesList:               parseServerData(serverDiv ? serverDiv.dataset.salesList       : null) || [],
+        deathsList:              parseServerData(serverDiv ? serverDiv.dataset.deathsList      : null) || [],
+        monthlyBirths:     monthlyBirths,
+        monthlySales:      monthlySales,
+        monthlyDeaths:     monthlyDeaths,
         monthlyTreatments: monthlyTreatments,
-        monthlyRevenue: monthlyRevenue,
-        monthlyCosts: monthlyCosts
+        monthlyRevenue:    monthlyRevenue,
+        monthlyCosts:      monthlyCosts
     };
 
     // ── UTILS ────────────────────────────────────────
-    var fmt = function(n) { return (n == null ? '0' : (+n).toLocaleString()); };
-    var fmtC = function(n) { return (n == null ? '0 RWF' : (+n).toLocaleString() + ' RWF'); };
-    var fmtK = function(n) { if (n == null) return '0'; var v = +n; return v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? Math.round(v/1000)+'K' : String(v); };
-    var fmtD = function(s) { if (!s) return '—'; return new Date(s).toLocaleDateString('en-GB'); };
+    var fmt  = function(n)  { return (n == null ? '0' : (+n).toLocaleString()); };
+    var fmtC = function(n)  { return (n == null ? '0 RWF' : (+n).toLocaleString() + ' RWF'); };
+    var fmtK = function(n)  {
+        if (n == null) return '0';
+        var v = +n;
+        return v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? Math.round(v/1000)+'K' : String(v);
+    };
+    var fmtD = function(s)  { if (!s) return '—'; try { return new Date(s).toLocaleDateString('en-GB'); } catch(e){ return '—'; } };
 
     function toast(msg, type) {
-        if (type === undefined) type = 'success';
+        type = type || 'success';
         var el = document.createElement('div');
         el.className = 'toast-notif';
         el.style.borderLeftColor = type === 'success' ? 'var(--teal)' : 'var(--rose)';
-        el.innerHTML = '<i class="bi ' + (type==='success'?'bi-check-circle-fill':'bi-exclamation-triangle-fill') + '" style="color:' + (type==='success'?'var(--teal)':'var(--rose)') + '"></i><span>' + msg + '</span>';
+        el.innerHTML = '<i class="bi ' + (type==='success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill') + '" style="color:' + (type==='success' ? 'var(--teal)' : 'var(--rose)') + '"></i><span>' + msg + '</span>';
         document.body.appendChild(el);
-        setTimeout(function() { el.remove(); }, 3000);
+        setTimeout(function() { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
     }
 
-    // ── CHART CONSTANTS ───────────────────────────────
     var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var C = { births:'#38bdf8', sales:'#34d399', treat:'#a78bfa', sick:'#fbbf24', abort:'#fb923c', deaths:'#fb7185', green:'#52b788', teal:'#14b8a6', rose:'#f43f5e' };
 
-    function mkLegend(color1, label1, color2, label2, color3, label3, color4, label4) {
+    function mkLegend(c1, l1, c2, l2, c3, l3, c4, l4) {
+        var pairs = [[c1,l1],[c2,l2],[c3,l3],[c4,l4]];
         var html = '<div class="chart-legend">';
-        if(color1 && label1) {
-            html += '<span class="legend-item"><span class="legend-dot" style="background:' + color1 + '"></span>' + label1 + '</span>';
+        for (var i = 0; i < pairs.length; i++) {
+            if (pairs[i][0] && pairs[i][1]) html += '<span class="legend-item"><span class="legend-dot" style="background:' + pairs[i][0] + '"></span>' + pairs[i][1] + '</span>';
         }
-        if(color2 && label2) {
-            html += '<span class="legend-item"><span class="legend-dot" style="background:' + color2 + '"></span>' + label2 + '</span>';
-        }
-        if(color3 && label3) {
-            html += '<span class="legend-item"><span class="legend-dot" style="background:' + color3 + '"></span>' + label3 + '</span>';
-        }
-        if(color4 && label4) {
-            html += '<span class="legend-item"><span class="legend-dot" style="background:' + color4 + '"></span>' + label4 + '</span>';
-        }
-        html += '</div>';
-        return html;
+        return html + '</div>';
     }
 
     // ── VIEW MANAGEMENT ──────────────────────────────
-    var dashCharts = [];
-    function destroyCharts() { dashCharts.forEach(function(c) { try { c.destroy(); } catch(e){} }); dashCharts = []; }
+    var ALL_VIEWS = ['dashboard','report','treatment-report','sick-report','abortion-report','sales-report','deaths-report','overview-report','birth-report','iframe'];
 
     function showView(name) {
-        var views = document.querySelectorAll('.view');
-        for(var i = 0; i < views.length; i++) {
-            views[i].classList.remove('active');
+        for (var i = 0; i < ALL_VIEWS.length; i++) {
+            var el = document.getElementById(ALL_VIEWS[i] + '-view');
+            if (el) el.classList.remove('active');
         }
-        var t = document.getElementById(name + '-view');
-        if (t) t.classList.add('active');
+        var target = document.getElementById(name + '-view');
+        if (target) target.classList.add('active');
     }
 
     function showDashboard(el) {
         showView('dashboard');
         var btns = document.querySelectorAll('.nav-btn');
-        for(var i = 0; i < btns.length; i++) {
-            btns[i].classList.remove('active');
-        }
+        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
         if (el) el.classList.add('active');
         closeMobile();
         setTimeout(renderDashboardOverview, 100);
     }
 
-    function showBirthReport(e,el)     { e.preventDefault(); showView('report');           markActive(el); renderBirthReport();     closeMobile(); }
-    function showTreatmentReport(e,el) { e.preventDefault(); showView('treatment-report'); markActive(el); renderTreatmentReport(); closeMobile(); }
-    function showSickReport(e,el)      { e.preventDefault(); showView('sick-report');      markActive(el); renderSickReport();      closeMobile(); }
-    function showAbortionReport(e,el)  { e.preventDefault(); showView('abortion-report');  markActive(el); renderAbortionReport();  closeMobile(); }
-    function showSalesReport(e,el)     { e.preventDefault(); showView('sales-report');     markActive(el); renderSalesReport();     closeMobile(); }
-    function showDeathsReport(e,el)    { e.preventDefault(); showView('deaths-report');    markActive(el); renderDeathsReport();    closeMobile(); }
-    function showOverviewReport(e,el)  { e.preventDefault(); showView('overview-report');  markActive(el); renderOverviewReport();  closeMobile(); }
+    function markActive(el) {
+        var links = document.querySelectorAll('.submenu-link, .submenu-item');
+        for (var i = 0; i < links.length; i++) links[i].classList.remove('active-item');
+        if (el) el.classList.add('active-item');
+    }
 
-    function navigateTo(e,el) {
+    function showBirthReport(e, el) {
+        e.preventDefault(); showView('report'); markActive(el); renderBirthReport(); closeMobile();
+    }
+
+    function showTreatmentReport(e, el) {
+        e.preventDefault();
+        showView('treatment-report');
+        markActive(el);
+        // Reset to all tab
+        trSwitchTab('all', document.querySelector('#treatment-report-view .report-tab'));
+        trCalcDays();
+        closeMobile();
+    }
+
+    function showSickReport(e, el) {
+        e.preventDefault(); showView('sick-report'); markActive(el); renderSickReport(); closeMobile();
+    }
+
+    function showAbortionReport(e, el) {
+        e.preventDefault();
+        showView('abortion-report');
+        markActive(el);
+        // Reset to all tab
+        abSwitchTab('all', document.querySelector('#abortion-report-view .report-tab'));
+        abCalcDays();
+        closeMobile();
+    }
+
+    function showSalesReport(e, el) {
+        e.preventDefault(); showView('sales-report'); markActive(el); renderSalesReport(); closeMobile();
+    }
+
+    function showDeathsReport(e, el) {
+        e.preventDefault(); showView('deaths-report'); markActive(el); renderDeathsReport(); closeMobile();
+    }
+
+    function showOverviewReport(e, el) {
+        e.preventDefault(); showView('overview-report'); markActive(el); renderOverviewReport(); closeMobile();
+    }
+
+    function navigateTo(e, el) {
         e.preventDefault();
         var url = el.getAttribute('href');
         if (!url || url === '#') return;
         showView('iframe');
         var f = document.getElementById('contentFrame');
         if (f) f.src = url;
-        markActive(el); closeMobile();
+        markActive(el);
+        closeMobile();
     }
 
-    function markActive(el) {
-        var links = document.querySelectorAll('.submenu-link');
-        for(var i = 0; i < links.length; i++) {
-            links[i].classList.remove('active-item');
-        }
-        if (el) el.classList.add('active-item');
-    }
+    function closeSidebarOnMobile() { closeMobile(); }
 
     function toggleSidebar() {
         var s = document.getElementById('sidebar');
         var o = document.getElementById('sidebarOverlay');
+        if (!s) return;
         s.classList.toggle('active');
-        o.style.display = s.classList.contains('active') ? 'block' : 'none';
+        if (o) o.style.display = s.classList.contains('active') ? 'block' : 'none';
     }
 
     function toggleSub(id, btn) {
         var sub = document.getElementById('submenu-' + id);
+        if (!sub) return;
         var isOpen = sub.classList.contains('open');
         var subs = document.querySelectorAll('.submenu');
-        for(var i = 0; i < subs.length; i++) {
-            subs[i].classList.remove('open');
-        }
         var btns = document.querySelectorAll('.nav-btn');
-        for(var i = 0; i < btns.length; i++) {
-            btns[i].classList.remove('open');
-        }
-        if (!isOpen) { sub.classList.add('open'); btn.classList.add('open'); }
+        for (var i = 0; i < subs.length; i++) subs[i].classList.remove('open');
+        for (var i = 0; i < btns.length; i++) btns[i].classList.remove('open');
+        if (!isOpen) { sub.classList.add('open'); if (btn) btn.classList.add('open'); }
     }
 
     function toggleNested(id) {
@@ -779,240 +1418,373 @@
     }
 
     // ══════════════════════════════════════════════════
+    // TREATMENT REPORT TABS
+    // ══════════════════════════════════════════════════
+    function trSwitchTab(tab, btn) {
+        var panels = document.querySelectorAll('.tr-tab-panel');
+        for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+        var tabBtns = document.querySelectorAll('#treatment-report-view .report-tab');
+        for (var i = 0; i < tabBtns.length; i++) tabBtns[i].classList.remove('active');
+        var panel = document.getElementById('tr-tab-' + tab);
+        if (panel) panel.classList.add('active');
+        if (btn)   btn.classList.add('active');
+        var labels = { all:'Showing all treatment records', search:'Search by animal tag', medication:'Grouped by medication', upcoming:'Upcoming & overdue treatments' };
+        var infoEl = document.getElementById('trExportInfo');
+        if (infoEl) infoEl.textContent = labels[tab] || '';
+        if (tab === 'medication') trBuildMedicationGroups();
+        if (tab === 'upcoming')   trCheckUpcomingEmpty();
+    }
+
+    function trCalcDays() {
+        var today = new Date(); today.setHours(0, 0, 0, 0);
+        var cells = document.querySelectorAll('.tr-days-cell');
+        for (var i = 0; i < cells.length; i++) {
+            var cell = cells[i];
+            var raw  = cell.getAttribute('data-next');
+            if (!raw) { cell.textContent = '—'; continue; }
+            var next = new Date(raw); next.setHours(0, 0, 0, 0);
+            var diff = Math.round((next - today) / 86400000);
+            if      (diff < 0)  cell.innerHTML = '<span style="color:#dc2626;font-weight:700;">' + Math.abs(diff) + ' days overdue</span>';
+            else if (diff === 0) cell.innerHTML = '<span style="color:#d97706;font-weight:700;">Today!</span>';
+            else                 cell.innerHTML = '<span style="color:#059669;font-weight:600;">In ' + diff + ' day' + (diff !== 1 ? 's' : '') + '</span>';
+        }
+    }
+
+    function trCheckUpcomingEmpty() {
+        var rows    = document.querySelectorAll('#trTableUpcoming tbody tr:not(#trUpcomingEmptyRow)');
+        var visible = 0;
+        for (var i = 0; i < rows.length; i++) { if (rows[i].style.display !== 'none') visible++; }
+        var emptyRow = document.getElementById('trUpcomingEmptyRow');
+        if (emptyRow) emptyRow.style.display = visible === 0 ? '' : 'none';
+    }
+
+    function trFilterByTag(query) {
+        var resultsDiv = document.getElementById('trSearchResults');
+        var infoEl     = document.getElementById('trExportInfo');
+        query = (query || '').trim().toUpperCase();
+        if (!query) {
+            resultsDiv.innerHTML = '<div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its treatment history</p></div>';
+            if (infoEl) infoEl.textContent = 'Search by animal tag';
+            return;
+        }
+        var rows = document.querySelectorAll('#trTableAll tbody tr');
+        var matches = [];
+        for (var i = 0; i < rows.length; i++) {
+            var tagEl = rows[i].querySelector('td:nth-child(2) strong');
+            if (tagEl && tagEl.textContent.toUpperCase().indexOf(query) !== -1) matches.push(rows[i]);
+        }
+        if (matches.length === 0) {
+            resultsDiv.innerHTML = '<div class="no-results-msg"><i class="bi bi-search me-2"></i>No treatments found for tag <strong>' + query + '</strong></div>';
+            if (infoEl) infoEl.textContent = 'No results for: ' + query;
+            return;
+        }
+        if (infoEl) infoEl.textContent = matches.length + ' record(s) for: ' + query;
+        var html = '<table class="tr-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Date</th><th>Medication</th><th>Type</th><th>Status</th><th>Cost</th><th>Paid</th><th>Next</th><th>Next Status</th></tr></thead><tbody>';
+        for (var i = 0; i < matches.length; i++) {
+            var cells = matches[i].querySelectorAll('td');
+            html += '<tr class="' + matches[i].className + '"><td>' + (i + 1) + '</td>';
+            for (var j = 1; j < cells.length; j++) html += '<td>' + cells[j].innerHTML + '</td>';
+            html += '</tr>';
+        }
+        resultsDiv.innerHTML = html + '</tbody></table>';
+    }
+
+    function trClearSearch() {
+        var inp = document.getElementById('trSearchInput');
+        if (inp) inp.value = '';
+        trFilterByTag('');
+    }
+
+    function trBuildMedicationGroups() {
+        var container = document.getElementById('trMedGroupContainer');
+        if (!container) return;
+        var rows   = document.querySelectorAll('#trTableAll tbody tr');
+        var groups = {};
+        for (var i = 0; i < rows.length; i++) {
+            var cells = rows[i].querySelectorAll('td');
+            if (!cells[4]) continue;
+            var med  = cells[4].textContent.trim() || '—';
+            if (!groups[med]) groups[med] = { records: [], totalCost: 0 };
+            var cost = parseFloat((cells[12] ? cells[12].textContent.trim().replace(/[^0-9.]/g, '') : '') || 0);
+            groups[med].records.push({ row: rows[i], cost: cost });
+            groups[med].totalCost += cost;
+        }
+        var keys = Object.keys(groups);
+        if (keys.length === 0) { container.innerHTML = '<div class="tr-empty"><i class="bi bi-capsule"></i><p>No medication data.</p></div>'; return; }
+        keys.sort(function(a, b) { return groups[b].records.length - groups[a].records.length; });
+        var html = '';
+        for (var k = 0; k < keys.length; k++) {
+            var med = keys[k]; var g = groups[med];
+            html += '<div class="med-group-card"><div class="med-group-header"><div class="mgh-name"><i class="bi bi-capsule-pill"></i> ' + med + '</div><div class="mgh-meta"><span><i class="bi bi-list-check"></i> ' + g.records.length + ' treatment' + (g.records.length !== 1 ? 's' : '') + '</span>' + (g.totalCost > 0 ? '<span><i class="bi bi-cash"></i> RWF ' + g.totalCost.toLocaleString() + '</span>' : '') + '</div></div><div class="table-responsive"><table class="tr-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Date</th><th>Type</th><th>Status</th><th>Dosage</th><th>Cost</th><th>Paid</th><th>Next</th><th>Next Status</th></tr></thead><tbody>';
+            for (var r = 0; r < g.records.length; r++) {
+                var c = g.records[r].row.querySelectorAll('td');
+                html += '<tr class="' + g.records[r].row.className + '"><td>' + (r+1) + '</td><td>' + (c[1]?c[1].innerHTML:'—') + '</td><td>' + (c[2]?c[2].innerHTML:'—') + '</td><td>' + (c[3]?c[3].textContent.trim():'—') + '</td><td>' + (c[7]?c[7].innerHTML:'—') + '</td><td>' + (c[8]?c[8].innerHTML:'—') + '</td><td>' + (c[6]?c[6].textContent.trim():'—') + '</td><td>' + (c[12]?c[12].textContent.trim():'—') + '</td><td>' + (c[13]?c[13].innerHTML:'—') + '</td><td>' + (c[14]?c[14].textContent.trim():'—') + '</td><td>' + (c[15]?c[15].innerHTML:'—') + '</td></tr>';
+            }
+            html += '</tbody></table></div></div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function trGetActiveTab() {
+        var tabs = ['all','search','medication','upcoming'];
+        for (var i = 0; i < tabs.length; i++) { var p = document.getElementById('tr-tab-' + tabs[i]); if (p && p.classList.contains('active')) return tabs[i]; }
+        return 'all';
+    }
+
+    function trGetTableCSV(tableId, title) {
+        var table = document.getElementById(tableId);
+        if (!table) return null;
+        var csv = 'Treatment Report - ' + title + '\nGenerated: ' + new Date().toLocaleString() + '\n\n';
+        var headers = []; var ths = table.querySelectorAll('thead th');
+        for (var i = 0; i < ths.length; i++) { var t = ths[i].textContent.trim(); if (t) headers.push('"' + t + '"'); }
+        csv += headers.join(',') + '\n';
+        var rows = table.querySelectorAll('tbody tr');
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].id === 'trUpcomingEmptyRow') continue;
+            var cols = []; var tds = rows[i].querySelectorAll('td');
+            for (var j = 0; j < tds.length; j++) cols.push('"' + tds[j].textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') + '"');
+            if (cols.length) csv += cols.join(',') + '\n';
+        }
+        return csv;
+    }
+
+    function trDownloadCSV(csv, filename) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+        a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function trExportExcel() {
+        var tab = trGetActiveTab(); var csv = ''; var filename = '';
+        var date = new Date().toISOString().slice(0,10);
+        if (tab === 'all' || tab === 'medication') { csv = trGetTableCSV('trTableAll','All Treatments'); filename = 'All_Treatments_'+date+'.csv'; }
+        else if (tab === 'upcoming') { csv = trGetTableCSV('trTableUpcoming','Upcoming Treatments'); filename = 'Upcoming_Treatments_'+date+'.csv'; }
+        if (csv) trDownloadCSV(csv, filename);
+    }
+
+    function trExportPDF() { window.print(); }
+    function trPrint() { window.print(); }
+
+    // ══════════════════════════════════════════════════
+    // ABORTION REPORT TABS
+    // ══════════════════════════════════════════════════
+    function abSwitchTab(tab, btn) {
+        var panels = document.querySelectorAll('.ab-tab-panel');
+        for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+        var tabBtns = document.querySelectorAll('#abortion-report-view .report-tab');
+        for (var i = 0; i < tabBtns.length; i++) tabBtns[i].classList.remove('active');
+        var panel = document.getElementById('ab-tab-' + tab);
+        if (panel) panel.classList.add('active');
+        if (btn)   btn.classList.add('active');
+        var labels = { all:'Showing all abortion records', search:'Search by animal tag', category:'Grouped by category', upcoming:'Expected birth dates' };
+        var infoEl = document.getElementById('abExportInfo');
+        if (infoEl) infoEl.textContent = labels[tab] || '';
+        if (tab === 'category') abBuildCategoryGroups();
+        if (tab === 'upcoming') abCheckUpcomingEmpty();
+    }
+
+    function abCalcDays() {
+        var today = new Date(); today.setHours(0,0,0,0);
+        var cells = document.querySelectorAll('.ab-days-cell');
+        for (var i = 0; i < cells.length; i++) {
+            var cell = cells[i]; var raw = cell.getAttribute('data-expected');
+            if (!raw) { cell.textContent = '—'; continue; }
+            var exp = new Date(raw); exp.setHours(0,0,0,0);
+            var diff = Math.round((exp - today) / 86400000);
+            if      (diff < 0)  cell.innerHTML = '<span style="color:#6b7280;font-weight:700;">' + Math.abs(diff) + ' days ago</span>';
+            else if (diff === 0) cell.innerHTML = '<span style="color:#059669;font-weight:700;">Today!</span>';
+            else                 cell.innerHTML = '<span style="color:#d97706;font-weight:600;">In ' + diff + ' day' + (diff !== 1 ? 's' : '') + '</span>';
+        }
+    }
+
+    function abCheckUpcomingEmpty() {
+        var rows = document.querySelectorAll('#abTableUpcoming tbody tr:not(#abUpcomingEmptyRow)');
+        var visible = 0;
+        for (var i = 0; i < rows.length; i++) { if (rows[i].style.display !== 'none') visible++; }
+        var emptyRow = document.getElementById('abUpcomingEmptyRow');
+        if (emptyRow) emptyRow.style.display = visible === 0 ? '' : 'none';
+    }
+
+    function abFilterByTag(query) {
+        var resultsDiv = document.getElementById('abSearchResults');
+        var infoEl     = document.getElementById('abExportInfo');
+        query = (query || '').trim().toUpperCase();
+        if (!query) {
+            resultsDiv.innerHTML = '<div class="search-placeholder"><i class="bi bi-search"></i><p>Enter an animal tag number to see its abortion history</p></div>';
+            if (infoEl) infoEl.textContent = 'Search by animal tag';
+            return;
+        }
+        var rows = document.querySelectorAll('#abTableAll tbody tr');
+        var matches = [];
+        for (var i = 0; i < rows.length; i++) {
+            var tagEl = rows[i].querySelector('td:nth-child(2) strong');
+            if (tagEl && tagEl.textContent.toUpperCase().indexOf(query) !== -1) matches.push(rows[i]);
+        }
+        if (matches.length === 0) {
+            resultsDiv.innerHTML = '<div class="no-results-msg"><i class="bi bi-search me-2"></i>No abortion records found for tag <strong>' + query + '</strong></div>';
+            if (infoEl) infoEl.textContent = 'No results for: ' + query;
+            return;
+        }
+        if (infoEl) infoEl.textContent = matches.length + ' record(s) for: ' + query;
+        var html = '<table class="ab-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Abortion Date</th><th>Pregnancy #</th><th>Expected Birth</th><th>Birth Status</th></tr></thead><tbody>';
+        for (var i = 0; i < matches.length; i++) {
+            var cells = matches[i].querySelectorAll('td');
+            html += '<tr class="' + matches[i].className + '"><td>' + (i+1) + '</td>';
+            for (var j = 1; j < cells.length; j++) html += '<td>' + cells[j].innerHTML + '</td>';
+            html += '</tr>';
+        }
+        resultsDiv.innerHTML = html + '</tbody></table>';
+    }
+
+    function abClearSearch() {
+        var inp = document.getElementById('abSearchInput');
+        if (inp) inp.value = '';
+        abFilterByTag('');
+    }
+
+    function abBuildCategoryGroups() {
+        var container = document.getElementById('abCatGroupContainer');
+        if (!container) return;
+        var rows = document.querySelectorAll('#abTableAll tbody tr');
+        var groups = {};
+        for (var i = 0; i < rows.length; i++) {
+            var cells = rows[i].querySelectorAll('td');
+            if (!cells[2]) continue;
+            var cat = cells[2].textContent.trim() || 'Uncategorised';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(rows[i]);
+        }
+        var keys = Object.keys(groups);
+        if (keys.length === 0) { container.innerHTML = '<div class="ab-empty"><i class="bi bi-tag"></i><p>No category data available.</p></div>'; return; }
+        keys.sort(function(a,b) { return groups[b].length - groups[a].length; });
+        var html = '';
+        for (var k = 0; k < keys.length; k++) {
+            var cat = keys[k]; var recs = groups[cat];
+            html += '<div class="cat-group-card"><div class="cat-group-header"><div class="cgh-name"><i class="bi bi-tag-fill"></i> ' + cat + '</div><div class="cgh-meta"><span><i class="bi bi-list-check"></i> ' + recs.length + ' abortion' + (recs.length!==1?'s':'') + '</span></div></div><div class="table-responsive"><table class="ab-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Abortion Date</th><th>Pregnancy #</th><th>Expected Birth</th><th>Birth Status</th></tr></thead><tbody>';
+            for (var r = 0; r < recs.length; r++) {
+                var c = recs[r].querySelectorAll('td');
+                html += '<tr class="'+recs[r].className+'"><td>'+(r+1)+'</td><td>'+(c[1]?c[1].innerHTML:'—')+'</td><td>'+(c[3]?c[3].textContent.trim():'—')+'</td><td>'+(c[4]?c[4].textContent.trim():'—')+'</td><td>'+(c[5]?c[5].textContent.trim():'—')+'</td><td>'+(c[6]?c[6].innerHTML:'—')+'</td></tr>';
+            }
+            html += '</tbody></table></div></div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function abGetActiveTab() {
+        var tabs = ['all','search','category','upcoming'];
+        for (var i = 0; i < tabs.length; i++) { var p = document.getElementById('ab-tab-' + tabs[i]); if (p && p.classList.contains('active')) return tabs[i]; }
+        return 'all';
+    }
+
+    function abGetTableCSV(tableId, title) {
+        var table = document.getElementById(tableId);
+        if (!table) return null;
+        var csv = 'Abortion Report - ' + title + '\nGenerated: ' + new Date().toLocaleString() + '\n\n';
+        var headers = []; var ths = table.querySelectorAll('thead th');
+        for (var i = 0; i < ths.length; i++) { var t = ths[i].textContent.trim(); if (t) headers.push('"'+t+'"'); }
+        csv += headers.join(',') + '\n';
+        var rows = table.querySelectorAll('tbody tr');
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].id === 'abUpcomingEmptyRow') continue;
+            var cols = []; var tds = rows[i].querySelectorAll('td');
+            for (var j = 0; j < tds.length; j++) cols.push('"'+tds[j].textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""')+'"');
+            if (cols.length) csv += cols.join(',') + '\n';
+        }
+        return csv;
+    }
+
+    function abDownloadCSV(csv, filename) {
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+        a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+
+    function abExportExcel() {
+        var tab = abGetActiveTab(); var csv = ''; var filename = '';
+        var date = new Date().toISOString().slice(0,10);
+        if (tab === 'all' || tab === 'category') { csv = abGetTableCSV('abTableAll','All Abortions'); filename = 'All_Abortions_'+date+'.csv'; }
+        else if (tab === 'upcoming') { csv = abGetTableCSV('abTableUpcoming','Expected Births'); filename = 'Expected_Births_'+date+'.csv'; }
+        if (csv) abDownloadCSV(csv, filename);
+    }
+
+    function abExportPDF() { window.print(); }
+    function abPrint() { window.print(); }
+
+    // ══════════════════════════════════════════════════
     // ANALYTICS DASHBOARD
     // ══════════════════════════════════════════════════
+    var dashCharts = [];
+    function destroyCharts() {
+        for (var i = 0; i < dashCharts.length; i++) { try { dashCharts[i].destroy(); } catch(e) {} }
+        dashCharts = [];
+    }
+
     function renderDashboardOverview() {
         destroyCharts();
         var container = document.getElementById('dashboardOverviewContent');
         if (!container) return;
         var d = dashboardData;
-        var net = d.totalSaleRevenue - ((d.totalTreatmentCost||0) + (d.totalSickTreatmentCost||0));
+        var net = d.totalSaleRevenue - ((d.totalTreatmentCost || 0) + (d.totalSickTreatmentCost || 0));
         var profit = net >= 0;
         var activeHerd = Math.max(0, d.totalLivestock - d.totalSales - d.totalDeaths);
         var outflow = [];
-        for(var i = 0; i < (d.monthlySales || []).length; i++) {
-            outflow.push((d.monthlySales[i] || 0) + ((d.monthlyDeaths || [])[i] || 0));
-        }
+        for (var i = 0; i < d.monthlySales.length; i++) outflow.push((d.monthlySales[i]||0)+((d.monthlyDeaths[i])||0));
 
         container.innerHTML =
-        '<div class="section-head" style="margin-bottom:14px;">' +
-            '<div class="section-title"><i class="bi bi-graph-up-arrow"></i> Farm Analytics</div>' +
-        '</div>' +
-        '<div class="analytics-kpi-row">' +
-            '<div class="akpi rev">' +
-                '<div class="akpi-label"><i class="bi bi-cash-stack"></i> Total Revenue</div>' +
-                '<div class="akpi-val" style="color:var(--teal)">' + fmtC(d.totalSaleRevenue) + '</div>' +
+            '<div class="section-head" style="margin-bottom:14px;"><div class="section-title"><i class="bi bi-graph-up-arrow"></i> Farm Analytics</div></div>' +
+            '<div class="analytics-kpi-row">' +
+                '<div class="akpi rev"><div class="akpi-label"><i class="bi bi-cash-stack"></i> Total Revenue</div><div class="akpi-val" style="color:var(--teal)">' + fmtC(d.totalSaleRevenue) + '</div></div>' +
+                '<div class="akpi cost"><div class="akpi-label"><i class="bi bi-receipt"></i> Total Costs</div><div class="akpi-val" style="color:var(--rose)">' + fmtC((d.totalTreatmentCost||0)+(d.totalSickTreatmentCost||0)) + '</div></div>' +
+                '<div class="akpi net"><div class="akpi-label"><i class="bi bi-currency-dollar"></i> Net '+(profit?'Profit':'Loss')+'</div><div class="akpi-val" style="color:'+(profit?'var(--teal)':'var(--rose)')+'">'+(profit?'+':'-')+fmtC(Math.abs(net))+'</div></div>' +
+                '<div class="akpi rec"><div class="akpi-label"><i class="bi bi-heart-pulse-fill"></i> Recovery Rate</div><div class="akpi-val" style="color:var(--sky)">'+d.recoveryRate+'%</div></div>' +
             '</div>' +
-            '<div class="akpi cost">' +
-                '<div class="akpi-label"><i class="bi bi-receipt"></i> Total Costs</div>' +
-                '<div class="akpi-val" style="color:var(--rose)">' + fmtC((d.totalTreatmentCost||0)+(d.totalSickTreatmentCost||0)) + '</div>' +
+            '<div class="chart-row wide">' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-bar-chart-fill"></i> Monthly livestock events</div><div class="chart-card-sub">Births · sales · deaths · treatments per month</div>' + mkLegend(C.births,'Births',C.sales,'Sales',C.deaths,'Deaths',C.treat,'Treatments') + '<div class="chart-wrap-md"><canvas id="chartActivity"></canvas></div></div>' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-pie-chart-fill"></i> Herd composition</div><div class="chart-card-sub">Current status breakdown</div>' + mkLegend(C.green,'Active',C.births,'Sold',C.deaths,'Deaths',C.sick,'Sick') + '<div class="chart-wrap-md"><canvas id="chartDonut"></canvas></div></div>' +
             '</div>' +
-            '<div class="akpi net">' +
-                '<div class="akpi-label"><i class="bi bi-currency-dollar"></i> Net ' + (profit?'Profit':'Loss') + '</div>' +
-                '<div class="akpi-val" style="color:' + (profit?'var(--green-600)':'var(--rose)') + '">' + (profit?'+':'-') + fmtC(Math.abs(net)) + '</div>' +
+            '<div class="chart-row two">' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-graph-up"></i> Revenue vs costs</div><div class="chart-card-sub">Monthly financial trend (RWF)</div>' + mkLegend(C.teal,'Revenue',C.rose,'Costs') + '<div class="chart-wrap-md"><canvas id="chartFinance"></canvas></div></div>' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-heart-pulse-fill"></i> Health summary</div><div class="chart-card-sub">Sick · critical · recovered · treatments</div>' + mkLegend(C.rose,'Sick',C.abort,'Critical',C.green,'Recovered',C.treat,'Treatments') + '<div class="chart-wrap-md"><canvas id="chartHealth"></canvas></div></div>' +
             '</div>' +
-            '<div class="akpi rec">' +
-                '<div class="akpi-label"><i class="bi bi-heart-pulse-fill"></i> Recovery Rate</div>' +
-                '<div class="akpi-val" style="color:var(--sky)">' + d.recoveryRate + '%</div>' +
-            '</div>' +
-        '</div>' +
-        '<div class="chart-row wide">' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-bar-chart-fill"></i> Monthly livestock events</div>' +
-                '<div class="chart-card-sub">Births · sales · deaths · treatments per month</div>' +
-                mkLegend(C.births,'Births', C.sales,'Sales', C.deaths,'Deaths', C.treat,'Treatments') +
-                '<div class="chart-wrap-md"><canvas id="chartActivity"></canvas></div>' +
-            '</div>' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-pie-chart-fill"></i> Herd composition</div>' +
-                '<div class="chart-card-sub">Current status breakdown</div>' +
-                mkLegend(C.green,'Active', C.births,'Sold', C.deaths,'Deaths', C.sick,'Sick') +
-                '<div class="chart-wrap-md"><canvas id="chartDonut"></canvas></div>' +
-            '</div>' +
-        '</div>' +
-        '<div class="chart-row two">' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-graph-up"></i> Revenue vs costs</div>' +
-                '<div class="chart-card-sub">Monthly financial trend (RWF)</div>' +
-                mkLegend(C.teal,'Revenue', C.rose,'Costs') +
-                '<div class="chart-wrap-md"><canvas id="chartFinance"></canvas></div>' +
-            '</div>' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-heart-pulse-fill"></i> Health summary</div>' +
-                '<div class="chart-card-sub">Sick · critical · recovered · treatments</div>' +
-                mkLegend(C.rose,'Sick', C.abort,'Critical', C.green,'Recovered', C.treat,'Treatments') +
-                '<div class="chart-wrap-md"><canvas id="chartHealth"></canvas></div>' +
-            '</div>' +
-        '</div>' +
-        '<div class="chart-row two">' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-arrow-left-right"></i> Herd flow — inflow vs outflow</div>' +
-                '<div class="chart-card-sub">Monthly births in vs sales + deaths out</div>' +
-                mkLegend(C.green,'Births (inflow)', C.rose,'Outflow (sales + deaths)') +
-                '<div class="chart-wrap-md"><canvas id="chartFlow"></canvas></div>' +
-            '</div>' +
-            '<div class="chart-card">' +
-                '<div class="chart-card-title"><i class="bi bi-activity"></i> System event overview</div>' +
-                '<div class="chart-card-sub">All key metrics at a glance</div>' +
-                '<div class="chart-wrap-md"><canvas id="chartRadar"></canvas></div>' +
-            '</div>' +
-        '</div>';
+            '<div class="chart-row two">' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-arrow-left-right"></i> Herd flow</div><div class="chart-card-sub">Monthly births vs outflow</div>' + mkLegend(C.green,'Births (inflow)',C.rose,'Outflow') + '<div class="chart-wrap-md"><canvas id="chartFlow"></canvas></div></div>' +
+                '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-activity"></i> System event overview</div><div class="chart-card-sub">All key metrics at a glance</div><div class="chart-wrap-md"><canvas id="chartRadar"></canvas></div></div>' +
+            '</div>';
 
-        // Chart 1 — Monthly activity grouped bar
         var ctxAct = document.getElementById('chartActivity');
-        if (ctxAct) {
-            dashCharts.push(new Chart(ctxAct, {
-                type: 'bar',
-                data: {
-                    labels: MONTHS,
-                    datasets: [
-                        { label:'Births', data: d.monthlyBirths, backgroundColor: C.births, borderRadius: 4, borderSkipped: false },
-                        { label:'Sales', data: d.monthlySales, backgroundColor: C.sales, borderRadius: 4, borderSkipped: false },
-                        { label:'Deaths', data: d.monthlyDeaths, backgroundColor: C.deaths, borderRadius: 4, borderSkipped: false },
-                        { label:'Treatments', data: d.monthlyTreatments, backgroundColor: C.treat, borderRadius: 4, borderSkipped: false }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false } },
-                              y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10 } } } }
-                }
-            }));
-        }
-
-        // Chart 2 — Donut
+        if (ctxAct) dashCharts.push(new Chart(ctxAct, { type:'bar', data:{ labels:MONTHS, datasets:[{label:'Births',data:d.monthlyBirths,backgroundColor:C.births,borderRadius:4,borderSkipped:false},{label:'Sales',data:d.monthlySales,backgroundColor:C.sales,borderRadius:4,borderSkipped:false},{label:'Deaths',data:d.monthlyDeaths,backgroundColor:C.deaths,borderRadius:4,borderSkipped:false},{label:'Treatments',data:d.monthlyTreatments,backgroundColor:C.treat,borderRadius:4,borderSkipped:false}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},autoSkip:false}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}}}}}));
         var ctxD = document.getElementById('chartDonut');
-        if (ctxD) {
-            dashCharts.push(new Chart(ctxD, {
-                type: 'doughnut',
-                data: { labels: ['Active','Sold','Deaths','Sick'], datasets: [{ data: [activeHerd, d.totalSales, d.totalDeaths, d.totalSick], backgroundColor: [C.green, C.births, C.deaths, C.sick], borderWidth: 0, hoverOffset: 8 }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed + ' animals'; } } } } }
-            }));
-        }
-
-        // Chart 3 — Revenue vs Costs line
+        if (ctxD) dashCharts.push(new Chart(ctxD, { type:'doughnut', data:{ labels:['Active','Sold','Deaths','Sick'], datasets:[{data:[activeHerd,d.totalSales,d.totalDeaths,d.totalSick],backgroundColor:[C.green,C.births,C.deaths,C.sick],borderWidth:0,hoverOffset:8}]}, options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}}));
         var ctxFin = document.getElementById('chartFinance');
-        if (ctxFin) {
-            dashCharts.push(new Chart(ctxFin, {
-                type: 'line',
-                data: {
-                    labels: MONTHS,
-                    datasets: [
-                        { label:'Revenue', data: d.monthlyRevenue, borderColor: C.teal, backgroundColor: 'rgba(20,184,166,.08)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: C.teal, borderWidth: 2 },
-                        { label:'Costs', data: d.monthlyCosts, borderColor: C.rose, backgroundColor: 'rgba(244,63,94,.06)', fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: C.rose, borderWidth: 2, borderDash: [5,3] }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45 } },
-                              y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10 }, callback: function(v) { return fmtK(v); } } } }
-                }
-            }));
-        }
-
-        // Chart 4 — Health horizontal bar
+        if (ctxFin) dashCharts.push(new Chart(ctxFin, { type:'line', data:{ labels:MONTHS, datasets:[{label:'Revenue',data:d.monthlyRevenue,borderColor:C.teal,backgroundColor:'rgba(20,184,166,.08)',fill:true,tension:.4,pointRadius:3,borderWidth:2},{label:'Costs',data:d.monthlyCosts,borderColor:C.rose,backgroundColor:'rgba(244,63,94,.06)',fill:true,tension:.4,pointRadius:3,borderWidth:2,borderDash:[5,3]}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10},callback:function(v){return fmtK(v);}}}}} }));
         var ctxH = document.getElementById('chartHealth');
-        if (ctxH) {
-            dashCharts.push(new Chart(ctxH, {
-                type: 'bar',
-                data: { labels: ['Sick','Critical','Recovered','Treatments'], datasets: [{ data: [d.totalSick, d.criticalCount, d.recoveredCount, d.totalTreatments], backgroundColor: [C.rose, C.abort, C.green, C.treat], borderRadius: 6, borderSkipped: false }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10 } } },
-                              y: { grid: { display: false }, ticks: { font: { size: 10 } } } }
-                }
-            }));
-        }
-
-        // Chart 5 — Herd flow stacked bar
+        if (ctxH) dashCharts.push(new Chart(ctxH, { type:'bar', data:{ labels:['Sick','Critical','Recovered','Treatments'], datasets:[{data:[d.totalSick,d.criticalCount,d.recoveredCount,d.totalTreatments],backgroundColor:[C.rose,C.abort,C.green,C.treat],borderRadius:6,borderSkipped:false}]}, options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}}));
         var ctxFlow = document.getElementById('chartFlow');
-        if (ctxFlow) {
-            dashCharts.push(new Chart(ctxFlow, {
-                type: 'bar',
-                data: {
-                    labels: MONTHS,
-                    datasets: [
-                        { label:'Births (inflow)', data: d.monthlyBirths, backgroundColor: C.green, borderRadius: 4, borderSkipped: false },
-                        { label:'Outflow', data: outflow, backgroundColor: C.rose, borderRadius: 4, borderSkipped: false }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { x: { grid: { display: false }, ticks: { font: { size: 10 }, autoSkip: false, maxRotation: 45 } },
-                              y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.04)' }, ticks: { font: { size: 10 } } } }
-                }
-            }));
-        }
-
-        // Chart 6 — Radar
+        if (ctxFlow) dashCharts.push(new Chart(ctxFlow, { type:'bar', data:{ labels:MONTHS, datasets:[{label:'Births (inflow)',data:d.monthlyBirths,backgroundColor:C.green,borderRadius:4,borderSkipped:false},{label:'Outflow',data:outflow,backgroundColor:C.rose,borderRadius:4,borderSkipped:false}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{size:10}}}}}}));
         var ctxR = document.getElementById('chartRadar');
         if (ctxR) {
-            var maxVal = Math.max(d.totalBirths, d.totalSales, d.totalTreatments, d.totalSick, d.totalAbortions, d.totalDeaths);
-            var stepSize = Math.ceil(maxVal / 5);
-            dashCharts.push(new Chart(ctxR, {
-                type: 'radar',
-                data: {
-                    labels: ['Births','Sales','Treatments','Sick','Abortions','Deaths'],
-                    datasets: [{ label: 'Total', data: [d.totalBirths, d.totalSales, d.totalTreatments, d.totalSick, d.totalAbortions, d.totalDeaths], backgroundColor: 'rgba(82,183,136,.15)', borderColor: C.green, pointBackgroundColor: C.green, borderWidth: 2, pointRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                    scales: { r: { beginAtZero: true, ticks: { font: { size: 9 }, stepSize: stepSize }, pointLabels: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,.06)' }, angleLines: { color: 'rgba(0,0,0,.06)' } } }
-                }
-            }));
+            var maxVal = Math.max(d.totalBirths,d.totalSales,d.totalTreatments,d.totalSick,d.totalAbortions,d.totalDeaths,1);
+            var stepSize = Math.ceil(maxVal/5);
+            dashCharts.push(new Chart(ctxR, { type:'radar', data:{ labels:['Births','Sales','Treatments','Sick','Abortions','Deaths'], datasets:[{label:'Total',data:[d.totalBirths,d.totalSales,d.totalTreatments,d.totalSick,d.totalAbortions,d.totalDeaths],backgroundColor:'rgba(82,183,136,.15)',borderColor:C.green,pointBackgroundColor:C.green,borderWidth:2,pointRadius:4}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{beginAtZero:true,ticks:{font:{size:9},stepSize:stepSize},pointLabels:{font:{size:10}},grid:{color:'rgba(0,0,0,.06)'},angleLines:{color:'rgba(0,0,0,.06)'}}}}}));
         }
     }
 
-    // ── REPORT RENDERERS ─────────────────────────────
+    // ══════════════════════════════════════════════════
+    // JS-RENDERED REPORT FUNCTIONS
+    // ══════════════════════════════════════════════════
     function exportBar(type) {
-        return '<div class="export-bar no-print">' +
-            '<span class="export-label"><i class="bi bi-download"></i> Export:</span>' +
-            '<button class="btn-exp excel" onclick="exportCSV(\'' + type + '\')"><i class="bi bi-file-earmark-excel-fill"></i> Excel / CSV</button>' +
-            '<button class="btn-exp print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print</button>' +
-        '</div>';
+        return '<div class="export-bar no-print"><span class="export-label"><i class="bi bi-download"></i> Export:</span><button class="btn-export excel" onclick="exportCSV(\''+type+'\')"><i class="bi bi-file-earmark-excel-fill"></i> Excel / CSV</button><button class="btn-export print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print</button></div>';
     }
 
     function renderBirthReport() {
         var el = document.getElementById('birthReportContent');
         if (!el) return;
-        if (!dashboardData.recentBirths || dashboardData.recentBirths.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-stars"></i><p>No birth records found.</p></div>';
-            return;
-        }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalBirths) + '</div><div class="kpi-lbl">Total Births</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalMothers||0) + '</div><div class="kpi-lbl">Unique Mothers</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalLinkedChildren||0) + '</div><div class="kpi-lbl">Linked Children</div></div>' +
-        '</div>' + exportBar('birth') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Mother Tag</th><th>Birth Date</th><th>Offspring</th><th>Gender</th><th>Children</th></tr></thead>' +
-            '<tbody>';
-        for(var i = 0; i < dashboardData.recentBirths.length; i++) {
-            var b = dashboardData.recentBirths[i];
-            html += '<tr><td><strong>' + (b.livestock?.tagNumber || '—') + '</strong></td><td>' + fmtD(b.birthDate) + '</td>' +
-                '<td><span class="badge badge-success">' + (b.offspringCount || 0) + '</span></td>' +
-                '<td>' + (b.offspringGender || '—') + '</td><td>' + (b.children?.length || 0) + '</td></tr>';
-        }
-        html += '</tbody></table></div>';
-        el.innerHTML = html;
-    }
-
-    function renderTreatmentReport() {
-        var el = document.getElementById('treatmentReportContent');
-        if (!el) return;
-        if (!dashboardData.treatmentList || dashboardData.treatmentList.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-heart-pulse"></i><p>No treatment records found.</p></div>';
-            return;
-        }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalTreatments) + '</div><div class="kpi-lbl">Total Treatments</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmtC(dashboardData.totalTreatmentCost) + '</div><div class="kpi-lbl">Total Cost</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + dashboardData.mostTreatedAnimalTag + '</div><div class="kpi-lbl">Most Treated</div></div>' +
-        '</div>' + exportBar('treatment') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Animal Tag</th><th>Category</th><th>Treatment Date</th><th>Medication</th><th>Cost</th><th>Next Treatment</th></tr></thead>' +
-            '<tbody>';
-        var maxItems = Math.min(dashboardData.treatmentList.length, 50);
-        for(var i = 0; i < maxItems; i++) {
-            var t = dashboardData.treatmentList[i];
-            html += '<tr><td><strong>' + (t.livestock?.tagNumber || '—') + '</strong></td><td>' + (t.livestock?.livestockCategory?.name || '—') + '</td>' +
-                '<td>' + fmtD(t.treatmentDate) + '</td><td>' + (t.medication?.name || t.description || '—') + '</td>' +
-                '<td>' + (t.treatmentCost ? fmtC(t.treatmentCost) : '—') + '</td><td>' + fmtD(t.nextTreatmentDate) + '</td></tr>';
+        var d = dashboardData;
+        if (!d.recentBirths || d.recentBirths.length === 0) { el.innerHTML = '<div class="empty-state"><i class="bi bi-stars"></i><p>No birth records found.</p></div>'; return; }
+        var html = '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalBirths)+'</div><div class="kpi-lbl">Total Births</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalMothers)+'</div><div class="kpi-lbl">Unique Mothers</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalLinkedChildren)+'</div><div class="kpi-lbl">Linked Children</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.avgOffspringPerBirth)+'</div><div class="kpi-lbl">Avg Offspring</div></div></div>' + exportBar('birth') + '<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Mother Tag</th><th>Birth Date</th><th>Offspring</th><th>Gender</th><th>Linked Children</th></tr></thead><tbody>';
+        for (var i = 0; i < d.recentBirths.length; i++) {
+            var b = d.recentBirths[i];
+            html += '<tr><td>'+(i+1)+'</td><td><strong>'+(b.livestock&&b.livestock.tagNumber?b.livestock.tagNumber:'—')+'</strong></td><td>'+fmtD(b.birthDate)+'</td><td><span class="badge badge-success">'+(b.offspringCount||0)+'</span></td><td>'+(b.offspringGender||'—')+'</td><td>'+(b.children?b.children.length:0)+'</td></tr>';
         }
         html += '</tbody></table></div>';
         el.innerHTML = html;
@@ -1021,109 +1793,42 @@
     function renderSickReport() {
         var el = document.getElementById('sickReportContent');
         if (!el) return;
-        if (!dashboardData.sickList || dashboardData.sickList.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-emoji-smile" style="color:var(--teal);"></i><p>No sick animals! All livestock are healthy. 🎉</p></div>';
-            return;
+        var d = dashboardData;
+        if (!d.sickList || d.sickList.length === 0) { el.innerHTML = '<div class="empty-state"><i class="bi bi-emoji-smile" style="color:var(--teal);"></i><p>No sick animals! All livestock are healthy. 🎉</p></div>'; return; }
+        var html = '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalSick)+'</div><div class="kpi-lbl">Total Sick</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--rose)">'+fmt(d.criticalCount)+'</div><div class="kpi-lbl">Critical</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--sky)">'+fmt(d.recoveringCount)+'</div><div class="kpi-lbl">Recovering</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--teal)">'+fmt(d.recoveredCount)+'</div><div class="kpi-lbl">Recovered</div></div><div class="kpi-card"><div class="kpi-val">'+d.recoveryRate+'%</div><div class="kpi-lbl">Recovery Rate</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--rose)">'+fmt(d.lifeThreatCount)+'</div><div class="kpi-lbl">Life-Threatening</div></div></div>' + exportBar('sick') + '<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Reported</th><th>Symptoms</th><th>Diagnosis</th><th>Severity</th><th>Status</th><th>Vet</th></tr></thead><tbody>';
+        for (var i = 0; i < d.sickList.length; i++) {
+            var s = d.sickList[i]; var sv = s.severityLevel||''; var st = s.status||'';
+            var scClass = (sv==='LIFE_THREATENING'||sv==='SEVERE')?'badge-danger':(sv==='MODERATE'?'badge-warning':'badge-info');
+            var stClass = st==='RECOVERED'?'badge-success':(st==='CRITICAL'?'badge-danger':'badge-warning');
+            html += '<tr><td>'+(i+1)+'</td><td><strong>'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'</strong></td><td>'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(s.reportedDate)+'</td><td>'+(s.symptoms||'—')+'</td><td>'+(s.diagnosis||'—')+'</td><td><span class="badge '+scClass+'">'+(sv||'—')+'</span></td><td><span class="badge '+stClass+'">'+(st||'—')+'</span></td><td>'+(s.vetName||(s.veterinarian&&s.veterinarian.fullName?s.veterinarian.fullName:'—'))+'</td></tr>';
         }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalSick) + '</div><div class="kpi-lbl">Total Sick</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val" style="color:var(--rose)">' + fmt(dashboardData.criticalCount||0) + '</div><div class="kpi-lbl">Critical</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val" style="color:var(--teal)">' + fmt(dashboardData.recoveredCount||0) + '</div><div class="kpi-lbl">Recovered</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + dashboardData.recoveryRate + '%</div><div class="kpi-lbl">Recovery Rate</div></div>' +
-        '</div>' + exportBar('sick') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Animal Tag</th><th>Category</th><th>Reported</th><th>Symptoms</th><th>Severity</th><th>Status</th><th>Vet</th></tr></thead>' +
-            '<tbody>';
-        for(var i = 0; i < dashboardData.sickList.length; i++) {
-            var s = dashboardData.sickList[i];
-            var sc = (s.severityLevel === 'LIFE_THREATENING' || s.severityLevel === 'SEVERE') ? 'badge-danger' : (s.severityLevel === 'MODERATE' ? 'badge-warning' : 'badge-info');
-            var st = s.status === 'RECOVERED' ? 'badge-success' : (s.status === 'CRITICAL' ? 'badge-danger' : 'badge-warning');
-            html += '<tr><td><strong>' + (s.livestock?.tagNumber || '—') + '</strong></td><td>' + (s.livestock?.livestockCategory?.name || '—') + '</td>' +
-                '<td>' + fmtD(s.reportedDate) + '</td><td>' + (s.symptoms || s.diagnosis || '—') + '</td>' +
-                '<td><span class="badge ' + sc + '">' + (s.severityLevel || '—') + '</span></td>' +
-                '<td><span class="badge ' + st + '">' + (s.status || '—') + '</span></td>' +
-                '<td>' + (s.veterinarian?.fullName || s.vetName || '—') + '</td></tr>';
-        }
-        html += '</tbody></table></div>';
-        el.innerHTML = html;
-    }
-
-    function renderAbortionReport() {
-        var el = document.getElementById('abortionReportContent');
-        if (!el) return;
-        if (!dashboardData.abortionList || dashboardData.abortionList.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-heartbreak"></i><p>No abortion records found.</p></div>';
-            return;
-        }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalAbortions) + '</div><div class="kpi-lbl">Total Abortions</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalAnimalsAffected||0) + '</div><div class="kpi-lbl">Animals Affected</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + dashboardData.mostAffectedAnimalTag + '</div><div class="kpi-lbl">Most Affected</div></div>' +
-        '</div>' + exportBar('abortion') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Animal Tag</th><th>Category</th><th>Abortion Date</th><th>Expected Birth</th></tr></thead>' +
-            '<tbody>';
-        for(var i = 0; i < dashboardData.abortionList.length; i++) {
-            var a = dashboardData.abortionList[i];
-            html += '<tr><td><strong>' + (a.livestock?.tagNumber || '—') + '</strong></td><td>' + (a.livestock?.livestockCategory?.name || '—') + '</td>' +
-                '<td>' + fmtD(a.abortionDate) + '</td><td>' + fmtD(a.expectedBirthDate) + '</td></tr>';
-        }
-        html += '</tbody></table></div>';
-        el.innerHTML = html;
+        el.innerHTML = html + '</tbody></table></div>';
     }
 
     function renderSalesReport() {
         var el = document.getElementById('salesReportContent');
         if (!el) return;
-        if (!dashboardData.salesList || dashboardData.salesList.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-bag-x"></i><p>No sales records found.</p></div>';
-            return;
+        var d = dashboardData;
+        if (!d.salesList || d.salesList.length === 0) { el.innerHTML = '<div class="empty-state"><i class="bi bi-bag-x"></i><p>No sales records found.</p></div>'; return; }
+        var html = '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalSales)+'</div><div class="kpi-lbl">Total Sales</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.salesThisMonth)+'</div><div class="kpi-lbl">This Month</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--teal)">'+fmtC(d.totalSaleRevenue)+'</div><div class="kpi-lbl">Total Revenue</div></div><div class="kpi-card"><div class="kpi-val">'+d.mostSoldAnimalTag+'</div><div class="kpi-lbl">Most Sold Animal</div></div></div>' + exportBar('sale') + '<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Sale Date</th><th>Price</th><th>Buyer</th><th>Reason</th></tr></thead><tbody>';
+        for (var i = 0; i < d.salesList.length; i++) {
+            var s = d.salesList[i];
+            html += '<tr><td>'+(i+1)+'</td><td><strong>'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'</strong></td><td>'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(s.saleDate)+'</td><td><span class="badge badge-success">'+(s.salePrice?fmtC(s.salePrice):'—')+'</span></td><td>'+(s.buyer&&s.buyer.name?s.buyer.name:(s.buyerName||'—'))+'</td><td><span class="badge badge-info">'+(s.saleReason||'OTHER')+'</span></td></tr>';
         }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalSales) + '</div><div class="kpi-lbl">Total Sales</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmtC(dashboardData.totalSaleRevenue) + '</div><div class="kpi-lbl">Total Revenue</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + dashboardData.mostSoldAnimalTag + '</div><div class="kpi-lbl">Most Sold</div></div>' +
-        '</div>' + exportBar('sale') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Animal Tag</th><th>Category</th><th>Sale Date</th><th>Price</th><th>Buyer</th><th>Reason</th></tr></thead>' +
-            '<tbody>';
-        for(var i = 0; i < dashboardData.salesList.length; i++) {
-            var s = dashboardData.salesList[i];
-            html += '<tr><td><strong>' + (s.livestock?.tagNumber || '—') + '</strong></td><td>' + (s.livestock?.livestockCategory?.name || '—') + '</td>' +
-                '<td>' + fmtD(s.saleDate) + '</td><td><span class="badge badge-success">' + (s.salePrice ? fmtC(s.salePrice) : '—') + '</span></td>' +
-                '<td>' + (s.buyer?.name || s.buyerName || '—') + '</td><td><span class="badge badge-info">' + (s.saleReason || 'OTHER') + '</span></td></tr>';
-        }
-        html += '<tr style="background:var(--green-50);font-weight:700;">' +
-            '<td colspan="3" style="text-align:right;">Total</td>' +
-            '<td colspan="3"><span class="badge badge-success">' + fmtC(dashboardData.totalSaleRevenue) + '</span></td>' +
-        '</tr>' +
-        '</tbody></table></div>';
-        el.innerHTML = html;
+        el.innerHTML = html + '</tbody></table></div>';
     }
 
     function renderDeathsReport() {
         var el = document.getElementById('deathsReportContent');
         if (!el) return;
-        if (!dashboardData.deathsList || dashboardData.deathsList.length === 0) {
-            el.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No death records found.</p></div>';
-            return;
+        var d = dashboardData;
+        if (!d.deathsList || d.deathsList.length === 0) { el.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No death records found.</p></div>'; return; }
+        var html = '<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalDeaths)+'</div><div class="kpi-lbl">Total Deaths</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.deathsThisMonth)+'</div><div class="kpi-lbl">This Month</div></div><div class="kpi-card"><div class="kpi-val">'+d.mostCommonCause+'</div><div class="kpi-lbl">Most Common Cause</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.distinctCausesCount)+'</div><div class="kpi-lbl">Distinct Causes</div></div></div>' + exportBar('death') + '<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Gender</th><th>Category</th><th>Death Date</th><th>Cause</th></tr></thead><tbody>';
+        for (var i = 0; i < d.deathsList.length; i++) {
+            var x = d.deathsList[i];
+            html += '<tr><td>'+(i+1)+'</td><td><strong>'+(x.livestock&&x.livestock.tagNumber?x.livestock.tagNumber:'—')+'</strong></td><td>'+(x.livestock&&x.livestock.gender?x.livestock.gender:'—')+'</td><td>'+(x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(x.deathDate)+'</td><td><span class="badge badge-danger">'+(x.causeOfDeath||'Unknown')+'</span></td></tr>';
         }
-        var html = '<div class="kpi-grid">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.totalDeaths) + '</div><div class="kpi-lbl">Total Deaths</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + dashboardData.mostCommonCause + '</div><div class="kpi-lbl">Most Common Cause</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(dashboardData.distinctCausesCount||0) + '</div><div class="kpi-lbl">Distinct Causes</div></div>' +
-        '</div>' + exportBar('death') +
-        '<div class="table-responsive"><table class="data-table">' +
-            '<thead><tr><th>Animal Tag</th><th>Gender</th><th>Category</th><th>Death Date</th><th>Cause</th></tr></thead>' +
-            '<tbody>';
-        for(var i = 0; i < dashboardData.deathsList.length; i++) {
-            var d = dashboardData.deathsList[i];
-            html += '<tr><td><strong>' + (d.livestock?.tagNumber || '—') + '</strong></td><td>' + (d.livestock?.gender || '—') + '</td>' +
-                '<td>' + (d.livestock?.livestockCategory?.name || '—') + '</td><td>' + fmtD(d.deathDate) + '</td>' +
-                '<td><span class="badge badge-danger">' + (d.causeOfDeath || 'Unknown') + '</span></td></tr>';
-        }
-        html += '</tbody></table></div>';
-        el.innerHTML = html;
+        el.innerHTML = html + '</tbody></table></div>';
     }
 
     function renderOverviewReport() {
@@ -1132,99 +1837,44 @@
         var d = dashboardData;
         var net = d.totalSaleRevenue - ((d.totalTreatmentCost||0)+(d.totalSickTreatmentCost||0));
         var profit = net >= 0;
-        var html = '<div class="kpi-grid" style="margin-bottom:20px;">' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmt(d.totalLivestock) + '</div><div class="kpi-lbl">Total Herd</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmtC(d.totalSaleRevenue) + '</div><div class="kpi-lbl">Revenue</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val">' + fmtC((d.totalTreatmentCost||0)+(d.totalSickTreatmentCost||0)) + '</div><div class="kpi-lbl">Costs</div></div>' +
-            '<div class="kpi-card"><div class="kpi-val" style="color:' + (profit ? 'var(--teal)' : 'var(--rose)') + '">' + (profit ? '+' : '-') + fmtC(Math.abs(net)) + '</div><div class="kpi-lbl">' + (profit ? 'Profit' : 'Loss') + '</div></div>' +
-        '</div>' +
-        '<div class="card"><div class="card-title"><i class="bi bi-activity"></i> Key Metrics</div>' +
-            '<div class="chart-wrap"><canvas id="overviewChart"></canvas></div>' +
-        '</div>';
+        var html = '<div class="kpi-grid" style="margin-bottom:20px;"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalLivestock)+'</div><div class="kpi-lbl">Total Herd</div></div><div class="kpi-card"><div class="kpi-val">'+fmtC(d.totalSaleRevenue)+'</div><div class="kpi-lbl">Revenue</div></div><div class="kpi-card"><div class="kpi-val">'+fmtC((d.totalTreatmentCost||0)+(d.totalSickTreatmentCost||0))+'</div><div class="kpi-lbl">Costs</div></div><div class="kpi-card"><div class="kpi-val" style="color:'+(profit?'var(--teal)':'var(--rose)')+'">'+(profit?'+':'-')+fmtC(Math.abs(net))+'</div><div class="kpi-lbl">'+(profit?'Profit':'Loss')+'</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalBirths)+'</div><div class="kpi-lbl">Total Births</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalTreatments)+'</div><div class="kpi-lbl">Treatments</div></div></div><div class="card"><div class="chart-card-title"><i class="bi bi-activity"></i> Key Metrics at a Glance</div><div class="chart-wrap-md"><canvas id="overviewChart"></canvas></div></div>';
         el.innerHTML = html;
-
         var ctx = document.getElementById('overviewChart');
-        if (ctx) {
-            new Chart(ctx, {
-                type: 'bar',
-                data: { labels: ['Births','Sales','Treatments','Sick','Abortions','Deaths'],
-                        datasets: [{ label: 'Count', data: [d.totalBirths, d.totalSales, d.totalTreatments, d.totalSick, d.totalAbortions, d.totalDeaths],
-                                    backgroundColor: [C.births, C.sales, C.treat, C.sick, C.abort, C.deaths], borderRadius: 8, borderSkipped: false }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
-                          scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
-            });
-        }
+        if (ctx) new Chart(ctx, { type:'bar', data:{ labels:['Births','Sales','Treatments','Sick','Abortions','Deaths'], datasets:[{label:'Count',data:[d.totalBirths,d.totalSales,d.totalTreatments,d.totalSick,d.totalAbortions,d.totalDeaths],backgroundColor:[C.births,C.sales,C.treat,C.sick,C.abort,C.deaths],borderRadius:8,borderSkipped:false}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
     }
 
-    // ── CSV EXPORT ───────────────────────────────────
     function exportCSV(type) {
-        var csv = '', filename = '';
-        var d = dashboardData;
-        switch(type) {
-            case 'birth':
-                csv = 'Mother Tag,Birth Date,Offspring,Gender,Children\n';
-                for(var i = 0; i < d.recentBirths.length; i++) {
-                    var b = d.recentBirths[i];
-                    csv += '"' + (b.livestock?.tagNumber || '—') + '","' + fmtD(b.birthDate) + '","' + (b.offspringCount || 0) + '","' + (b.offspringGender || '—') + '","' + (b.children?.length || 0) + '"\n';
-                }
-                filename = 'birth_report.csv';
-                break;
-            case 'treatment':
-                csv = 'Animal Tag,Category,Date,Medication,Cost,Next\n';
-                for(var i = 0; i < d.treatmentList.length; i++) {
-                    var t = d.treatmentList[i];
-                    csv += '"' + (t.livestock?.tagNumber || '—') + '","' + (t.livestock?.livestockCategory?.name || '—') + '","' + fmtD(t.treatmentDate) + '","' + (t.medication?.name || t.description || '—') + '","' + (t.treatmentCost || 0) + '","' + fmtD(t.nextTreatmentDate) + '"\n';
-                }
-                filename = 'treatment_report.csv';
-                break;
-            case 'sick':
-                csv = 'Animal Tag,Category,Reported,Symptoms,Severity,Status,Vet\n';
-                for(var i = 0; i < d.sickList.length; i++) {
-                    var s = d.sickList[i];
-                    csv += '"' + (s.livestock?.tagNumber || '—') + '","' + (s.livestock?.livestockCategory?.name || '—') + '","' + fmtD(s.reportedDate) + '","' + (s.symptoms || s.diagnosis || '—') + '","' + (s.severityLevel || '—') + '","' + (s.status || '—') + '","' + (s.veterinarian?.fullName || s.vetName || '—') + '"\n';
-                }
-                filename = 'sick_report.csv';
-                break;
-            case 'sale':
-                csv = 'Animal Tag,Category,Date,Price,Buyer,Reason\n';
-                for(var i = 0; i < d.salesList.length; i++) {
-                    var s = d.salesList[i];
-                    csv += '"' + (s.livestock?.tagNumber || '—') + '","' + (s.livestock?.livestockCategory?.name || '—') + '","' + fmtD(s.saleDate) + '","' + (s.salePrice || 0) + '","' + (s.buyer?.name || s.buyerName || '—') + '","' + (s.saleReason || 'OTHER') + '"\n';
-                }
-                filename = 'sales_report.csv';
-                break;
-            case 'death':
-                csv = 'Animal Tag,Gender,Category,Death Date,Cause\n';
-                for(var i = 0; i < d.deathsList.length; i++) {
-                    var x = d.deathsList[i];
-                    csv += '"' + (x.livestock?.tagNumber || '—') + '","' + (x.livestock?.gender || '—') + '","' + (x.livestock?.livestockCategory?.name || '—') + '","' + fmtD(x.deathDate) + '","' + (x.causeOfDeath || 'Unknown') + '"\n';
-                }
-                filename = 'deaths_report.csv';
-                break;
-            case 'abortion':
-                csv = 'Animal Tag,Category,Abortion Date,Expected Birth\n';
-                for(var i = 0; i < d.abortionList.length; i++) {
-                    var a = d.abortionList[i];
-                    csv += '"' + (a.livestock?.tagNumber || '—') + '","' + (a.livestock?.livestockCategory?.name || '—') + '","' + fmtD(a.abortionDate) + '","' + fmtD(a.expectedBirthDate) + '"\n';
-                }
-                filename = 'abortion_report.csv';
-                break;
+        var d = dashboardData; var csv = ''; var filename = '';
+        if (type === 'birth') {
+            csv = 'Mother Tag,Birth Date,Offspring,Gender,Linked Children\n';
+            for (var i = 0; i < d.recentBirths.length; i++) { var b=d.recentBirths[i]; csv+='"'+(b.livestock&&b.livestock.tagNumber?b.livestock.tagNumber:'—')+'","'+fmtD(b.birthDate)+'",'+(b.offspringCount||0)+',"'+(b.offspringGender||'—')+'",'+(b.children?b.children.length:0)+'\n'; }
+            filename='birth_report.csv';
+        } else if (type==='sick') {
+            csv='Animal Tag,Category,Reported,Symptoms,Diagnosis,Severity,Status,Vet\n';
+            for (var i=0;i<d.sickList.length;i++){var s=d.sickList[i];csv+='"'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'","'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'","'+fmtD(s.reportedDate)+'","'+(s.symptoms||'—')+'","'+(s.diagnosis||'—')+'","'+(s.severityLevel||'—')+'","'+(s.status||'—')+'","'+(s.vetName||'—')+'"\n';}
+            filename='sick_report.csv';
+        } else if (type==='sale') {
+            csv='Animal Tag,Category,Sale Date,Price (RWF),Buyer,Reason\n';
+            for (var i=0;i<d.salesList.length;i++){var s=d.salesList[i];csv+='"'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'","'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'","'+fmtD(s.saleDate)+'",'+(s.salePrice||0)+',"'+(s.buyer&&s.buyer.name?s.buyer.name:(s.buyerName||'—'))+'","'+(s.saleReason||'OTHER')+'"\n';}
+            filename='sales_report.csv';
+        } else if (type==='death') {
+            csv='Animal Tag,Gender,Category,Death Date,Cause\n';
+            for (var i=0;i<d.deathsList.length;i++){var x=d.deathsList[i];csv+='"'+(x.livestock&&x.livestock.tagNumber?x.livestock.tagNumber:'—')+'","'+(x.livestock&&x.livestock.gender?x.livestock.gender:'—')+'","'+(x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—')+'","'+fmtD(x.deathDate)+'","'+(x.causeOfDeath||'Unknown')+'"\n';}
+            filename='deaths_report.csv';
         }
-        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        if (!csv) return;
         var a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        a.click();
-        URL.revokeObjectURL(a.href);
+        a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv;charset=utf-8;' }));
+        a.download = filename; a.click(); URL.revokeObjectURL(a.href);
         toast('Export ready!');
     }
 
     // ── INIT ─────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
         var dateEl = document.getElementById('todayDate');
-        if (dateEl) {
-            dateEl.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        }
+        if (dateEl) dateEl.textContent = new Date().toLocaleDateString('en-GB', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+        trCalcDays();
+        abCalcDays();
         setTimeout(renderDashboardOverview, 200);
         window.addEventListener('resize', closeMobile);
     });

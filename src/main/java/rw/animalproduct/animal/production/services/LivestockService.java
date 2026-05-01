@@ -1,7 +1,6 @@
 package rw.animalproduct.animal.production.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.*;
@@ -14,21 +13,18 @@ public class LivestockService {
 
     private final LivestockRepository              livestockRepository;
     private final LivestockCategoryRepository      livestockCategoryRepository;
-    private final BeneficiaryRepository            beneficiaryRepository;
+    private final BeneficiaryRepository beneficiaryRepository;
     private final LocationRepository               locationRepository;
-    private final LivestockLifecycleService        lifecycleService;  // ← ADDED
 
     @Autowired
     public LivestockService(LivestockRepository livestockRepository,
                             LivestockCategoryRepository livestockCategoryRepository,
                             BeneficiaryRepository beneficiaryRepository,
-                            LocationRepository locationRepository,
-                            @Lazy LivestockLifecycleService lifecycleService) {  // ← ADDED (@Lazy avoids circular dependency)
+                            LocationRepository locationRepository) {
         this.livestockRepository          = livestockRepository;
         this.livestockCategoryRepository  = livestockCategoryRepository;
-        this.beneficiaryRepository        = beneficiaryRepository;
+        this.beneficiaryRepository = beneficiaryRepository;
         this.locationRepository           = locationRepository;
-        this.lifecycleService             = lifecycleService;  // ← ADDED
     }
 
     public List<Livestock> getAll() {
@@ -84,9 +80,7 @@ public class LivestockService {
             livestock.setDateReceived(LocalDate.now());
         }
 
-        // ── CHANGED: was livestockRepository.save(livestock)
-        // Now sends newborn email notification automatically on registration
-        return lifecycleService.saveAnimalWithNotification(livestock);
+        return livestockRepository.save(livestock);
     }
 
     public Livestock update(UUID id, Livestock updatedLivestock) {
@@ -141,9 +135,7 @@ public class LivestockService {
             existing.setLocation(updatedLivestock.getLocation());
         }
 
-        // ── update() keeps plain save — stage-change email fires only
-        // if the stage actually changed (handled inside saveAnimalWithNotification)
-        return lifecycleService.saveAnimalWithNotification(existing);
+        return livestockRepository.save(existing);
     }
 
     public void delete(UUID id) {
