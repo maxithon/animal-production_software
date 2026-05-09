@@ -10,15 +10,21 @@
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
         .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin: 0 24px 24px; }
         .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
-        .badge-status-pending { background-color: #ffc107; color: #000; }
-        .badge-status-confirmed { background-color: #28a745; }
-        .badge-status-failed { background-color: #dc3545; }
-        .badge-status-completed { background-color: #6c757d; }
+
+        .badge-status-pending   { background-color: #ffc107; color: #000; }
+        .badge-status-confirmed { background-color: #28a745; color: #fff; }
+        .badge-status-failed    { background-color: #dc3545; color: #fff; }
+        .badge-status-completed { background-color: #6c757d; color: #fff; }
+
+        /* Method badges */
+        .method-natural    { background: #d1fae5; color: #065f46; }
+        .method-ai         { background: #dbeafe; color: #1e40af; }
+        .method-embryo     { background: #ede9fe; color: #5b21b6; }
+        .method-purchased  { background: #fef3c7; color: #92400e; }
     </style>
 </head>
 <body>
 
-<!-- Page Header -->
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h4 class="mb-1"><i class="bi bi-heart-fill text-danger me-2"></i>Livestock Breeding</h4>
@@ -28,7 +34,7 @@
         <a href="/livestock/breeding/register" class="btn btn-primary">
             <i class="bi bi-plus-circle me-1"></i> Record Breeding
         </a>
-        <a href="/livestock/breeding/dashboard" class="btn btn-outline-info">
+        <a href="/livestock/breeding" class="btn btn-outline-info">
             <i class="bi bi-graph-up me-1"></i> Dashboard
         </a>
         <a href="/livestock/list" class="btn btn-outline-secondary">
@@ -39,7 +45,6 @@
 
 <div class="content-card p-0">
 
-    <!-- Alerts -->
     <div class="p-3">
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-0">
             <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
@@ -51,7 +56,6 @@
         </div>
     </div>
 
-    <!-- Table -->
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
@@ -83,37 +87,48 @@
                 <td>
                     <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
                     <div th:if="${b.livestock?.livestockCategory != null}">
-                        <span class="badge bg-secondary" th:text="${b.livestock.livestockCategory.name}"></span>
+                        <span class="badge bg-secondary"
+                              th:text="${b.livestock.livestockCategory.name}"></span>
                     </div>
                 </td>
 
                 <!-- Breeding date -->
                 <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
 
-                <!-- Method -->
+                <!-- Method — FIX: includes PURCHASE_PREGNANT -->
                 <td>
-                    <span th:if="${b.breedingMethod != null}" 
-                          class="badge bg-info text-dark" 
-                          th:text="${b.breedingMethod}"></span>
+                    <span th:if="${b.breedingMethod == 'NATURAL'}"
+                          class="badge method-natural">Natural</span>
+                    <span th:if="${b.breedingMethod == 'ARTIFICIAL_INSEMINATION'}"
+                          class="badge method-ai">AI</span>
+                    <span th:if="${b.breedingMethod == 'EMBRYO_TRANSFER'}"
+                          class="badge method-embryo">Embryo</span>
+                    <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}"
+                          class="badge method-purchased">
+                        <i class="bi bi-shop me-1"></i>Purchased Pregnant
+                    </span>
                     <span th:if="${b.breedingMethod == null}" class="text-muted">—</span>
                 </td>
 
                 <!-- Male animal -->
                 <td>
-                    <span th:if="${b.maleLivestock != null}" 
+                    <span th:if="${b.maleLivestock != null}"
                           th:text="${b.maleLivestock.tagNumber}"></span>
-                    <span th:if="${b.maleLivestock == null}" class="text-muted">—</span>
+                    <span th:if="${b.maleLivestock == null}" class="text-muted">
+                        <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}">N/A</span>
+                        <span th:if="${b.breedingMethod != 'PURCHASE_PREGNANT'}">—</span>
+                    </span>
                 </td>
 
                 <!-- Status -->
                 <td>
-                    <span th:if="${b.status == 'PENDING'}" 
+                    <span th:if="${b.status == 'PENDING'}"
                           class="badge badge-status-pending">Pending</span>
-                    <span th:if="${b.status == 'CONFIRMED_PREGNANT'}" 
+                    <span th:if="${b.status == 'CONFIRMED_PREGNANT'}"
                           class="badge badge-status-confirmed">Confirmed Pregnant</span>
-                    <span th:if="${b.status == 'FAILED'}" 
+                    <span th:if="${b.status == 'FAILED'}"
                           class="badge badge-status-failed">Failed</span>
-                    <span th:if="${b.status == 'COMPLETED'}" 
+                    <span th:if="${b.status == 'COMPLETED'}"
                           class="badge badge-status-completed">Completed</span>
                 </td>
 
@@ -133,7 +148,7 @@
 
                 <!-- Veterinarian -->
                 <td>
-                    <span th:if="${b.veterinarian != null}" 
+                    <span th:if="${b.veterinarian != null}"
                           th:text="${b.veterinarian.firstName + ' ' + b.veterinarian.lastName}"></span>
                     <span th:if="${b.veterinarian == null}" class="text-muted">—</span>
                 </td>
@@ -172,7 +187,8 @@
                                 </div>
                                 <div class="modal-footer">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <form th:action="@{/livestock/breeding/delete/{id}(id=${b.id})}" method="post" class="d-inline">
+                                    <form th:action="@{/livestock/breeding/delete/{id}(id=${b.id})}"
+                                          method="post" class="d-inline">
                                         <button class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </div>
@@ -196,7 +212,8 @@
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/livestock/breeding/list(page=${currentPage - 1}, size=${pageSize})}">
+                    <a class="page-link"
+                       th:href="@{/livestock/breeding/list(page=${currentPage - 1}, size=${pageSize})}">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
@@ -207,7 +224,8 @@
                        th:text="${i + 1}"></a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/livestock/breeding/list(page=${currentPage + 1}, size=${pageSize})}">
+                    <a class="page-link"
+                       th:href="@{/livestock/breeding/list(page=${currentPage + 1}, size=${pageSize})}">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

@@ -20,9 +20,12 @@ import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSaleRepository;
 import rw.animalproduct.animal.production.repository.LivestockTreatmentRepository;
 import rw.animalproduct.animal.production.repository.LocationRepository;
+import rw.animalproduct.animal.production.services.LivestockBreedingService;
 import rw.animalproduct.animal.production.services.LivestockCategoryService;
 import rw.animalproduct.animal.production.services.LivestockService;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.Comparator;
@@ -40,6 +43,7 @@ public class LivestockController {
     private final LivestockSaleRepository       saleRepository;
     private final LivestockTreatmentRepository  treatmentRepository;
     private final LivestockAbortionRepository   abortionRepository;
+    private final LivestockBreedingService      breedingService;
 
     @Autowired
     public LivestockController(LivestockService livestockService,
@@ -50,7 +54,8 @@ public class LivestockController {
                                LivestockBirthRepository birthRepository,
                                LivestockSaleRepository saleRepository,
                                LivestockTreatmentRepository treatmentRepository,
-                               LivestockAbortionRepository abortionRepository) {
+                               LivestockAbortionRepository abortionRepository,
+                               LivestockBreedingService breedingService) {
         this.livestockService             = livestockService;
         this.livestockCategoryService     = livestockCategoryService;
         this.beneficiaryRepository        = beneficiaryRepository;
@@ -60,6 +65,7 @@ public class LivestockController {
         this.saleRepository               = saleRepository;
         this.treatmentRepository          = treatmentRepository;
         this.abortionRepository           = abortionRepository;
+        this.breedingService              = breedingService;
     }
 
     // =====================================================================
@@ -74,11 +80,11 @@ public class LivestockController {
 
         if (i == existingTag.length() - 1) return null;
 
-        String prefix = existingTag.substring(0, i + 1);
+        String prefix  = existingTag.substring(0, i + 1);
         String numPart = existingTag.substring(i + 1);
 
         try {
-            long num = Long.parseLong(numPart);
+            long num     = Long.parseLong(numPart);
             String nextNum = String.format("%0" + numPart.length() + "d", num + 1);
             return prefix + nextNum;
         } catch (NumberFormatException e) {
@@ -94,15 +100,29 @@ public class LivestockController {
                 .orElse(null);
     }
 
+    private LocalDate parseDate(String s) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return LocalDate.parse(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void populateFormModel(Model model) {
+        model.addAttribute("categories",        livestockCategoryService.getAll());
+        model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
+        model.addAttribute("locationList",      locationRepository.findAll());
+    }
+
     // =====================================================================
     // LIVESTOCK CATEGORIES
     // =====================================================================
 
     @GetMapping("/categories")
     public String listCategories(Model model) {
-        List<LivestockCategory> categories = livestockCategoryService.getAll();
-        model.addAttribute("categories", categories);
-        model.addAttribute("category", new LivestockCategory());
+        model.addAttribute("categories", livestockCategoryService.getAll());
+        model.addAttribute("category",   new LivestockCategory());
         return "livestock-categories-list";
     }
 
@@ -112,21 +132,16 @@ public class LivestockController {
                                  Model model,
                                  RedirectAttributes redirectAttributes) {
 
-        Optional<LivestockCategory> existingCode = livestockCategoryService.getByCode(category.getCode());
-        if (existingCode.isPresent()) {
+        if (livestockCategoryService.getByCode(category.getCode()).isPresent()) {
             result.rejectValue("code", "error.category", "Category code already exists");
         }
-
-        Optional<LivestockCategory> existingName = livestockCategoryService.getByName(category.getName());
-        if (existingName.isPresent()) {
+        if (livestockCategoryService.getByName(category.getName()).isPresent()) {
             result.rejectValue("name", "error.category", "Category name already exists");
         }
 
         if (result.hasErrors()) {
-            String errorMessages = result.getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.joining(", "));
-            model.addAttribute("error", errorMessages);
+            model.addAttribute("error", result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage).collect(Collectors.joining(", ")));
             model.addAttribute("categories", livestockCategoryService.getAll());
             return "livestock-categories-list";
         }
@@ -137,37 +152,29 @@ public class LivestockController {
     }
 
     @GetMapping("/categories/edit/{id}")
-    public String showEditCategoryForm(@PathVariable("id") UUID id, Model model) {
-        Optional<LivestockCategory> categoryOpt = livestockCategoryService.getById(id);
-        if (categoryOpt.isEmpty()) {
-            return "redirect:/livestock/categories";
-        }
-        model.addAttribute("category", categoryOpt.get());
-        return "livestock-category-edit";
+    public String showEditCategoryForm(@PathVariable UUID id, Model model) {
+        return livestockCategoryService.getById(id)
+                .map(cat -> { model.addAttribute("category", cat); return "livestock-category-edit"; })
+                .orElse("redirect:/livestock/categories");
     }
 
     @PostMapping("/categories/update/{id}")
-    public String updateCategory(@PathVariable("id") UUID id,
+    public String updateCategory(@PathVariable UUID id,
                                  @Valid @ModelAttribute("category") LivestockCategory category,
-                                 BindingResult result,
-                                 Model model,
+                                 BindingResult result, Model model,
                                  RedirectAttributes redirectAttributes) {
 
-        Optional<LivestockCategory> existingCode = livestockCategoryService.getByCode(category.getCode());
-        if (existingCode.isPresent() && !existingCode.get().getId().equals(id)) {
-            result.rejectValue("code", "error.category", "Category code already exists");
-        }
+        livestockCategoryService.getByCode(category.getCode())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> result.rejectValue("code", "error.category", "Category code already exists"));
 
-        Optional<LivestockCategory> existingName = livestockCategoryService.getByName(category.getName());
-        if (existingName.isPresent() && !existingName.get().getId().equals(id)) {
-            result.rejectValue("name", "error.category", "Category name already exists");
-        }
+        livestockCategoryService.getByName(category.getName())
+                .filter(c -> !c.getId().equals(id))
+                .ifPresent(c -> result.rejectValue("name", "error.category", "Category name already exists"));
 
         if (result.hasErrors()) {
-            String errorMessages = result.getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.joining(", "));
-            model.addAttribute("error", errorMessages);
+            model.addAttribute("error", result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage).collect(Collectors.joining(", ")));
             return "livestock-category-edit";
         }
 
@@ -177,204 +184,144 @@ public class LivestockController {
     }
 
     @PostMapping("/categories/delete/{id}")
-    public String deleteCategory(@PathVariable("id") UUID id,
-                                 RedirectAttributes redirectAttributes) {
+    public String deleteCategory(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
             livestockCategoryService.delete(id);
             redirectAttributes.addFlashAttribute("success", "Livestock category deleted successfully!");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Cannot delete category: it may have livestock assigned to it.");
+            redirectAttributes.addFlashAttribute("error",
+                    "Cannot delete category: it may have livestock assigned to it.");
         }
         return "redirect:/livestock/categories";
     }
 
     // =====================================================================
-    // LIVESTOCK LIST - COMPLETELY FIXED
+    // LIVESTOCK LIST
     // =====================================================================
 
     @GetMapping("/list")
-    public String listAll(@RequestParam(value = "page", defaultValue = "0") int page,
-                          @RequestParam(value = "size", defaultValue = "10") int size,
-                          @RequestParam(value = "sort", defaultValue = "tagNumber") String sort,
+    public String listAll(@RequestParam(value = "page",  defaultValue = "0")         int page,
+                          @RequestParam(value = "size",  defaultValue = "10")        int size,
+                          @RequestParam(value = "sort",  defaultValue = "tagNumber") String sort,
                           Model model) {
 
-        // Get ALL livestock for accurate totals (before pagination)
         List<Livestock> allLivestock = livestockService.getAll();
 
-        // Log for debugging
-        System.out.println("=== DEBUGGING LIVESTOCK DATA ===");
-        System.out.println("Total livestock in database: " + allLivestock.size());
-
-        // ─────────────────────────────────────────────────────────────────
-        // CALCULATE SUMMARY STATISTICS FROM ALL LIVESTOCK
-        // ─────────────────────────────────────────────────────────────────
-
-        // Total items
-        long totalAllItems = allLivestock.size();
-        System.out.println("totalAllItems: " + totalAllItems);
-
-        // Active count - animals with status "ACTIVE"
-        long totalActive = allLivestock.stream()
-                .filter(l -> "ACTIVE".equals(l.getStatus()))
+        long totalAllItems  = allLivestock.size();
+        long totalActive    = allLivestock.stream().filter(l -> "ACTIVE".equals(l.getStatus())).count();
+        long totalSold      = allLivestock.stream().filter(l -> "SOLD".equals(l.getStatus())).count();
+        long totalSick      = allLivestock.stream().filter(l -> "SICK".equals(l.getStatus())).count();
+        long totalDead      = allLivestock.stream().filter(l -> "DEAD".equals(l.getStatus())).count();
+        long totalPregnant  = allLivestock.stream().filter(l -> "PREGNANT".equals(l.getStatus())).count();
+        long totalBornOnFarm = allLivestock.stream()
+                .filter(l -> birthRepository.findByChildAnimalId(l.getId()).isPresent())
                 .count();
-        System.out.println("totalActive: " + totalActive);
 
-        // Sold count - animals with status "SOLD"
-        long totalSold = allLivestock.stream()
-                .filter(l -> "SOLD".equals(l.getStatus()))
-                .count();
-        System.out.println("totalSold: " + totalSold);
-
-        // Sick count - animals with status "SICK"
-        long totalSick = allLivestock.stream()
-                .filter(l -> "SICK".equals(l.getStatus()))
-                .count();
-        System.out.println("totalSick: " + totalSick);
-
-        // Dead count - animals with status "DEAD"
-        long totalDead = allLivestock.stream()
-                .filter(l -> "DEAD".equals(l.getStatus()))
-                .count();
-        System.out.println("totalDead: " + totalDead);
-
-        // Born on Farm count - animals that have a birth record
-        long totalBornOnFarm = 0;
-        for (Livestock livestock : allLivestock) {
-            Optional<LivestockBirth> birth = birthRepository.findByChildAnimalId(livestock.getId());
-            if (birth.isPresent()) {
-                totalBornOnFarm++;
-            }
-        }
-        System.out.println("totalBornOnFarm: " + totalBornOnFarm);
-
-        // Treatments count - total number of treatment records
         long totalTreatments = treatmentRepository.countByIsDeletedFalse();
-        System.out.println("totalTreatments: " + totalTreatments);
-
-        // Abortions count - total number of abortion records
-        long totalAbortions = abortionRepository.findAllActive().size();
-        System.out.println("totalAbortions: " + totalAbortions);
-
-        System.out.println("================================");
-
-        // ─────────────────────────────────────────────────────────────────
-        // GET PAGINATED LIST FOR TABLE DISPLAY
-        // ─────────────────────────────────────────────────────────────────
+        long totalAbortions  = abortionRepository.findAllActive().size();
 
         List<Livestock> currentPageList;
-        long totalItems = totalAllItems;  // Use total from all livestock
-        int totalPages = 1;
-        int currentPage = page;
-        int pageSize = size;
+        int totalPages;
+        int currentPage;
+        int pageSize;
 
         try {
-            Pageable pageable = PageRequest.of(page, size, Sort.Direction.ASC, sort);
-            Page<Livestock> pageContent = livestockRepository.findAll(pageable);
-            currentPageList = pageContent.getContent();
-            totalPages = pageContent.getTotalPages();
-            currentPage = page;
-            pageSize = size;
+            Pageable pageable  = PageRequest.of(page, size, Sort.Direction.ASC, sort);
+            Page<Livestock> pg = livestockRepository.findAll(pageable);
+            currentPageList    = pg.getContent();
+            totalPages         = pg.getTotalPages();
+            currentPage        = page;
+            pageSize           = size;
         } catch (Exception e) {
             currentPageList = allLivestock;
-            totalPages = 1;
-            currentPage = 0;
-            pageSize = size;
+            totalPages      = 1;
+            currentPage     = 0;
+            pageSize        = size;
         }
 
         model.addAttribute("livestockList", currentPageList);
-        model.addAttribute("currentPage", currentPage);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("totalItems", totalAllItems);  // Use total from all livestock
-        model.addAttribute("pageSize", pageSize);
+        model.addAttribute("currentPage",   currentPage);
+        model.addAttribute("totalPages",    totalPages);
+        model.addAttribute("totalItems",    totalAllItems);
+        model.addAttribute("pageSize",      pageSize);
 
-        // ─────────────────────────────────────────────────────────────────
-        // POPULATE BIRTH MAP
-        // ─────────────────────────────────────────────────────────────────
+        // Birth map
         Map<UUID, LivestockBirth> birthMap = new HashMap<>();
-        for (Livestock livestock : currentPageList) {
-            Optional<LivestockBirth> birth = birthRepository.findByChildAnimalId(livestock.getId());
-            if (birth.isPresent()) {
-                birthMap.put(livestock.getId(), birth.get());
-            }
+        for (Livestock ls : currentPageList) {
+            birthRepository.findByChildAnimalId(ls.getId()).ifPresent(b -> birthMap.put(ls.getId(), b));
         }
         model.addAttribute("birthMap", birthMap);
 
-        // ─────────────────────────────────────────────────────────────────
-        // POPULATE MOTHER MAP
-        // ─────────────────────────────────────────────────────────────────
+        // Mother map
         Map<UUID, Boolean> motherMap = new HashMap<>();
-        for (Livestock livestock : currentPageList) {
-            List<LivestockBirth> births = birthRepository.findByLivestockId(livestock.getId());
-            if (births != null && !births.isEmpty()) {
-                motherMap.put(livestock.getId(), true);
-            }
+        for (Livestock ls : currentPageList) {
+            List<LivestockBirth> births = birthRepository.findByLivestockId(ls.getId());
+            if (births != null && !births.isEmpty()) motherMap.put(ls.getId(), true);
         }
         model.addAttribute("motherMap", motherMap);
 
-        // ─────────────────────────────────────────────────────────────────
-        // POPULATE SALE MAP
-        // ─────────────────────────────────────────────────────────────────
+        // Sale map
         Map<UUID, LivestockSale> saleMap = new HashMap<>();
-        for (Livestock livestock : currentPageList) {
-            List<LivestockSale> sales = saleRepository.findByLivestockId(livestock.getId());
+        for (Livestock ls : currentPageList) {
+            List<LivestockSale> sales = saleRepository.findByLivestockId(ls.getId());
             if (sales != null && !sales.isEmpty()) {
-                sales.stream()
-                        .max(Comparator.comparing(LivestockSale::getSaleDate))
-                        .ifPresent(sale -> saleMap.put(livestock.getId(), sale));
+                sales.stream().max(Comparator.comparing(LivestockSale::getSaleDate))
+                        .ifPresent(s -> saleMap.put(ls.getId(), s));
             }
         }
         model.addAttribute("saleMap", saleMap);
 
-        // ─────────────────────────────────────────────────────────────────
-        // POPULATE TREATMENT MAP & COUNT MAP
-        // ─────────────────────────────────────────────────────────────────
-        Map<UUID, LivestockTreatment> treatmentMap = new HashMap<>();
-        Map<UUID, Long> treatmentCountMap = new HashMap<>();
-        for (Livestock livestock : currentPageList) {
-            List<LivestockTreatment> treatments = treatmentRepository.findByLivestock_Id(livestock.getId());
+        // Treatment maps
+        Map<UUID, LivestockTreatment> treatmentMap      = new HashMap<>();
+        Map<UUID, Long>               treatmentCountMap = new HashMap<>();
+        for (Livestock ls : currentPageList) {
+            List<LivestockTreatment> treatments = treatmentRepository.findByLivestock_Id(ls.getId());
             if (treatments != null && !treatments.isEmpty()) {
-                treatments.stream()
-                        .max(Comparator.comparing(LivestockTreatment::getTreatmentDate))
-                        .ifPresent(treatment -> treatmentMap.put(livestock.getId(), treatment));
-                treatmentCountMap.put(livestock.getId(), (long) treatments.size());
+                treatments.stream().max(Comparator.comparing(LivestockTreatment::getTreatmentDate))
+                        .ifPresent(t -> treatmentMap.put(ls.getId(), t));
+                treatmentCountMap.put(ls.getId(), (long) treatments.size());
             }
         }
-        model.addAttribute("treatmentMap", treatmentMap);
+        model.addAttribute("treatmentMap",      treatmentMap);
         model.addAttribute("treatmentCountMap", treatmentCountMap);
 
-        // ─────────────────────────────────────────────────────────────────
-        // POPULATE ABORTION MAP & COUNT MAP
-        // ─────────────────────────────────────────────────────────────────
-        Map<UUID, LivestockAbortion> abortionMap = new HashMap<>();
-        Map<UUID, Long> abortionCountMap = new HashMap<>();
-        for (Livestock livestock : currentPageList) {
-            List<LivestockAbortion> abortions = abortionRepository.findByLivestockId(livestock.getId());
+        // Abortion maps
+        Map<UUID, LivestockAbortion> abortionMap      = new HashMap<>();
+        Map<UUID, Long>              abortionCountMap = new HashMap<>();
+        for (Livestock ls : currentPageList) {
+            List<LivestockAbortion> abortions = abortionRepository.findByLivestockId(ls.getId());
             if (abortions != null && !abortions.isEmpty()) {
-                abortions.stream()
-                        .max(Comparator.comparing(LivestockAbortion::getAbortionDate))
-                        .ifPresent(abortion -> abortionMap.put(livestock.getId(), abortion));
-                abortionCountMap.put(livestock.getId(), (long) abortions.size());
+                abortions.stream().max(Comparator.comparing(LivestockAbortion::getAbortionDate))
+                        .ifPresent(a -> abortionMap.put(ls.getId(), a));
+                abortionCountMap.put(ls.getId(), (long) abortions.size());
             }
         }
-        model.addAttribute("abortionMap", abortionMap);
+        model.addAttribute("abortionMap",      abortionMap);
         model.addAttribute("abortionCountMap", abortionCountMap);
+        model.addAttribute("sickMap",          new HashMap<>());
+        model.addAttribute("sickCountMap",     new HashMap<>());
 
-        // ─────────────────────────────────────────────────────────────────
-        // SICK MAPS (placeholder)
-        // ─────────────────────────────────────────────────────────────────
-        model.addAttribute("sickMap", new HashMap<>());
-        model.addAttribute("sickCountMap", new HashMap<>());
+        // Breeding capability map
+        Map<UUID, Boolean> breedingCapableMap = new HashMap<>();
+        LocalDate today = LocalDate.now();
+        for (Livestock ls : currentPageList) {
+            LocalDate bd = ls.getBirthDate();
+            if (bd == null) continue;
+            LivestockCategory cat = ls.getLivestockCategory();
+            if (cat == null || cat.getMinBreedingAgeMonths() == null) continue;
+            long ageMonths = ChronoUnit.MONTHS.between(bd, today);
+            breedingCapableMap.put(ls.getId(), ageMonths >= cat.getMinBreedingAgeMonths());
+        }
+        model.addAttribute("breedingCapableMap", breedingCapableMap);
 
-        // ─────────────────────────────────────────────────────────────────
-        // ADD ALL SUMMARY STATISTICS TO MODEL
-        // ─────────────────────────────────────────────────────────────────
-        model.addAttribute("totalActive", totalActive);
-        model.addAttribute("totalSold", totalSold);
-        model.addAttribute("totalSick", totalSick);
-        model.addAttribute("totalDead", totalDead);
+        model.addAttribute("totalActive",     totalActive);
+        model.addAttribute("totalSold",       totalSold);
+        model.addAttribute("totalSick",       totalSick);
+        model.addAttribute("totalDead",       totalDead);
+        model.addAttribute("totalPregnant",   totalPregnant);
         model.addAttribute("totalBornOnFarm", totalBornOnFarm);
         model.addAttribute("totalTreatments", totalTreatments);
-        model.addAttribute("totalAbortions", totalAbortions);
+        model.addAttribute("totalAbortions",  totalAbortions);
 
         return "livestock-list";
     }
@@ -386,55 +333,87 @@ public class LivestockController {
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
         model.addAttribute("livestock", new Livestock());
-        model.addAttribute("categories", livestockCategoryService.getAll());
-        model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-        model.addAttribute("locationList", locationRepository.findAll());
+        populateFormModel(model);
 
         String lastTag = findLastTagNumber();
-        model.addAttribute("lastTag", lastTag);
+        model.addAttribute("lastTag",      lastTag);
         model.addAttribute("suggestedTag", suggestNextTag(lastTag));
 
         return "livestock-register";
     }
 
+    /**
+     * Registers a new animal.
+     *
+     * KEY LOGIC:
+     *
+     * 1. BIRTH animals:
+     *    - birthDate is cleared (managed via livestock_births table)
+     *    - isPregnant is forced to false (a newborn cannot be pregnant)
+     *    - No breeding record is created at registration time
+     *
+     * 2. PURCHASE / DONATION / TRANSFER / OTHER animals:
+     *    - birthDate is kept as provided (the animal's real birthday)
+     *    - If female + isPregnant = true:
+     *        → status set to PREGNANT
+     *        → pregnancyStatus set to "PREGNANT"
+     *        → A CONFIRMED_PREGNANT breeding record is auto-created (PURCHASE_PREGNANT method)
+     *          so the animal appears in all pregnancy tracking dashboards
+     *
+     * Form parameters (beyond the Livestock object):
+     *   locationId       – UUID of the selected location
+     *   conceptionDate   – yyyy-MM-dd string, may be blank
+     *   expectedDueDate  – yyyy-MM-dd string, may be blank
+     */
     @PostMapping("/register/new")
     public String register(@Valid @ModelAttribute("livestock") Livestock livestock,
-                           @RequestParam(value = "locationId", required = false) UUID locationId,
+                           @RequestParam(value = "locationId",      required = false) UUID locationId,
+                           @RequestParam(value = "conceptionDate",  required = false) String conceptionDateStr,
+                           @RequestParam(value = "expectedDueDate", required = false) String expectedDueDateStr,
                            BindingResult result,
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
-        // Check for duplicate tag number
-        Optional<Livestock> existingTag = livestockService.getByTagNumber(livestock.getTagNumber());
-        if (existingTag.isPresent()) {
-            result.rejectValue("tagNumber", "error.livestock", "Tag number already exists");
-            model.addAttribute("lastTag", livestock.getTagNumber());
-            model.addAttribute("suggestedTag", suggestNextTag(livestock.getTagNumber()));
+        // Duplicate tag check
+        if (livestock.getTagNumber() != null && !livestock.getTagNumber().isBlank()) {
+            livestockService.getByTagNumber(livestock.getTagNumber()).ifPresent(existing -> {
+                result.rejectValue("tagNumber", "error.livestock", "Tag number already exists");
+                model.addAttribute("lastTag",      livestock.getTagNumber());
+                model.addAttribute("suggestedTag", suggestNextTag(livestock.getTagNumber()));
+            });
         }
 
-        // Handle pregnancy logic
-        if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
-            livestock.setStatus(Livestock.STATUS_PREGNANT);
-            livestock.setPregnancyStatus("PREGNANT");
-        } else {
+        // ── BIRTH animals: clear birth date + force not-pregnant ──────────────
+        boolean isBirth = Livestock.ACQ_BIRTH.equals(livestock.getAcquisitionMethod());
+        if (isBirth) {
+            livestock.setBirthDate(null);
+            livestock.setIsPregnant(false);
             livestock.setPregnancyStatus("NOT_PREGNANT");
-            livestock.setPregnancyMonths(null);
+            livestock.setStatus(Livestock.STATUS_ACTIVE);
+        } else {
+            // ── Non-BIRTH: apply pregnancy status ─────────────────────────────
+            if (Boolean.TRUE.equals(livestock.getIsPregnant())
+                    && "FEMALE".equalsIgnoreCase(livestock.getGender())) {
+                livestock.setStatus(Livestock.STATUS_PREGNANT);
+                livestock.setPregnancyStatus("PREGNANT");
+            } else {
+                livestock.setIsPregnant(false);
+                livestock.setPregnancyStatus("NOT_PREGNANT");
+            }
         }
+
+        livestock.setPregnancyMonths(null);
 
         if (result.hasErrors()) {
+            // Rebuild model for re-render
             if (!model.containsAttribute("suggestedTag")) {
                 String lastTag = findLastTagNumber();
-                model.addAttribute("lastTag", lastTag);
+                model.addAttribute("lastTag",      lastTag);
                 model.addAttribute("suggestedTag", suggestNextTag(lastTag));
             }
-
-            String errorMessages = result.getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.joining(", "));
-            model.addAttribute("error", errorMessages);
-            model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-            model.addAttribute("locationList", locationRepository.findAll());
+            model.addAttribute("error", result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage).collect(Collectors.joining(", ")));
+            populateFormModel(model);
             return "livestock-register";
         }
 
@@ -442,14 +421,50 @@ public class LivestockController {
             if (locationId != null) {
                 locationRepository.findById(locationId).ifPresent(livestock::setLocation);
             }
-            livestockService.addNew(livestock);
+
+            // Parse pregnancy dates from form (only meaningful for non-BIRTH)
+            LocalDate conceptionDate  = isBirth ? null : parseDate(conceptionDateStr);
+            LocalDate expectedDueDate = isBirth ? null : parseDate(expectedDueDateStr);
+
+            // Store conception / due date on the livestock record itself
+            if (conceptionDate != null) {
+                livestock.setConceptionDate(conceptionDate);
+                livestock.setLastBreedingDate(conceptionDate);
+            }
+            if (expectedDueDate != null) {
+                livestock.setExpectedDueDate(expectedDueDate);
+            }
+
+            Livestock saved = livestockService.addNew(livestock);
+
+            // ── AUTO-CREATE BREEDING RECORD FOR PURCHASED PREGNANT ANIMALS ────
+            //
+            // Condition: female + non-BIRTH acquisition + isPregnant = true
+            //
+            // This creates a CONFIRMED_PREGNANT breeding record so the animal
+            // appears in:
+            //   • Pregnancy tracking dashboard
+            //   • Due-date alerts
+            //   • Breeding management page (Pregnant Animals section)
+            //
+            // REQUIREMENT: DB constraint must allow 'PURCHASE_PREGNANT' method.
+            // Run the migration SQL in LivestockBreedingService class javadoc.
+            //
+            boolean isPurchasedPregnant =
+                    "FEMALE".equalsIgnoreCase(saved.getGender())
+                            && Boolean.TRUE.equals(saved.getIsPregnant())
+                            && !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
+
+            if (isPurchasedPregnant) {
+                breedingService.createForPurchasedPregnantAnimal(saved, conceptionDate, expectedDueDate);
+            }
+
             redirectAttributes.addFlashAttribute("success", "Livestock registered successfully!");
             return "redirect:/livestock/list";
+
         } catch (Exception e) {
             model.addAttribute("error", "Error registering livestock: " + e.getMessage());
-            model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-            model.addAttribute("locationList", locationRepository.findAll());
+            populateFormModel(model);
             return "livestock-register";
         }
     }
@@ -459,56 +474,58 @@ public class LivestockController {
     // =====================================================================
 
     @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable("id") UUID id, Model model) {
-        Optional<Livestock> livestockOpt = livestockService.getById(id);
-        if (livestockOpt.isEmpty()) {
-            return "redirect:/livestock/list";
-        }
-
-        Livestock livestock = livestockOpt.get();
-
-        // Pre-populate transient fields for the form
-        if (livestock.getLivestockCategory() != null) {
-            livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
-        }
-        if (livestock.getBeneficiary() != null) {
-            livestock.setBeneficiaryIdValue(livestock.getBeneficiary().getId().toString());
-        }
-
-        model.addAttribute("livestock", livestock);
-        model.addAttribute("categories", livestockCategoryService.getAll());
-        model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-        model.addAttribute("locationList", locationRepository.findAll());
-
-        return "livestock-edit";
+    public String showEditForm(@PathVariable UUID id, Model model) {
+        return livestockService.getById(id).map(livestock -> {
+            if (livestock.getLivestockCategory() != null) {
+                livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
+            }
+            if (livestock.getBeneficiary() != null) {
+                livestock.setBeneficiaryIdValue(livestock.getBeneficiary().getId().toString());
+            }
+            model.addAttribute("livestock", livestock);
+            populateFormModel(model);
+            return "livestock-edit";
+        }).orElse("redirect:/livestock/list");
     }
 
     @PostMapping("/update/{id}")
-    public String update(@PathVariable("id") UUID id,
+    public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute("livestock") Livestock livestock,
-                         @RequestParam(value = "locationId", required = false) UUID locationId,
-                         BindingResult result,
-                         Model model,
+                         @RequestParam(value = "locationId",      required = false) UUID locationId,
+                         @RequestParam(value = "conceptionDate",  required = false) String conceptionDateStr,
+                         @RequestParam(value = "expectedDueDate", required = false) String expectedDueDateStr,
+                         BindingResult result, Model model,
                          RedirectAttributes redirectAttributes) {
 
-        // Handle pregnancy logic
-        if (Boolean.TRUE.equals(livestock.getIsPregnant())) {
-            livestock.setStatus(Livestock.STATUS_PREGNANT);
-            livestock.setPregnancyStatus("PREGNANT");
+        // Fetch existing to detect pregnancy state change
+        boolean wasPregnant = livestockService.getById(id)
+                .map(e -> Boolean.TRUE.equals(e.getIsPregnant()))
+                .orElse(false);
+
+        boolean isBirth = Livestock.ACQ_BIRTH.equals(livestock.getAcquisitionMethod());
+        if (isBirth) {
+            livestock.setBirthDate(null);
+            livestock.setIsPregnant(false);
+            livestock.setPregnancyStatus("NOT_PREGNANT");
         } else {
-            if ("PREGNANT".equals(livestock.getPregnancyStatus())) {
-                livestock.setPregnancyStatus("NOT_PREGNANT");
+            if (Boolean.TRUE.equals(livestock.getIsPregnant())
+                    && "FEMALE".equalsIgnoreCase(livestock.getGender())) {
+                livestock.setStatus(Livestock.STATUS_PREGNANT);
+                livestock.setPregnancyStatus("PREGNANT");
+            } else {
+                livestock.setIsPregnant(false);
+                if ("PREGNANT".equals(livestock.getPregnancyStatus())) {
+                    livestock.setPregnancyStatus("NOT_PREGNANT");
+                }
             }
         }
 
+        livestock.setPregnancyMonths(null);
+
         if (result.hasErrors()) {
-            String errorMessages = result.getFieldErrors().stream()
-                    .map(FieldError::getDefaultMessage)
-                    .collect(Collectors.joining(", "));
-            model.addAttribute("error", errorMessages);
-            model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-            model.addAttribute("locationList", locationRepository.findAll());
+            model.addAttribute("error", result.getFieldErrors().stream()
+                    .map(FieldError::getDefaultMessage).collect(Collectors.joining(", ")));
+            populateFormModel(model);
             return "livestock-edit";
         }
 
@@ -516,14 +533,46 @@ public class LivestockController {
             if (locationId != null) {
                 locationRepository.findById(locationId).ifPresent(livestock::setLocation);
             }
-            livestockService.update(id, livestock);
+
+            LocalDate conceptionDate  = isBirth ? null : parseDate(conceptionDateStr);
+            LocalDate expectedDueDate = isBirth ? null : parseDate(expectedDueDateStr);
+
+            if (conceptionDate != null) {
+                livestock.setConceptionDate(conceptionDate);
+                livestock.setLastBreedingDate(conceptionDate);
+            }
+            if (expectedDueDate != null) {
+                livestock.setExpectedDueDate(expectedDueDate);
+            }
+
+            Livestock saved = livestockService.update(id, livestock);
+
+            // If animal was just marked pregnant during edit AND it's a purchased animal
+            // AND it had no breeding record before → create one
+            boolean nowPregnant = Boolean.TRUE.equals(saved.getIsPregnant());
+            boolean isPurchased = !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
+            boolean justBecamePregnant = nowPregnant && !wasPregnant;
+
+            if (justBecamePregnant && isPurchased && "FEMALE".equalsIgnoreCase(saved.getGender())) {
+                // Only create if no active breeding record already exists
+                boolean hasActive = !breedingService.getAll().stream()
+                        .filter(b -> b.getLivestock() != null
+                                && b.getLivestock().getId().equals(saved.getId()))
+                        .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
+                                || LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
+                        .toList().isEmpty();
+
+                if (!hasActive) {
+                    breedingService.createForPurchasedPregnantAnimal(saved, conceptionDate, expectedDueDate);
+                }
+            }
+
             redirectAttributes.addFlashAttribute("success", "Livestock updated successfully!");
             return "redirect:/livestock/list";
+
         } catch (Exception e) {
             model.addAttribute("error", "Error updating livestock: " + e.getMessage());
-            model.addAttribute("categories", livestockCategoryService.getAll());
-            model.addAttribute("beneficiariesList", beneficiaryRepository.findAll());
-            model.addAttribute("locationList", locationRepository.findAll());
+            populateFormModel(model);
             return "livestock-edit";
         }
     }
@@ -533,7 +582,7 @@ public class LivestockController {
     // =====================================================================
 
     @PostMapping("/delete/{id}")
-    public String delete(@PathVariable("id") UUID id, RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
             livestockService.delete(id);
             redirectAttributes.addFlashAttribute("success", "Livestock deleted successfully!");
@@ -548,13 +597,11 @@ public class LivestockController {
     // =====================================================================
 
     @GetMapping("/view/{id}")
-    public String viewDetail(@PathVariable("id") UUID id, Model model) {
-        Optional<Livestock> livestockOpt = livestockService.getById(id);
-        if (livestockOpt.isEmpty()) {
-            return "redirect:/livestock/list";
-        }
-        model.addAttribute("livestock", livestockOpt.get());
-        return "livestock-detail";
+    public String viewDetail(@PathVariable UUID id, Model model) {
+        return livestockService.getById(id).map(livestock -> {
+            model.addAttribute("livestock", livestock);
+            return "livestock-detail";
+        }).orElse("redirect:/livestock/list");
     }
 
     // =====================================================================
@@ -564,8 +611,6 @@ public class LivestockController {
     @GetMapping("/api/suggest-tag")
     @ResponseBody
     public Map<String, String> suggestTagForCategory(@RequestParam("categoryId") String categoryId) {
-        Map<String, String> response = new HashMap<>();
-
         String lastTag = livestockRepository.findAll().stream()
                 .filter(l -> l.getLivestockCategory() != null
                         && l.getLivestockCategory().getId().toString().equals(categoryId))
@@ -574,9 +619,9 @@ public class LivestockController {
                 .max(Comparator.naturalOrder())
                 .orElse(null);
 
-        response.put("lastTag", lastTag != null ? lastTag : "None yet");
+        Map<String, String> response = new HashMap<>();
+        response.put("lastTag",      lastTag != null ? lastTag : "None yet");
         response.put("suggestedTag", lastTag != null ? suggestNextTag(lastTag) : null);
-
         return response;
     }
 }

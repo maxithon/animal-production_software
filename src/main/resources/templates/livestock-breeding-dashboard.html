@@ -8,7 +8,6 @@
     <style>
         body { background: #f0f4f8; }
 
-        /* ── Page Header ─────────────────────────────────────────────────── */
         .page-header {
             background: white;
             border-bottom: 2px solid #e2e8f0;
@@ -20,7 +19,6 @@
         }
         .page-header h4 { margin: 0; font-weight: 700; color: #1a202c; }
 
-        /* ── Stat Cards ──────────────────────────────────────────────────── */
         .stat-card {
             background: white;
             border-radius: 12px;
@@ -45,7 +43,6 @@
             margin-top: 3px;
         }
 
-        /* ── Content Cards ───────────────────────────────────────────────── */
         .content-card {
             background: white;
             border-radius: 12px;
@@ -63,7 +60,6 @@
             gap: 8px;
         }
 
-        /* ── Table ───────────────────────────────────────────────────────── */
         .table { margin-bottom: 0; }
         .table thead th {
             background: #f8fafc;
@@ -73,7 +69,6 @@
         }
         .table td { vertical-align: middle; font-size: 0.9rem; }
 
-        /* ── Empty State ─────────────────────────────────────────────────── */
         .empty-state {
             padding: 40px 20px;
             text-align: center;
@@ -81,7 +76,6 @@
         }
         .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 10px; }
 
-        /* ── Alert strip (overdue / due soon) ────────────────────────────── */
         .alert-strip {
             display: flex;
             align-items: center;
@@ -92,11 +86,16 @@
         }
         .alert-strip.warning { background: #fffbeb; color: #92400e; }
         .alert-strip.success { background: #f0fff4; color: #276749; }
+
+        /* Method badge variants */
+        .method-badge-natural   { background: #d1fae5; color: #065f46; }
+        .method-badge-ai        { background: #dbeafe; color: #1e40af; }
+        .method-badge-embryo    { background: #ede9fe; color: #5b21b6; }
+        .method-badge-purchased { background: #fef3c7; color: #92400e; }
     </style>
 </head>
 <body>
 
-<!-- ── Page Header ───────────────────────────────────────────────────────── -->
 <div class="page-header">
     <div>
         <h4><i class="bi bi-graph-up text-info me-2"></i>Breeding Dashboard</h4>
@@ -114,15 +113,13 @@
 
 <div class="container-fluid px-4">
 
-    <!-- Flash messages -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-3">
         <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
         <button class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- ── Stats Row ─────────────────────────────────────────────────────── -->
+    <!-- Stats Row -->
     <div class="row g-3 mb-4">
-
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#ebf8ff;color:#2b6cb0;">
@@ -134,7 +131,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#fffbeb;color:#d97706;">
@@ -146,7 +142,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#f0fff4;color:#276749;">
@@ -158,7 +153,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
                 <div class="stat-icon" style="background:#faf5ff;color:#6b46c1;">
@@ -171,11 +165,9 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- ── Alert Strips ──────────────────────────────────────────────────── -->
-    <!-- Overdue pregnancy checks -->
+    <!-- Overdue pregnancy checks alert -->
     <div th:if="${dueForCheck != null and !dueForCheck.empty}"
          class="alert-strip warning mb-2" style="border-radius:12px;">
         <i class="bi bi-exclamation-triangle-fill"></i>
@@ -183,7 +175,7 @@
         <a href="#dueForCheckTable" class="ms-2 fw-bold" style="color:#92400e;">View below ↓</a>
     </div>
 
-    <!-- Approaching due dates -->
+    <!-- Approaching due dates alert -->
     <div th:if="${approachingDueDate != null and !approachingDueDate.empty}"
          class="alert-strip success mb-4" style="border-radius:12px;">
         <i class="bi bi-bell-fill"></i>
@@ -191,15 +183,13 @@
         <a href="#approachingTable" class="ms-2 fw-bold" style="color:#276749;">View below ↓</a>
     </div>
 
-    <!-- ── Due for Pregnancy Check ───────────────────────────────────────── -->
+    <!-- Due for Pregnancy Check table -->
     <div class="content-card" id="dueForCheckTable"
          th:if="${dueForCheck != null and !dueForCheck.empty}">
         <div class="content-card-header" style="background:#fffbeb;color:#92400e;">
             <i class="bi bi-calendar-x-fill"></i>
             Overdue Pregnancy Checks
-            <span class="badge ms-auto" style="background:#d97706;">
-                <span th:text="${dueForCheck.size()}">0</span>
-            </span>
+            <span class="badge ms-auto" style="background:#d97706;" th:text="${dueForCheck.size()}">0</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -215,9 +205,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="b : ${dueForCheck}">
-                    <td>
-                        <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
-                    </td>
+                    <td><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong></td>
                     <td>
                         <span class="badge bg-secondary"
                               th:if="${b.livestock?.livestockCategory != null}"
@@ -242,15 +230,13 @@
         </div>
     </div>
 
-    <!-- ── Approaching Due Dates ──────────────────────────────────────────── -->
+    <!-- Approaching Due Dates table -->
     <div class="content-card" id="approachingTable"
          th:if="${approachingDueDate != null and !approachingDueDate.empty}">
         <div class="content-card-header" style="background:#f0fff4;color:#276749;">
             <i class="bi bi-bell-fill"></i>
             Approaching Due Dates (Next 30 Days)
-            <span class="badge ms-auto" style="background:#38a169;">
-                <span th:text="${approachingDueDate.size()}">0</span>
-            </span>
+            <span class="badge ms-auto" style="background:#38a169;" th:text="${approachingDueDate.size()}">0</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -266,9 +252,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="b : ${approachingDueDate}">
-                    <td>
-                        <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
-                    </td>
+                    <td><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong></td>
                     <td>
                         <span class="badge bg-secondary"
                               th:if="${b.livestock?.livestockCategory != null}"
@@ -293,7 +277,7 @@
         </div>
     </div>
 
-    <!-- ── Recent Breeding Records ───────────────────────────────────────── -->
+    <!-- Recent Breeding Records -->
     <div class="content-card">
         <div class="content-card-header">
             <i class="bi bi-clock-history text-secondary"></i>
@@ -303,7 +287,6 @@
             </a>
         </div>
 
-        <!-- Empty state -->
         <div class="empty-state" th:if="${recentBreedings == null or recentBreedings.empty}">
             <i class="bi bi-inbox"></i>
             No breeding records yet.
@@ -340,20 +323,27 @@
                     </td>
                     <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
                     <td>
+                        <!-- FIX: Added PURCHASE_PREGNANT badge -->
                         <span th:if="${b.breedingMethod == 'NATURAL'}"
-                              class="badge bg-success">Natural</span>
+                              class="badge method-badge-natural">Natural</span>
                         <span th:if="${b.breedingMethod == 'ARTIFICIAL_INSEMINATION'}"
-                              class="badge bg-info text-dark">AI</span>
+                              class="badge method-badge-ai">AI</span>
                         <span th:if="${b.breedingMethod == 'EMBRYO_TRANSFER'}"
-                              class="badge bg-primary">Embryo</span>
-                        <span th:if="${b.breedingMethod == null}"
-                              class="text-muted">—</span>
+                              class="badge method-badge-embryo">Embryo</span>
+                        <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}"
+                              class="badge method-badge-purchased">
+                            <i class="bi bi-shop me-1"></i>Purchased Pregnant
+                        </span>
+                        <span th:if="${b.breedingMethod == null}" class="text-muted">—</span>
                     </td>
                     <td>
                         <span th:if="${b.maleLivestock != null}"
                               th:text="${b.maleLivestock.tagNumber}"></span>
-                        <span th:if="${b.maleLivestock == null}"
-                              class="text-muted">—</span>
+                        <span th:if="${b.maleLivestock == null}" class="text-muted">
+                            <!-- Show N/A for PURCHASE_PREGNANT, dash for others -->
+                            <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}">N/A</span>
+                            <span th:if="${b.breedingMethod != 'PURCHASE_PREGNANT'}">—</span>
+                        </span>
                     </td>
                     <td>
                         <span th:if="${b.status == 'PENDING'}"

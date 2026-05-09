@@ -33,29 +33,20 @@
 
     <form th:action="@{/livestock/births/update/{id}(id=${birth.id})}" th:object="${birth}" method="post">
 
-        <!-- Birth type banner (read-only — cannot change type after creation) -->
-        <div th:if="${birth.isExternalBirth}" class="alert alert-primary d-flex align-items-center gap-2 mb-4">
-            <i class="bi bi-box-arrow-in-down fs-5"></i>
-            <div>
-                <strong>Purchased / External Birth</strong> — mother is not from this farm.
-            </div>
-        </div>
-        <div th:if="${!birth.isExternalBirth}" class="alert alert-success d-flex align-items-center gap-2 mb-4">
+        <!-- Always a farm birth on edit -->
+        <input type="hidden" name="isExternalBirth" value="false">
+
+        <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
             <i class="bi bi-house-heart-fill fs-5"></i>
-            <div>
-                <strong>Farm Birth</strong> — born on this farm with a known mother.
-            </div>
+            <div><strong>Farm Birth</strong> — born on this farm with a known mother.</div>
         </div>
 
-        <!-- Keep isExternalBirth unchanged -->
-        <input type="hidden" th:field="*{isExternalBirth}">
-
-        <!-- Mother (farm births only) -->
-        <div th:if="${!birth.isExternalBirth}" class="mb-4">
+        <!-- Mother -->
+        <div class="mb-4">
             <label class="form-label fw-semibold">
                 Mother Animal <span class="text-danger">*</span>
             </label>
-            <select class="form-select" th:field="*{livestockIdValue}">
+            <select class="form-select" th:field="*{livestockIdValue}" required>
                 <option value="">-- Select the mother animal --</option>
                 <option th:each="ls : ${livestockList}"
                         th:value="${ls.id}"
@@ -63,13 +54,6 @@
                         th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')}">
                 </option>
             </select>
-        </div>
-
-        <!-- Source location (external births only) -->
-        <div th:if="${birth.isExternalBirth}" class="mb-4">
-            <label class="form-label fw-semibold">Purchase Source / Origin</label>
-            <input type="text" class="form-control" th:field="*{sourceLocation}"
-                   placeholder="Where was this animal purchased from?">
         </div>
 
         <div class="section-divider"></div>
@@ -80,17 +64,14 @@
                     Birth Date <span class="text-danger">*</span>
                 </label>
                 <input type="date" class="form-control" th:field="*{birthDate}" required>
-                <div class="form-text text-muted" th:if="${birth.isExternalBirth}">
-                    Stored in <code>livestock_births.birth_date</code>. Used to calculate breeding eligibility.
-                </div>
             </div>
 
-            <div class="col-md-4" th:if="${!birth.isExternalBirth}">
+            <div class="col-md-4">
                 <label class="form-label">Number of Offspring</label>
                 <input type="number" class="form-control" th:field="*{offspringCount}" min="1">
             </div>
 
-            <div class="col-md-4" th:if="${!birth.isExternalBirth}">
+            <div class="col-md-4">
                 <label class="form-label">Offspring Gender</label>
                 <select class="form-select" th:field="*{offspringGender}">
                     <option value="">-- Mixed / Unknown --</option>
@@ -99,14 +80,20 @@
                 </select>
             </div>
 
-            <div class="col-md-4" th:if="${!birth.isExternalBirth}">
+            <div class="col-md-4">
                 <label class="form-label">Weaning Date</label>
                 <input type="date" class="form-control" th:field="*{weaningDate}">
             </div>
 
-            <div class="col-md-4" th:if="${!birth.isExternalBirth}">
+            <div class="col-md-4">
                 <label class="form-label">Next Breeding Date (Mother)</label>
                 <input type="date" class="form-control" th:field="*{nextBreedingDate}">
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Source Location / Notes on Origin</label>
+                <input type="text" class="form-control" th:field="*{sourceLocation}"
+                       placeholder="e.g. Born in Barn 2">
             </div>
 
             <div class="col-12">

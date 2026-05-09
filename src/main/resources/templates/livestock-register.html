@@ -19,7 +19,91 @@
             overflow: hidden; margin-top: 10px;
         }
         .photo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .pregnancy-section { display: none; }
+
+        /*
+         * ── Birth date info banner ──────────────────────────────────────────
+         * Shown when acquisition method = BIRTH.
+         * Explains that birth date is managed in the Births module.
+         */
+        #birthMethodInfo {
+            display: none;
+            background: #e0f2fe;
+            border-left: 4px solid #0369a1;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            color: #0369a1;
+        }
+
+        /*
+         * ── Pregnancy details panel ─────────────────────────────────────────
+         * Shown ONLY when:
+         *   1. Gender = FEMALE
+         *   2. "Currently Pregnant?" checkbox is checked
+         *   3. Acquisition method ≠ BIRTH
+         *
+         * BIRTH animals cannot be registered as pregnant here — their pregnancy
+         * is tracked through the Breeding module after they mature.
+         */
+        #pregnancyDetailsPanel {
+            display: none;
+            background: #fdf4ff;
+            border: 1.5px solid #e9d8fd;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 12px;
+        }
+        #pregnancyDetailsPanel .panel-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: #6b21a8;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* ── Section header ── */
+        .section-header {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1a5f7a;
+            border-bottom: 2px solid #e0f2fe;
+            padding-bottom: 6px;
+            margin-bottom: 16px;
+            margin-top: 24px;
+        }
+
+        /* ── Purchased-pregnant info box ── */
+        .purchased-pregnant-info {
+            background: #fdf4ff;
+            border: 1px solid #e9d8fd;
+            border-left: 4px solid #7c3aed;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 16px;
+            font-size: 0.83rem;
+            color: #4c1d95;
+            margin-top: 8px;
+        }
+
+        /*
+         * ── Birth-acquisition pregnancy notice ─────────────────────────────
+         * Shown (instead of the pregnancy toggle) when BIRTH is selected.
+         * Explains why the pregnancy checkbox is not available for farm-born animals.
+         */
+        #birthPregnancyNotice {
+            display: none;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-left: 4px solid #0369a1;
+            border-radius: 0 8px 8px 0;
+            padding: 10px 16px;
+            font-size: 0.83rem;
+            color: #075985;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
@@ -40,20 +124,34 @@
                 </div>
 
                 <form th:action="@{/livestock/register/new}" th:object="${livestock}" method="post" id="registerForm">
-                    <!--  hidden field to ensure pregnancy_status is never null -->
-                    <input type="hidden" th:field="*{pregnancyStatus}" th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
+                    <input type="hidden" th:field="*{pregnancyStatus}"
+                           th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
 
-                    <!-- Photo Upload -->
-                    <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
-                    <div class="row mb-4">
+                    <!--
+                        HIDDEN FIELDS
+                        ─────────────────────────────────────────────────────────
+                        conception_date and expected_due_date are captured from
+                        the pregnancy details panel and submitted as separate
+                        request params so LivestockController can pass them to
+                        LivestockBreedingService.createForPurchasedPregnantAnimal().
+
+                        These are NEVER populated for BIRTH animals.
+                    -->
+                    <input type="hidden" id="conceptionDateHidden"  name="conceptionDate">
+                    <input type="hidden" id="expectedDueDateHidden" name="expectedDueDate">
+
+                    <!-- ══ PHOTO ══════════════════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-camera me-1"></i> Photo</div>
+                    <div class="row mb-3">
                         <div class="col-md-12">
-                            <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
-                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
+                            <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="uploadPhoto()">
+                            <button type="button" class="btn btn-outline-primary"
+                                    onclick="document.getElementById('photoFile').click()">
                                 <i class="bi bi-camera-fill"></i> Choose Photo
                             </button>
                             <div class="photo-preview" id="photoPreview">
                                 <div class="text-center text-muted">
-                                    <i class="bi bi-box2-heart" style="font-size: 3rem;"></i>
+                                    <i class="bi bi-box2-heart" style="font-size:3rem"></i>
                                     <p class="small mt-2">No photo selected</p>
                                 </div>
                             </div>
@@ -62,28 +160,30 @@
                         </div>
                     </div>
 
-                    <!-- Category & Beneficiary -->
-                    <h5 class="mb-3 mt-2 text-primary"><i class="bi bi-tag"></i> Assignment</h5>
+                    <!-- ══ ASSIGNMENT ══════════════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-tag me-1"></i> Assignment</div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="livestockCategoryIdValue" class="form-label">Livestock Category *</label>
-                            <!-- PURPOSE: Every time the user picks a different category, the browser       -->
-                            <!-- calls fetchTagSuggestion() which hits /livestock/api/suggest-tag and       -->
-                            <!-- updates the tag hints below the input to match THAT category's last tag.   -->
-
+                            <label class="form-label">Livestock Category *</label>
+                            <!--
+                                data-gestation is read by recalcDueDate() to auto-calculate
+                                the expected due date when a conception date is entered.
+                                gestation_period_months from livestock_categories table.
+                                e.g. Goats = 5 months, Pigs = 4 months.
+                            -->
                             <select class="form-select" id="livestockCategoryIdValue"
                                     th:field="*{livestockCategoryIdValue}"
-                                    onchange="fetchTagSuggestion(this.value)"
-                                    required>
+                                    onchange="fetchTagSuggestion(this.value); recalcDueDate();" required>
                                 <option value="">Select category...</option>
                                 <option th:each="cat : ${categories}"
                                         th:value="${cat.id}"
+                                        th:attr="data-gestation=${cat.gestationPeriodMonths}"
                                         th:text="${cat.name + ' (' + cat.code + ')'}">
                                 </option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="beneficiaryIdValue" class="form-label">Beneficiary (Abaragizwa) *</label>
+                            <label class="form-label">Beneficiary (Abaragizwa) *</label>
                             <select class="form-select" id="beneficiaryIdValue"
                                     th:field="*{beneficiaryIdValue}" required>
                                 <option value="">Select beneficiary...</option>
@@ -92,108 +192,151 @@
                                         th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
                                 </option>
                             </select>
-                            <div class="form-text">The beneficiary who owns/cares for this animal</div>
                         </div>
                     </div>
 
-                    <!-- Basic Information -->
-                    <h5 class="mb-3 text-primary"><i class="bi bi-info-circle"></i> Basic Information</h5>
+                    <!-- ══ BASIC INFORMATION ═══════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-info-circle me-1"></i> Basic Information</div>
                     <div class="row">
-                        <!-- PURPOSE: The placeholder shows the global last-tag hint on first load.     -->
-                        <!-- Once the user picks a category, fetchTagSuggestion() updates all three     -->
-                        <!-- hint elements below (lastTagInfo, suggestedTagPill, noTagsYet).            -->
-
+                        <!-- Tag Number -->
                         <div class="col-md-4 mb-3">
-                            <label for="tagNumber" class="form-label">Tag Number *</label>
+                            <label class="form-label">Tag Number *</label>
                             <input type="text" class="form-control" id="tagNumber"
                                    th:field="*{tagNumber}"
                                    th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
                                    required>
-
-                            <!-- Shows the last registered tag for this category (filled by JS) -->
-                            <!-- Hidden on load; JS shows it after a category is selected -->
-                            <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none;">
+                            <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none">
                                 <i class="bi bi-tag-fill"></i>
                                 Last in this category: <code id="lastTagValue"></code>
                             </div>
-
-                            <!-- Clickable pill — click it to auto-fill the next suggested tag -->
-                            <!-- data-tag is set by JS; onclick reads it to avoid Thymeleaf security error -->
                             <div id="suggestedTagPill"
                                  style="display:none; margin-top:6px; align-items:center; gap:6px;
-                background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
-                border-radius:20px; font-size:0.8rem; font-weight:600;
-                color:#0369a1; cursor:pointer;"
+                                        background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
+                                        border-radius:20px; font-size:0.8rem; font-weight:600;
+                                        color:#0369a1; cursor:pointer;"
                                  onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
                                  title="Click to use this tag number">
                                 <i class="bi bi-arrow-right-circle-fill"></i>
                                 Next available: <strong id="suggestedTagValue"></strong>
                                 <span style="font-size:0.72rem; opacity:0.75;">(click to use)</span>
                             </div>
-
-                            <!-- Shown when the selected category has no animals registered yet -->
                             <div id="noTagsYet"
                                  style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
                                 <i class="bi bi-info-circle"></i>
-                                No animals registered in this category yet — enter your first tag number.
+                                No animals registered in this category yet.
                             </div>
                         </div>
+
+                        <!-- Gender -->
                         <div class="col-md-4 mb-3">
-                            <label for="gender" class="form-label">Gender *</label>
-                            <select class="form-select" id="gender" th:field="*{gender}" required>
+                            <label class="form-label">Gender *</label>
+                            <select class="form-select" id="gender" th:field="*{gender}"
+                                    onchange="togglePregnancySection()" required>
                                 <option value="">Select gender...</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
                             </select>
                         </div>
+
+                        <!-- Status -->
                         <div class="col-md-4 mb-3">
-                            <label for="status" class="form-label">Status</label>
+                            <label class="form-label">Status</label>
                             <select class="form-select" id="status" th:field="*{status}">
                                 <option value="ACTIVE">Active</option>
-                                <option value="INACTIVE">Inactive</option>
+                                <option value="SICK">Sick</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="row">
+                        <!--
+                            ACQUISITION METHOD
+                            ─────────────────────────────────────────────────────
+                            BIRTH   → birth date hidden (managed in Births module)
+                                    → "Currently Pregnant?" toggle HIDDEN
+                                      (a newborn cannot be pregnant)
+                                    → Shows informational notice instead
+
+                            PURCHASE / DONATION / TRANSFER / OTHER
+                                    → birth date shown
+                                    → "Currently Pregnant?" toggle VISIBLE (females only)
+                                    → Pregnancy details panel opens when checked
+                        -->
                         <div class="col-md-4 mb-3">
-                            <label for="acquisitionMethod" class="form-label">Acquisition Method</label>
-                            <select class="form-select" id="acquisitionMethod" th:field="*{acquisitionMethod}">
+                            <label class="form-label">Acquisition Method</label>
+                            <select class="form-select" id="acquisitionMethod"
+                                    th:field="*{acquisitionMethod}"
+                                    onchange="handleAcquisitionChange(this.value)">
                                 <option value="">Select method...</option>
                                 <option value="PURCHASE">Purchase</option>
                                 <option value="DONATION">Donation</option>
-                                <option value="BIRTH">Birth</option>
+                                <option value="BIRTH">Birth (born on this farm)</option>
                                 <option value="TRANSFER">Transfer</option>
                                 <option value="OTHER">Other</option>
                             </select>
                         </div>
+
+                        <!-- Date Received -->
                         <div class="col-md-4 mb-3">
-                            <label for="dateReceived" class="form-label">Date Received</label>
+                            <label class="form-label">Date Received</label>
                             <input type="date" class="form-control" id="dateReceived" th:field="*{dateReceived}">
                         </div>
+
+                        <!-- Current Value -->
                         <div class="col-md-4 mb-3">
-                            <label for="currentValue" class="form-label">Current Value (RWF)</label>
+                            <label class="form-label">Current Value (RWF)</label>
                             <input type="number" class="form-control" id="currentValue"
-                                   th:field="*{currentValue}" min="0" step="0.01"
-                                   placeholder="0.00">
+                                   th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00">
                         </div>
                     </div>
 
-                    <!-- Pregnancy Section -->
+                    <!-- ══ BIRTH DATE — shown only for non-BIRTH acquisition ══ -->
+                    <div class="row" id="birthDateRow">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="birthDate">
+                                Birth Date
+                            </label>
+                            <input type="date" class="form-control" id="birthDate" th:field="*{birthDate}">
+                            <div class="form-text text-muted">
+                                The actual date this animal was born (not arrival date).
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info banner shown when BIRTH is selected -->
+                    <div id="birthMethodInfo" class="mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Birth date is managed automatically.</strong>
+                        Because this animal was born on the farm, its birth date will be recorded
+                        in the <strong>Births</strong> module — no need to enter it here.
+                    </div>
+
+                    <!-- ══ OFFSPRING / BREEDING HISTORY ═══════════════════════ -->
+                    <div class="section-header"><i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History</div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="lastBirthDate" class="form-label">Last Birth Date</label>
+                            <label class="form-label">Last Birth Date</label>
                             <input type="date" class="form-control" id="lastBirthDate" th:field="*{lastBirthDate}">
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="offspringCount" class="form-label">Offspring Count</label>
+                            <label class="form-label">Offspring Count</label>
                             <input type="number" class="form-control" id="offspringCount"
                                    th:field="*{offspringCount}" min="0" value="0">
                         </div>
-                        <div class="col-md-4 mb-3 d-flex align-items-end">
+
+                        <!--
+                            PREGNANCY TOGGLE COLUMN
+                            ─────────────────────────────────────────────────────
+                            #pregnancyToggleCol  → shown for FEMALE + non-BIRTH
+                            #birthPregnancyNotice → shown for FEMALE + BIRTH
+                                                    (explains why toggle is hidden)
+                            Both hidden for MALE or no gender selected.
+                        -->
+                        <div class="col-md-4 mb-3 d-flex align-items-end" id="pregnancyToggleCol"
+                             style="display:none!important;">
                             <div class="form-check form-switch mt-3">
                                 <input class="form-check-input" type="checkbox" id="isPregnant"
-                                       th:field="*{isPregnant}" onchange="togglePregnancy(this)">
+                                       th:field="*{isPregnant}" onchange="togglePregnancyDetails(this)">
                                 <label class="form-check-label fw-semibold" for="isPregnant">
                                     Currently Pregnant?
                                 </label>
@@ -201,47 +344,154 @@
                         </div>
                     </div>
 
-                    <div class="row pregnancy-section" id="pregnancyMonthsRow">
-                        <div class="col-md-4 mb-3">
-                            <label for="pregnancyMonths" class="form-label">Pregnancy Months</label>
-                            <input type="number" class="form-control" id="pregnancyMonths"
-                                   th:field="*{pregnancyMonths}" min="1" max="12"
-                                   placeholder="1 - 12">
+                    <!--
+                        Notice shown to FEMALE + BIRTH animals only.
+                        Replaces the pregnancy checkbox — explains that pregnancy
+                        tracking for farm-born animals happens through the Breeding module.
+                    -->
+                    <div id="birthPregnancyNotice" class="mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Pregnancy tracking not applicable here.</strong>
+                        This animal is being registered as born on this farm. A newborn animal
+                        cannot be currently pregnant. Pregnancy will be tracked through the
+                        <strong>Breeding</strong> module once the animal matures.
+                    </div>
+
+                    <!--
+                    ═══════════════════════════════════════════════════════════════
+                    PREGNANCY DETAILS PANEL
+                    ───────────────────────────────────────────────────────────────
+                    Shown ONLY when:
+                      • Gender = FEMALE
+                      • "Currently Pregnant?" is checked
+                      • Acquisition method ≠ BIRTH  (enforced by JS)
+
+                    Fields explained:
+                      conceptionDateInput   → stored as livestock.conception_date
+                                              and livestock.last_breeding_date
+                      expectedDueDateInput  → auto-calculated from:
+                                              conception_date + category.gestation_period_months
+                                              (e.g. Goats: +5 months, Pigs: +4 months)
+                                              User can override if they know exact date.
+                      weeksPregnantInput    → UI HELPER ONLY, not stored in DB.
+                                              Entering weeks back-calculates conception_date,
+                                              which then auto-fills expected_due_date.
+
+                    Why gestation_period_months instead of storing weeks?
+                      Weeks are imprecise and vary by species. The authoritative
+                      value is gestation_period_months on livestock_categories.
+                      We use it to calculate the due date reliably.
+                    ═══════════════════════════════════════════════════════════════
+                    -->
+                    <div id="pregnancyDetailsPanel">
+                        <div class="panel-title">
+                            <i class="bi bi-heart-fill" style="color:#7c3aed;"></i>
+                            Pregnancy Details
+                        </div>
+
+                        <div class="purchased-pregnant-info mb-3">
+                            <i class="bi bi-info-circle-fill me-1"></i>
+                            <strong>Purchased / received while pregnant.</strong>
+                            Filling in the conception date and expected due date will automatically
+                            start pregnancy tracking for this animal — you will see it in the
+                            <em>Pregnancy Tracking</em> dashboard with alerts for upcoming due dates.
+                            If you don't know the exact dates, leave them blank and update later.
+                        </div>
+
+                        <div class="row g-3">
+                            <!--
+                                CONCEPTION / BREEDING DATE
+                                Stored as: livestock.conception_date + livestock.last_breeding_date
+                                Drives auto-calculation of expected_due_date.
+                            -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    Conception / Breeding Date
+                                    <span class="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <input type="date" class="form-control" id="conceptionDateInput"
+                                       oninput="syncConceptionDate(); recalcDueDate();"
+                                       max="" placeholder="">
+                                <div class="form-text">Approximate date animal was bred / conceived</div>
+                            </div>
+
+                            <!--
+                                EXPECTED DUE / BIRTH DATE
+                                Stored as: livestock.expected_due_date
+                                Auto-calculated: conception_date + gestation_period_months
+                                User can override manually.
+                            -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    Expected Due / Birth Date
+                                    <span class="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <input type="date" class="form-control" id="expectedDueDateInput"
+                                       oninput="syncDueDate();">
+                                <div class="form-text" id="gestationHintText">
+                                    Auto-calculated from conception date + category gestation period
+                                </div>
+                            </div>
+
+                            <!--
+                                WEEKS PREGNANT — UI HELPER ONLY, NOT STORED
+                                ─────────────────────────────────────────────
+                                Purpose: if the farmer knows "this goat is 8 weeks pregnant"
+                                but not the exact conception date, they enter 8 weeks here.
+                                JS back-calculates: today − (8 × 7 days) = conception date.
+                                Then recalcDueDate() uses gestation_period_months to fill
+                                expected_due_date.
+
+                                Nothing is stored from this field.
+                            -->
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    Weeks Pregnant
+                                    <span class="text-muted fw-normal">(estimate, optional)</span>
+                                </label>
+                                <input type="number" class="form-control" id="weeksPregnantInput"
+                                       min="0" max="60" placeholder="e.g. 8"
+                                       oninput="weeksToConception();">
+                                <div class="form-text">
+                                    Helper: enter weeks to auto-calculate conception date →
+                                    then due date is calculated from species gestation period.
+                                    <strong>Not stored.</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Location - Cascading Dropdowns -->
-                    <h5 class="mb-3 mt-2 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
+                    <!-- ══ LOCATION ═══════════════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Location</div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="province" class="form-label">Province</label>
+                            <label class="form-label">Province</label>
                             <select class="form-select" id="province" onchange="loadDistricts()">
                                 <option value="">Select province...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="district" class="form-label">District</label>
+                            <label class="form-label">District</label>
                             <select class="form-select" id="district" onchange="loadSectors()" disabled>
                                 <option value="">Select district...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="sector" class="form-label">Sector</label>
+                            <label class="form-label">Sector</label>
                             <select class="form-select" id="sector" onchange="loadCells()" disabled>
                                 <option value="">Select sector...</option>
                             </select>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="cell" class="form-label">Cell</label>
+                            <label class="form-label">Cell</label>
                             <select class="form-select" id="cell" onchange="loadVillages()" disabled>
                                 <option value="">Select cell...</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="village" class="form-label">Village</label>
+                            <label class="form-label">Village</label>
                             <select class="form-select" id="village" name="locationId" disabled>
                                 <option value="">Select village...</option>
                             </select>
@@ -266,41 +516,270 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-
-    // ── On page load ──────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PAGE INIT
+    // ═══════════════════════════════════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function () {
-        // Load provinces into the first dropdown
         loadProvinces();
 
-        // Restore pregnancy row if editing an existing record
-        const cb = document.getElementById('isPregnant');
-        if (cb && cb.checked) {
-            document.getElementById('pregnancyMonthsRow').style.display = 'flex';
+        const acqSelect = document.getElementById('acquisitionMethod');
+        if (acqSelect && acqSelect.value) {
+            handleAcquisitionChange(acqSelect.value);
         }
+
+        const catSelect = document.getElementById('livestockCategoryIdValue');
+        if (catSelect && catSelect.value) {
+            fetchTagSuggestion(catSelect.value);
+        }
+
+        togglePregnancySection();
     });
 
-    // ── Pregnancy toggle ──────────────────────────────────────────────────────
-    function togglePregnancy(checkbox) {
-        const row = document.getElementById('pregnancyMonthsRow');
-        row.style.display = checkbox.checked ? 'flex' : 'none';
-        if (!checkbox.checked) {
-            document.getElementById('pregnancyMonths').value = '';
+    // ═══════════════════════════════════════════════════════════════════════════
+    // ACQUISITION METHOD CHANGE HANDLER
+    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * Called whenever the Acquisition Method dropdown changes.
+     *
+     * BIRTH animals:
+     *   - Hide the birth date row (managed in Births module)
+     *   - Show the birth method info banner
+     *   - HIDE the "Currently Pregnant?" checkbox (newborns cannot be pregnant)
+     *   - If gender is FEMALE, show the birthPregnancyNotice instead
+     *   - Close and clear the pregnancy details panel
+     *
+     * All other methods (PURCHASE, DONATION, TRANSFER, OTHER):
+     *   - Show the birth date row
+     *   - Hide the birth method info banner
+     *   - Re-evaluate pregnancy toggle visibility based on gender
+     */
+    function handleAcquisitionChange(method) {
+        const birthDateRow        = document.getElementById('birthDateRow');
+        const birthInfo           = document.getElementById('birthMethodInfo');
+        const birthInput          = document.getElementById('birthDate');
+        const birthPregnancyNotice = document.getElementById('birthPregnancyNotice');
+
+        if (method === 'BIRTH') {
+            // Hide birth date — it's in the Births module
+            birthDateRow.style.display = 'none';
+            birthInfo.style.display    = 'block';
+            birthInput.required        = false;
+            birthInput.value           = '';
+
+            // Force uncheck and hide the pregnancy toggle
+            const cb = document.getElementById('isPregnant');
+            if (cb) cb.checked = false;
+            showPregnancyPanel(false);
+
+            // Update status back to ACTIVE (not PREGNANT)
+            const statusSel = document.getElementById('status');
+            if (statusSel) statusSel.value = 'ACTIVE';
+
+            // Hide the toggle column regardless of gender
+            const col = document.getElementById('pregnancyToggleCol');
+            if (col) col.style.display = 'none';
+
+            // Show the informational notice for FEMALE animals
+            const gender = document.getElementById('gender').value;
+            if (birthPregnancyNotice) {
+                birthPregnancyNotice.style.display = (gender === 'FEMALE') ? 'block' : 'none';
+            }
+
+        } else {
+            // Non-BIRTH: show birth date, hide birth info banner
+            birthDateRow.style.display = '';
+            birthInfo.style.display    = 'none';
+            birthInput.required        = false;
+
+            // Hide the BIRTH pregnancy notice
+            if (birthPregnancyNotice) birthPregnancyNotice.style.display = 'none';
+
+            // Re-evaluate pregnancy section based on current gender
+            togglePregnancySection();
+
+            // Re-show pregnancy panel if checkbox is still checked
+            const cb = document.getElementById('isPregnant');
+            if (cb && cb.checked) showPregnancyPanel(true);
         }
     }
 
-    // ── Photo upload ──────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PREGNANCY SECTION VISIBILITY
+    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * Controls whether the "Currently Pregnant?" toggle is shown.
+     * Rules:
+     *   • MALE or no gender → always hidden
+     *   • FEMALE + BIRTH    → hidden (show birthPregnancyNotice instead)
+     *   • FEMALE + other    → shown
+     *
+     * Called on: gender change, acquisition method change, page load.
+     */
+    function togglePregnancySection() {
+        const gender  = document.getElementById('gender').value;
+        const acqVal  = (document.getElementById('acquisitionMethod') || {}).value || '';
+        const col     = document.getElementById('pregnancyToggleCol');
+        const cb      = document.getElementById('isPregnant');
+        const notice  = document.getElementById('birthPregnancyNotice');
+
+        if (gender === 'FEMALE') {
+            if (acqVal === 'BIRTH') {
+                // Female + BIRTH: hide toggle, show notice
+                col.style.display = 'none';
+                if (notice) notice.style.display = 'block';
+                if (cb) { cb.checked = false; }
+                showPregnancyPanel(false);
+            } else {
+                // Female + other: show toggle, hide notice
+                col.style.removeProperty('display');
+                col.style.display = '';
+                if (notice) notice.style.display = 'none';
+            }
+        } else {
+            // Male or unknown: hide everything pregnancy-related
+            col.style.display = 'none';
+            if (notice) notice.style.display = 'none';
+            if (cb) { cb.checked = false; }
+            showPregnancyPanel(false);
+        }
+    }
+
+    /**
+     * Called when the "Currently Pregnant?" checkbox is toggled.
+     * Shows/hides the pregnancy details panel and updates status dropdown.
+     * No-op for BIRTH animals (checkbox is hidden, so this won't fire).
+     */
+    function togglePregnancyDetails(checkbox) {
+        const acqVal = (document.getElementById('acquisitionMethod') || {}).value || '';
+
+        // Safety guard: never show pregnancy panel for BIRTH animals
+        const show = checkbox.checked && acqVal !== 'BIRTH';
+        showPregnancyPanel(show);
+
+        const statusSel = document.getElementById('status');
+        if (statusSel) {
+            statusSel.value = (checkbox.checked && show) ? 'PREGNANT' : 'ACTIVE';
+        }
+    }
+
+    /**
+     * Shows or hides the pregnancy details panel.
+     * When hiding: clears all input values and syncs hidden fields to empty.
+     */
+    function showPregnancyPanel(show) {
+        const panel = document.getElementById('pregnancyDetailsPanel');
+        if (!panel) return;
+        panel.style.display = show ? 'block' : 'none';
+        if (!show) {
+            const conception = document.getElementById('conceptionDateInput');
+            const dueDate    = document.getElementById('expectedDueDateInput');
+            const weeks      = document.getElementById('weeksPregnantInput');
+            if (conception) conception.value = '';
+            if (dueDate)    dueDate.value    = '';
+            if (weeks)      weeks.value      = '';
+            syncConceptionDate();
+            syncDueDate();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // HIDDEN FIELD SYNC
+    // Keeps the hidden <input name="conceptionDate"> and <input name="expectedDueDate">
+    // in sync with the visible date inputs so they are submitted with the form.
+    // ═══════════════════════════════════════════════════════════════════════════
+    function syncConceptionDate() {
+        const val    = (document.getElementById('conceptionDateInput') || {}).value || '';
+        const hidden = document.getElementById('conceptionDateHidden');
+        if (hidden) hidden.value = val;
+    }
+
+    function syncDueDate() {
+        const val    = (document.getElementById('expectedDueDateInput') || {}).value || '';
+        const hidden = document.getElementById('expectedDueDateHidden');
+        if (hidden) hidden.value = val;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DUE DATE AUTO-CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * Auto-calculates the expected due date when a conception date is entered.
+     *
+     * Formula: expected_due_date = conception_date + gestation_period_months
+     *
+     * gestation_period_months is read from the selected category's data-gestation
+     * attribute (populated from livestock_categories.gestation_period_months).
+     *
+     * Examples:
+     *   Goats (5 months): conceived 2026-01-01 → due 2026-06-01
+     *   Pigs  (4 months): conceived 2026-01-01 → due 2026-05-01
+     *
+     * The user can still manually override the due date after auto-calculation.
+     */
+    function recalcDueDate() {
+        const conceptionInput = document.getElementById('conceptionDateInput');
+        const dueDateInput    = document.getElementById('expectedDueDateInput');
+        const gestHint        = document.getElementById('gestationHintText');
+
+        if (!conceptionInput || !dueDateInput) return;
+
+        const conceptionVal = conceptionInput.value;
+        if (!conceptionVal) return;
+
+        const catSel     = document.getElementById('livestockCategoryIdValue');
+        const gestMonths = catSel && catSel.selectedOptions[0]
+            ? parseInt(catSel.selectedOptions[0].getAttribute('data-gestation') || '0')
+            : 0;
+
+        if (gestMonths > 0) {
+            const d = new Date(conceptionVal);
+            d.setMonth(d.getMonth() + gestMonths);
+            dueDateInput.value = d.toISOString().split('T')[0];
+            syncDueDate();
+            if (gestHint && catSel && catSel.selectedOptions[0]) {
+                const catName = catSel.selectedOptions[0].textContent.split(' (')[0];
+                gestHint.textContent = catName + ' gestation: ~' + gestMonths + ' months — due date auto-calculated';
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WEEKS PREGNANT → CONCEPTION DATE BACK-CALCULATION
+    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * UI helper: if the farmer knows "this animal is 8 weeks pregnant"
+     * but not the conception date, they enter weeks here.
+     *
+     * Calculation: conception_date = today − (weeks × 7 days)
+     * Then recalcDueDate() is called to fill expected_due_date.
+     *
+     * This field is NOT stored in the database. It only populates
+     * conceptionDateInput, which IS stored.
+     */
+    function weeksToConception() {
+        const weeksInput      = document.getElementById('weeksPregnantInput');
+        const conceptionInput = document.getElementById('conceptionDateInput');
+        if (!weeksInput || !conceptionInput) return;
+
+        const weeks = parseInt(weeksInput.value);
+        if (isNaN(weeks) || weeks < 0) return;
+
+        const today     = new Date();
+        const conceived = new Date(today);
+        conceived.setDate(conceived.getDate() - (weeks * 7));
+        conceptionInput.value = conceived.toISOString().split('T')[0];
+        syncConceptionDate();
+        recalcDueDate();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PHOTO UPLOAD
+    // ═══════════════════════════════════════════════════════════════════════════
     function uploadPhoto() {
         const file = document.getElementById('photoFile').files[0];
         if (!file) return;
-
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
-            return;
-        }
+        if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
 
         const preview = document.getElementById('photoPreview');
         preview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
@@ -325,167 +804,116 @@
             });
     }
 
-    // ── Cascading location dropdowns ──────────────────────────────────────────
-    function loadProvinces() {
-        fetch('/api/locations/provinces')
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('province');
-                select.innerHTML = '<option value="">Select province...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            })
-            .catch(error => console.error('Error loading provinces:', error));
-    }
-
-    function loadDistricts() {
-        const provinceId = document.getElementById('province').value;
-        if (!provinceId) {
-            resetSelects(['district', 'sector', 'cell', 'village']);
-            return;
-        }
-        fetch(`/api/locations/districts/${provinceId}`)
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('district');
-                select.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                select.disabled = false;
-                resetSelects(['sector', 'cell', 'village']);
-            })
-            .catch(error => console.error('Error loading districts:', error));
-    }
-
-    function loadSectors() {
-        const districtId = document.getElementById('district').value;
-        if (!districtId) {
-            resetSelects(['sector', 'cell', 'village']);
-            return;
-        }
-        fetch(`/api/locations/sectors/${districtId}`)
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('sector');
-                select.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                select.disabled = false;
-                resetSelects(['cell', 'village']);
-            })
-            .catch(error => console.error('Error loading sectors:', error));
-    }
-
-    function loadCells() {
-        const sectorId = document.getElementById('sector').value;
-        if (!sectorId) {
-            resetSelects(['cell', 'village']);
-            return;
-        }
-        fetch(`/api/locations/cells/${sectorId}`)
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('cell');
-                select.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                select.disabled = false;
-                resetSelects(['village']);
-            })
-            .catch(error => console.error('Error loading cells:', error));
-    }
-
-    function loadVillages() {
-        const cellId = document.getElementById('cell').value;
-        if (!cellId) {
-            resetSelects(['village']);
-            return;
-        }
-        fetch(`/api/locations/villages/${cellId}`)
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('village');
-                select.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                select.disabled = false;
-            })
-            .catch(error => console.error('Error loading villages:', error));
-    }
-
-    function resetSelects(selectIds) {
-        selectIds.forEach(id => {
-            const select = document.getElementById(id);
-            select.innerHTML = `<option value="">Select ${id}...</option>`;
-            select.disabled = true;
-        });
-    }
-
-    <!-- PURPOSE: Handles the per-category tag suggestion logic entirely in the     -->
-<!-- browser. When the user changes the category dropdown, it calls the         -->
-<!-- /livestock/api/suggest-tag endpoint and updates the hint elements.         -->
-<!-- The DOMContentLoaded block re-triggers the suggestion if the form          -->
-<!-- re-renders after a validation error (category is already pre-selected).    -->
-
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TAG NUMBER SUGGESTION
+    // ═══════════════════════════════════════════════════════════════════════════
     function fetchTagSuggestion(categoryId) {
-        const pill      = document.getElementById('suggestedTagPill');
-        const lastInfo  = document.getElementById('lastTagInfo');
-        const noTags    = document.getElementById('noTagsYet');
-        const tagInput  = document.getElementById('tagNumber');
+        const pill     = document.getElementById('suggestedTagPill');
+        const lastInfo = document.getElementById('lastTagInfo');
+        const noTags   = document.getElementById('noTagsYet');
+        const tagInput = document.getElementById('tagNumber');
 
-        // Hide all hint elements while the fetch is in progress
-        pill.style.display    = 'none';
+        pill.style.display     = 'none';
         lastInfo.style.display = 'none';
-        noTags.style.display  = 'none';
+        noTags.style.display   = 'none';
 
-        // Do nothing if no category is selected yet
         if (!categoryId) return;
 
-        // Call the per-category API endpoint added in LivestockController.java
         fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-
-                // Always show the last tag for context ("Last in this category: GTS001000005")
                 document.getElementById('lastTagValue').textContent = data.lastTag;
                 lastInfo.style.display = 'block';
 
                 if (data.suggestedTag) {
-                    // Category has existing animals — show the next tag pill
                     document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
-                    // Store the value in data-tag so onclick can read it safely
-                    // (avoids Thymeleaf's security restriction on strings in event handlers)
                     pill.setAttribute('data-tag', data.suggestedTag);
                     pill.style.display = 'inline-flex';
-                    // Update the placeholder to match the expected format for this category
                     tagInput.placeholder = data.suggestedTag;
                 } else {
-                    // Category has no animals yet — prompt user to enter the first tag
                     noTags.style.display = 'block';
                     tagInput.placeholder = 'Enter first tag for this category...';
                 }
             })
-            .catch(() => {
-                // Silently fail — just reset the placeholder
-                tagInput.placeholder = 'Enter tag number...';
+            .catch(() => { tagInput.placeholder = 'Enter tag number...'; });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CASCADING LOCATION DROPDOWNS
+    // ═══════════════════════════════════════════════════════════════════════════
+    function loadProvinces() {
+        fetch('/api/locations/provinces')
+            .then(r => r.json())
+            .then(data => {
+                const select = document.getElementById('province');
+                select.innerHTML = '<option value="">Select province...</option>';
+                data.forEach(item => { select.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            })
+            .catch(err => console.error('Error loading provinces:', err));
+    }
+
+    function loadDistricts() {
+        const id = document.getElementById('province').value;
+        if (!id) { resetSelects(['district','sector','cell','village']); return; }
+        fetch('/api/locations/districts/' + id)
+            .then(r => r.json())
+            .then(data => {
+                const s = document.getElementById('district');
+                s.innerHTML = '<option value="">Select district...</option>';
+                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                s.disabled = false;
+                resetSelects(['sector','cell','village']);
             });
     }
 
-    // When the page loads, check if a category is already selected.
-    // This happens when the form re-renders after a validation error —
-    // the category dropdown keeps its value but the JS hints need to be rebuilt.
-    document.addEventListener('DOMContentLoaded', function () {
-        const select = document.getElementById('livestockCategoryIdValue');
-        if (select && select.value) {
-            fetchTagSuggestion(select.value);
-        }
-    });
+    function loadSectors() {
+        const id = document.getElementById('district').value;
+        if (!id) { resetSelects(['sector','cell','village']); return; }
+        fetch('/api/locations/sectors/' + id)
+            .then(r => r.json())
+            .then(data => {
+                const s = document.getElementById('sector');
+                s.innerHTML = '<option value="">Select sector...</option>';
+                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                s.disabled = false;
+                resetSelects(['cell','village']);
+            });
+    }
 
+    function loadCells() {
+        const id = document.getElementById('sector').value;
+        if (!id) { resetSelects(['cell','village']); return; }
+        fetch('/api/locations/cells/' + id)
+            .then(r => r.json())
+            .then(data => {
+                const s = document.getElementById('cell');
+                s.innerHTML = '<option value="">Select cell...</option>';
+                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                s.disabled = false;
+                resetSelects(['village']);
+            });
+    }
+
+    function loadVillages() {
+        const id = document.getElementById('cell').value;
+        if (!id) { resetSelects(['village']); return; }
+        fetch('/api/locations/villages/' + id)
+            .then(r => r.json())
+            .then(data => {
+                const s = document.getElementById('village');
+                s.innerHTML = '<option value="">Select village...</option>';
+                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                s.disabled = false;
+            });
+    }
+
+    function resetSelects(ids) {
+        ids.forEach(id => {
+            const s = document.getElementById(id);
+            s.innerHTML = `<option value="">Select ${id}...</option>`;
+            s.disabled = true;
+        });
+    }
 </script>
 </body>
 </html>

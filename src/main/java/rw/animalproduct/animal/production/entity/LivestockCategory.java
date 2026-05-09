@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 
-import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "livestock_categories")
+@Table(name = "livestock_categories",
+        indexes = {
+                @Index(name = "idx_category_code", columnList = "code"),
+                @Index(name = "idx_category_name", columnList = "name")
+        })
 public class LivestockCategory {
 
     @Id
@@ -16,95 +19,77 @@ public class LivestockCategory {
     private UUID id;
 
     @NotEmpty(message = "Category code is required")
-    @Size(min = 1, max = 20, message = "Category code must be between 1 and 20 characters")
-    @Column(name = "code", unique = true, nullable = false)
+    @Size(min = 1, max = 20, message = "Code must be 1–20 characters")
+    @Column(name = "code", unique = true, nullable = false, length = 20)
     private String code;
 
     @NotEmpty(message = "Category name is required")
-    @Size(min = 2, max = 100, message = "Category name must be between 2 and 100 characters")
-    @Column(name = "name", nullable = false)
+    @Size(min = 2, max = 100, message = "Name must be 2–100 characters")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
+    /**
+     * Minimum months required between breeding date and birth date.
+     * Used to validate:
+     *   1. Whether a birth can be recorded (gestation complete check)
+     *   2. Whether a new breeding can be recorded (interval since last birth)
+     *   3. Whether a new breeding can be recorded (too soon since last breeding)
+     *
+     * From your DB: Goats = 5, Pigs = 4
+     */
     @Column(name = "gestation_period_months")
     private Integer gestationPeriodMonths;
+
+    /**
+     * Optional: typical min age in months before first breeding.
+     * Used in ready-to-breed eligibility checks.
+     */
+    @Column(name = "min_breeding_age_months")
+    private Integer minBreedingAgeMonths;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "is_deleted")
+    @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted = false;
 
-    @OneToMany(mappedBy = "livestockCategory", cascade = CascadeType.ALL)
-    private List<Livestock> livestockList;
+    // NOTE: @OneToMany to Livestock intentionally removed.
+    // Loading a category was loading the entire livestock table.
+    // Use LivestockRepository.findByLivestockCategoryId() instead.
 
-    // Constructors
-    public LivestockCategory() {
-    }
+    public LivestockCategory() {}
 
-    // Getters and Setters
-    public UUID getId() {
-        return id;
-    }
+    // ── Getters & Setters ─────────────────────────────────────────────────────
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public String getCode() {
-        return code;
-    }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
-    public void setCode(String code) {
-        this.code = code;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getGestationPeriodMonths() {
-        return gestationPeriodMonths;
-    }
-
+    public Integer getGestationPeriodMonths() { return gestationPeriodMonths; }
     public void setGestationPeriodMonths(Integer gestationPeriodMonths) {
         this.gestationPeriodMonths = gestationPeriodMonths;
     }
 
-    public String getDescription() {
-        return description;
+    public Integer getMinBreedingAgeMonths() { return minBreedingAgeMonths; }
+    public void setMinBreedingAgeMonths(Integer minBreedingAgeMonths) {
+        this.minBreedingAgeMonths = minBreedingAgeMonths;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
-    public List<Livestock> getLivestockList() {
-        return livestockList;
-    }
-
-    public void setLivestockList(List<Livestock> livestockList) {
-        this.livestockList = livestockList;
-    }
+    public Boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 
     @Override
     public String toString() {
-        return "LivestockCategory{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", code='" + code + '\'' +
-                ", gestationPeriodMonths=" + gestationPeriodMonths +
-                '}';
+        return "LivestockCategory{id=" + id + ", name='" + name
+                + "', code='" + code
+                + "', gestationMonths=" + gestationPeriodMonths + "}";
     }
 }

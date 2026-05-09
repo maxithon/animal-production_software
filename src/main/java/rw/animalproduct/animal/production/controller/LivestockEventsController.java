@@ -329,7 +329,7 @@ public class LivestockEventsController {
         // Pre-populate transient ID fields for the form
         if (t.getLivestock()   != null) t.setLivestockIdValue(t.getLivestock().getId().toString());
         if (t.getMedication()  != null) t.setMedicationIdValue(t.getMedication().getId().toString());
-        if (t.getVeterinarian() != null) t.setVeterinarianIdValue(t.getVeterinarian().getId().toString()); // ← NEW
+        if (t.getVeterinarian() != null) t.setVeterinarianIdValue(t.getVeterinarian().getId().toString());
 
         model.addAttribute("treatment", t);
         addAllLivestockToModel(model);
@@ -458,7 +458,6 @@ public class LivestockEventsController {
             s.setLivestockIdValue(s.getLivestock().getId().toString());
         }
         if (s.getVeterinarian() != null) {
-            // ← NEW: lets the edit template pre-render the vet chip via JS
             s.setVeterinarianIdValue(s.getVeterinarian().getId().toString());
         }
 
@@ -678,7 +677,16 @@ public class LivestockEventsController {
                     .filter(l -> l.getLivestockCategory() != null
                             && l.getLivestockCategory().getId().equals(cat.getId()))
                     .count();
-            categoriesWithCount.add(new CategoryWithCount(cat, count));
+            CategoryWithCount cwc = new CategoryWithCount(cat, count);
+
+            // Fetch and set the livestock list
+            List<Livestock> categoryAnimals = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .collect(Collectors.toList());
+            cwc.setLivestockList(categoryAnimals);
+
+            categoriesWithCount.add(cwc);
         }
 
         model.addAttribute("categories",       categoriesWithCount);
@@ -703,7 +711,16 @@ public class LivestockEventsController {
                     .filter(l -> l.getLivestockCategory() != null
                             && l.getLivestockCategory().getId().equals(cat.getId()))
                     .count();
-            categoriesWithCount.add(new CategoryWithCount(cat, count));
+            CategoryWithCount cwc = new CategoryWithCount(cat, count);
+
+            // Fetch and set the livestock list for each category
+            List<Livestock> categoryAnimals = livestockRepository.findAll().stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .collect(Collectors.toList());
+            cwc.setLivestockList(categoryAnimals);
+
+            categoriesWithCount.add(cwc);
         }
 
         LivestockCategory selectedCategory = allCategories.stream()
@@ -875,20 +892,26 @@ public class LivestockEventsController {
         public List<Livestock> getLivestockList() { return livestockList; }
     }
 
+    // FIXED: CategoryWithCount class - removed dependency on category.getLivestockList()
     public static class CategoryWithCount {
         private final LivestockCategory category;
         private final long livestockCount;
+        private List<Livestock> livestockList;
 
         public CategoryWithCount(LivestockCategory category, long livestockCount) {
             this.category       = category;
             this.livestockCount = livestockCount;
+            this.livestockList  = new ArrayList<>();
         }
 
         public UUID getId()                   { return category.getId(); }
         public String getName()               { return category.getName(); }
         public String getCode()               { return category.getCode(); }
         public long getLivestockCount()       { return livestockCount; }
-        public List<Livestock> getLivestock() { return category.getLivestockList(); }
+        public List<Livestock> getLivestock() { return livestockList; }
+        public void setLivestockList(List<Livestock> livestockList) {
+            this.livestockList = livestockList;
+        }
     }
 
     // =========================================================================
@@ -969,6 +992,7 @@ public class LivestockEventsController {
 
         return "livestock-inventory-report";
     }
+
     @GetMapping("/movement-report")
     public String movementReport(
             @RequestParam(value = "from", required = false) String fromStr,
@@ -1447,7 +1471,6 @@ public class LivestockEventsController {
         categoryResult.put("sickRecords",     sickRecordMaps);
         categoryResult.put("treatments",      treatmentMaps);
         categoryResult.put("diseaseBreakdown", diseaseBreakdown);
-
 
         model.addAttribute("categoryResult", categoryResult);
         return "health-report-by-category";
@@ -1928,6 +1951,7 @@ public class LivestockEventsController {
         public String getDescription() { return description; }
         public BigDecimal getAmount()  { return amount; }
     }
+
     // AJAX endpoint for buyer search
     @GetMapping("/buyers/search")
     @ResponseBody
@@ -1981,5 +2005,4 @@ public class LivestockEventsController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
-
 }

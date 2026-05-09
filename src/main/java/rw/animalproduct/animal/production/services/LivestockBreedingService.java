@@ -15,43 +15,41 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class LivestockBreedingService {
 
     private final LivestockBreedingRepository breedingRepository;
     private final VeterinarianRepository      veterinarianRepository;
-    private final LivestockRepository         livestockRepository;  // ADDED
-    private final LifecycleEmailService       emailService;        // ADDED
+    private final LivestockRepository         livestockRepository;
+    private final LifecycleEmailService       emailService;
 
     public LivestockBreedingService(LivestockBreedingRepository breedingRepository,
                                     VeterinarianRepository veterinarianRepository,
                                     LivestockRepository livestockRepository,
                                     LifecycleEmailService emailService) {
-        this.breedingRepository = breedingRepository;
+        this.breedingRepository     = breedingRepository;
         this.veterinarianRepository = veterinarianRepository;
-        this.livestockRepository = livestockRepository;
-        this.emailService = emailService;
+        this.livestockRepository    = livestockRepository;
+        this.emailService           = emailService;
     }
 
-    // ── CRUD WITH EMAIL NOTIFICATIONS ─────────────────────────────────────────
+    // ── READ ──────────────────────────────────────────────────────────────────
 
     public List<LivestockBreeding> getAll() {
-        return breedingRepository.findAll().stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
-                .collect(Collectors.toList());
+        return breedingRepository.findByIsDeletedFalse(Pageable.unpaged()).getContent();
     }
 
     public Page<LivestockBreeding> getPaginated(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return breedingRepository.findByIsDeletedFalse(pageable);
+        return breedingRepository.findByIsDeletedFalse(PageRequest.of(page, size));
     }
 
     public Optional<LivestockBreeding> getById(UUID id) {
         return breedingRepository.findById(id)
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()));
     }
+
+    // ── CREATE ────────────────────────────────────────────────────────────────
 
     @Transactional
     public LivestockBreeding addNew(LivestockBreeding breeding) {
@@ -60,12 +58,113 @@ public class LivestockBreedingService {
             breeding.setStatus(LivestockBreeding.STATUS_PENDING);
         }
         LivestockBreeding saved = breedingRepository.save(breeding);
-
-        // Send email notification
         emailService.sendBreedingStartedNotification(saved);
+        return saved;
+    }
+
+    // ── CREATE FOR PURCHASED PREGNANT ANIMAL ─────────────────────────────────
+
+    /**
+     * Called automatically when a PURCHASED/DONATED/TRANSFERRED animal is
+     * registered with is_pregnant = true.
+     *
+     * Creates a CONFIRMED_PREGNANT breeding record with method = PURCHASE_PREGNANT
+     * so the animal appears in pregnancy tracking, due-date alerts, and all
+     * breeding dashboards — even though no on-farm breeding event was recorded.
+     *
+     * IMPORTANT: The database check constraint on livestock_breeding.breeding_method
+     * must include 'PURCHASE_PREGNANT'. Run this migration before deploying:
+     *
+     *   ALTER TABLE livestock_breeding
+     *   DROP CONSTRAINT livestock_breeding_breeding_method_check;
+     *
+     *   ALTER TABLE livestock_breeding
+     *   ADD CONSTRAINT livestock_breeding_breeding_method_check
+     *   CHECK (breeding_method IN (
+     *       'NATURAL','ARTIFICIAL_INSEMINATION','EMBRYO_TRANSFER','PURCHASE_PREGNANT'
+     *   ));
+     *
+     * @param animal          The newly registered pregnant animal
+     * @param conceptionDate  The conception date entered during registration (may be null)
+     * @param expectedDueDate The expected due date (may be null — estimated from gestation)
+     */
+    @Transactional
+    public LivestockBreeding createForPurchasedPregnantAnimal(Livestock animal,
+                                                              LocalDate conceptionDate,
+                                                              LocalDate expectedDueDate) {
+
+        // Guard: only for non-BIRTH, female animals
+        if (!isEligibleForPurchasePregnantRecord(animal)) {
+            throw new IllegalArgumentException(
+                    "createForPurchasedPregnantAnimal() called for ineligible animal: "
+                            + animal.getTagNumber()
+                            + " (must be female, non-BIRTH, and pregnant)");
+        }
+
+        LivestockBreeding breeding = new LivestockBreeding();
+        breeding.setLivestock(animal);
+        breeding.setIsDeleted(false);
+        breeding.setStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT);
+
+        // Use conception date as the "breeding date" proxy.
+        // If unknown, fall back to: date received → today
+        LocalDate breedingDateProxy = conceptionDate;
+        if (breedingDateProxy == null) {
+            breedingDateProxy = animal.getDateReceived() != null
+                    ? animal.getDateReceived()
+                    : LocalDate.now();
+        }
+        breeding.setBreedingDate(breedingDateProxy);
+
+        // Mark as PURCHASE_PREGNANT so it's distinguishable in the UI
+        // The DB constraint MUST allow this value — see migration SQL above.
+        breeding.setBreedingMethod(LivestockBreeding.METHOD_PURCHASE_PREGNANT);
+
+        // Resolve due date: use provided value, or estimate from category gestation
+        LocalDate dueDate = expectedDueDate;
+        if (dueDate == null && animal.getLivestockCategory() != null
+                && animal.getLivestockCategory().getGestationPeriodMonths() != null) {
+            dueDate = breedingDateProxy.plusMonths(
+                    animal.getLivestockCategory().getGestationPeriodMonths());
+        }
+        breeding.setExpectedDueDate(dueDate);
+
+        // Pregnancy check: schedule 7 days from today (vet should verify)
+        breeding.setExpectedPregnancyCheckDate(LocalDate.now().plusDays(7));
+
+        breeding.setNotes(
+                "Animal purchased/received while already pregnant. "
+                        + "Pregnancy tracking started on registration date: "
+                        + LocalDate.now() + "."
+        );
+
+        LivestockBreeding saved = breedingRepository.save(breeding);
+
+        // ── Sync pregnancy fields back onto the livestock record ──────────────
+        animal.setStatus(Livestock.STATUS_PREGNANT);
+        animal.setIsPregnant(true);
+        animal.setPregnancyStatus("PREGNANT");
+        animal.setConceptionDate(conceptionDate);
+        animal.setExpectedDueDate(dueDate);
+        if (conceptionDate != null) {
+            animal.setLastBreedingDate(conceptionDate);
+        }
+        livestockRepository.save(animal);
 
         return saved;
     }
+
+    /**
+     * Returns true if the animal qualifies for a PURCHASE_PREGNANT breeding record.
+     * Must be: female, not born on this farm, and currently pregnant.
+     */
+    private boolean isEligibleForPurchasePregnantRecord(Livestock animal) {
+        return "FEMALE".equalsIgnoreCase(animal.getGender())
+                && Boolean.TRUE.equals(animal.getIsPregnant())
+                && !Livestock.ACQ_BIRTH.equals(animal.getAcquisitionMethod());
+    }
+
+    // ── UPDATE ────────────────────────────────────────────────────────────────
 
     @Transactional
     public LivestockBreeding update(UUID id, LivestockBreeding updated) {
@@ -86,23 +185,34 @@ public class LivestockBreedingService {
 
         LivestockBreeding saved = breedingRepository.save(existing);
 
-        // Send notification when status changes to CONFIRMED_PREGNANT
-        if (!oldStatus.equals(saved.getStatus()) &&
-                LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(saved.getStatus())) {
+        // When status transitions to CONFIRMED_PREGNANT, update the animal record
+        if (!saved.getStatus().equals(oldStatus)
+                && LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(saved.getStatus())) {
+            confirmPregnancyOnAnimal(saved);
             emailService.sendPregnancyConfirmedNotification(saved);
+        }
 
-            // Update the livestock status
-            if (saved.getLivestock() != null) {
-                Livestock animal = saved.getLivestock();
-                animal.setStatus(Livestock.STATUS_PREGNANT);
-                animal.setIsPregnant(true);
-                animal.setExpectedDueDate(saved.getExpectedDueDate());
-                livestockRepository.save(animal);
-            }
+        // When status transitions to FAILED or COMPLETED, reset pregnancy flags
+        if (!saved.getStatus().equals(oldStatus)
+                && (LivestockBreeding.STATUS_FAILED.equals(saved.getStatus())
+                || LivestockBreeding.STATUS_COMPLETED.equals(saved.getStatus()))) {
+            resetPregnancyOnAnimal(saved.getLivestock());
         }
 
         return saved;
     }
+
+    // ── DELETE (soft) ─────────────────────────────────────────────────────────
+
+    @Transactional
+    public void delete(UUID id) {
+        LivestockBreeding b = breedingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Breeding record not found: " + id));
+        b.setIsDeleted(true);
+        breedingRepository.save(b);
+    }
+
+    // ── CONFIRM PREGNANCY ─────────────────────────────────────────────────────
 
     @Transactional
     public LivestockBreeding confirmPregnancy(UUID id, LocalDate expectedDueDate) {
@@ -113,71 +223,104 @@ public class LivestockBreedingService {
         breeding.setExpectedDueDate(expectedDueDate);
         LivestockBreeding saved = breedingRepository.save(breeding);
 
-        // Send pregnancy confirmation email
+        confirmPregnancyOnAnimal(saved);
         emailService.sendPregnancyConfirmedNotification(saved);
-
-        // Update the livestock
-        if (saved.getLivestock() != null) {
-            Livestock animal = saved.getLivestock();
-            animal.setStatus(Livestock.STATUS_PREGNANT);
-            animal.setIsPregnant(true);
-            animal.setExpectedDueDate(expectedDueDate);
-            livestockRepository.save(animal);
-        }
 
         return saved;
     }
 
+    // ── AUTO-COMPLETE ON BIRTH ────────────────────────────────────────────────
+
+    /**
+     * Called automatically by LivestockBirthService when a birth is recorded.
+     *
+     * Finds the most recent CONFIRMED_PREGNANT or PENDING breeding record
+     * for the mother, marks it COMPLETED, and resets the animal's pregnancy flags.
+     */
     @Transactional
-    public void delete(UUID id) {
-        LivestockBreeding b = breedingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Breeding record not found: " + id));
-        b.setIsDeleted(true);
-        breedingRepository.save(b);
+    public void completeBreedingOnBirth(UUID femaleLivestockId, LocalDate birthDate) {
+
+        Optional<LivestockBreeding> activeOpt =
+                breedingRepository.findMostRecentActiveBreeding(femaleLivestockId);
+
+        activeOpt.ifPresent(breeding -> {
+            breeding.setStatus(LivestockBreeding.STATUS_COMPLETED);
+            String autoNote = "[Auto-completed] Birth recorded on: " + birthDate;
+            breeding.setNotes(breeding.getNotes() == null || breeding.getNotes().isBlank()
+                    ? autoNote
+                    : breeding.getNotes() + "\n" + autoNote);
+            breedingRepository.save(breeding);
+        });
+
+        // Reset animal pregnancy flags regardless of whether a breeding was found
+        livestockRepository.findById(femaleLivestockId).ifPresent(animal -> {
+            animal.setIsPregnant(false);
+            animal.setPregnancyStatus("NOT_PREGNANT");
+            animal.setStatus(Livestock.STATUS_ACTIVE);
+            animal.setLastBirthDate(birthDate);
+            animal.setExpectedDueDate(null);
+            livestockRepository.save(animal);
+        });
     }
 
-    // ── DASHBOARD HELPERS ─────────────────────────────────────────────────────
+    // ── DASHBOARD / REPORT HELPERS ────────────────────────────────────────────
 
     public List<LivestockBreeding> getDueForPregnancyCheck() {
-        LocalDate today = LocalDate.now();
-        return getAll().stream()
-                .filter(b -> LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
-                .filter(b -> b.getExpectedPregnancyCheckDate() != null
-                        && b.getExpectedPregnancyCheckDate().isBefore(today))
-                .collect(Collectors.toList());
+        return breedingRepository.findOverduePregnancyChecks(LocalDate.now());
     }
 
     public List<LivestockBreeding> getApproachingDueDate() {
         LocalDate today = LocalDate.now();
-        LocalDate in30  = today.plusDays(30);
-        return getAll().stream()
-                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus()))
-                .filter(b -> b.getExpectedDueDate() != null
-                        && !b.getExpectedDueDate().isBefore(today)
-                        && !b.getExpectedDueDate().isAfter(in30))
-                .collect(Collectors.toList());
+        return breedingRepository.findApproachingDueDate(today, today.plusDays(30));
+    }
+
+    public List<LivestockBreeding> getOverduePregnancies() {
+        return breedingRepository.findOverduePregnancies(LocalDate.now());
+    }
+
+    public List<LivestockBreeding> getAllActivePregnancies() {
+        return breedingRepository.findAllActivePregnancies();
     }
 
     public List<LivestockBreeding> getRecentBreedings() {
-        return getAll().stream()
-                .filter(b -> b.getBreedingDate() != null)
-                .sorted((a, b) -> b.getBreedingDate().compareTo(a.getBreedingDate()))
-                .limit(10)
-                .collect(Collectors.toList());
+        return breedingRepository.findRecentBreedings(10);
     }
 
     public double getSuccessRate() {
-        List<LivestockBreeding> all = getAll();
-        if (all.isEmpty()) return 0.0;
-        long confirmed = all.stream()
-                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus()))
-                .count();
-        return (confirmed * 100.0) / all.size();
+        long total = breedingRepository.countByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_PENDING)
+                + breedingRepository.countByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
+                + breedingRepository.countByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_FAILED)
+                + breedingRepository.countByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_COMPLETED);
+        if (total == 0) return 0.0;
+        long confirmed = breedingRepository
+                .countByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT);
+        return (confirmed * 100.0) / total;
     }
 
     public long countByStatus(String status) {
-        return getAll().stream()
-                .filter(b -> status.equals(b.getStatus()))
-                .count();
+        return breedingRepository.countByStatusAndIsDeletedFalse(status);
+    }
+
+    // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
+
+    private void confirmPregnancyOnAnimal(LivestockBreeding saved) {
+        if (saved.getLivestock() == null) return;
+        Livestock animal = saved.getLivestock();
+        animal.setStatus(Livestock.STATUS_PREGNANT);
+        animal.setIsPregnant(true);
+        animal.setPregnancyStatus("PREGNANT");
+        animal.setExpectedDueDate(saved.getExpectedDueDate());
+        livestockRepository.save(animal);
+    }
+
+    private void resetPregnancyOnAnimal(Livestock animal) {
+        if (animal == null) return;
+        animal.setIsPregnant(false);
+        animal.setPregnancyStatus("NOT_PREGNANT");
+        if (Livestock.STATUS_PREGNANT.equals(animal.getStatus())) {
+            animal.setStatus(Livestock.STATUS_ACTIVE);
+        }
+        animal.setExpectedDueDate(null);
+        livestockRepository.save(animal);
     }
 }

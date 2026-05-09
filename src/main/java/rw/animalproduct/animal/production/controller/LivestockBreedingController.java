@@ -12,12 +12,8 @@ import rw.animalproduct.animal.production.dto.MaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.dto.FemaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
-import rw.animalproduct.animal.production.repository.LivestockRepository;
-import rw.animalproduct.animal.production.repository.VeterinarianRepository;
-import rw.animalproduct.animal.production.services.LivestockBreedingService;
-import rw.animalproduct.animal.production.services.MalesReadyToBreedService;
-import rw.animalproduct.animal.production.services.VeterinarianService;
-import rw.animalproduct.animal.production.services.FemalesReadyToBreedService;
+import rw.animalproduct.animal.production.repository.*;
+import rw.animalproduct.animal.production.services.*;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -28,11 +24,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/livestock")
 public class LivestockBreedingController {
 
-    private final LivestockBreedingService  breedingService;
-    private final VeterinarianService       veterinarianService;
-    private final LivestockRepository       livestockRepository;
-    private final VeterinarianRepository    veterinarianRepository;
-    private final MalesReadyToBreedService  malesReadyToBreedService;
+    private final LivestockBreedingService   breedingService;
+    private final VeterinarianService        veterinarianService;
+    private final LivestockRepository        livestockRepository;
+    private final VeterinarianRepository     veterinarianRepository;
+    private final MalesReadyToBreedService   malesReadyToBreedService;
     private final FemalesReadyToBreedService femalesReadyToBreedService;
 
     public LivestockBreedingController(LivestockBreedingService breedingService,
@@ -40,7 +36,8 @@ public class LivestockBreedingController {
                                        LivestockRepository livestockRepository,
                                        VeterinarianRepository veterinarianRepository,
                                        MalesReadyToBreedService malesReadyToBreedService,
-                                       FemalesReadyToBreedService femalesReadyToBreedService) {
+                                       FemalesReadyToBreedService femalesReadyToBreedService
+                                       ) {
         this.breedingService          = breedingService;
         this.veterinarianService      = veterinarianService;
         this.livestockRepository      = livestockRepository;
@@ -49,11 +46,13 @@ public class LivestockBreedingController {
         this.femalesReadyToBreedService = femalesReadyToBreedService;
     }
 
+
+
+
     // ── BREEDING MANAGEMENT PAGE ───────────────────────────────────────────────
 
     @GetMapping("/lifecycle/breeding-management")
     public String breedingManagement(Model model) {
-        // Get all the DTOs - filter out nulls
         List<MaleReadyToBreedDTO> breedingMales = malesReadyToBreedService.getAllReadyToBreed()
                 .stream()
                 .filter(Objects::nonNull)
@@ -64,7 +63,6 @@ public class LivestockBreedingController {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // Group males by category
         Map<String, List<MaleReadyToBreedDTO>> groupedMales = new LinkedHashMap<>();
         for (MaleReadyToBreedDTO male : breedingMales) {
             if (male != null) {
@@ -73,7 +71,6 @@ public class LivestockBreedingController {
             }
         }
 
-        // Group females by category
         Map<String, List<FemaleReadyToBreedDTO>> groupedFemales = new LinkedHashMap<>();
         for (FemaleReadyToBreedDTO female : readyFemales) {
             if (female != null) {
@@ -82,17 +79,15 @@ public class LivestockBreedingController {
             }
         }
 
-        // Calculate male statistics
         int maleTotal = breedingMales.size();
         long maleNeverBred = breedingMales.stream()
                 .filter(m -> m.getTotalBreedings() == null || m.getTotalBreedings() == 0)
                 .count();
         double maleAvgSuccessRate = breedingMales.stream()
-                .mapToDouble(m -> m.getSuccessRate())
+                .mapToDouble(MaleReadyToBreedDTO::getSuccessRate)
                 .average()
                 .orElse(0.0);
 
-        // Get pregnant animals
         List<PregnantAnimalDTO> pregnantAnimals = getPregnantAnimals();
         Map<String, List<PregnantAnimalDTO>> groupedPregnant = new LinkedHashMap<>();
         for (PregnantAnimalDTO animal : pregnantAnimals) {
@@ -102,39 +97,31 @@ public class LivestockBreedingController {
             }
         }
 
-        // Get active breedings (pending confirmation)
         List<LivestockBreeding> activeBreedings = breedingService.getAll().stream()
                 .filter(b -> b != null && LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
                 .collect(Collectors.toList());
 
-        // Get pending pregnancy checks
         List<LivestockBreeding> pendingPregnancyCheck = breedingService.getDueForPregnancyCheck();
 
-        // Get failed breedings
         List<LivestockBreeding> failedBreedings = breedingService.getAll().stream()
                 .filter(b -> b != null && LivestockBreeding.STATUS_FAILED.equals(b.getStatus()))
                 .collect(Collectors.toList());
 
-        // Add all attributes to model
-        model.addAttribute("breedingMales", breedingMales);
-        model.addAttribute("groupedMales", groupedMales);
-        model.addAttribute("maleTotal", maleTotal);
-        model.addAttribute("maleNeverBred", maleNeverBred);
-        model.addAttribute("maleAvgSuccessRate", maleAvgSuccessRate);
-
-        model.addAttribute("readyFemales", readyFemales);
-        model.addAttribute("groupedFemales", groupedFemales);
-
-        model.addAttribute("pregnantAnimals", pregnantAnimals);
-        model.addAttribute("groupedPregnant", groupedPregnant);
-
-        model.addAttribute("activeBreedings", activeBreedings);
-        model.addAttribute("pendingPregnancyCheck", pendingPregnancyCheck);
-        model.addAttribute("failedBreedings", failedBreedings);
-
-        model.addAttribute("successRate", String.format("%.1f", breedingService.getSuccessRate()));
-        model.addAttribute("avgDaysToConception", calculateAvgDaysToConception());
-        model.addAttribute("today", LocalDate.now());
+        model.addAttribute("breedingMales",         breedingMales);
+        model.addAttribute("groupedMales",           groupedMales);
+        model.addAttribute("maleTotal",              maleTotal);
+        model.addAttribute("maleNeverBred",          maleNeverBred);
+        model.addAttribute("maleAvgSuccessRate",     maleAvgSuccessRate);
+        model.addAttribute("readyFemales",           readyFemales);
+        model.addAttribute("groupedFemales",         groupedFemales);
+        model.addAttribute("pregnantAnimals",        pregnantAnimals);
+        model.addAttribute("groupedPregnant",        groupedPregnant);
+        model.addAttribute("activeBreedings",        activeBreedings);
+        model.addAttribute("pendingPregnancyCheck",  pendingPregnancyCheck);
+        model.addAttribute("failedBreedings",        failedBreedings);
+        model.addAttribute("successRate",            String.format("%.1f", breedingService.getSuccessRate()));
+        model.addAttribute("avgDaysToConception",    calculateAvgDaysToConception());
+        model.addAttribute("today",                  LocalDate.now());
 
         return "livestock-breeding-management";
     }
@@ -143,11 +130,7 @@ public class LivestockBreedingController {
         List<LivestockBreeding> confirmed = breedingService.getAll().stream()
                 .filter(b -> b != null && LivestockBreeding.STATUS_CONFIRMED.equals(b.getStatus()))
                 .collect(Collectors.toList());
-
         if (confirmed.isEmpty()) return 0.0;
-
-        // Calculate actual average days from breeding date to expected due date minus gestation
-        // This is a placeholder - implement your actual calculation logic
         return 45.0;
     }
 
@@ -194,19 +177,16 @@ public class LivestockBreedingController {
     // ── LIST ──────────────────────────────────────────────────────────────────
 
     @GetMapping("/breeding/list")
-    public String list(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Model model) {
+    public String list(@RequestParam(defaultValue = "0") int page,
+                       @RequestParam(defaultValue = "10") int size,
+                       Model model) {
 
         Page<LivestockBreeding> breedingPage = breedingService.getPaginated(page, size);
-
-        model.addAttribute("breedings", breedingPage.getContent());
-        model.addAttribute("currentPage", breedingPage.getNumber());
-        model.addAttribute("totalPages", breedingPage.getTotalPages());
-        model.addAttribute("totalItems", breedingPage.getTotalElements());
-        model.addAttribute("pageSize", breedingPage.getSize());
-
+        model.addAttribute("breedings",    breedingPage.getContent());
+        model.addAttribute("currentPage",  breedingPage.getNumber());
+        model.addAttribute("totalPages",   breedingPage.getTotalPages());
+        model.addAttribute("totalItems",   breedingPage.getTotalElements());
+        model.addAttribute("pageSize",     breedingPage.getSize());
         return "livestock-breeding-list";
     }
 
@@ -223,6 +203,7 @@ public class LivestockBreedingController {
     public String save(@Valid @ModelAttribute("breeding") LivestockBreeding breeding,
                        BindingResult result, Model model, RedirectAttributes ra) {
 
+        // 1. Female animal is required
         if (breeding.getLivestockIdValue() == null || breeding.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "required", "Female livestock is required");
         }
@@ -238,20 +219,34 @@ public class LivestockBreedingController {
             }
         }
 
+        // 2. Resolve the Livestock entity from the transient ID value
         resolveRelations(breeding);
 
         if (breeding.getLivestock() == null) {
-            result.rejectValue("livestockIdValue", "required", "Female livestock is required — please select a valid animal");
+            result.rejectValue("livestockIdValue", "required",
+                    "Female livestock is required — please select a valid animal");
             addLivestockAndVetsToModel(model);
             return "livestock-breeding-form";
         }
 
+        // 3. Must be female
         if (!"FEMALE".equalsIgnoreCase(breeding.getLivestock().getGender())) {
-            result.rejectValue("livestockIdValue", "gender.invalid", "Selected animal is not female");
+            result.rejectValue("livestockIdValue", "gender.invalid",
+                    "Selected animal is not female");
             addLivestockAndVetsToModel(model);
             return "livestock-breeding-form";
         }
 
+        // 4. Check breeding eligibility based on gestation period
+        String eligibilityError = checkBreedingEligibility(
+                breeding.getLivestock(), breeding.getBreedingDate());
+        if (eligibilityError != null) {
+            model.addAttribute("error", eligibilityError);
+            addLivestockAndVetsToModel(model);
+            return "livestock-breeding-form";
+        }
+
+        // 5. Male must be same category for natural breeding
         String method = breeding.getBreedingMethod();
         boolean requiresMale = method == null
                 || LivestockBreeding.METHOD_NATURAL.equalsIgnoreCase(method);
@@ -315,7 +310,8 @@ public class LivestockBreedingController {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id",        male.getId().toString());
             m.put("tagNumber", male.getTagNumber());
-            m.put("category",  male.getLivestockCategory() != null ? male.getLivestockCategory().getName() : "");
+            m.put("category",  male.getLivestockCategory() != null
+                    ? male.getLivestockCategory().getName() : "");
             m.put("eligible",  eligibleIds.contains(male.getId()));
             result.add(m);
         }
@@ -411,7 +407,45 @@ public class LivestockBreedingController {
         return "redirect:/livestock/breeding";
     }
 
-    // ── HELPERS ───────────────────────────────────────────────────────────────
+    // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
+
+    /**
+     * Checks if enough time has passed since the animal's last birth to allow
+     * a new breeding event. Uses the category's gestation_period_months as the
+     * minimum required interval.
+     *
+     * Returns an error message string if not eligible, or null if eligible.
+     */
+    private String checkBreedingEligibility(Livestock female, LocalDate breedingDate) {
+        // Never given birth before — always eligible
+        if (female.getLastBirthDate() == null) return null;
+
+        // Get gestation months from the animal's category
+        int gestationMonths = 0;
+        if (female.getLivestockCategory() != null
+                && female.getLivestockCategory().getGestationPeriodMonths() != null) {
+            gestationMonths = female.getLivestockCategory().getGestationPeriodMonths();
+        }
+
+        // No rule configured for this category — allow
+        if (gestationMonths <= 0) return null;
+
+        LocalDate effectiveBreedingDate = (breedingDate != null) ? breedingDate : LocalDate.now();
+        LocalDate earliestNextBreeding  = female.getLastBirthDate().plusMonths(gestationMonths);
+
+        if (effectiveBreedingDate.isBefore(earliestNextBreeding)) {
+            long daysRemaining = ChronoUnit.DAYS.between(effectiveBreedingDate, earliestNextBreeding);
+            return "Animal " + female.getTagNumber()
+                    + " is not yet eligible for breeding."
+                    + " Last birth: " + female.getLastBirthDate()
+                    + ". Earliest next breeding date: " + earliestNextBreeding
+                    + " (" + daysRemaining + " day(s) remaining)."
+                    + " Category: " + female.getLivestockCategory().getName()
+                    + " — gestation period: " + gestationMonths + " months.";
+        }
+
+        return null;
+    }
 
     private void addLivestockAndVetsToModel(Model model) {
         List<Livestock> all = livestockRepository.findAll().stream()
@@ -505,39 +539,40 @@ public class LivestockBreedingController {
     }
 
     private String buildGestationJson() {
-        return "{" +
-                "\"COW\":283,\"CATTLE\":283,\"DAIRY COW\":283," +
-                "\"GOAT\":150,\"SHEEP\":147," +
-                "\"PIG\":114,\"SOW\":114," +
-                "\"RABBIT\":31," +
-                "\"HORSE\":340,\"MARE\":340," +
-                "\"DONKEY\":365," +
-                "\"DOG\":63,\"CAT\":65," +
-                "\"DEFAULT\":283" +
-                "}";
+        return "{"
+                + "\"COW\":283,\"CATTLE\":283,\"DAIRY COW\":283,"
+                + "\"GOAT\":150,\"SHEEP\":147,"
+                + "\"PIG\":114,\"SOW\":114,"
+                + "\"RABBIT\":31,"
+                + "\"HORSE\":340,\"MARE\":340,"
+                + "\"DONKEY\":365,"
+                + "\"DOG\":63,\"CAT\":65,"
+                + "\"DEFAULT\":283"
+                + "}";
     }
 
-    // Inner DTO class for Pregnant Animals
+    // ── INNER DTO ─────────────────────────────────────────────────────────────
+
     public static class PregnantAnimalDTO {
-        private UUID id;
-        private String tagNumber;
-        private String categoryName;
+        private UUID      id;
+        private String    tagNumber;
+        private String    categoryName;
         private LocalDate expectedDueDate;
-        private Integer daysUntilDue;
+        private Integer   daysUntilDue;
 
-        public UUID getId() { return id; }
-        public void setId(UUID id) { this.id = id; }
+        public UUID      getId()              { return id; }
+        public void      setId(UUID id)       { this.id = id; }
 
-        public String getTagNumber() { return tagNumber; }
-        public void setTagNumber(String tagNumber) { this.tagNumber = tagNumber; }
+        public String    getTagNumber()                   { return tagNumber; }
+        public void      setTagNumber(String tagNumber)   { this.tagNumber = tagNumber; }
 
-        public String getCategoryName() { return categoryName; }
-        public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+        public String    getCategoryName()                    { return categoryName; }
+        public void      setCategoryName(String categoryName) { this.categoryName = categoryName; }
 
-        public LocalDate getExpectedDueDate() { return expectedDueDate; }
-        public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
+        public LocalDate getExpectedDueDate()                       { return expectedDueDate; }
+        public void      setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
 
-        public Integer getDaysUntilDue() { return daysUntilDue; }
-        public void setDaysUntilDue(Integer daysUntilDue) { this.daysUntilDue = daysUntilDue; }
+        public Integer   getDaysUntilDue()                    { return daysUntilDue; }
+        public void      setDaysUntilDue(Integer daysUntilDue) { this.daysUntilDue = daysUntilDue; }
     }
 }

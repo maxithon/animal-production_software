@@ -13,7 +13,7 @@ public class LivestockService {
 
     private final LivestockRepository              livestockRepository;
     private final LivestockCategoryRepository      livestockCategoryRepository;
-    private final BeneficiaryRepository beneficiaryRepository;
+    private final BeneficiaryRepository            beneficiaryRepository;
     private final LocationRepository               locationRepository;
 
     @Autowired
@@ -23,7 +23,7 @@ public class LivestockService {
                             LocationRepository locationRepository) {
         this.livestockRepository          = livestockRepository;
         this.livestockCategoryRepository  = livestockCategoryRepository;
-        this.beneficiaryRepository = beneficiaryRepository;
+        this.beneficiaryRepository        = beneficiaryRepository;
         this.locationRepository           = locationRepository;
     }
 
@@ -40,31 +40,35 @@ public class LivestockService {
     }
 
     public Livestock addNew(Livestock livestock) {
-        // Handle category relationship
-        if (livestock.getLivestockCategoryIdValue() != null) {
-            String categoryIdStr = livestock.getLivestockCategoryIdValue();
+
+        // ── Resolve category relationship ─────────────────────────────────────
+        if (livestock.getLivestockCategoryIdValue() != null
+                && !livestock.getLivestockCategoryIdValue().isBlank()) {
             try {
-                UUID categoryId = UUID.fromString(categoryIdStr);
+                UUID categoryId = UUID.fromString(livestock.getLivestockCategoryIdValue().trim());
                 livestockCategoryRepository.findById(categoryId)
                         .ifPresent(livestock::setLivestockCategory);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid category ID format: " + categoryIdStr);
+                throw new RuntimeException("Invalid category ID format: "
+                        + livestock.getLivestockCategoryIdValue());
             }
         }
 
-        // Handle beneficiary relationship
-        if (livestock.getBeneficiaryIdValue() != null) {
-            String beneficiaryIdStr = livestock.getBeneficiaryIdValue();
+        // ── Resolve beneficiary relationship ──────────────────────────────────
+        if (livestock.getBeneficiaryIdValue() != null
+                && !livestock.getBeneficiaryIdValue().isBlank()) {
             try {
-                UUID beneficiaryId = UUID.fromString(beneficiaryIdStr);
+                UUID beneficiaryId = UUID.fromString(livestock.getBeneficiaryIdValue().trim());
                 beneficiaryRepository.findById(beneficiaryId)
                         .ifPresent(livestock::setBeneficiary);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid beneficiary ID format: " + beneficiaryIdStr);
+                throw new RuntimeException("Invalid beneficiary ID format: "
+                        + livestock.getBeneficiaryIdValue());
             }
         }
 
-        if (livestock.getStatus() == null) {
+        // ── Safe defaults ─────────────────────────────────────────────────────
+        if (livestock.getStatus() == null || livestock.getStatus().isBlank()) {
             livestock.setStatus(Livestock.STATUS_ACTIVE);
         }
         if (livestock.getOffspringCount() == null) {
@@ -73,23 +77,26 @@ public class LivestockService {
         if (livestock.getIsDeleted() == null) {
             livestock.setIsDeleted(false);
         }
-        if (livestock.getPregnancyStatus() == null) {
+        // FIX: ensure isPregnant defaults to false (never null in DB)
+        if (livestock.getIsPregnant() == null) {
+            livestock.setIsPregnant(false);
+        }
+        if (livestock.getPregnancyStatus() == null || livestock.getPregnancyStatus().isBlank()) {
             livestock.setPregnancyStatus("NOT_PREGNANT");
         }
         if (livestock.getDateReceived() == null) {
             livestock.setDateReceived(LocalDate.now());
+        }
+        if (livestock.getIsDraft() == null) {
+            livestock.setIsDraft(false);
         }
 
         return livestockRepository.save(livestock);
     }
 
     public Livestock update(UUID id, Livestock updatedLivestock) {
-        Optional<Livestock> existingOpt = livestockRepository.findById(id);
-        if (existingOpt.isEmpty()) {
-            throw new RuntimeException("Livestock not found with id: " + id);
-        }
-
-        Livestock existing = existingOpt.get();
+        Livestock existing = livestockRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Livestock not found with id: " + id));
 
         existing.setTagNumber(updatedLivestock.getTagNumber());
         existing.setGender(updatedLivestock.getGender());
@@ -107,27 +114,34 @@ public class LivestockService {
         existing.setPhoto(updatedLivestock.getPhoto());
         existing.setSoldPrice(updatedLivestock.getSoldPrice());
 
-        // Update category relationship
-        if (updatedLivestock.getLivestockCategoryIdValue() != null) {
-            String categoryIdStr = updatedLivestock.getLivestockCategoryIdValue();
+        // FIX: keep isPregnant in sync during updates
+        if (updatedLivestock.getIsPregnant() != null) {
+            existing.setIsPregnant(updatedLivestock.getIsPregnant());
+        }
+
+        // ── Update category relationship ──────────────────────────────────────
+        if (updatedLivestock.getLivestockCategoryIdValue() != null
+                && !updatedLivestock.getLivestockCategoryIdValue().isBlank()) {
             try {
-                UUID categoryId = UUID.fromString(categoryIdStr);
+                UUID categoryId = UUID.fromString(updatedLivestock.getLivestockCategoryIdValue().trim());
                 livestockCategoryRepository.findById(categoryId)
                         .ifPresent(existing::setLivestockCategory);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid category ID format: " + categoryIdStr);
+                throw new RuntimeException("Invalid category ID format: "
+                        + updatedLivestock.getLivestockCategoryIdValue());
             }
         }
 
-        // Update beneficiary relationship
-        if (updatedLivestock.getBeneficiaryIdValue() != null) {
-            String beneficiaryIdStr = updatedLivestock.getBeneficiaryIdValue();
+        // ── Update beneficiary relationship ───────────────────────────────────
+        if (updatedLivestock.getBeneficiaryIdValue() != null
+                && !updatedLivestock.getBeneficiaryIdValue().isBlank()) {
             try {
-                UUID beneficiaryId = UUID.fromString(beneficiaryIdStr);
+                UUID beneficiaryId = UUID.fromString(updatedLivestock.getBeneficiaryIdValue().trim());
                 beneficiaryRepository.findById(beneficiaryId)
                         .ifPresent(existing::setBeneficiary);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Invalid beneficiary ID format: " + beneficiaryIdStr);
+                throw new RuntimeException("Invalid beneficiary ID format: "
+                        + updatedLivestock.getBeneficiaryIdValue());
             }
         }
 
@@ -164,5 +178,35 @@ public class LivestockService {
 
     public long countByStatus(String status) {
         return livestockRepository.countByStatus(status);
+    }
+
+    /**
+     * Builds acquisition source description for livestock.
+     */
+    public static String buildAcquisitionSource(String acquisitionMethod,
+                                                String externalSource,
+                                                String motherTag) {
+        if (Livestock.ACQ_BIRTH.equals(acquisitionMethod)) {
+            if (motherTag != null && !motherTag.isBlank()) {
+                return "Born on this farm — Mother: " + motherTag;
+            }
+            return "Born on this farm — Mother not recorded";
+        } else if (Livestock.ACQ_PURCHASE.equals(acquisitionMethod)) {
+            if (externalSource != null && !externalSource.isBlank()) {
+                return "Purchased from: " + externalSource;
+            }
+            return "Purchased (source not recorded)";
+        } else if (Livestock.ACQ_DONATION.equals(acquisitionMethod)) {
+            if (externalSource != null && !externalSource.isBlank()) {
+                return "Donated from: " + externalSource;
+            }
+            return "Donated (source not recorded)";
+        } else if (Livestock.ACQ_TRANSFER.equals(acquisitionMethod)) {
+            if (externalSource != null && !externalSource.isBlank()) {
+                return "Transferred from: " + externalSource;
+            }
+            return "Transferred (source not recorded)";
+        }
+        return "Unknown origin";
     }
 }

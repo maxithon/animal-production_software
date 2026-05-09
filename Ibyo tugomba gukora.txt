@@ -1,0 +1,14 @@
+Ibyo tugomba gukora:
+
+1. 
+- Gukora Record ya animal ya ziri pregnant
+- Gukora record ya animal yabyaye
+- kureba ko nyuma yo kwandiya iyo yabyaye iyari pregnant ihita yikuramo.
+
+2. Gukora kuri delete then izibaye deleted zigahita zihindura status 
+zikanajya muri logs table
+
+3. gukora arrangement ya menu izigomba gusigara kwa admin nizigomba kuri 
+kwa other user
+
+4. 

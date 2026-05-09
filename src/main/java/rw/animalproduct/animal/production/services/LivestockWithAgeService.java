@@ -172,7 +172,9 @@ public class LivestockWithAgeService {
         LocalDate birthDate = getBirthDateFromBirthRecord(ls.getId());
 
         // ── 2. Reference date: birth_date (from livestock_births) OR date_received ──
-        LocalDate ref = birthDate != null ? birthDate : ls.getDateReceived();
+        LocalDate ref = birthDate != null ? birthDate
+                : ls.getBirthDate() != null ? ls.getBirthDate()
+                : ls.getDateReceived();
 
         // ── 3. Age in days and months ─────────────────────────────────────────
         int ageInDays   = 0;
@@ -244,7 +246,7 @@ public class LivestockWithAgeService {
         if ("SOLD".equalsIgnoreCase(ls.getStatus()))   return "SOLD";
 
         // Age-based stages
-        if (ageInDays <= 0)               return "UNKNOWN";
+        if (ageInDays <= 0)                return "UNKNOWN";
         if (ageInDays <= NEWBORN_MAX_DAYS) return "NEWBORN";
 
         if (ageInDays >= MATURE_MIN_DAYS) {
@@ -253,7 +255,7 @@ public class LivestockWithAgeService {
             return "MATURE";
         }
 
-        if (ageInDays >= PRE_BREEDING_MIN_DAYS) return "PRE_BREEDING";
+        // Everything between 31 and 364 days is YOUNG (removed PRE_BREEDING)
         return "YOUNG";
     }
 

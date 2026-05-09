@@ -25,7 +25,7 @@ public class LivestockLifecycleService {
 
     private final LivestockRepository        livestockRepository;
     private final LivestockBreedingRepository breedingRepository;
-    private final LifecycleEmailService      emailService;  // ADDED
+    private final LifecycleEmailService      emailService;
 
     @Autowired
     public LivestockLifecycleService(LivestockRepository livestockRepository,
@@ -141,9 +141,6 @@ public class LivestockLifecycleService {
     // MAIN METHODS WITH EMAIL NOTIFICATIONS
     // =========================================================================
 
-    /**
-     * Save animal with automatic email notification on stage change
-     */
     @Transactional
     public Livestock saveAnimalWithNotification(Livestock animal) {
         boolean isNew = animal.getId() == null;
@@ -168,9 +165,6 @@ public class LivestockLifecycleService {
         return saved;
     }
 
-    /**
-     * Record birth with email notifications
-     */
     @Transactional
     public Livestock recordBirthWithNotification(Livestock mother, Livestock offspring) {
         Livestock savedOffspring = livestockRepository.save(offspring);
@@ -181,23 +175,16 @@ public class LivestockLifecycleService {
         mother.setIsPregnant(false);
         livestockRepository.save(mother);
 
-        // Send notifications
         emailService.sendOffspringBornNotification(mother, savedOffspring);
         emailService.sendNewbornNotification(savedOffspring);
 
         return savedOffspring;
     }
 
-    /**
-     * Get animal by ID
-     */
     public Livestock getAnimalById(UUID id) {
         return livestockRepository.findById(id).orElse(null);
     }
 
-    /**
-     * Send notification based on stage
-     */
     private void sendStageNotification(Livestock animal, String stage) {
         switch (stage) {
             case "NEWBORN":
@@ -257,7 +244,7 @@ public class LivestockLifecycleService {
     }
 
     public long countInBreeding() {
-        return breedingRepository.findByStatus(LivestockBreeding.STATUS_PENDING).size();
+        return breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_PENDING).size();
     }
 
     public long countPregnant() {
@@ -267,9 +254,8 @@ public class LivestockLifecycleService {
                 .map(Livestock::getId)
                 .collect(Collectors.toSet());
 
-        Set<UUID> fromBreeding = breedingRepository.findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
+        Set<UUID> fromBreeding = breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
                 .stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
                 .filter(b -> b.getLivestock() != null)
                 .map(b -> b.getLivestock().getId())
                 .collect(Collectors.toSet());
@@ -329,13 +315,13 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getReadyToBreed() {
-        Set<UUID> inBreeding = breedingRepository.findByStatus(LivestockBreeding.STATUS_PENDING)
+        Set<UUID> inBreeding = breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_PENDING)
                 .stream()
                 .filter(b -> b.getLivestock() != null)
                 .map(b -> b.getLivestock().getId())
                 .collect(Collectors.toSet());
 
-        Set<UUID> confirmedPregnant = breedingRepository.findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
+        Set<UUID> confirmedPregnant = breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT)
                 .stream()
                 .filter(b -> b.getLivestock() != null)
                 .map(b -> b.getLivestock().getId())
@@ -391,8 +377,7 @@ public class LivestockLifecycleService {
                     alreadyIncluded.add(l.getId());
                 });
 
-        breedingRepository.findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
+        breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
                 .filter(b -> b.getLivestock() != null)
                 .forEach(b -> {
                     Livestock l = b.getLivestock();
@@ -415,8 +400,7 @@ public class LivestockLifecycleService {
         LocalDate cutoff = today.plusDays(withinDays);
 
         Set<UUID> dueSoonFromBreeding = breedingRepository
-                .findByStatus(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
+                .findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_CONFIRMED_PREGNANT).stream()
                 .filter(b -> b.getExpectedDueDate() != null)
                 .filter(b -> !b.getExpectedDueDate().isBefore(today) && !b.getExpectedDueDate().isAfter(cutoff))
                 .filter(b -> b.getLivestock() != null)
@@ -463,12 +447,11 @@ public class LivestockLifecycleService {
     // =========================================================================
 
     public List<LivestockBreeding> getActiveBreedings() {
-        return breedingRepository.findByStatus(LivestockBreeding.STATUS_PENDING);
+        return breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_PENDING);
     }
 
     public List<LivestockBreeding> getPendingPregnancyCheck() {
-        return breedingRepository
-                .findByExpectedPregnancyCheckDateBeforeAndStatus(LocalDate.now(), LivestockBreeding.STATUS_PENDING);
+        return breedingRepository.findOverduePregnancyChecks(LocalDate.now());
     }
 
     public List<LivestockBreeding> getOverduePregnancyCheck() {
@@ -485,7 +468,7 @@ public class LivestockLifecycleService {
     }
 
     public List<LivestockBreeding> getFailedBreedings() {
-        return breedingRepository.findByStatus(LivestockBreeding.STATUS_FAILED);
+        return breedingRepository.findByStatusAndIsDeletedFalse(LivestockBreeding.STATUS_FAILED);
     }
 
     public double getBreedingSuccessRate() {

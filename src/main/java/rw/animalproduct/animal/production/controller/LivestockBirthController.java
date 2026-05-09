@@ -11,12 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBirth;
+import rw.animalproduct.animal.production.entity.LivestockCategory;
 import rw.animalproduct.animal.production.entity.LivestockOffspring;
 import rw.animalproduct.animal.production.entity.LivestockSale;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSaleRepository;
 import rw.animalproduct.animal.production.services.LivestockBirthService;
 
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,12 +43,12 @@ public class LivestockBirthController {
     // ── Helper ───────────────────────────────────────────────────────
 
     private void addLivestockToModel(Model model) {
-        List<Livestock> females = livestockRepository.findByGenderIgnoreCase("FEMALE");
-        if (females.isEmpty()) {
-            model.addAttribute("livestockList", livestockRepository.findAll());
-        } else {
-            model.addAttribute("livestockList", females);
-        }
+        // Show active female animals old enough to be mothers.
+        // Animals that arrived pregnant (non-BIRTH acquisition, isPregnant=true)
+        // are included so staff can record when they actually give birth.
+        LocalDate cutoffDate = LocalDate.now().minusMonths(6);
+        List<Livestock> eligibleMothers = livestockRepository.findEligibleMothers(cutoffDate);
+        model.addAttribute("livestockList",    eligibleMothers);
         model.addAttribute("allLivestockList", livestockRepository.findAll());
     }
 
@@ -63,21 +65,49 @@ public class LivestockBirthController {
     public String listAll(@RequestParam(value = "page", defaultValue = "0") int page,
                           @RequestParam(value = "size", defaultValue = "10") int size,
                           Model model) {
+
+        List<LivestockBirth> births;
+
         try {
             Page<LivestockBirth> pageContent = birthService.getPaged(page, size);
-            model.addAttribute("births",      pageContent.getContent());
+            births = pageContent.getContent();
+            model.addAttribute("births",      births);
             model.addAttribute("currentPage", page);
             model.addAttribute("totalPages",  pageContent.getTotalPages());
             model.addAttribute("totalItems",  pageContent.getTotalElements());
             model.addAttribute("pageSize",    size);
         } catch (Exception e) {
-            List<LivestockBirth> all = birthService.getAll();
-            model.addAttribute("births",      all);
-            model.addAttribute("totalItems",  all.size());
+            births = birthService.getAll();
+            model.addAttribute("births",      births);
+            model.addAttribute("totalItems",  births.size());
             model.addAttribute("totalPages",  1);
             model.addAttribute("currentPage", 0);
             model.addAttribute("pageSize",    10);
         }
+
+        // ─────────────────────────────────────────────────────────────────
+        // BREEDING CAPABILITY MAP — keyed by mother livestock ID
+        // Shows whether the mother had reached min breeding age as of today.
+        // For external/purchased births the mother is unknown — key absent.
+        // ─────────────────────────────────────────────────────────────────
+        Map<UUID, Boolean> breedingCapableMap = new HashMap<>();
+        LocalDate today = LocalDate.now();
+
+        for (LivestockBirth b : births) {
+            Livestock mother = b.getLivestock();
+            if (mother == null) continue;
+
+            LocalDate bd = mother.getBirthDate();
+            if (bd == null) continue;
+
+            LivestockCategory cat = mother.getLivestockCategory();
+            if (cat == null || cat.getMinBreedingAgeMonths() == null) continue;
+
+            long ageMonths = ChronoUnit.MONTHS.between(bd, today);
+            breedingCapableMap.put(mother.getId(), ageMonths >= cat.getMinBreedingAgeMonths());
+        }
+        model.addAttribute("breedingCapableMap", breedingCapableMap);
+
         return "livestock-births-list";
     }
 
@@ -96,14 +126,13 @@ public class LivestockBirthController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
-        boolean isExternal = Boolean.TRUE.equals(birth.getIsExternalBirth());
+        // Birth form always creates a farm birth — force flag to false
+        birth.setIsExternalBirth(false);
 
-        // Mother is required ONLY for on-farm births
-        if (!isExternal
-                && (birth.getLivestockIdValue() == null
-                || birth.getLivestockIdValue().trim().isEmpty())) {
+        // Mother is always required
+        if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "error.birth",
-                    "Mother animal is required for on-farm births");
+                    "Mother animal is required — select the animal that gave birth");
         }
 
         if (result.hasErrors()) {
@@ -117,10 +146,8 @@ public class LivestockBirthController {
 
         try {
             LivestockBirth saved = birthService.addNew(birth);
-            String msg = isExternal
-                    ? "External birth recorded! Now link the purchased animal below."
-                    : "Birth recorded successfully! Now link the child animals below.";
-            redirectAttributes.addFlashAttribute("success", msg);
+            redirectAttributes.addFlashAttribute("success",
+                    "Birth recorded successfully! Now link the child animals below.");
             return "redirect:/livestock/births/" + saved.getId() + "/children";
         } catch (Exception e) {
             model.addAttribute("error", "Error recording birth: " + e.getMessage());
@@ -152,13 +179,12 @@ public class LivestockBirthController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
-        boolean isExternal = Boolean.TRUE.equals(birth.getIsExternalBirth());
+        // Always a farm birth on edit
+        birth.setIsExternalBirth(false);
 
-        if (!isExternal
-                && (birth.getLivestockIdValue() == null
-                || birth.getLivestockIdValue().trim().isEmpty())) {
+        if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "error.birth",
-                    "Mother animal is required for on-farm births");
+                    "Mother animal is required");
         }
 
         if (result.hasErrors()) {
@@ -202,7 +228,7 @@ public class LivestockBirthController {
         if (opt.isEmpty()) return "redirect:/livestock/births/list";
 
         LivestockBirth birth = opt.get();
-        model.addAttribute("birth", birth);
+        model.addAttribute("birth",          birth);
         model.addAttribute("linkedChildren", birth.getChildren());
         return "livestock-birth-view";
     }
@@ -223,9 +249,16 @@ public class LivestockBirthController {
 
         UUID motherId = birth.getLivestock() != null ? birth.getLivestock().getId() : null;
 
+        List<UUID> linkedIds = linkedChildren.stream()
+                .map(Livestock::getId)
+                .collect(Collectors.toList());
+
         List<Livestock> available = livestockRepository.findAll().stream()
-                .filter(l -> !linkedChildren.contains(l))
+                .filter(l -> !linkedIds.contains(l.getId()))
                 .filter(l -> motherId == null || !l.getId().equals(motherId))
+                .filter(l -> l.getAcquisitionMethod() != null
+                        && l.getAcquisitionMethod().equalsIgnoreCase("BIRTH"))
+                .filter(l -> l.getMother() == null)
                 .collect(Collectors.toList());
 
         model.addAttribute("birth",              birth);
@@ -268,7 +301,7 @@ public class LivestockBirthController {
         if (opt.isEmpty()) return "redirect:/livestock/list";
 
         Livestock animal = opt.get();
-        List<Livestock> directChildren      = birthService.getDirectChildren(livestockId);
+        List<Livestock>     directChildren  = birthService.getDirectChildren(livestockId);
         List<LivestockBirth> birthsAsMother = birthService.getByLivestockId(livestockId);
 
         model.addAttribute("animal",         animal);
@@ -306,29 +339,26 @@ public class LivestockBirthController {
                 if (child == null) continue;
 
                 Map<String, Object> row = new LinkedHashMap<>();
-                row.put("childId",        child.getId());
-                row.put("childTag",       child.getTagNumber());
-                row.put("childGender",    child.getGender());
-                row.put("category",       child.getLivestockCategory() != null
+                row.put("childId",     child.getId());
+                row.put("childTag",    child.getTagNumber());
+                row.put("childGender", child.getGender());
+                row.put("category",    child.getLivestockCategory() != null
                         ? child.getLivestockCategory().getName() : "—");
 
-                // Mother tag — null for external/purchased animals
                 row.put("motherTag",      birth.getLivestock() != null
-                        ? birth.getLivestock().getTagNumber() : "Unknown (purchased)");
+                        ? birth.getLivestock().getTagNumber() : "Unknown");
                 row.put("motherId",       birth.getLivestock() != null
                         ? birth.getLivestock().getId() : null);
                 row.put("isExternal",     birth.getIsExternalBirth());
                 row.put("sourceLocation", birth.getSourceLocation() != null
                         ? birth.getSourceLocation() : "—");
 
-                // birth_date comes from livestock_births — same for both farm and purchased animals
-                row.put("birthDate",      birth.getBirthDate());
-                row.put("birthId",        birth.getId());
-                row.put("generation",     offspring.getGeneration());
-                row.put("status",         child.getStatus() != null
+                row.put("birthDate", birth.getBirthDate());
+                row.put("birthId",   birth.getId());
+                row.put("generation", offspring.getGeneration());
+                row.put("status",    child.getStatus() != null
                         ? child.getStatus() : Livestock.STATUS_ACTIVE);
 
-                // Sale record
                 List<LivestockSale> sales = saleRepository.findByLivestockId(child.getId());
                 if (!sales.isEmpty()) {
                     LivestockSale latestSale = sales.stream()

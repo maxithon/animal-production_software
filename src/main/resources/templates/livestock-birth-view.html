@@ -10,8 +10,7 @@
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
         .detail-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 24px; margin: 0 24px 24px; }
         .field-label { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: #6c757d; }
-        .child-row    { border-left: 4px solid #198754; padding: 10px 14px; border-radius: 6px; background: #f0fff4; margin-bottom: 8px; }
-        .external-row { border-left: 4px solid #0d6efd; padding: 10px 14px; border-radius: 6px; background: #f0f7ff; margin-bottom: 8px; }
+        .child-row { border-left: 4px solid #198754; padding: 10px 14px; border-radius: 6px; background: #f0fff4; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -30,9 +29,7 @@
         </a>
         <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
            class="btn btn-success btn-sm">
-            <i class="bi bi-link-45deg me-1"></i>
-            <span th:if="${birth.isExternalBirth}">Manage Linked Animal</span>
-            <span th:if="${!birth.isExternalBirth}">Manage Children</span>
+            <i class="bi bi-link-45deg me-1"></i> Manage Children
         </a>
         <a href="/livestock/births/list" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back
@@ -43,19 +40,8 @@
 <div class="row g-0 mx-3">
     <div class="col-lg-6 pe-3">
 
-        <!-- Birth type banner -->
-        <div th:if="${birth.isExternalBirth}"
-             class="alert alert-primary d-flex align-items-center gap-2 mb-3">
-            <i class="bi bi-box-arrow-in-down fs-5"></i>
-            <div>
-                <strong>Purchased / External Animal</strong><br>
-                <small>Bought from outside the farm. Mother is unknown.<br>
-                    Birth date stored in <code>livestock_births.birth_date</code>
-                    — used to calculate breeding eligibility.</small>
-            </div>
-        </div>
-        <div th:if="${!birth.isExternalBirth}"
-             class="alert alert-success d-flex align-items-center gap-2 mb-3">
+        <!-- Farm birth banner -->
+        <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
             <i class="bi bi-house-heart-fill fs-5"></i>
             <div>
                 <strong>Born on This Farm</strong><br>
@@ -70,26 +56,24 @@
                 <div class="col-6">
                     <div class="field-label">Birth Date</div>
                     <div th:text="${#temporals.format(birth.birthDate, 'dd-MM-yyyy')}"></div>
-                    <div class="text-muted" style="font-size:0.75rem;" th:if="${birth.isExternalBirth}">
-                        From <code>livestock_births.birth_date</code>
-                    </div>
                 </div>
 
-                <div class="col-6" th:if="${!birth.isExternalBirth}">
+                <div class="col-6">
                     <div class="field-label">Offspring Count</div>
                     <div th:text="${birth.offspringCount != null ? birth.offspringCount : '—'}"></div>
                 </div>
 
-                <div class="col-6" th:if="${!birth.isExternalBirth}">
+                <div class="col-6">
                     <div class="field-label">Offspring Gender</div>
                     <div>
                         <span th:if="${birth.offspringGender == 'MALE'}"   class="badge bg-primary">Male</span>
                         <span th:if="${birth.offspringGender == 'FEMALE'}" class="badge bg-danger">Female</span>
-                        <span th:if="${birth.offspringGender == null or birth.offspringGender == ''}" class="text-muted">Mixed / Unknown</span>
+                        <span th:if="${birth.offspringGender == null or birth.offspringGender == ''}"
+                              class="text-muted">Mixed / Unknown</span>
                     </div>
                 </div>
 
-                <div class="col-6" th:if="${!birth.isExternalBirth}">
+                <div class="col-6">
                     <div class="field-label">Weaning Date</div>
                     <div>
                         <span th:if="${birth.weaningDate != null}"
@@ -98,18 +82,13 @@
                     </div>
                 </div>
 
-                <div class="col-6" th:if="${!birth.isExternalBirth}">
+                <div class="col-6">
                     <div class="field-label">Next Breeding Date</div>
                     <div>
                         <span th:if="${birth.nextBreedingDate != null}"
                               th:text="${#temporals.format(birth.nextBreedingDate, 'dd-MM-yyyy')}"></span>
                         <span th:if="${birth.nextBreedingDate == null}" class="text-muted">—</span>
                     </div>
-                </div>
-
-                <div class="col-12" th:if="${birth.isExternalBirth}">
-                    <div class="field-label">Purchase Source / Origin</div>
-                    <div th:text="${birth.sourceLocation != null and !birth.sourceLocation.isEmpty() ? birth.sourceLocation : '—'}"></div>
                 </div>
 
                 <div class="col-12" th:if="${birth.notes != null and !birth.notes.isEmpty()}">
@@ -119,8 +98,8 @@
             </div>
         </div>
 
-        <!-- Mother card (farm births only) -->
-        <div class="detail-card" th:if="${!birth.isExternalBirth}">
+        <!-- Mother card -->
+        <div class="detail-card">
             <h6 class="fw-bold mb-3 border-bottom pb-2">Mother Animal</h6>
             <div th:if="${birth.livestock != null}">
                 <div class="fw-bold fs-6">
@@ -154,58 +133,34 @@
                     </a>
                 </div>
             </div>
-        </div>
-
-        <!-- External birth — origin info instead of mother -->
-        <div class="detail-card" th:if="${birth.isExternalBirth}">
-            <h6 class="fw-bold mb-3 border-bottom pb-2">Origin Information</h6>
-            <div class="text-muted mb-2">
-                <i class="bi bi-info-circle me-1"></i>
-                Mother is unknown — animal was purchased from outside this farm.
-            </div>
-            <div th:if="${birth.sourceLocation != null and !birth.sourceLocation.isEmpty()}">
-                <strong>Purchased from:</strong>
-                <span th:text="${birth.sourceLocation}"></span>
-            </div>
-            <div class="mt-3 p-2 bg-light rounded">
-                <div class="field-label">Birth date (for breeding eligibility)</div>
-                <div class="fw-bold" th:text="${#temporals.format(birth.birthDate, 'dd MMMM yyyy')}"></div>
-                <small class="text-muted">Stored in <code>livestock_births.birth_date</code>. Use this to calculate when the animal can start breeding.</small>
+            <div th:if="${birth.livestock == null}" class="text-muted fst-italic">
+                Mother not linked to this birth record.
             </div>
         </div>
 
     </div>
 
-    <!-- Linked children / animals column -->
+    <!-- Linked children column -->
     <div class="col-lg-6">
         <div class="detail-card">
             <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
                 <h6 class="fw-bold mb-0">
-                    <span th:if="${birth.isExternalBirth}">Linked Animals</span>
-                    <span th:if="${!birth.isExternalBirth}">Children Linked</span>
+                    Children Linked
                     <span class="badge bg-success ms-1" th:text="${linkedChildren.size()}"></span>
                 </h6>
                 <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
                    class="btn btn-sm btn-outline-primary">
-                    <i class="bi bi-pencil"></i>
-                    <span th:if="${birth.isExternalBirth}">Link Animal</span>
-                    <span th:if="${!birth.isExternalBirth}">Edit Children</span>
+                    <i class="bi bi-pencil"></i> Edit Children
                 </a>
             </div>
 
             <div th:if="${linkedChildren.empty}" class="text-muted fst-italic py-3 text-center">
-                <span th:if="${birth.isExternalBirth}">
-                    No animal linked yet.
-                    <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Link the purchased animal now</a>
-                </span>
-                <span th:if="${!birth.isExternalBirth}">
-                    No child animals linked yet.
-                    <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Link now</a>
-                </span>
+                No child animals linked yet.
+                <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Link now</a>
             </div>
 
             <div th:each="link : ${linkedChildren}"
-                 th:class="${birth.isExternalBirth ? 'external-row' : 'child-row'} + ' d-flex justify-content-between align-items-center'">
+                 class="child-row d-flex justify-content-between align-items-center">
                 <div th:if="${link.childLivestock != null}">
                     <span class="fw-bold">
                         <i class="bi bi-tag me-1"></i>
@@ -217,7 +172,7 @@
                     <span th:if="${link.childLivestock.gender != null}"
                           class="badge bg-secondary ms-1"
                           th:text="${link.childLivestock.gender}"></span>
-                    <div th:if="${!birth.isExternalBirth}" class="small text-muted mt-1">
+                    <div class="small text-muted mt-1">
                         Generation: <span th:text="${link.generation}"></span>
                     </div>
                 </div>
@@ -227,7 +182,7 @@
                        class="btn btn-sm btn-outline-secondary" title="View profile">
                         <i class="bi bi-eye"></i>
                     </a>
-                    <a th:if="${link.childLivestock != null and !birth.isExternalBirth}"
+                    <a th:if="${link.childLivestock != null}"
                        th:href="@{/livestock/births/family/{id}(id=${link.childLivestock.id})}"
                        class="btn btn-sm btn-outline-success" title="Family tree">
                         <i class="bi bi-diagram-3"></i>

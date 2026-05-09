@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import rw.animalproduct.animal.production.entity.VLivestockWithAge;
+import rw.animalproduct.animal.production.services.LivestockWithAgeService;
 import rw.animalproduct.animal.production.services.VLivestockWithAgeService;
 
 import java.util.Map;
@@ -19,26 +20,28 @@ import java.util.Map;
 public class LivestockOverviewController {
 
     private final VLivestockWithAgeService vLivestockService;
+    private final LivestockWithAgeService  livestockWithAgeService;
 
-    public LivestockOverviewController(VLivestockWithAgeService vLivestockService) {
-        this.vLivestockService = vLivestockService;
+    public LivestockOverviewController(VLivestockWithAgeService vLivestockService,
+                                       LivestockWithAgeService livestockWithAgeService) {
+        this.vLivestockService      = vLivestockService;
+        this.livestockWithAgeService = livestockWithAgeService;
     }
 
     @GetMapping
     public String showOverview(
-            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String stage,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String gender,
             @RequestParam(required = false) String search,
-            Model model
-    ) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("tagNumber").ascending());
-        Page<VLivestockWithAge> livestockPage;
+            Model model) {
 
-        // Apply filters
+        Pageable pageable = PageRequest.of(page, size, Sort.by("tagNumber").ascending());
+
+        Page<VLivestockWithAge> livestockPage;
         if (search != null && !search.isEmpty()) {
             livestockPage = vLivestockService.search(search, pageable);
         } else if (stage != null && !stage.isEmpty() && !stage.equals("ALL")) {
@@ -51,29 +54,24 @@ public class LivestockOverviewController {
             livestockPage = vLivestockService.getAll(pageable);
         }
 
-        // Get statistics
-        Map<String, Long> lifecycleStats = vLivestockService.getLifecycleStageStats();
-        Map<String, Long> categoryStats = vLivestockService.getCategoryStats();
-        Map<String, Long> statusStats = vLivestockService.getStatusStats();
+        // ── Use the accurate DTO-based service for stat cards ──
+        Map<String, Long> lifecycleStats = livestockWithAgeService.getLifecycleSummary();
+        Map<String, Long> categoryStats  = vLivestockService.getCategoryStats();
+        Map<String, Long> statusStats    = vLivestockService.getStatusStats();
 
-        // Add to model
-        model.addAttribute("livestockList", livestockPage.getContent());
-        model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", livestockPage.getTotalPages());
-        model.addAttribute("totalItems", livestockPage.getTotalElements());
-        model.addAttribute("pageSize", size);
-
-        // Statistics
+        model.addAttribute("livestockList",  livestockPage.getContent());
+        model.addAttribute("currentPage",    page);
+        model.addAttribute("totalPages",     livestockPage.getTotalPages());
+        model.addAttribute("totalItems",     livestockPage.getTotalElements());
+        model.addAttribute("pageSize",       size);
         model.addAttribute("lifecycleStats", lifecycleStats);
-        model.addAttribute("categoryStats", categoryStats);
-        model.addAttribute("statusStats", statusStats);
-
-        // Filter values
-        model.addAttribute("selectedStage", stage);
-        model.addAttribute("selectedStatus", status);
+        model.addAttribute("categoryStats",  categoryStats);
+        model.addAttribute("statusStats",    statusStats);
+        model.addAttribute("selectedStage",    stage);
+        model.addAttribute("selectedStatus",   status);
         model.addAttribute("selectedCategory", category);
-        model.addAttribute("selectedGender", gender);
-        model.addAttribute("searchQuery", search);
+        model.addAttribute("selectedGender",   gender);
+        model.addAttribute("searchQuery",      search);
 
         return "livestock-overview";
     }

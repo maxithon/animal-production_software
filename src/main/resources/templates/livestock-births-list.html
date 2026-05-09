@@ -10,6 +10,42 @@
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
         .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin: 0 24px 24px; }
         .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
+
+        /* ── Mother origin badges ── */
+        .bd-farm {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+            border-radius: 20px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
+        }
+        .bd-purchased {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #fef9c3; color: #854d0e; border: 1px solid #fde047;
+            border-radius: 20px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
+        }
+
+        /* child birth dates list inside a cell */
+        .child-bd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+        .child-bd-list li { font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
+        .child-tag { font-weight: 700; color: #1e293b; }
+        .child-date { color: #0369a1; }
+        .child-date-unknown { color: #94a3b8; font-style: italic; }
+
+        /* ── Breeding Age Pills ── */
+        .breed-pill {
+            display: inline-flex; align-items: center; gap: 4px;
+            border-radius: 20px; padding: 3px 9px; font-size: 0.72rem; font-weight: 700;
+            white-space: nowrap;
+        }
+        .breed-capable    { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .breed-too-young  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .breed-unknown    { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.8; }
+
+        /* Purchased-pregnant origin badge shown in Mother cell */
+        .orig-purchased {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
+            border-radius: 4px; padding: 1px 7px; font-size: 0.68rem; font-weight: 700;
+        }
     </style>
 </head>
 <body>
@@ -47,12 +83,21 @@
             <thead class="table-light">
             <tr>
                 <th style="width:40px">#</th>
-                <th>Type</th>
-                <th>Mother / Source</th>
+                <th>Mother</th>
                 <th>Category</th>
+                <!--
+                    MOTHER BREEDING AGE COLUMN
+                    Shows whether the mother had reached min breeding age on birth date.
+                    Computed server-side in LivestockBirthController.listAll().
+                    Badge colours: green=capable, amber=too young, grey=unknown.
+                    For purchased-pregnant mothers the field is still shown —
+                    the mother IS on record, she just arrived pregnant.
+                -->
+                <th>Mother Breeding Age</th>
                 <th>Birth Date</th>
                 <th>Offspring #</th>
                 <th>Offspring Gender</th>
+                <th>Child Birth Date(s)</th>
                 <th>Weaning Date</th>
                 <th>Next Breeding</th>
                 <th>Animals Linked</th>
@@ -62,7 +107,7 @@
             <tbody>
 
             <tr th:if="${births == null or births.empty}">
-                <td colspan="11" class="text-center py-5 text-muted">
+                <td colspan="12" class="text-center py-5 text-muted">
                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                     No birth records yet.
                     <a href="/livestock/births/register">Record the first one</a>
@@ -72,38 +117,36 @@
             <tr th:each="b, i : ${births}">
                 <td class="text-muted" th:text="${(currentPage * pageSize) + i.count}"></td>
 
-                <!-- Type badge -->
+                <!-- Mother info -->
                 <td>
-                    <span th:if="${b.isExternalBirth}"
-                          class="badge bg-primary">
-                        <i class="bi bi-box-arrow-in-down me-1"></i>Purchased
-                    </span>
-                    <span th:if="${!b.isExternalBirth}"
-                          class="badge bg-success">
-                        <i class="bi bi-house-heart me-1"></i>Farm Birth
-                    </span>
-                </td>
-
-                <!-- Mother tag (farm) or source location (external) -->
-                <td>
-                    <div th:if="${!b.isExternalBirth}">
-                        <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
-                        <div th:if="${b.livestock != null}">
+                    <div th:if="${b.livestock != null}">
+                        <strong th:text="${b.livestock.tagNumber}"></strong>
+                        <!--
+                            Show a small badge when the mother arrived pregnant from outside.
+                            This makes it clear this birth was her FIRST on this farm.
+                        -->
+                        <div th:if="${b.livestock.acquisitionMethod != null
+                                      and b.livestock.acquisitionMethod != 'BIRTH'}"
+                             class="mt-1">
+                            <span class="orig-purchased">
+                                <i class="bi bi-box-arrow-in-down"></i>
+                                Arrived
+                                <span th:text="${b.livestock.acquisitionMethod}"></span>
+                            </span>
+                        </div>
+                        <div>
                             <a th:href="@{/livestock/births/family/{id}(id=${b.livestock.id})}"
                                class="text-muted small">
                                 <i class="bi bi-diagram-3"></i> Family tree
                             </a>
                         </div>
                     </div>
-                    <div th:if="${b.isExternalBirth}">
-                        <span class="text-muted small">
-                            <i class="bi bi-geo-alt me-1"></i>
-                            <span th:text="${b.sourceLocation != null and !b.sourceLocation.isEmpty() ? b.sourceLocation : 'Source not recorded'}"></span>
-                        </span>
+                    <div th:if="${b.livestock == null}" class="text-muted small fst-italic">
+                        Mother not recorded
                     </div>
                 </td>
 
-                <!-- Category -->
+                <!-- Category (from mother) -->
                 <td>
                     <span th:if="${b.livestock?.livestockCategory != null}"
                           class="badge bg-secondary"
@@ -111,8 +154,45 @@
                     <span th:if="${b.livestock?.livestockCategory == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Birth date (from livestock_births.birth_date — same for both types) -->
-                <td th:text="${#temporals.format(b.birthDate, 'dd-MM-yyyy')}"></td>
+                <!-- Mother Breeding Age -->
+                <td>
+                    <div th:if="${b.livestock != null}"
+                         th:with="mother=${b.livestock},
+                                  capable=${mother != null and breedingCapableMap != null
+                                            ? breedingCapableMap[mother.id] : null}">
+
+                        <span th:if="${capable != null and capable}"
+                              class="breed-pill breed-capable"
+                              th:with="minAge=${mother.livestockCategory != null ? mother.livestockCategory.minBreedingAgeMonths : null}"
+                              th:title="${minAge != null} ? 'Reached minimum breeding age of ' + minAge + ' months' : 'Reached minimum breeding age'">
+                            <i class="bi bi-check-circle-fill"></i> Breeding Age Met
+                        </span>
+
+                        <span th:if="${capable != null and !capable}"
+                              class="breed-pill breed-too-young"
+                              th:with="minAge=${mother.livestockCategory != null ? mother.livestockCategory.minBreedingAgeMonths : null}"
+                              th:title="${minAge != null} ? 'Minimum is ' + minAge + ' months. Mother had not reached this age yet.' : 'Below minimum breeding age.'">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Below Min Age
+                            <small th:if="${minAge != null}" style="opacity:0.8;font-size:0.63rem;">
+                                (min <span th:text="${minAge}"></span>mo)
+                            </small>
+                        </span>
+
+                        <span th:if="${capable == null}"
+                              class="breed-pill breed-unknown"
+                              title="Cannot determine: birth date or category min breeding age not recorded.">
+                            <i class="bi bi-question-circle"></i> Unknown
+                        </span>
+                    </div>
+                    <div th:if="${b.livestock == null}" class="text-muted small">—</div>
+                </td>
+
+                <!-- Birth Date -->
+                <td>
+                    <span th:if="${b.birthDate != null}"
+                          th:text="${#temporals.format(b.birthDate, 'dd-MM-yyyy')}"></span>
+                    <span th:if="${b.birthDate == null}" class="text-muted">—</span>
+                </td>
 
                 <!-- Offspring count -->
                 <td>
@@ -127,6 +207,34 @@
                     <span th:if="${b.offspringGender == 'MALE'}"   class="badge bg-primary text-white">Male</span>
                     <span th:if="${b.offspringGender == 'FEMALE'}" class="badge bg-danger text-white">Female</span>
                     <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">—</span>
+                </td>
+
+                <!-- Child Birth Date(s) -->
+                <td>
+                    <div th:if="${b.children != null and !b.children.empty}">
+                        <ul class="child-bd-list">
+                            <li th:each="offspring : ${b.children}"
+                                th:if="${offspring.childLivestock != null}">
+                                <i class="bi bi-dot text-success"></i>
+                                <span class="child-tag"
+                                      th:text="${offspring.childLivestock.tagNumber != null
+                                                 ? offspring.childLivestock.tagNumber
+                                                 : '(Draft)'}"></span>
+                                <span th:if="${offspring.childLivestock.birthDate != null}"
+                                      class="child-date">
+                                    <i class="bi bi-calendar2-check"></i>
+                                    <span th:text="${#temporals.format(offspring.childLivestock.birthDate, 'dd-MM-yyyy')}"></span>
+                                </span>
+                                <span th:if="${offspring.childLivestock.birthDate == null}"
+                                      class="child-date-unknown">
+                                    <i class="bi bi-calendar2-x"></i> Not recorded
+                                </span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div th:if="${b.children == null or b.children.empty}">
+                        <span class="text-muted small"><i class="bi bi-link-45deg"></i> No animals linked</span>
+                    </div>
                 </td>
 
                 <!-- Weaning -->
@@ -181,7 +289,7 @@
                                 </div>
                                 <div class="modal-body small">
                                     Delete birth record dated
-                                    <strong th:text="${#temporals.format(b.birthDate, 'dd-MM-yyyy')}"></strong>?
+                                    <strong th:text="${b.birthDate != null ? #temporals.format(b.birthDate, 'dd-MM-yyyy') : 'N/A'}"></strong>?
                                     Linked animals will be unlinked.
                                 </div>
                                 <div class="modal-footer">

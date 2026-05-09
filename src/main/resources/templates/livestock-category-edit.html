@@ -12,6 +12,7 @@
         .form-label { font-weight: 500; color: #333; }
         .btn-update { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
         .btn-update:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
+        .field-hint { background: #f0f8ff; border-left: 3px solid #2e8b9e; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 0.82rem; color: #555; margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -36,11 +37,14 @@
                       th:object="${category}" method="post">
 
                     <div class="row g-3">
+
+                        <!-- Name -->
                         <div class="col-md-8">
                             <label class="form-label">Category Name *</label>
                             <input type="text" class="form-control" th:field="*{name}" required>
                         </div>
 
+                        <!-- Code -->
                         <div class="col-md-4">
                             <label class="form-label">Category Code *</label>
                             <input type="text" class="form-control" th:field="*{code}" required
@@ -48,19 +52,43 @@
                             <div class="form-text">Auto-uppercased</div>
                         </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Gestation Period (months)</label>
+                        <!-- Gestation Period -->
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-clock-history text-info me-1"></i>
+                                Gestation Period (months)
+                            </label>
                             <input type="number" class="form-control"
                                    th:field="*{gestationPeriodMonths}"
-                                   placeholder="e.g. 9" min="1" max="24">
-                            <div class="form-text">How many months pregnancy lasts</div>
+                                   placeholder="e.g. 5" min="1" max="24">
+                            <div class="field-hint">
+                                <strong>How long pregnancy lasts.</strong><br>
+                                Goats = 5 months &nbsp;·&nbsp; Pigs = 4 months &nbsp;·&nbsp; Cows = 9 months
+                            </div>
                         </div>
 
-                        <div class="col-md-8">
+                        <!-- Min Breeding Age -->
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-check text-success me-1"></i>
+                                Min Breeding Age (months)
+                            </label>
+                            <input type="number" class="form-control"
+                                   th:field="*{minBreedingAgeMonths}"
+                                   placeholder="e.g. 8" min="1" max="36">
+                            <div class="field-hint">
+                                <strong>Minimum age before first breeding.</strong><br>
+                                Goats = 8 months &nbsp;·&nbsp; Pigs = 6 months &nbsp;·&nbsp; Cows = 15 months
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="col-md-12">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" th:field="*{description}"
                                       rows="3" placeholder="Optional description of this category"></textarea>
                         </div>
+
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">

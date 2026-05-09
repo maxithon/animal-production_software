@@ -52,8 +52,13 @@
             box-shadow: 0 0 0 3px rgba(66,153,225,.15);
         }
 
-        option.eligible   { background: #f0fff4; color: #276749; font-weight: 600; }
-        option.ineligible { background: #fffaf0; color: #744210; }
+        /* Female dropdown: eligible = green tint, ineligible = amber tint */
+        option.female-eligible   { background: #f0fff4; color: #276749; font-weight: 600; }
+        option.female-ineligible { background: #fffaf0; color: #744210; }
+        option.female-pregnant   { background: #fdf4ff; color: #6b21a8; font-style: italic; }
+
+        option.male-eligible   { background: #f0fff4; color: #276749; font-weight: 600; }
+        option.male-ineligible { background: #fffaf0; color: #744210; }
 
         #maleInfo { font-size: 0.82rem; border-radius: 8px; display: none; }
 
@@ -78,7 +83,7 @@
             display: none;
         }
 
-        /* ── FIX 2: Male section hidden for AI / Embryo Transfer ── */
+        /* Male section hidden for AI / Embryo Transfer */
         #maleSection { transition: opacity .2s; }
         #maleSection.hidden-method {
             opacity: .45;
@@ -95,6 +100,27 @@
             margin-top: 6px;
         }
         .method-note.visible { display: block; }
+
+        /* Female eligibility info banner */
+        #femaleEligibilityNote {
+            display: none;
+            font-size: 0.82rem;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-top: 6px;
+        }
+        #femaleEligibilityNote.warn {
+            background: #fffbeb; border: 1px solid #fde68a; color: #92400e;
+            display: block;
+        }
+        #femaleEligibilityNote.ok {
+            background: #f0fff4; border: 1px solid #9ae6b4; color: #276749;
+            display: block;
+        }
+        #femaleEligibilityNote.pregnant {
+            background: #fdf4ff; border: 1px solid #e9d8fd; color: #6b21a8;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -114,13 +140,12 @@
     </div>
 </div>
 
-<!-- Flash messages -->
 <div class="container-fluid px-4" style="max-width:900px;margin:0 auto;">
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
         <i class="bi bi-check-circle-fill me-2"></i> <span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
         <i class="bi bi-exclamation-triangle-fill me-2"></i> <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -131,71 +156,7 @@
 
         <form th:action="@{/livestock/breeding/register}" th:object="${breeding}" method="post" id="breedingForm">
 
-            <!-- ── SECTION 1: Animal Selection ────────────────────────────── -->
-            <p class="section-title"><i class="bi bi-gender-ambiguous me-1"></i> Animal Selection</p>
-            <div class="row g-3 mb-4">
-
-                <!-- Female Animal -->
-                <div class="col-md-6">
-                    <label class="form-label">Female Animal <span class="text-danger">*</span></label>
-                    <!--
-                        FIX 1: Bind to livestockIdValue (transient String).
-                        The entity field 'livestock' is null at bind time — that's expected.
-                        Validation now uses @NotBlank on livestockIdValue instead.
-                    -->
-                    <select th:field="*{livestockIdValue}"
-                            class="form-select"
-                            th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
-                            id="femaleSelect" required>
-                        <option value="">— Select Female Animal —</option>
-                        <option th:each="ls : ${femaleLivestock}"
-                                th:value="${ls.id}"
-                                th:attr="data-cat-id=${ls.livestockCategory != null ? ls.livestockCategory.id : ''},
-                                         data-cat-name=${ls.livestockCategory != null ? ls.livestockCategory.name : 'Unknown'}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' · ' + ls.livestockCategory.name : '')}">
-                        </option>
-                    </select>
-                    <div th:if="${#fields.hasErrors('livestockIdValue')}"
-                         class="invalid-feedback" th:errors="*{livestockIdValue}"></div>
-                    <div class="form-text">Active females only</div>
-                </div>
-
-                <!-- Male Animal — hidden for AI / Embryo Transfer -->
-                <div class="col-md-6" id="maleSection">
-                    <label class="form-label">
-                        Male Animal (Sire)
-                        <span id="maleCountBadge" class="badge-category ms-1" style="display:none;">
-                            <span id="maleCount">0</span> available
-                        </span>
-                    </label>
-
-                    <select th:field="*{maleLivestockIdValue}" class="form-select" id="maleSelect">
-                        <option value="">— Select a female first —</option>
-                    </select>
-
-                    <!-- Note shown when AI or Embryo Transfer is selected -->
-                    <div id="methodNote" class="method-note">
-                        <i class="bi bi-info-circle-fill me-1"></i>
-                        <span id="methodNoteText">Male animal is not required for this breeding method.</span>
-                    </div>
-
-                    <div id="noMalesWarning" class="no-males-warning mt-2">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        No male <strong id="noMalesCatName"></strong> animals found.
-                        You may still record this as an <em>Artificial Insemination</em> event.
-                    </div>
-
-                    <div id="maleInfo" class="alert alert-info mt-2 p-2">
-                        <i class="bi bi-info-circle me-1"></i>
-                        <span class="badge-eligible">✓ Eligible</span> = 12+ months (recommended) &nbsp;
-                        <span class="badge-young">⚠ Young</span> = under 12 months
-                    </div>
-                    <div class="form-text">Only males of the same category are shown</div>
-                </div>
-
-            </div>
-
-            <!-- ── SECTION 2: Breeding Details ────────────────────────────── -->
+            <!-- ── SECTION 1: Breeding Details ────────────────────────────── -->
             <p class="section-title"><i class="bi bi-calendar3 me-1"></i> Breeding Details</p>
             <div class="row g-3 mb-4">
 
@@ -206,10 +167,6 @@
 
                 <div class="col-md-4">
                     <label class="form-label">Breeding Method</label>
-                    <!--
-                        FIX 2: When AI or Embryo Transfer is chosen, the male section
-                        is visually disabled and male is cleared via JS below.
-                    -->
                     <select th:field="*{breedingMethod}" class="form-select" id="methodSelect">
                         <option value="">— Select Method —</option>
                         <option value="NATURAL">Natural Mating</option>
@@ -226,6 +183,97 @@
                         <option value="FAILED">Failed</option>
                         <option value="COMPLETED">Completed</option>
                     </select>
+                </div>
+
+            </div>
+
+            <!-- ── SECTION 2: Animal Selection ────────────────────────────── -->
+            <p class="section-title"><i class="bi bi-gender-ambiguous me-1"></i> Animal Selection</p>
+            <div class="row g-3 mb-4">
+
+                <!--
+                    FEMALE ANIMAL
+                    ─────────────
+                    The dropdown groups females into:
+                      ✓ Ready to Breed  — age >= min_breeding_age_months (green)
+                      ⚠ Too Young      — age < min_breeding_age_months (amber)
+                      (unlisted)        — no birth_date / no category min age (neutral)
+
+                    Ineligible animals are still selectable in case the user
+                    knows something the system doesn't (e.g. early developer).
+                    A warning banner below the dropdown explains the status.
+                -->
+                <div class="col-md-6">
+                    <label class="form-label">
+                        Female Animal <span class="text-danger">*</span>
+                        <span class="badge-category ms-1" id="femaleCount" style="display:none;"></span>
+                    </label>
+                    <select th:field="*{livestockIdValue}"
+                            class="form-select"
+                            th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
+                            id="femaleSelect" required
+                            onchange="onFemaleChange()">
+                        <option value="">— Select Female Animal —</option>
+                        <!--
+                            Thymeleaf renders each female with data attributes:
+                              data-cat-id    → category UUID
+                              data-cat-name  → category display name
+                              data-eligible  → "true"/"false"/"unknown" (breeding capability)
+                              data-pregnant  → "true"/"false"
+                        -->
+                        <option th:each="ls : ${femaleLivestock}"
+                                th:value="${ls.id}"
+                                th:attr="data-cat-id=${ls.livestockCategory != null ? ls.livestockCategory.id : ''},
+                                         data-cat-name=${ls.livestockCategory != null ? ls.livestockCategory.name : 'Unknown'},
+                                         data-eligible=${breedingCapableMap != null and breedingCapableMap[ls.id] != null ? breedingCapableMap[ls.id] : 'unknown'},
+                                         data-pregnant=${ls.isPregnant}"
+                                th:classappend="${ls.isPregnant} ? 'female-pregnant' :
+                                                (${breedingCapableMap != null and breedingCapableMap[ls.id] != null and breedingCapableMap[ls.id]} ? 'female-eligible' :
+                                                 (${breedingCapableMap != null and breedingCapableMap[ls.id] != null and !breedingCapableMap[ls.id]} ? 'female-ineligible' : ''))"
+                                th:text="${ls.tagNumber
+                                         + (ls.livestockCategory != null ? ' · ' + ls.livestockCategory.name : '')
+                                         + (ls.isPregnant ? ' ⚠ Already Pregnant' : '')
+                                         + (breedingCapableMap != null and breedingCapableMap[ls.id] != null and breedingCapableMap[ls.id] ? ' ✓' :
+                                            (breedingCapableMap != null and breedingCapableMap[ls.id] != null and !breedingCapableMap[ls.id] ? ' ⚠ Too Young' : ''))}">
+                        </option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('livestockIdValue')}"
+                         class="invalid-feedback" th:errors="*{livestockIdValue}"></div>
+                    <!-- Eligibility / pregnancy notice — populated by JS -->
+                    <div id="femaleEligibilityNote"></div>
+                    <div class="form-text">Active females · ✓ = eligible to breed · ⚠ = too young or already pregnant</div>
+                </div>
+
+                <!-- Male Animal — hidden for AI / Embryo Transfer -->
+                <div class="col-md-6" id="maleSection">
+                    <label class="form-label">
+                        Male Animal (Sire)
+                        <span id="maleCountBadge" class="badge-category ms-1" style="display:none;">
+                            <span id="maleCount">0</span> available
+                        </span>
+                    </label>
+
+                    <select th:field="*{maleLivestockIdValue}" class="form-select" id="maleSelect">
+                        <option value="">— Select a female first —</option>
+                    </select>
+
+                    <div id="methodNote" class="method-note">
+                        <i class="bi bi-info-circle-fill me-1"></i>
+                        <span id="methodNoteText">Male animal is not required for this breeding method.</span>
+                    </div>
+
+                    <div id="noMalesWarning" class="no-males-warning mt-2">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        No male <strong id="noMalesCatName"></strong> animals found.
+                        You may still record this as an <em>Artificial Insemination</em> event.
+                    </div>
+
+                    <div id="maleInfo" class="alert alert-info mt-2 p-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span class="badge-eligible">✓ Eligible</span> = recommended age &nbsp;
+                        <span class="badge-young">⚠ Young</span> = below minimum age
+                    </div>
+                    <div class="form-text">Only males of the same category are shown</div>
                 </div>
 
             </div>
@@ -251,7 +299,6 @@
             <!-- ── SECTION 4: Veterinarian ────────────────────────────────── -->
             <p class="section-title"><i class="bi bi-person-badge me-1"></i> Veterinarian</p>
             <div class="row g-3 mb-4">
-
                 <div class="col-md-6">
                     <label class="form-label">Attending Veterinarian</label>
                     <select th:field="*{veterinarianIdValue}" class="form-select">
@@ -262,7 +309,6 @@
                         </option>
                     </select>
                 </div>
-
             </div>
 
             <!-- ── SECTION 5: Notes ───────────────────────────────────────── -->
@@ -306,28 +352,25 @@
         try { gestationDays   = JSON.parse(GESTATION_DAYS);    } catch(e) {}
 
         // ── DOM refs ─────────────────────────────────────────────────────────────
-        const femaleSelect      = document.getElementById('femaleSelect');
-        const maleSelect        = document.getElementById('maleSelect');
-        const maleSection       = document.getElementById('maleSection');
-        const methodSelect      = document.getElementById('methodSelect');
-        const methodNote        = document.getElementById('methodNote');
-        const methodNoteText    = document.getElementById('methodNoteText');
-        const noMalesWarning    = document.getElementById('noMalesWarning');
-        const noMalesCatName    = document.getElementById('noMalesCatName');
-        const maleCountBadge    = document.getElementById('maleCountBadge');
-        const maleCountEl       = document.getElementById('maleCount');
-        const maleInfo          = document.getElementById('maleInfo');
-        const breedingDateInput = document.getElementById('breedingDateInput');
-        const checkDateInput    = document.getElementById('checkDateInput');
-        const dueDateInput      = document.getElementById('dueDateInput');
-        const gestationHint     = document.getElementById('gestationHint');
+        const femaleSelect         = document.getElementById('femaleSelect');
+        const maleSelect           = document.getElementById('maleSelect');
+        const maleSection          = document.getElementById('maleSection');
+        const methodSelect         = document.getElementById('methodSelect');
+        const methodNote           = document.getElementById('methodNote');
+        const methodNoteText       = document.getElementById('methodNoteText');
+        const noMalesWarning       = document.getElementById('noMalesWarning');
+        const noMalesCatName       = document.getElementById('noMalesCatName');
+        const maleCountBadge       = document.getElementById('maleCountBadge');
+        const maleCountEl          = document.getElementById('maleCount');
+        const maleInfo             = document.getElementById('maleInfo');
+        const breedingDateInput    = document.getElementById('breedingDateInput');
+        const checkDateInput       = document.getElementById('checkDateInput');
+        const dueDateInput         = document.getElementById('dueDateInput');
+        const gestationHint        = document.getElementById('gestationHint');
+        const femaleEligibilityNote = document.getElementById('femaleEligibilityNote');
 
-        // ── FIX 2: Methods that do NOT require a male animal ────────────────────
+        // ── Methods that do NOT require a male animal ────────────────────────────
         const NO_MALE_METHODS = ['ARTIFICIAL_INSEMINATION', 'EMBRYO_TRANSFER'];
-
-        function isMaleRequired() {
-            return !NO_MALE_METHODS.includes(methodSelect ? methodSelect.value : '');
-        }
 
         function updateMaleSectionVisibility() {
             if (!methodSelect || !maleSection) return;
@@ -336,7 +379,7 @@
 
             if (noMale) {
                 maleSection.classList.add('hidden-method');
-                maleSelect.value = '';          // Clear any selection
+                maleSelect.value = '';
                 methodNote.classList.add('visible');
                 if (method === 'ARTIFICIAL_INSEMINATION') {
                     methodNoteText.textContent =
@@ -353,20 +396,46 @@
             }
         }
 
-        // ── Female → filter males ────────────────────────────────────────────────
+        // ── Female selection change ──────────────────────────────────────────────
         function onFemaleChange() {
-            const opt     = femaleSelect.selectedOptions[0];
-            const catId   = opt ? opt.getAttribute('data-cat-id')   : '';
-            const catName = opt ? opt.getAttribute('data-cat-name') : '';
+            const opt       = femaleSelect ? femaleSelect.selectedOptions[0] : null;
+            const catId     = opt ? opt.getAttribute('data-cat-id')   : '';
+            const catName   = opt ? opt.getAttribute('data-cat-name') : '';
+            const eligible  = opt ? opt.getAttribute('data-eligible') : 'unknown';
+            const pregnant  = opt ? opt.getAttribute('data-pregnant') : 'false';
 
-            // Rebuild male dropdown
+            // Show eligibility note under female dropdown
+            if (femaleEligibilityNote) {
+                femaleEligibilityNote.className = '';
+                femaleEligibilityNote.textContent = '';
+                if (pregnant === 'true') {
+                    femaleEligibilityNote.className = 'pregnant';
+                    femaleEligibilityNote.innerHTML =
+                        '<i class="bi bi-exclamation-triangle-fill me-1"></i>' +
+                        '<strong>This animal is already pregnant.</strong> ' +
+                        'You can still record a new breeding event, but verify this is correct.';
+                } else if (eligible === 'false') {
+                    femaleEligibilityNote.className = 'warn';
+                    femaleEligibilityNote.innerHTML =
+                        '<i class="bi bi-hourglass-split me-1"></i>' +
+                        '<strong>This animal has not yet reached the minimum breeding age</strong> ' +
+                        'for its category. Proceed with caution.';
+                } else if (eligible === 'true') {
+                    femaleEligibilityNote.className = 'ok';
+                    femaleEligibilityNote.innerHTML =
+                        '<i class="bi bi-check-circle-fill me-1"></i>' +
+                        'This female has reached breeding age and is eligible to conceive.';
+                }
+            }
+
+            // Rebuild male dropdown based on category
             maleSelect.innerHTML = '';
             maleSelect.add(new Option('— Select Male Animal (optional) —', ''));
 
             if (!catId) {
                 let total = 0;
                 Object.values(malesByCategory).forEach(males =>
-                    males.forEach(m => { maleSelect.add(buildOption(m)); total++; }));
+                    males.forEach(m => { maleSelect.add(buildMaleOption(m)); total++; }));
                 hideMaleUI(total);
                 updateGestationHint('');
                 return;
@@ -375,20 +444,20 @@
             const males = malesByCategory[catId] || [];
 
             if (males.length === 0) {
-                noMalesCatName.textContent = catName;
-                noMalesWarning.style.display = 'block';
-                maleCountBadge.style.display = 'none';
-                maleInfo.style.display = 'none';
-                // Auto-suggest AI if no males exist and Natural is selected
-                if (methodSelect && methodSelect.value === '' || methodSelect.value === 'NATURAL') {
+                noMalesCatName.textContent    = catName;
+                noMalesWarning.style.display  = 'block';
+                maleCountBadge.style.display  = 'none';
+                maleInfo.style.display        = 'none';
+                // Auto-suggest AI if no males and Natural selected
+                if (methodSelect && (methodSelect.value === '' || methodSelect.value === 'NATURAL')) {
                     methodSelect.value = 'ARTIFICIAL_INSEMINATION';
                     updateMaleSectionVisibility();
                 }
             } else {
-                noMalesWarning.style.display = 'none';
-                maleInfo.style.display = 'block';
-                maleCountBadge.style.display = 'inline-block';
-                maleCountEl.textContent = males.length;
+                noMalesWarning.style.display  = 'none';
+                maleInfo.style.display        = 'block';
+                maleCountBadge.style.display  = 'inline-block';
+                maleCountEl.textContent       = males.length;
 
                 const sorted = [...males].sort((a, b) => {
                     const aEl = ELIGIBLE_IDS.has(a.id) ? 0 : 1;
@@ -402,40 +471,40 @@
 
                 if (hasEligible && hasIneligible) {
                     const grp1 = document.createElement('optgroup');
-                    grp1.label = '✓ Recommended (12+ months)';
-                    sorted.filter(m =>  ELIGIBLE_IDS.has(m.id)).forEach(m => grp1.appendChild(buildOption(m)));
+                    grp1.label = '✓ Recommended (min age met)';
+                    sorted.filter(m =>  ELIGIBLE_IDS.has(m.id)).forEach(m => grp1.appendChild(buildMaleOption(m)));
                     maleSelect.appendChild(grp1);
 
                     const grp2 = document.createElement('optgroup');
-                    grp2.label = '⚠ Young (under 12 months)';
-                    sorted.filter(m => !ELIGIBLE_IDS.has(m.id)).forEach(m => grp2.appendChild(buildOption(m)));
+                    grp2.label = '⚠ Below Minimum Age';
+                    sorted.filter(m => !ELIGIBLE_IDS.has(m.id)).forEach(m => grp2.appendChild(buildMaleOption(m)));
                     maleSelect.appendChild(grp2);
                 } else {
-                    sorted.forEach(m => maleSelect.add(buildOption(m)));
+                    sorted.forEach(m => maleSelect.add(buildMaleOption(m)));
                 }
             }
 
             updateGestationHint(catName);
         }
 
-        function buildOption(male) {
+        function buildMaleOption(male) {
             const isEligible = ELIGIBLE_IDS.has(male.id);
             const label = male.tagNumber
                 + (male.category ? ' · ' + male.category : '')
                 + (isEligible ? ' ✓' : ' ⚠');
             const opt = new Option(label, male.id);
-            opt.className = isEligible ? 'eligible' : 'ineligible';
+            opt.className = isEligible ? 'male-eligible' : 'male-ineligible';
             return opt;
         }
 
         function hideMaleUI(count) {
-            noMalesWarning.style.display = 'none';
-            maleInfo.style.display       = count > 0 ? 'block' : 'none';
-            maleCountBadge.style.display = count > 0 ? 'inline-block' : 'none';
+            noMalesWarning.style.display  = 'none';
+            maleInfo.style.display        = count > 0 ? 'block' : 'none';
+            maleCountBadge.style.display  = count > 0 ? 'inline-block' : 'none';
             if (count > 0) maleCountEl.textContent = count;
         }
 
-        // ── Auto-calculate dates ─────────────────────────────────────────────────
+        // ── Gestation hint ────────────────────────────────────────────────────────
         function getGestationDays(catName) {
             if (!catName) return gestationDays['DEFAULT'] || 283;
             const upper = catName.toUpperCase().trim();
@@ -454,6 +523,7 @@
                 : 'Auto-calculated based on species';
         }
 
+        // ── Auto-calculate check and due dates from breeding date ─────────────────
         breedingDateInput && breedingDateInput.addEventListener('change', function () {
             const d = new Date(this.value);
             if (isNaN(d.getTime())) return;
@@ -467,20 +537,15 @@
             if (dueDateInput && !dueDateInput.value) {
                 const opt     = femaleSelect ? femaleSelect.selectedOptions[0] : null;
                 const catName = opt ? (opt.getAttribute('data-cat-name') || '') : '';
-                const due = new Date(d);
+                const due     = new Date(d);
                 due.setDate(due.getDate() + getGestationDays(catName));
                 dueDateInput.value = due.toISOString().split('T')[0];
             }
         });
 
-        // ── Method change → show/hide male section ───────────────────────────────
-        methodSelect && methodSelect.addEventListener('change', function () {
-            updateMaleSectionVisibility();
-            // If switching back to Natural and a male IS selected — keep it
-            // If switching to AI/Embryo — male is cleared inside updateMaleSectionVisibility()
-        });
+        // ── Method change ─────────────────────────────────────────────────────────
+        methodSelect && methodSelect.addEventListener('change', updateMaleSectionVisibility);
 
-        // If user picks a male while Natural is implied but no method set — auto-set Natural
         maleSelect && maleSelect.addEventListener('change', function () {
             if (this.value && methodSelect && methodSelect.value === '') {
                 methodSelect.value = 'NATURAL';
@@ -497,21 +562,18 @@
                 setTimeout(() => { maleSelect.value = savedMaleId; }, 50);
             }
         } else {
-            // Populate all males initially so user can browse
             let total = 0;
             Object.values(malesByCategory).forEach(males =>
-                males.forEach(m => { maleSelect.add(buildOption(m)); total++; }));
+                males.forEach(m => { maleSelect.add(buildMaleOption(m)); total++; }));
             if (total > 0) {
-                maleInfo.style.display = 'block';
+                maleInfo.style.display       = 'block';
                 maleCountBadge.style.display = 'inline-block';
-                maleCountEl.textContent = total;
-                maleSelect.options[0].text = '— Select Male Animal (optional) —';
+                maleCountEl.textContent      = total;
+                maleSelect.options[0].text   = '— Select Male Animal (optional) —';
             }
         }
 
-        // Apply method visibility on page load (covers edit / form re-display after error)
         updateMaleSectionVisibility();
-
     })();
 </script>
 </body>

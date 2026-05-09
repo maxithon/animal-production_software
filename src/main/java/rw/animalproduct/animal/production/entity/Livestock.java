@@ -10,12 +10,19 @@ import java.util.UUID;
 @Table(name = "livestock")
 public class Livestock {
 
-    // Status constants
-    public static final String STATUS_ACTIVE = "ACTIVE";
-    public static final String STATUS_SOLD = "SOLD";
-    public static final String STATUS_DEAD = "DEAD";
-    public static final String STATUS_SICK = "SICK";
+    // ── Status constants ──────────────────────────────────────────────────────
+    public static final String STATUS_ACTIVE   = "ACTIVE";
+    public static final String STATUS_SOLD     = "SOLD";
+    public static final String STATUS_DEAD     = "DEAD";
+    public static final String STATUS_SICK     = "SICK";
     public static final String STATUS_PREGNANT = "PREGNANT";
+
+    // ── Acquisition method constants ──────────────────────────────────────────
+    public static final String ACQ_BIRTH    = "BIRTH";
+    public static final String ACQ_PURCHASE = "PURCHASE";
+    public static final String ACQ_DONATION = "DONATION";
+    public static final String ACQ_TRANSFER = "TRANSFER";
+    public static final String ACQ_OTHER    = "OTHER";
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -32,6 +39,18 @@ public class Livestock {
 
     @Column(name = "acquisition_method")
     private String acquisitionMethod;
+
+    /**
+     * Human-readable description of where this animal came from.
+     *
+     * Examples:
+     *   BIRTH animals  → "Born on this farm" or "Born on this farm — Mother: GOA-002"
+     *   PURCHASE       → "Nyagatare livestock market" / "Private farm in Huye"
+     *   DONATION       → "Donated by XYZ NGO"
+     *   TRANSFER       → "Transferred from Musanze farm"
+     */
+    @Column(name = "acquisition_source", length = 255)
+    private String acquisitionSource;
 
     @Column(name = "date_received")
     private LocalDate dateReceived;
@@ -72,6 +91,27 @@ public class Livestock {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    /**
+     * Legacy field — kept for backward compatibility.
+     * New code should use acquisitionSource instead.
+     */
+    @Column(name = "source_location", length = 255)
+    private String sourceLocation;
+
+    /**
+     * TRUE  = this animal was auto-created by the birth recording flow.
+     * FALSE = fully registered animal (default).
+     */
+    @Column(name = "is_draft", nullable = false)
+    private Boolean isDraft = false;
+
+    /**
+     * For draft animals only: links back to the birth event that created this.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "draft_birth_id")
+    private LivestockBirth draftBirthEvent;
+
     @Transient
     private Integer pregnancyMonths;
 
@@ -79,7 +119,6 @@ public class Livestock {
     @JoinColumn(name = "livestock_category_id")
     private LivestockCategory livestockCategory;
 
-    // ✅ FIXED: Changed column name to match database (beneficiary_id)
     @ManyToOne
     @JoinColumn(name = "beneficiary_id")
     private Beneficiary beneficiary;
@@ -95,10 +134,14 @@ public class Livestock {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // ── FIX: Added missing updatedAt field ────────────────────────────────────
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-    // Transient fields for form binding
+    // ── Transient fields for form binding ────────────────────────────────────
     @Transient
     private String livestockCategoryIdValue;
 
@@ -107,14 +150,42 @@ public class Livestock {
 
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (isDraft   == null) isDraft   = false;
+        if (isPregnant == null) isPregnant = false;
+        if (isDeleted == null) isDeleted = false;
+    }
+
+    // ── FIX: Added @PreUpdate to stamp updatedAt ──────────────────────────────
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public Livestock() {}
 
-    // Getters and Setters
+    // ── Convenience: build acquisition source label ───────────────────────────
+    public String resolvedAcquisitionSource() {
+        if (acquisitionSource != null && !acquisitionSource.isBlank()) {
+            return acquisitionSource;
+        }
+        if (ACQ_BIRTH.equals(acquisitionMethod)) {
+            if (mother != null) {
+                return "Born on this farm — Mother: " + mother.getTagNumber();
+            }
+            return "Born on this farm";
+        }
+        if (sourceLocation != null && !sourceLocation.isBlank()) {
+            return sourceLocation;
+        }
+        if (ACQ_PURCHASE.equals(acquisitionMethod)) return "Purchased (source not recorded)";
+        if (ACQ_DONATION.equals(acquisitionMethod)) return "Donated (source not recorded)";
+        if (ACQ_TRANSFER.equals(acquisitionMethod)) return "Transferred (source not recorded)";
+        return "Unknown origin";
+    }
+
+    // ── Getters and Setters ───────────────────────────────────────────────────
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -128,7 +199,14 @@ public class Livestock {
     public void setStatus(String status) { this.status = status; }
 
     public String getAcquisitionMethod() { return acquisitionMethod; }
-    public void setAcquisitionMethod(String acquisitionMethod) { this.acquisitionMethod = acquisitionMethod; }
+    public void setAcquisitionMethod(String acquisitionMethod) {
+        this.acquisitionMethod = acquisitionMethod;
+    }
+
+    public String getAcquisitionSource() { return acquisitionSource; }
+    public void setAcquisitionSource(String acquisitionSource) {
+        this.acquisitionSource = acquisitionSource;
+    }
 
     public LocalDate getDateReceived() { return dateReceived; }
     public void setDateReceived(LocalDate dateReceived) { this.dateReceived = dateReceived; }
@@ -149,13 +227,19 @@ public class Livestock {
     public void setConceptionDate(LocalDate conceptionDate) { this.conceptionDate = conceptionDate; }
 
     public LocalDate getLastBreedingDate() { return lastBreedingDate; }
-    public void setLastBreedingDate(LocalDate lastBreedingDate) { this.lastBreedingDate = lastBreedingDate; }
+    public void setLastBreedingDate(LocalDate lastBreedingDate) {
+        this.lastBreedingDate = lastBreedingDate;
+    }
 
     public LocalDate getFirstBreedingDate() { return firstBreedingDate; }
-    public void setFirstBreedingDate(LocalDate firstBreedingDate) { this.firstBreedingDate = firstBreedingDate; }
+    public void setFirstBreedingDate(LocalDate firstBreedingDate) {
+        this.firstBreedingDate = firstBreedingDate;
+    }
 
     public LocalDate getExpectedDueDate() { return expectedDueDate; }
-    public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
+    public void setExpectedDueDate(LocalDate expectedDueDate) {
+        this.expectedDueDate = expectedDueDate;
+    }
 
     public String getPhoto() { return photo; }
     public void setPhoto(String photo) { this.photo = photo; }
@@ -169,18 +253,25 @@ public class Livestock {
     public LocalDate getBirthDate() { return birthDate; }
     public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
+    public String getSourceLocation() { return sourceLocation; }
+    public void setSourceLocation(String sourceLocation) { this.sourceLocation = sourceLocation; }
+
+    public Boolean getIsDraft() { return isDraft; }
+    public void setIsDraft(Boolean isDraft) { this.isDraft = isDraft; }
+
+    public LivestockBirth getDraftBirthEvent() { return draftBirthEvent; }
+    public void setDraftBirthEvent(LivestockBirth draftBirthEvent) {
+        this.draftBirthEvent = draftBirthEvent;
+    }
+
     public Integer getPregnancyMonths() { return pregnancyMonths; }
     public void setPregnancyMonths(Integer pregnancyMonths) { this.pregnancyMonths = pregnancyMonths; }
 
     public LivestockCategory getLivestockCategory() { return livestockCategory; }
-    public void setLivestockCategory(LivestockCategory livestockCategory) {
-        this.livestockCategory = livestockCategory;
-    }
+    public void setLivestockCategory(LivestockCategory cat) { this.livestockCategory = cat; }
 
     public Beneficiary getBeneficiary() { return beneficiary; }
-    public void setBeneficiary(Beneficiary beneficiary) {
-        this.beneficiary = beneficiary;
-    }
+    public void setBeneficiary(Beneficiary beneficiary) { this.beneficiary = beneficiary; }
 
     public Livestock getMother() { return mother; }
     public void setMother(Livestock mother) { this.mother = mother; }
@@ -191,16 +282,15 @@ public class Livestock {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
     public Boolean getIsDeleted() { return isDeleted; }
     public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 
     public String getLivestockCategoryIdValue() { return livestockCategoryIdValue; }
-    public void setLivestockCategoryIdValue(String livestockCategoryIdValue) {
-        this.livestockCategoryIdValue = livestockCategoryIdValue;
-    }
+    public void setLivestockCategoryIdValue(String v) { this.livestockCategoryIdValue = v; }
 
     public String getBeneficiaryIdValue() { return beneficiaryIdValue; }
-    public void setBeneficiaryIdValue(String beneficiaryIdValue) {
-        this.beneficiaryIdValue = beneficiaryIdValue;
-    }
+    public void setBeneficiaryIdValue(String v) { this.beneficiaryIdValue = v; }
 }
