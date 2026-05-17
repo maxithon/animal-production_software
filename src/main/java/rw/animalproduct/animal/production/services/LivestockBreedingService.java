@@ -68,8 +68,10 @@ public class LivestockBreedingService {
      * Called automatically when a PURCHASED/DONATED/TRANSFERRED animal is
      * registered with is_pregnant = true.
      *
-     * Creates a CONFIRMED_PREGNANT breeding record with method = PURCHASE_PREGNANT
-     * so the animal appears in pregnancy tracking, due-date alerts, and all
+     * Creates a CONFIRMED_PREGNANT breeding record. The breedingMethod is set
+     * to the inseminationMethod provided (e.g. NATURAL_MATING, ARTIFICIAL_INSEMINATION)
+     * and falls back to PURCHASE_PREGNANT when no method is known, so the animal
+     * appears correctly in pregnancy tracking, due-date alerts, and all
      * breeding dashboards — even though no on-farm breeding event was recorded.
      *
      * IMPORTANT: The database check constraint on livestock_breeding.breeding_method
@@ -84,14 +86,16 @@ public class LivestockBreedingService {
      *       'NATURAL','ARTIFICIAL_INSEMINATION','EMBRYO_TRANSFER','PURCHASE_PREGNANT'
      *   ));
      *
-     * @param animal          The newly registered pregnant animal
-     * @param conceptionDate  The conception date entered during registration (may be null)
-     * @param expectedDueDate The expected due date (may be null — estimated from gestation)
+     * @param animal               The newly registered pregnant animal
+     * @param conceptionDate       The conception date entered during registration (may be null)
+     * @param expectedDueDate      The expected due date (may be null — estimated from gestation)
+     * @param inseminationMethod   The method used to make the animal pregnant (may be null)
      */
     @Transactional
     public LivestockBreeding createForPurchasedPregnantAnimal(Livestock animal,
                                                               LocalDate conceptionDate,
-                                                              LocalDate expectedDueDate) {
+                                                              LocalDate expectedDueDate,
+                                                              String inseminationMethod) {
 
         // Guard: only for non-BIRTH, female animals
         if (!isEligibleForPurchasePregnantRecord(animal)) {
@@ -116,9 +120,14 @@ public class LivestockBreedingService {
         }
         breeding.setBreedingDate(breedingDateProxy);
 
-        // Mark as PURCHASE_PREGNANT so it's distinguishable in the UI
-        // The DB constraint MUST allow this value — see migration SQL above.
-        breeding.setBreedingMethod(LivestockBreeding.METHOD_PURCHASE_PREGNANT);
+        // Use the provided insemination method when known.
+        // Fall back to PURCHASE_PREGNANT so it is distinguishable in the UI.
+        // The DB constraint MUST allow PURCHASE_PREGNANT — see migration SQL above.
+        if (inseminationMethod != null && !inseminationMethod.isBlank()) {
+            breeding.setBreedingMethod(inseminationMethod);
+        } else {
+            breeding.setBreedingMethod(LivestockBreeding.METHOD_PURCHASE_PREGNANT);
+        }
 
         // Resolve due date: use provided value, or estimate from category gestation
         LocalDate dueDate = expectedDueDate;

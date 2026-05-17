@@ -24,6 +24,12 @@ public class Livestock {
     public static final String ACQ_TRANSFER = "TRANSFER";
     public static final String ACQ_OTHER    = "OTHER";
 
+    // ── Insemination method constants ─────────────────────────────────────────
+    public static final String INSEM_NATURAL              = "NATURAL_MATING";
+    public static final String INSEM_AI                   = "ARTIFICIAL_INSEMINATION";
+    public static final String INSEM_ET                   = "EMBRYO_TRANSFER";
+    public static final String INSEM_UNKNOWN              = "UNKNOWN";
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -42,12 +48,6 @@ public class Livestock {
 
     /**
      * Human-readable description of where this animal came from.
-     *
-     * Examples:
-     *   BIRTH animals  → "Born on this farm" or "Born on this farm — Mother: GOA-002"
-     *   PURCHASE       → "Nyagatare livestock market" / "Private farm in Huye"
-     *   DONATION       → "Donated by XYZ NGO"
-     *   TRANSFER       → "Transferred from Musanze farm"
      */
     @Column(name = "acquisition_source", length = 255)
     private String acquisitionSource;
@@ -92,22 +92,38 @@ public class Livestock {
     private LocalDate birthDate;
 
     /**
+     * The method used to make this animal pregnant (or the method used at last breeding).
+     *
+     * Populated at registration for purchased/donated/transferred animals
+     * that arrived already pregnant, and also recordable for any animal
+     * regardless of current pregnancy status (historical breeding record).
+     *
+     * Values (use the constants above):
+     *   NATURAL_MATING           – bull/ram/buck/boar mounted naturally
+     *   ARTIFICIAL_INSEMINATION  – AI technician inserted semen
+     *   EMBRYO_TRANSFER          – ET procedure
+     *   UNKNOWN                  – method not recorded
+     *
+     * This field is surfaced in:
+     *   • Pregnancy Tracking dashboard (livestock-pregnancy-tracking.html)
+     *   • PregnancyRowDTO  (farm-bred animals)
+     *   • PurchasedPregnancyRowDTO (purchased/external animals)
+     *
+     * DB column: insemination_method VARCHAR(50)
+     * Migration: ALTER TABLE livestock ADD COLUMN insemination_method VARCHAR(50);
+     */
+    @Column(name = "insemination_method", length = 50)
+    private String inseminationMethod;
+
+    /**
      * Legacy field — kept for backward compatibility.
-     * New code should use acquisitionSource instead.
      */
     @Column(name = "source_location", length = 255)
     private String sourceLocation;
 
-    /**
-     * TRUE  = this animal was auto-created by the birth recording flow.
-     * FALSE = fully registered animal (default).
-     */
     @Column(name = "is_draft", nullable = false)
     private Boolean isDraft = false;
 
-    /**
-     * For draft animals only: links back to the birth event that created this.
-     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "draft_birth_id")
     private LivestockBirth draftBirthEvent;
@@ -134,14 +150,13 @@ public class Livestock {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // ── FIX: Added missing updatedAt field ────────────────────────────────────
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-    // ── Transient fields for form binding ────────────────────────────────────
+    // ── Transient fields for form binding ─────────────────────────────────────
     @Transient
     private String livestockCategoryIdValue;
 
@@ -150,13 +165,12 @@ public class Livestock {
 
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (isDraft   == null) isDraft   = false;
+        if (createdAt  == null) createdAt  = LocalDateTime.now();
+        if (isDraft    == null) isDraft    = false;
         if (isPregnant == null) isPregnant = false;
-        if (isDeleted == null) isDeleted = false;
+        if (isDeleted  == null) isDeleted  = false;
     }
 
-    // ── FIX: Added @PreUpdate to stamp updatedAt ──────────────────────────────
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
@@ -182,6 +196,21 @@ public class Livestock {
         if (ACQ_DONATION.equals(acquisitionMethod)) return "Donated (source not recorded)";
         if (ACQ_TRANSFER.equals(acquisitionMethod)) return "Transferred (source not recorded)";
         return "Unknown origin";
+    }
+
+    /**
+     * Human-readable label for the insemination method.
+     * Safe to call from Thymeleaf templates.
+     */
+    public String inseminationMethodLabel() {
+        if (inseminationMethod == null || inseminationMethod.isBlank()) return "Not recorded";
+        return switch (inseminationMethod) {
+            case INSEM_NATURAL -> "Natural Mating";
+            case INSEM_AI      -> "Artificial Insemination (AI)";
+            case INSEM_ET      -> "Embryo Transfer (ET)";
+            case INSEM_UNKNOWN -> "Unknown";
+            default            -> inseminationMethod;
+        };
     }
 
     // ── Getters and Setters ───────────────────────────────────────────────────
@@ -252,6 +281,11 @@ public class Livestock {
 
     public LocalDate getBirthDate() { return birthDate; }
     public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+
+    public String getInseminationMethod() { return inseminationMethod; }
+    public void setInseminationMethod(String inseminationMethod) {
+        this.inseminationMethod = inseminationMethod;
+    }
 
     public String getSourceLocation() { return sourceLocation; }
     public void setSourceLocation(String sourceLocation) { this.sourceLocation = sourceLocation; }

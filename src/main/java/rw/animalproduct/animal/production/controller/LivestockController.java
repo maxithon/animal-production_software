@@ -350,20 +350,24 @@ public class LivestockController {
      * 1. BIRTH animals:
      *    - birthDate is cleared (managed via livestock_births table)
      *    - isPregnant is forced to false (a newborn cannot be pregnant)
+     *    - inseminationMethod is cleared (not applicable at birth)
      *    - No breeding record is created at registration time
      *
      * 2. PURCHASE / DONATION / TRANSFER / OTHER animals:
-     *    - birthDate is kept as provided (the animal's real birthday)
+     *    - birthDate is kept as provided
+     *    - inseminationMethod is stored as-is (whatever the user selected)
      *    - If female + isPregnant = true:
      *        → status set to PREGNANT
      *        → pregnancyStatus set to "PREGNANT"
-     *        → A CONFIRMED_PREGNANT breeding record is auto-created (PURCHASE_PREGNANT method)
-     *          so the animal appears in all pregnancy tracking dashboards
+     *        → A CONFIRMED_PREGNANT breeding record is auto-created, with the
+     *          inseminationMethod copied onto the breeding record so it shows
+     *          in all pregnancy tracking dashboards.
      *
      * Form parameters (beyond the Livestock object):
-     *   locationId       – UUID of the selected location
-     *   conceptionDate   – yyyy-MM-dd string, may be blank
-     *   expectedDueDate  – yyyy-MM-dd string, may be blank
+     *   locationId          – UUID of the selected location
+     *   conceptionDate      – yyyy-MM-dd string, may be blank
+     *   expectedDueDate     – yyyy-MM-dd string, may be blank
+     *   inseminationMethod  – bound directly via th:field on the Livestock object
      */
     @PostMapping("/register/new")
     public String register(@Valid @ModelAttribute("livestock") Livestock livestock,
@@ -390,22 +394,25 @@ public class LivestockController {
             livestock.setIsPregnant(false);
             livestock.setPregnancyStatus("NOT_PREGNANT");
             livestock.setStatus(Livestock.STATUS_ACTIVE);
+            // A newborn has no insemination method — clear it
+            livestock.setInseminationMethod(null);
         } else {
             // ── Non-BIRTH: apply pregnancy status ─────────────────────────────
             if (Boolean.TRUE.equals(livestock.getIsPregnant())
                     && "FEMALE".equalsIgnoreCase(livestock.getGender())) {
                 livestock.setStatus(Livestock.STATUS_PREGNANT);
                 livestock.setPregnancyStatus("PREGNANT");
+                // inseminationMethod is already bound from the form — keep it
             } else {
                 livestock.setIsPregnant(false);
                 livestock.setPregnancyStatus("NOT_PREGNANT");
+                // inseminationMethod may still be recorded as historical info — keep it
             }
         }
 
         livestock.setPregnancyMonths(null);
 
         if (result.hasErrors()) {
-            // Rebuild model for re-render
             if (!model.containsAttribute("suggestedTag")) {
                 String lastTag = findLastTagNumber();
                 model.addAttribute("lastTag",      lastTag);
@@ -422,11 +429,9 @@ public class LivestockController {
                 locationRepository.findById(locationId).ifPresent(livestock::setLocation);
             }
 
-            // Parse pregnancy dates from form (only meaningful for non-BIRTH)
             LocalDate conceptionDate  = isBirth ? null : parseDate(conceptionDateStr);
             LocalDate expectedDueDate = isBirth ? null : parseDate(expectedDueDateStr);
 
-            // Store conception / due date on the livestock record itself
             if (conceptionDate != null) {
                 livestock.setConceptionDate(conceptionDate);
                 livestock.setLastBreedingDate(conceptionDate);
@@ -438,25 +443,19 @@ public class LivestockController {
             Livestock saved = livestockService.addNew(livestock);
 
             // ── AUTO-CREATE BREEDING RECORD FOR PURCHASED PREGNANT ANIMALS ────
-            //
-            // Condition: female + non-BIRTH acquisition + isPregnant = true
-            //
-            // This creates a CONFIRMED_PREGNANT breeding record so the animal
-            // appears in:
-            //   • Pregnancy tracking dashboard
-            //   • Due-date alerts
-            //   • Breeding management page (Pregnant Animals section)
-            //
-            // REQUIREMENT: DB constraint must allow 'PURCHASE_PREGNANT' method.
-            // Run the migration SQL in LivestockBreedingService class javadoc.
-            //
             boolean isPurchasedPregnant =
                     "FEMALE".equalsIgnoreCase(saved.getGender())
                             && Boolean.TRUE.equals(saved.getIsPregnant())
                             && !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
 
             if (isPurchasedPregnant) {
-                breedingService.createForPurchasedPregnantAnimal(saved, conceptionDate, expectedDueDate);
+                // Pass inseminationMethod so it is stored on the breeding record
+                // and shown in the Pregnancy Tracking dashboard.
+                breedingService.createForPurchasedPregnantAnimal(
+                        saved,
+                        conceptionDate,
+                        expectedDueDate,
+                        saved.getInseminationMethod());
             }
 
             redirectAttributes.addFlashAttribute("success", "Livestock registered successfully!");
@@ -507,6 +506,7 @@ public class LivestockController {
             livestock.setBirthDate(null);
             livestock.setIsPregnant(false);
             livestock.setPregnancyStatus("NOT_PREGNANT");
+            livestock.setInseminationMethod(null);
         } else {
             if (Boolean.TRUE.equals(livestock.getIsPregnant())
                     && "FEMALE".equalsIgnoreCase(livestock.getGender())) {
@@ -548,13 +548,12 @@ public class LivestockController {
             Livestock saved = livestockService.update(id, livestock);
 
             // If animal was just marked pregnant during edit AND it's a purchased animal
-            // AND it had no breeding record before → create one
-            boolean nowPregnant = Boolean.TRUE.equals(saved.getIsPregnant());
-            boolean isPurchased = !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
+            // AND it had no breeding record before → create one with the insemination method
+            boolean nowPregnant        = Boolean.TRUE.equals(saved.getIsPregnant());
+            boolean isPurchased        = !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
             boolean justBecamePregnant = nowPregnant && !wasPregnant;
 
             if (justBecamePregnant && isPurchased && "FEMALE".equalsIgnoreCase(saved.getGender())) {
-                // Only create if no active breeding record already exists
                 boolean hasActive = !breedingService.getAll().stream()
                         .filter(b -> b.getLivestock() != null
                                 && b.getLivestock().getId().equals(saved.getId()))
@@ -563,7 +562,11 @@ public class LivestockController {
                         .toList().isEmpty();
 
                 if (!hasActive) {
-                    breedingService.createForPurchasedPregnantAnimal(saved, conceptionDate, expectedDueDate);
+                    breedingService.createForPurchasedPregnantAnimal(
+                            saved,
+                            conceptionDate,
+                            expectedDueDate,
+                            saved.getInseminationMethod());
                 }
             }
 

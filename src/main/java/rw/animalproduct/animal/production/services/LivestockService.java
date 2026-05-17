@@ -77,7 +77,6 @@ public class LivestockService {
         if (livestock.getIsDeleted() == null) {
             livestock.setIsDeleted(false);
         }
-        // FIX: ensure isPregnant defaults to false (never null in DB)
         if (livestock.getIsPregnant() == null) {
             livestock.setIsPregnant(false);
         }
@@ -114,10 +113,16 @@ public class LivestockService {
         existing.setPhoto(updatedLivestock.getPhoto());
         existing.setSoldPrice(updatedLivestock.getSoldPrice());
 
-        // FIX: keep isPregnant in sync during updates
+        // Keep isPregnant in sync during updates
         if (updatedLivestock.getIsPregnant() != null) {
             existing.setIsPregnant(updatedLivestock.getIsPregnant());
         }
+
+        // ── Copy insemination method ──────────────────────────────────────────
+        // Always copy — null means "not recorded" which is a valid state,
+        // and we don't want to accidentally keep a stale value if the user
+        // cleared the field during edit.
+        existing.setInseminationMethod(updatedLivestock.getInseminationMethod());
 
         // ── Update category relationship ──────────────────────────────────────
         if (updatedLivestock.getLivestockCategoryIdValue() != null

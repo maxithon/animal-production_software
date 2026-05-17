@@ -4,78 +4,100 @@ import rw.animalproduct.animal.production.entity.Livestock;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 /**
- * DTO that pre-computes all date/ChronoUnit calculations for a purchased-animal
- * pregnancy row so the Thymeleaf template never needs T(...) SpEL expressions.
+ * Row DTO for the Pregnancy Tracking dashboard — purchased / external animals.
  *
- * These are animals where is_pregnant = true but no breeding record exists yet.
+ * Wraps a {@link Livestock} row where {@code is_pregnant = true} but no
+ * CONFIRMED_PREGNANT breeding record exists yet (animal arrived already
+ * pregnant, flagged at intake via the Register Livestock form).
+ *
+ * All date arithmetic happens here so Thymeleaf 3.1+ templates never need
+ * {@code T(...)} or {@code new} expressions.
+ *
+ * Fields exposed:
+ *   livestockId          – animal UUID (for links)
+ *   tagNumber            – display tag
+ *   categoryName         – species / breed
+ *   acquisitionMethod    – PURCHASE / DONATION / TRANSFER / OTHER
+ *   conceptionDate       – from livestock.conception_date
+ *   expectedDueDate      – from livestock.expected_due_date
+ *   daysPregnant         – days since conception (null if unknown)
+ *   daysUntilDue         – days remaining (negative = overdue)
+ *   dueSoon              – true when 0 ≤ daysUntilDue ≤ 14
+ *   critical             – true when overdue
+ *   inseminationMethod   – HOW the animal was made pregnant
+ *   inseminationMethodLabel – human-readable label
  */
 public class PurchasedPregnancyRowDTO {
 
-    private final Livestock  livestock;
-    private final LocalDate  conceptionDate; // conceptionDate ?? lastBreedingDate
-    private final long daysPregnant;   // -1 when conception date is unknown
-    private final long daysRemaining;  // 9999 when no due date
-    private final long totalDays;      // 0 when dates are missing
-    private final long pct;            // -1 when dates are unknown
-    private final int  trimester;      // 0 = unknown, 1/2/3 otherwise
-    private final boolean critical;
-    private final boolean dueSoon;
+    private final UUID      livestockId;
+    private final String    tagNumber;
+    private final String    categoryName;
+    private final String    acquisitionMethod;
+    private final LocalDate conceptionDate;
+    private final LocalDate expectedDueDate;
+    private final Long      daysPregnant;
+    private final long      daysUntilDue;
+    private final boolean   dueSoon;
+    private final boolean   critical;
+    private final String    inseminationMethod;
+    private final String    inseminationMethodLabel;
 
     public PurchasedPregnancyRowDTO(Livestock ls, LocalDate today) {
-        this.livestock = ls;
 
-        // Best-effort conception date: prefer conceptionDate, fall back to lastBreedingDate
-        LocalDate cd = (ls.getConceptionDate() != null)
-                ? ls.getConceptionDate()
-                : ls.getLastBreedingDate();
-        this.conceptionDate = cd;
+        this.livestockId       = ls.getId();
+        this.tagNumber         = ls.getTagNumber();
+        this.acquisitionMethod = ls.getAcquisitionMethod();
 
-        // Days pregnant
-        this.daysPregnant = (cd != null)
-                ? ChronoUnit.DAYS.between(cd, today)
-                : -1L;
+        this.categoryName = (ls.getLivestockCategory() != null)
+                ? ls.getLivestockCategory().getName()
+                : null;
 
-        // Days remaining
-        long due = (ls.getExpectedDueDate() != null)
-                ? ChronoUnit.DAYS.between(today, ls.getExpectedDueDate())
-                : 9999L;
-        this.daysRemaining = due;
+        this.conceptionDate  = ls.getConceptionDate();
+        this.expectedDueDate = ls.getExpectedDueDate();
 
-        // Total gestation span
-        this.totalDays = (cd != null && ls.getExpectedDueDate() != null)
-                ? ChronoUnit.DAYS.between(cd, ls.getExpectedDueDate())
-                : 0L;
+        this.daysPregnant = (conceptionDate != null)
+                ? ChronoUnit.DAYS.between(conceptionDate, today)
+                : null;
 
-        // Percentage (only meaningful when both dates exist)
-        this.pct = (totalDays > 0 && daysPregnant >= 0)
-                ? Math.min(100L, daysPregnant * 100L / totalDays)
-                : -1L;
+        this.daysUntilDue = (expectedDueDate != null)
+                ? ChronoUnit.DAYS.between(today, expectedDueDate)
+                : Long.MAX_VALUE;
 
-        // Trimester (0 = unknown)
-        if (totalDays > 0 && daysPregnant >= 0) {
-            if (daysPregnant < totalDays / 3)          this.trimester = 1;
-            else if (daysPregnant < totalDays * 2 / 3) this.trimester = 2;
-            else                                        this.trimester = 3;
-        } else {
-            this.trimester = 0;
-        }
+        this.dueSoon  = expectedDueDate != null && daysUntilDue >= 0 && daysUntilDue <= 14;
+        this.critical = expectedDueDate != null && daysUntilDue < 0;
 
-        // Urgency
-        this.critical = (ls.getExpectedDueDate() != null) && due < 7;
-        this.dueSoon  = (ls.getExpectedDueDate() != null) && due >= 7 && due <= 30;
+        // ── Insemination method ───────────────────────────────────────────────
+        this.inseminationMethod      = ls.getInseminationMethod();
+        this.inseminationMethodLabel = resolveLabel(ls.getInseminationMethod());
     }
 
-    // ── Getters ──────────────────────────────────────────────────────────────
+    private static String resolveLabel(String method) {
+        if (method == null || method.isBlank()) return "Not recorded";
+        return switch (method) {
+            case "NATURAL_MATING"           -> "Natural Mating";
+            case "ARTIFICIAL_INSEMINATION"  -> "Artificial Insemination (AI)";
+            case "EMBRYO_TRANSFER"          -> "Embryo Transfer (ET)";
+            case "UNKNOWN"                  -> "Unknown";
+            default                         -> method;
+        };
+    }
 
-    public Livestock  getLivestock()    { return livestock; }
-    public LocalDate  getConceptionDate(){ return conceptionDate; }
-    public long getDaysPregnant()       { return daysPregnant; }
-    public long getDaysRemaining()      { return daysRemaining; }
-    public long getTotalDays()          { return totalDays; }
-    public long getPct()                { return pct; }
-    public int  getTrimester()          { return trimester; }
-    public boolean isCritical()         { return critical; }
-    public boolean isDueSoon()          { return dueSoon; }
+    // ── Getters ───────────────────────────────────────────────────────────────
+
+    public UUID      getLivestockId()             { return livestockId; }
+    public String    getTagNumber()               { return tagNumber; }
+    public String    getCategoryName()            { return categoryName; }
+    public String    getAcquisitionMethod()       { return acquisitionMethod; }
+    public LocalDate getConceptionDate()          { return conceptionDate; }
+    public LocalDate getExpectedDueDate()         { return expectedDueDate; }
+    public Long      getDaysPregnant()            { return daysPregnant; }
+    public long      getDaysUntilDue()            { return daysUntilDue; }
+    public boolean   isDueSoon()                  { return dueSoon; }
+    public boolean   isCritical()                 { return critical; }
+    public boolean   isOverdue()                  { return critical; }
+    public String    getInseminationMethod()      { return inseminationMethod; }
+    public String    getInseminationMethodLabel() { return inseminationMethodLabel; }
 }
