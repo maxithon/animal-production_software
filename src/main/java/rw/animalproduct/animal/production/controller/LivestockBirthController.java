@@ -43,23 +43,22 @@ public class LivestockBirthController {
     // ── Helper ───────────────────────────────────────────────────────
 
     private void addLivestockToModel(Model model) {
-        // Show active female animals old enough to be mothers.
-        // Animals that arrived pregnant (non-BIRTH acquisition, isPregnant=true)
-        // are included so staff can record when they actually give birth.
         LocalDate cutoffDate = LocalDate.now().minusMonths(6);
         List<Livestock> eligibleMothers = livestockRepository.findEligibleMothers(cutoffDate);
         model.addAttribute("livestockList",    eligibleMothers);
         model.addAttribute("allLivestockList", livestockRepository.findAll());
     }
 
-    // ── Redirect ─────────────────────────────────────────────────────
+    // ── Redirect ─────────────────────────────────────────────────────────────
 
     @GetMapping({"", "/"})
     public String redirectToList() {
         return "redirect:/livestock/births/list";
     }
 
-    // ===================== LIST =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // LIST
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/list")
     public String listAll(@RequestParam(value = "page", defaultValue = "0") int page,
@@ -85,11 +84,7 @@ public class LivestockBirthController {
             model.addAttribute("pageSize",    10);
         }
 
-        // ─────────────────────────────────────────────────────────────────
-        // BREEDING CAPABILITY MAP — keyed by mother livestock ID
-        // Shows whether the mother had reached min breeding age as of today.
-        // For external/purchased births the mother is unknown — key absent.
-        // ─────────────────────────────────────────────────────────────────
+        // Breeding capability map keyed by mother livestock ID
         Map<UUID, Boolean> breedingCapableMap = new HashMap<>();
         LocalDate today = LocalDate.now();
 
@@ -108,10 +103,28 @@ public class LivestockBirthController {
         }
         model.addAttribute("breedingCapableMap", breedingCapableMap);
 
+        // ── ENHANCEMENT: pending drafts warning ───────────────────────────────
+        long pendingDraftCount = livestockRepository.findAllPendingDrafts().size();
+        model.addAttribute("pendingDraftCount", pendingDraftCount);
+
+        // ── hasDraftMap: keyed by birth UUID, true if any linked child is still a draft.
+        // Pre-computed here because Thymeleaf/SpEL does NOT support Java lambda syntax
+        // (stream().anyMatch(c -> ...)) — that must stay in Java, not the template.
+        Map<UUID, Boolean> hasDraftMap = new HashMap<>();
+        for (LivestockBirth b : births) {
+            boolean anyDraft = b.getChildren() != null && b.getChildren().stream()
+                    .map(LivestockOffspring::getChildLivestock)
+                    .anyMatch(child -> child != null && Boolean.TRUE.equals(child.getIsDraft()));
+            hasDraftMap.put(b.getId(), anyDraft);
+        }
+        model.addAttribute("hasDraftMap", hasDraftMap);
+
         return "livestock-births-list";
     }
 
-    // ===================== REGISTER =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // REGISTER
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
@@ -126,10 +139,8 @@ public class LivestockBirthController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
-        // Birth form always creates a farm birth — force flag to false
         birth.setIsExternalBirth(false);
 
-        // Mother is always required
         if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "error.birth",
                     "Mother animal is required — select the animal that gave birth");
@@ -147,7 +158,7 @@ public class LivestockBirthController {
         try {
             LivestockBirth saved = birthService.addNew(birth);
             redirectAttributes.addFlashAttribute("success",
-                    "Birth recorded successfully! Now link the child animals below.");
+                    "Birth recorded successfully! Now complete the child animals below.");
             return "redirect:/livestock/births/" + saved.getId() + "/children";
         } catch (Exception e) {
             model.addAttribute("error", "Error recording birth: " + e.getMessage());
@@ -156,7 +167,9 @@ public class LivestockBirthController {
         }
     }
 
-    // ===================== EDIT =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // EDIT
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable UUID id, Model model) {
@@ -179,12 +192,10 @@ public class LivestockBirthController {
                          Model model,
                          RedirectAttributes redirectAttributes) {
 
-        // Always a farm birth on edit
         birth.setIsExternalBirth(false);
 
         if (birth.getLivestockIdValue() == null || birth.getLivestockIdValue().trim().isEmpty()) {
-            result.rejectValue("livestockIdValue", "error.birth",
-                    "Mother animal is required");
+            result.rejectValue("livestockIdValue", "error.birth", "Mother animal is required");
         }
 
         if (result.hasErrors()) {
@@ -207,7 +218,9 @@ public class LivestockBirthController {
         }
     }
 
-    // ===================== DELETE =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // DELETE
+    // ═════════════════════════════════════════════════════════════════════════
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
@@ -220,7 +233,9 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/list";
     }
 
-    // ===================== VIEW =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // VIEW
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/view/{id}")
     public String viewDetail(@PathVariable UUID id, Model model) {
@@ -233,7 +248,17 @@ public class LivestockBirthController {
         return "livestock-birth-view";
     }
 
-    // ===================== CHILD LINKING =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // CHILD LINKING
+    //
+    // FIX: The available-animals list previously filtered out any animal where
+    // getMother() != null.  This blocked DRAFT animals (which already have their
+    // mother set from the birth event) from ever appearing in the dropdown.
+    //
+    // New rule: drafts belonging to THIS birth event always appear in the
+    // available list regardless of their mother field, so staff can complete them.
+    // Non-draft animals must still have no mother (no pre-existing family link).
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/{birthId}/children")
     public String viewChildren(@PathVariable UUID birthId, Model model) {
@@ -253,17 +278,43 @@ public class LivestockBirthController {
                 .map(Livestock::getId)
                 .collect(Collectors.toList());
 
+        // Collect draft IDs that belong to THIS birth event so we always include them
+        Set<UUID> draftIdsForThisBirth = livestockRepository
+                .findByDraftBirthEventIdAndIsDraftTrue(birthId)
+                .stream()
+                .map(Livestock::getId)
+                .collect(Collectors.toSet());
+
         List<Livestock> available = livestockRepository.findAll().stream()
+                // Not already linked
                 .filter(l -> !linkedIds.contains(l.getId()))
+                // Not the mother itself
                 .filter(l -> motherId == null || !l.getId().equals(motherId))
+                // Must be a BIRTH-acquired animal
                 .filter(l -> l.getAcquisitionMethod() != null
                         && l.getAcquisitionMethod().equalsIgnoreCase("BIRTH"))
-                .filter(l -> l.getMother() == null)
+                // FIX: include drafts from THIS birth event (they already have mother set),
+                //      exclude non-draft animals that already have a different mother linked.
+                .filter(l -> {
+                    if (Boolean.TRUE.equals(l.getIsDraft())) {
+                        // Only include drafts from this birth, not from other births
+                        return draftIdsForThisBirth.contains(l.getId());
+                    }
+                    // For completed (non-draft) animals: only allow those with no mother yet
+                    return l.getMother() == null;
+                })
                 .collect(Collectors.toList());
 
         model.addAttribute("birth",              birth);
         model.addAttribute("linkedChildren",     linkedChildren);
         model.addAttribute("availableLivestock", available);
+
+        // Count pending drafts for this birth specifically
+        long pendingDraftsForThisBirth = linkedChildren.stream()
+                .filter(l -> Boolean.TRUE.equals(l.getIsDraft()))
+                .count();
+        model.addAttribute("pendingDraftsForThisBirth", pendingDraftsForThisBirth);
+
         return "livestock-birth-children";
     }
 
@@ -293,7 +344,9 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/" + birthId + "/children";
     }
 
-    // ===================== FAMILY TREE =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // FAMILY TREE
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/family/{livestockId}")
     public String viewFamilyTree(@PathVariable UUID livestockId, Model model) {
@@ -319,7 +372,9 @@ public class LivestockBirthController {
         return "livestock-family";
     }
 
-    // ===================== BORN → SOLD REPORT =====================
+    // ═════════════════════════════════════════════════════════════════════════
+    // BORN → SOLD REPORT
+    // ═════════════════════════════════════════════════════════════════════════
 
     @GetMapping("/report/born-and-sold")
     public String bornAndSoldReport(Model model) {
@@ -337,6 +392,9 @@ public class LivestockBirthController {
             for (LivestockOffspring offspring : birth.getChildren()) {
                 Livestock child = offspring.getChildLivestock();
                 if (child == null) continue;
+
+                // Skip draft animals in the report — they are incomplete records
+                if (Boolean.TRUE.equals(child.getIsDraft())) continue;
 
                 Map<String, Object> row = new LinkedHashMap<>();
                 row.put("childId",     child.getId());
@@ -372,7 +430,8 @@ public class LivestockBirthController {
                     row.put("saleReason",   latestSale.getSaleReason() != null
                             ? latestSale.getSaleReason() : "—");
                     if (birth.getBirthDate() != null && latestSale.getSaleDate() != null) {
-                        long days = ChronoUnit.DAYS.between(birth.getBirthDate(), latestSale.getSaleDate());
+                        long days = java.time.temporal.ChronoUnit.DAYS.between(
+                                birth.getBirthDate(), latestSale.getSaleDate());
                         row.put("daysToSale", days);
                     } else {
                         row.put("daysToSale", null);
@@ -409,5 +468,23 @@ public class LivestockBirthController {
         model.addAttribute("totalDead",   totalDead);
 
         return "livestock-born-sold-report";
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // ADMIN: Repair missing mother links (run once to fix existing data)
+    // Access via GET /livestock/births/admin/repair-mother-links
+    // ═════════════════════════════════════════════════════════════════════════
+
+    @GetMapping("/admin/repair-mother-links")
+    public String repairMotherLinks(RedirectAttributes redirectAttributes) {
+        try {
+            int fixed = birthService.repairMissingMotherLinks();
+            redirectAttributes.addFlashAttribute("success",
+                    "Mother link repair complete. Fixed " + fixed + " animal(s).");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Repair failed: " + e.getMessage());
+        }
+        return "redirect:/livestock/births/list";
     }
 }

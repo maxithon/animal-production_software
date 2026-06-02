@@ -77,6 +77,13 @@ public class LivestockBirthService {
         return livestockRepository.countByDraftBirthEventIdAndIsDraftTrue(birthId);
     }
 
+    /**
+     * Complete a draft animal by giving it a real tag number and details.
+     *
+     * FIX: The mother relationship is now explicitly preserved from the draft
+     * birth event so that GOA-016 (and any other completed draft) correctly
+     * shows its mother (e.g. GOA-014) after completion.
+     */
     @Transactional
     public void completeDraft(UUID draftId, String tagNumber, String gender,
                               String categoryId, String beneficiaryId,
@@ -101,6 +108,26 @@ public class LivestockBirthService {
         draft.setDateReceived(LocalDate.now());
 
         if (currentValue != null) draft.setCurrentValue(currentValue);
+
+        // ── FIX: explicitly re-set mother from the draft birth event ──────────
+        // When a draft is created in addNew(), draft.setMother(mother) is called,
+        // but JPA lazy-loading can drop this reference.  We re-resolve it here
+        // from the draft birth event to guarantee it is persisted on completion.
+        if (draft.getMother() == null && draft.getDraftBirthEvent() != null) {
+            Livestock motherFromBirth = draft.getDraftBirthEvent().getLivestock();
+            if (motherFromBirth != null) {
+                draft.setMother(motherFromBirth);
+            }
+        }
+
+        // Build a descriptive acquisition source if not already set
+        if (draft.getAcquisitionSource() == null || draft.getAcquisitionSource().isBlank()) {
+            if (draft.getMother() != null) {
+                draft.setAcquisitionSource("Born on this farm — Mother: " + draft.getMother().getTagNumber());
+            } else {
+                draft.setAcquisitionSource("Born on this farm");
+            }
+        }
 
         if (categoryId != null && !categoryId.isEmpty()) {
             UUID catId = UUID.fromString(categoryId);
@@ -134,20 +161,14 @@ public class LivestockBirthService {
      *
      * KEY BEHAVIOUR for purchased/donated/transferred animals that arrived
      * pregnant (acquisitionMethod != BIRTH):
-     *
-     *   • The animal IS now on this farm so she is the mother on record.
-     *   • Gestation + due-date window validations are SKIPPED when no
-     *     active breeding record exists — because her breeding happened
-     *     before she arrived and was never entered into this system.
-     *   • Birth-interval validation is still applied so back-to-back
-     *     same-day births are prevented.
-     *   • After birth the pregnancy flags and breeding record (if any)
-     *     are cleared normally.
+     *   • Gestation + due-date window validations are SKIPPED — breeding
+     *     happened before the animal arrived on this farm.
+     *   • Birth-interval validation is still applied.
+     *   • After birth pregnancy flags and breeding record are cleared normally.
      */
     @Transactional
     public LivestockBirth addNew(LivestockBirth birth) {
 
-        // All births through this service are farm births (isExternalBirth = false).
         birth.setIsExternalBirth(false);
 
         resolveAndSetLivestock(birth);
@@ -160,13 +181,8 @@ public class LivestockBirthService {
         boolean isPurchasedPregnant = !Livestock.ACQ_BIRTH.equals(mother.getAcquisitionMethod());
 
         if (isPurchasedPregnant) {
-            // Purchased / donated / transferred animal:
-            // Skip strict gestation + due-date window checks because the
-            // breeding happened off-farm and was never logged here.
-            // Only enforce the birth-interval guard.
             validateBirthInterval(mother, birth.getBirthDate());
         } else {
-            // Animal born on this farm: full validation chain
             validateGestationComplete(mother, birth.getBirthDate());
             validateBirthInterval(mother, birth.getBirthDate());
             validateDueDateWindow(mother, birth.getBirthDate());
@@ -187,7 +203,6 @@ public class LivestockBirthService {
         }
         livestockRepository.save(mother);
 
-        // Complete any open breeding record
         breedingService.completeBreedingOnBirth(mother.getId(), birth.getBirthDate());
 
         LivestockBirth saved = birthRepository.save(birth);
@@ -203,7 +218,15 @@ public class LivestockBirthService {
                 draft.setAcquisitionMethod(Livestock.ACQ_BIRTH);
                 draft.setGender("UNKNOWN");
                 draft.setBirthDate(birth.getBirthDate());
+                // FIX: mother reference is set here and must survive through completeDraft()
                 draft.setMother(mother);
+                draft.setTagNumber("DRAFT-" + saved.getId().toString().substring(0, 8).toUpperCase() + "-" + (i + 1));
+                draft.setPregnancyStatus("NOT_PREGNANT");
+                draft.setIsPregnant(false);
+                draft.setOffspringCount(0);
+                draft.setIsDeleted(false);
+                // Pre-fill acquisition source so it is correct from the start
+                draft.setAcquisitionSource("Born on this farm — Mother: " + mother.getTagNumber());
 
                 if (saved.getLivestock() != null && saved.getLivestock().getLivestockCategory() != null) {
                     draft.setLivestockCategory(saved.getLivestock().getLivestockCategory());
@@ -221,7 +244,6 @@ public class LivestockBirthService {
 
     // ═════════════════════════════════════════════════════════════════════════
     // VALIDATION 1 — Gestation period completeness
-    // Only called for animals born on this farm (ACQ_BIRTH mothers).
     // ═════════════════════════════════════════════════════════════════════════
 
     private void validateGestationComplete(Livestock mother, LocalDate birthDate) {
@@ -266,7 +288,6 @@ public class LivestockBirthService {
 
     // ═════════════════════════════════════════════════════════════════════════
     // VALIDATION 2 — Minimum interval between consecutive births
-    // Applied to ALL animals (farm-born and purchased alike).
     // ═════════════════════════════════════════════════════════════════════════
 
     private void validateBirthInterval(Livestock mother, LocalDate newBirthDate) {
@@ -278,9 +299,20 @@ public class LivestockBirthService {
             return;
         }
 
+        boolean hasPreExistingConfirmedPregnancy = breedingRepository
+                .findByLivestockId(mother.getId())
+                .stream()
+                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
+                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
+                        || LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
+                .filter(b -> b.getBreedingDate() != null)
+                .anyMatch(b -> !b.getBreedingDate().isAfter(mother.getLastBirthDate()));
+
+        if (hasPreExistingConfirmedPregnancy) return;
+
         int gestationMonths = mother.getLivestockCategory().getGestationPeriodMonths();
         LocalDate effectiveBirthDate = (newBirthDate != null) ? newBirthDate : LocalDate.now();
-        LocalDate earliestNextBirth = mother.getLastBirthDate().plusMonths(gestationMonths);
+        LocalDate earliestNextBirth  = mother.getLastBirthDate().plusMonths(gestationMonths);
 
         if (effectiveBirthDate.isBefore(earliestNextBirth)) {
             throw new RuntimeException("Animal " + mother.getTagNumber()
@@ -290,7 +322,6 @@ public class LivestockBirthService {
 
     // ═════════════════════════════════════════════════════════════════════════
     // VALIDATION 3 — Birth date must be within the due date window
-    // Only called for animals born on this farm (ACQ_BIRTH mothers).
     // ═════════════════════════════════════════════════════════════════════════
 
     private void validateDueDateWindow(Livestock mother, LocalDate birthDate) {
@@ -368,6 +399,12 @@ public class LivestockBirthService {
 
     // ═════════════════════════════════════════════════════════════════════════
     // CHILD LINKING
+    //
+    // FIX: The available-animals filter in LivestockBirthController previously
+    // excluded any animal where getMother() != null.  This blocked draft animals
+    // from being linked because they already have their mother set.  The fix is
+    // to move the mother-null check ONLY to the controller view (for display
+    // purposes) and here in linkChild() we always update/overwrite the mother.
     // ═════════════════════════════════════════════════════════════════════════
 
     @Transactional
@@ -381,6 +418,11 @@ public class LivestockBirthService {
         Livestock mother = birth.getLivestock();
         if (mother != null) {
             child.setMother(mother);
+            // Update acquisition source to reflect the correct mother
+            if (child.getAcquisitionSource() == null || child.getAcquisitionSource().isBlank()
+                    || child.getAcquisitionSource().startsWith("Born on this farm")) {
+                child.setAcquisitionSource("Born on this farm — Mother: " + mother.getTagNumber());
+            }
             livestockRepository.save(child);
         }
 
@@ -411,6 +453,32 @@ public class LivestockBirthService {
 
     public boolean hasChildren(UUID livestockId) {
         return livestockRepository.existsByMotherId(livestockId);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // DATABASE FIX HELPER
+    // Call this once to repair any existing animals whose mother_id is NULL
+    // but whose draft_birth_id points to a birth event with a known mother.
+    // You can expose this as an admin endpoint or run it at startup once.
+    // ═════════════════════════════════════════════════════════════════════════
+
+    @Transactional
+    public int repairMissingMotherLinks() {
+        List<Livestock> broken = livestockRepository.findAll().stream()
+                .filter(l -> l.getMother() == null)
+                .filter(l -> l.getDraftBirthEvent() != null)
+                .filter(l -> l.getDraftBirthEvent().getLivestock() != null)
+                .collect(Collectors.toList());
+
+        for (Livestock animal : broken) {
+            Livestock mother = animal.getDraftBirthEvent().getLivestock();
+            animal.setMother(mother);
+            if (animal.getAcquisitionSource() == null || animal.getAcquisitionSource().isBlank()) {
+                animal.setAcquisitionSource("Born on this farm — Mother: " + mother.getTagNumber());
+            }
+            livestockRepository.save(animal);
+        }
+        return broken.size();
     }
 
     // ═════════════════════════════════════════════════════════════════════════

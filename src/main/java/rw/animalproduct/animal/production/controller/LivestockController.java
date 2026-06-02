@@ -93,9 +93,10 @@ public class LivestockController {
     }
 
     private String findLastTagNumber() {
+        // Exclude DRAFT- tags from the suggestion — they are temporary
         return livestockRepository.findAll().stream()
                 .map(Livestock::getTagNumber)
-                .filter(t -> t != null && !t.isEmpty())
+                .filter(t -> t != null && !t.isEmpty() && !t.startsWith("DRAFT-"))
                 .max(Comparator.naturalOrder())
                 .orElse(null);
     }
@@ -197,6 +198,10 @@ public class LivestockController {
 
     // =====================================================================
     // LIVESTOCK LIST
+    //
+    // FIX: Draft animals (is_draft = true) are now excluded from the list
+    // and from all statistics.  They appear only on the birth "children"
+    // screen until they are completed by staff.
     // =====================================================================
 
     @GetMapping("/list")
@@ -205,6 +210,7 @@ public class LivestockController {
                           @RequestParam(value = "sort",  defaultValue = "tagNumber") String sort,
                           Model model) {
 
+        // ── Use getAll() which already excludes drafts ─────────────────────────
         List<Livestock> allLivestock = livestockService.getAll();
 
         long totalAllItems  = allLivestock.size();
@@ -220,18 +226,27 @@ public class LivestockController {
         long totalTreatments = treatmentRepository.countByIsDeletedFalse();
         long totalAbortions  = abortionRepository.findAllActive().size();
 
+        // ── ENHANCEMENT: warn if there are pending draft animals ──────────────
+        long pendingDraftCount = livestockRepository.findAllPendingDrafts().size();
+        model.addAttribute("pendingDraftCount", pendingDraftCount);
+
         List<Livestock> currentPageList;
         int totalPages;
         int currentPage;
         int pageSize;
 
         try {
-            Pageable pageable  = PageRequest.of(page, size, Sort.Direction.ASC, sort);
-            Page<Livestock> pg = livestockRepository.findAll(pageable);
-            currentPageList    = pg.getContent();
-            totalPages         = pg.getTotalPages();
-            currentPage        = page;
-            pageSize           = size;
+            // Paginate only non-draft animals — use in-memory paging since JPA findAll
+            // with Pageable would include drafts.  For large datasets add a repository
+            // method findByIsDraftFalse with Pageable instead.
+            int fromIndex = page * size;
+            int toIndex   = Math.min(fromIndex + size, allLivestock.size());
+            currentPageList = fromIndex < allLivestock.size()
+                    ? allLivestock.subList(fromIndex, toIndex)
+                    : new ArrayList<>();
+            totalPages  = (int) Math.ceil((double) allLivestock.size() / size);
+            currentPage = page;
+            pageSize    = size;
         } catch (Exception e) {
             currentPageList = allLivestock;
             totalPages      = 1;
@@ -342,33 +357,6 @@ public class LivestockController {
         return "livestock-register";
     }
 
-    /**
-     * Registers a new animal.
-     *
-     * KEY LOGIC:
-     *
-     * 1. BIRTH animals:
-     *    - birthDate is cleared (managed via livestock_births table)
-     *    - isPregnant is forced to false (a newborn cannot be pregnant)
-     *    - inseminationMethod is cleared (not applicable at birth)
-     *    - No breeding record is created at registration time
-     *
-     * 2. PURCHASE / DONATION / TRANSFER / OTHER animals:
-     *    - birthDate is kept as provided
-     *    - inseminationMethod is stored as-is (whatever the user selected)
-     *    - If female + isPregnant = true:
-     *        → status set to PREGNANT
-     *        → pregnancyStatus set to "PREGNANT"
-     *        → A CONFIRMED_PREGNANT breeding record is auto-created, with the
-     *          inseminationMethod copied onto the breeding record so it shows
-     *          in all pregnancy tracking dashboards.
-     *
-     * Form parameters (beyond the Livestock object):
-     *   locationId          – UUID of the selected location
-     *   conceptionDate      – yyyy-MM-dd string, may be blank
-     *   expectedDueDate     – yyyy-MM-dd string, may be blank
-     *   inseminationMethod  – bound directly via th:field on the Livestock object
-     */
     @PostMapping("/register/new")
     public String register(@Valid @ModelAttribute("livestock") Livestock livestock,
                            @RequestParam(value = "locationId",      required = false) UUID locationId,
@@ -378,7 +366,6 @@ public class LivestockController {
                            Model model,
                            RedirectAttributes redirectAttributes) {
 
-        // Duplicate tag check
         if (livestock.getTagNumber() != null && !livestock.getTagNumber().isBlank()) {
             livestockService.getByTagNumber(livestock.getTagNumber()).ifPresent(existing -> {
                 result.rejectValue("tagNumber", "error.livestock", "Tag number already exists");
@@ -387,26 +374,21 @@ public class LivestockController {
             });
         }
 
-        // ── BIRTH animals: clear birth date + force not-pregnant ──────────────
         boolean isBirth = Livestock.ACQ_BIRTH.equals(livestock.getAcquisitionMethod());
         if (isBirth) {
             livestock.setBirthDate(null);
             livestock.setIsPregnant(false);
             livestock.setPregnancyStatus("NOT_PREGNANT");
             livestock.setStatus(Livestock.STATUS_ACTIVE);
-            // A newborn has no insemination method — clear it
             livestock.setInseminationMethod(null);
         } else {
-            // ── Non-BIRTH: apply pregnancy status ─────────────────────────────
             if (Boolean.TRUE.equals(livestock.getIsPregnant())
                     && "FEMALE".equalsIgnoreCase(livestock.getGender())) {
                 livestock.setStatus(Livestock.STATUS_PREGNANT);
                 livestock.setPregnancyStatus("PREGNANT");
-                // inseminationMethod is already bound from the form — keep it
             } else {
                 livestock.setIsPregnant(false);
                 livestock.setPregnancyStatus("NOT_PREGNANT");
-                // inseminationMethod may still be recorded as historical info — keep it
             }
         }
 
@@ -442,15 +424,12 @@ public class LivestockController {
 
             Livestock saved = livestockService.addNew(livestock);
 
-            // ── AUTO-CREATE BREEDING RECORD FOR PURCHASED PREGNANT ANIMALS ────
             boolean isPurchasedPregnant =
                     "FEMALE".equalsIgnoreCase(saved.getGender())
                             && Boolean.TRUE.equals(saved.getIsPregnant())
                             && !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
 
             if (isPurchasedPregnant) {
-                // Pass inseminationMethod so it is stored on the breeding record
-                // and shown in the Pregnancy Tracking dashboard.
                 breedingService.createForPurchasedPregnantAnimal(
                         saved,
                         conceptionDate,
@@ -496,7 +475,6 @@ public class LivestockController {
                          BindingResult result, Model model,
                          RedirectAttributes redirectAttributes) {
 
-        // Fetch existing to detect pregnancy state change
         boolean wasPregnant = livestockService.getById(id)
                 .map(e -> Boolean.TRUE.equals(e.getIsPregnant()))
                 .orElse(false);
@@ -547,8 +525,6 @@ public class LivestockController {
 
             Livestock saved = livestockService.update(id, livestock);
 
-            // If animal was just marked pregnant during edit AND it's a purchased animal
-            // AND it had no breeding record before → create one with the insemination method
             boolean nowPregnant        = Boolean.TRUE.equals(saved.getIsPregnant());
             boolean isPurchased        = !Livestock.ACQ_BIRTH.equals(saved.getAcquisitionMethod());
             boolean justBecamePregnant = nowPregnant && !wasPregnant;
@@ -617,8 +593,9 @@ public class LivestockController {
         String lastTag = livestockRepository.findAll().stream()
                 .filter(l -> l.getLivestockCategory() != null
                         && l.getLivestockCategory().getId().toString().equals(categoryId))
+                .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))            // exclude drafts
                 .map(Livestock::getTagNumber)
-                .filter(t -> t != null && !t.isEmpty())
+                .filter(t -> t != null && !t.isEmpty() && !t.startsWith("DRAFT-"))
                 .max(Comparator.naturalOrder())
                 .orElse(null);
 

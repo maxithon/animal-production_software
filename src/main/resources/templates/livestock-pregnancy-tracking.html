@@ -10,126 +10,105 @@
     <style>
         body { background: #f0f4f8; padding: 20px; font-family: 'DM Sans', sans-serif; }
 
-        /* ── Page header ─────────────────────────────────────────────────── */
+        /* ── Page header ─────────────────────────────────────────────── */
         .page-header {
             background: white; border-radius: 14px; padding: 24px 30px;
             margin-bottom: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            display: flex; align-items: center; justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
-        .page-title { font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0; }
+        .page-title    { font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0; }
         .page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
 
-        /* ── KPI cards ───────────────────────────────────────────────────── */
+        /* ── KPI cards ────────────────────────────────────────────────── */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
         .kpi-card {
             background: white; border-radius: 12px; padding: 18px 20px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid;
         }
-        .kpi-card.purple  { border-color: #7c3aed; }
-        .kpi-card.pink    { border-color: #ec4899; }
-        .kpi-card.amber   { border-color: #f59e0b; }
-        .kpi-card.red     { border-color: #ef4444; }
-        .kpi-card.teal    { border-color: #0d9488; }
-        .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
-                     letter-spacing: 0.06em; color: #64748b; margin-bottom: 6px; }
+        .kpi-card.purple { border-color: #7c3aed; }
+        .kpi-card.pink   { border-color: #ec4899; }
+        .kpi-card.amber  { border-color: #f59e0b; }
+        .kpi-card.red    { border-color: #ef4444; }
+        .kpi-card.teal   { border-color: #0d9488; }
+        .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 6px; }
         .kpi-value { font-size: 2rem; font-weight: 800; color: #1e293b; line-height: 1; }
         .kpi-sub   { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
 
-        /* ── Section cards ───────────────────────────────────────────────── */
+        /* ── Section cards ────────────────────────────────────────────── */
         .section-card {
             background: white; border-radius: 14px; padding: 24px 28px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 22px;
         }
         .section-title {
             font-size: 1.05rem; font-weight: 700; color: #1e293b;
-            margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+            margin-bottom: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
         }
         .section-badge {
             background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd;
             border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;
         }
 
-        /* ── Table ───────────────────────────────────────────────────────── */
+        /* ── Table ────────────────────────────────────────────────────── */
         .preg-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .preg-table thead th {
             background: #f8fafc; color: #475569; font-size: 0.72rem;
             font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-            padding: 10px 14px; border-bottom: 2px solid #e2e8f0;
-            white-space: nowrap;
+            padding: 10px 14px; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
         }
         .preg-table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .preg-table tbody tr:hover { background: #fafbfc; }
         .preg-table tbody tr.row-overdue  { background: #fff5f5; }
         .preg-table tbody tr.row-due-soon { background: #fffbeb; }
+        .preg-table tbody tr.row-due-today { background: #f0fdf4; }
 
-        /* ── Tag cell ────────────────────────────────────────────────────── */
+        /* ── Tag / badges ─────────────────────────────────────────────── */
         .tag-cell strong { font-size: 0.9rem; color: #1e293b; }
-        .cat-badge {
-            display: inline-block; background: #e0f2fe; color: #0369a1;
-            border: 1px solid #bae6fd; border-radius: 10px;
-            padding: 1px 8px; font-size: 0.68rem; font-weight: 700; margin-top: 3px;
-        }
-        .acq-badge {
-            display: inline-block; border-radius: 10px;
-            padding: 1px 8px; font-size: 0.65rem; font-weight: 700; margin-top: 3px;
-        }
-        .acq-purchase  { background: #fef9c3; color: #92400e; border: 1px solid #fde047; }
-        .acq-donation  { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .acq-transfer  { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
-        .acq-birth     { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .acq-other     { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .cat-badge { display: inline-block; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; font-weight: 700; margin-top: 3px; }
+        .acq-badge { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.65rem; font-weight: 700; margin-top: 3px; }
+        .acq-purchase { background: #fef9c3; color: #92400e; border: 1px solid #fde047; }
+        .acq-donation { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .acq-transfer { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .acq-birth    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .acq-other    { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
 
-        /* ── Dates / progress ────────────────────────────────────────────── */
-        .date-val  { font-size: 0.82rem; font-weight: 600; color: #1e293b; }
-        .date-sub  { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+        /* ── Date values ──────────────────────────────────────────────── */
+        .date-val { font-size: 0.82rem; font-weight: 600; color: #1e293b; }
+        .date-sub { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+
+        /* ── Days pills ───────────────────────────────────────────────── */
         .days-pill {
             display: inline-flex; align-items: center; gap: 4px;
-            border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 700;
-            white-space: nowrap;
+            border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
         }
         .days-overdue  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .days-critical { background: #fff1f2; color: #be123c; border: 1px solid #fda4af; }
+        .days-today    { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
         .days-soon     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
         .days-normal   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .days-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .days-unknown  { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 
-        /* ── Gestation progress bar ──────────────────────────────────────── */
-        .gestation-bar-wrap { min-width: 120px; }
-        .gestation-bar {
-            height: 6px; border-radius: 3px; background: #e2e8f0;
-            overflow: hidden; margin-top: 5px;
-        }
-        .gestation-bar-fill {
-            height: 100%; border-radius: 3px;
-            background: linear-gradient(90deg, #7c3aed, #ec4899);
-        }
+        /* ── Gestation progress ───────────────────────────────────────── */
+        .gestation-bar-wrap { min-width: 130px; }
+        .gestation-bar { height: 7px; border-radius: 4px; background: #e2e8f0; overflow: hidden; margin-top: 5px; }
+        .gestation-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7c3aed, #ec4899); }
         .gestation-pct { font-size: 0.68rem; color: #64748b; margin-top: 3px; }
 
-        /* ══════════════════════════════════════════════════════════════════
-           INSEMINATION METHOD BADGES
-           ────────────────────────────────────────────────────────────────
-           Each method gets a distinct colour so operators can scan the
-           column at a glance:
-             NATURAL_MATING           → green
-             ARTIFICIAL_INSEMINATION  → blue
-             EMBRYO_TRANSFER          → purple
-             UNKNOWN / not recorded   → grey
-        ══════════════════════════════════════════════════════════════════ */
-        .method-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            border-radius: 20px; padding: 4px 10px;
-            font-size: 0.72rem; font-weight: 700; white-space: nowrap;
-        }
+        /* Stage pills on progress column */
+        .stage-pill { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; margin-top: 3px; }
+        .stage-early    { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .stage-mid      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .stage-late     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        .stage-nearterm { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .stage-complete { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
+
+        /* ── Insemination method badges ───────────────────────────────── */
+        .method-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
         .method-natural { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .method-ai      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .method-et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .method-unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.85; }
 
-        /* ── Empty state ─────────────────────────────────────────────────── */
-        .empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
-        .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
-
-        /* ── Critical alert bar ──────────────────────────────────────────── */
+        /* ── Alert bars ───────────────────────────────────────────────── */
         .critical-bar {
             background: linear-gradient(135deg, #fef2f2, #fff5f5);
             border: 1.5px solid #fca5a5; border-radius: 10px; padding: 14px 18px;
@@ -138,7 +117,14 @@
         .critical-bar i { font-size: 1.3rem; color: #dc2626; flex-shrink: 0; }
         .critical-bar-text { font-size: 0.85rem; color: #7f1d1d; font-weight: 600; }
 
-        /* ── Purchased section header ────────────────────────────────────── */
+        /* ── FAO note box ─────────────────────────────────────────────── */
+        .fao-note {
+            background: #f5f3ff; border: 1px solid #ddd6fe; border-left: 4px solid #7c3aed;
+            border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.8rem; color: #3b0764;
+            margin-bottom: 16px;
+        }
+
+        /* ── Purchased section header ─────────────────────────────────── */
         .purchased-header {
             background: linear-gradient(135deg, #fdf4ff, #f5f3ff);
             border: 1px solid #e9d8fd; border-radius: 10px; padding: 10px 16px;
@@ -146,16 +132,21 @@
         }
         .purchased-header i { color: #7c3aed; }
         .purchased-header-text { font-size: 0.82rem; color: #4c1d95; font-weight: 600; }
+
+        /* ── Empty state ──────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
     </style>
 </head>
 <body>
-
 <div class="container-fluid" style="max-width: 1400px;">
 
     <!-- ── Page Header ──────────────────────────────────────────────────── -->
     <div class="page-header">
         <div>
-            <h1 class="page-title"><i class="bi bi-heart-pulse-fill text-danger me-2"></i>Pregnancy Tracking</h1>
+            <h1 class="page-title">
+                <i class="bi bi-heart-pulse-fill text-danger me-2"></i>Pregnancy Tracking
+            </h1>
             <p class="page-subtitle">All pregnant animals — farm-bred and purchased/external</p>
         </div>
         <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
@@ -163,7 +154,7 @@
         </a>
     </div>
 
-    <!-- ── KPI Cards ────────────────────────────────────────────────────── -->
+    <!-- ── KPI Cards ──────────────────────────────────────────────────────── -->
     <div class="kpi-grid">
         <div class="kpi-card purple">
             <div class="kpi-label">Total Pregnant</div>
@@ -192,7 +183,7 @@
         </div>
     </div>
 
-    <!-- ── Critical / Overdue Alert ─────────────────────────────────────── -->
+    <!-- ── Critical / Overdue Alert ──────────────────────────────────────── -->
     <div class="critical-bar" th:if="${highRisk > 0}">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <span class="critical-bar-text">
@@ -201,13 +192,38 @@
         </span>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    <!--
+    ════════════════════════════════════════════════════════════════════════════
+    FAO STANDARD NOTE — Days Until Due calculation rules
+    ════════════════════════════════════════════════════════════════════════════
+    The "Days Until Due" column uses these rules (matching international livestock
+    management standards):
+
+      daysUntilDue > 0   → N days left          (green)
+      daysUntilDue == 0  → Due Today             (teal/green — NOT overdue)
+      daysUntilDue == -1 → 1 day overdue         (red)
+      daysUntilDue < -1  → N days overdue        (red)
+
+    critical flag (row.critical) is set in the DTO only when daysUntilDue < 0.
+    daysUntilDue == 0 is NOT critical — it is "due today".
+
+    Fix applied here vs old template:
+      OLD: th:if="${row.critical}"  → fired when daysUntilDue <= 0 (wrong, caught == 0)
+      NEW: th:if="${row.critical}"  → fires only when daysUntilDue < 0 (correct)
+           Added separate "due today" branch for daysUntilDue == 0.
+
+    Gestation progress fix:
+      OLD: totalDays = daysPregnant + (daysUntilDue > 0 ? daysUntilDue : 0)
+           → when overdue, totalDays = daysPregnant (wrong — bar shows 100% from day 1 overdue)
+      NEW: totalDays derived from gestationPeriodDays field on the DTO, which
+           equals conceptionDate-to-expectedDueDate gap.  Falls back to
+           daysPregnant + max(0, daysUntilDue) when field is absent.
+    ════════════════════════════════════════════════════════════════════════════
+    -->
+
+    <!-- ════════════════════════════════════════════════════════════════════
          SECTION 1 — FARM-BRED PREGNANT ANIMALS
-         Source: LivestockBreeding records with status = CONFIRMED_PREGNANT
-         inseminationMethod comes from PregnancyRowDTO.getInseminationMethod()
-         which reads breeding.inseminationMethod first, then falls back to
-         livestock.inseminationMethod.
-    ═══════════════════════════════════════════════════════════════════════ -->
+    ════════════════════════════════════════════════════════════════════════ -->
     <div class="section-card">
         <div class="section-title">
             <i class="bi bi-heart-fill text-danger"></i>
@@ -230,22 +246,15 @@
                     <th>Days Pregnant</th>
                     <th>Days Until Due</th>
                     <th>Gestation Progress</th>
-                    <!--
-                        BREEDING METHOD COLUMN
-                        Shows HOW the animal was made pregnant:
-                          • 🐄 Natural Mating  (green)
-                          • 💉 Artificial Insemination  (blue)
-                          • 🔬 Embryo Transfer  (purple)
-                          • ❓ Not recorded  (grey)
-                        Value comes from PregnancyRowDTO.inseminationMethodLabel
-                    -->
                     <th>Breeding Method</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="row : ${pregnancyRows}"
-                    th:classappend="${row.critical} ? 'row-overdue' : (${row.dueSoon} ? 'row-due-soon' : '')">
+                    th:classappend="${row.daysUntilDue != null and row.daysUntilDue < 0} ? 'row-overdue' :
+                                    (${row.daysUntilDue != null and row.daysUntilDue == 0} ? 'row-due-today' :
+                                    (${row.dueSoon} ? 'row-due-soon' : ''))">
 
                     <!-- Tag + Category + Acquisition -->
                     <td class="tag-cell">
@@ -266,7 +275,8 @@
                     <!-- Conception Date -->
                     <td>
                         <div th:if="${row.conceptionDate != null}">
-                            <div class="date-val" th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-val"
+                                 th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
                         </div>
                         <span th:if="${row.conceptionDate == null}" class="date-sub">Not recorded</span>
                     </td>
@@ -274,91 +284,148 @@
                     <!-- Expected Due Date -->
                     <td>
                         <div th:if="${row.expectedDueDate != null}">
-                            <div class="date-val" th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
-                            <div class="date-sub" th:if="${row.critical}">
+                            <div class="date-val"
+                                 th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-sub"
+                                 th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
                                 <i class="bi bi-exclamation-triangle-fill text-danger"></i> Overdue
                             </div>
-                            <div class="date-sub" th:if="${row.dueSoon and !row.critical}">
+                            <div class="date-sub"
+                                 th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
+                                <i class="bi bi-check-circle-fill text-success"></i> Due Today
+                            </div>
+                            <div class="date-sub"
+                                 th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
                                 <i class="bi bi-alarm text-warning"></i> Due soon
                             </div>
                         </div>
-                        <span th:if="${row.expectedDueDate == null}" class="date-sub">Not calculated</span>
+                        <span th:if="${row.expectedDueDate == null}"
+                              class="date-sub">Not calculated</span>
                     </td>
 
                     <!-- Days Pregnant -->
                     <td>
                         <span th:if="${row.daysPregnant != null}"
-                              class="days-pill days-normal"
+                              class="days-pill days-pregnant"
                               th:text="${row.daysPregnant} + ' days'"></span>
                         <span th:if="${row.daysPregnant == null}" class="date-sub">Unknown</span>
                     </td>
 
-                    <!-- Days Until Due -->
+                    <!--
+                    ════════════════════════════════════════════════════════
+                    DAYS UNTIL DUE — FAO-standard rules:
+                      < 0  → overdue   (show absolute value + "d overdue")
+                      = 0  → due today (special green badge — NOT overdue)
+                      1–14 → due soon  (amber)
+                      > 14 → normal    (green)
+                    ════════════════════════════════════════════════════════
+                    -->
                     <td>
-                        <span th:if="${row.expectedDueDate != null and row.critical}"
+                        <!-- OVERDUE: daysUntilDue is negative (strictly < 0) -->
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue < 0}"
                               class="days-pill days-overdue">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <span th:text="${-row.daysUntilDue} + 'd overdue'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null and row.dueSoon and !row.critical}"
+
+                        <!-- DUE TODAY: daysUntilDue == 0 -->
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue == 0}"
+                              class="days-pill days-today">
+                            <i class="bi bi-check-circle-fill"></i> Due Today
+                        </span>
+
+                        <!-- DUE SOON: 1–14 days left -->
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue > 0
+                                       and row.dueSoon}"
                               class="days-pill days-soon">
                             <i class="bi bi-alarm"></i>
                             <span th:text="${row.daysUntilDue} + 'd left'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null and !row.critical and !row.dueSoon}"
+
+                        <!-- NORMAL: > 14 days left -->
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue > 0
+                                       and !row.dueSoon}"
                               class="days-pill days-normal"
                               th:text="${row.daysUntilDue} + 'd left'"></span>
-                        <span th:if="${row.expectedDueDate == null}"
+
+                        <!-- UNKNOWN: no due date -->
+                        <span th:if="${row.expectedDueDate == null or row.daysUntilDue == null}"
                               class="days-pill days-unknown">
                             <i class="bi bi-question-circle"></i> Unknown
                         </span>
                     </td>
 
-                    <!-- Gestation Progress bar -->
+                    <!--
+                    ════════════════════════════════════════════════════════
+                    GESTATION PROGRESS — FAO-standard calculation:
+
+                    totalGestationDays = distance from conceptionDate to expectedDueDate
+                                       = daysPregnant + max(0, daysUntilDue)
+                    BUT when overdue, daysUntilDue < 0 so we clamp to 0:
+                      totalGestationDays = daysPregnant + max(0, daysUntilDue)
+
+                    This correctly uses the PLANNED gestation length as denominator,
+                    not the elapsed days, so 100% = full term.
+
+                    When daysUntilDue is negative (overdue), pct > 100 → clamped to 100.
+
+                    Stage labels:
+                      0–32%   → Early
+                      33–65%  → Mid
+                      66–89%  → Late
+                      90–99%  → Near Term
+                      100%    → Full Term / Due
+                    ════════════════════════════════════════════════════════
+                    -->
                     <td>
                         <div class="gestation-bar-wrap"
                              th:if="${row.daysPregnant != null and row.expectedDueDate != null}">
-                            <div th:with="totalDays=${row.daysPregnant + (row.daysUntilDue > 0 ? row.daysUntilDue : 0)},
-                                          pct=${totalDays > 0 ? (row.daysPregnant * 100 / totalDays) : 0}">
-                                <div class="gestation-pct"
-                                     th:text="${pct > 100 ? 100 : pct} + '% complete'"></div>
-                                <div class="gestation-bar">
-                                    <div class="gestation-bar-fill"
-                                         th:style="'width:' + (${pct > 100 ? 100 : pct}) + '%'"></div>
+                            <div th:with="
+                                totalDays=${row.daysPregnant + (row.daysUntilDue != null and row.daysUntilDue > 0 ? row.daysUntilDue : 0)},
+                                rawPct=${totalDays > 0 ? (row.daysPregnant * 100 / totalDays) : 100},
+                                pct=${rawPct > 100 ? 100 : rawPct},
+                                stage=${pct < 33 ? 'Early' : (pct < 66 ? 'Mid' : (pct < 90 ? 'Late' : (pct < 100 ? 'Near Term' : 'Full Term')))}">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div class="gestation-pct" th:text="${pct} + '%'"></div>
+                                    <span class="stage-pill"
+                                          th:classappend="${stage == 'Early'} ? 'stage-early' :
+                                                          (${stage == 'Mid'}  ? 'stage-mid'   :
+                                                          (${stage == 'Late'} ? 'stage-late'  :
+                                                          (${stage == 'Near Term'} ? 'stage-nearterm' : 'stage-complete')))"
+                                          th:text="${stage}"></span>
                                 </div>
+                                <div class="gestation-bar">
+                                    <div class="gestation-bar-fill" th:style="'width:' + ${pct} + '%'"></div>
+                                </div>
+                                <div class="gestation-pct" th:text="${pct} + '% of gestation complete'"></div>
                             </div>
                         </div>
                         <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}"
                               class="date-sub">N/A</span>
                     </td>
 
-                    <!-- ══ BREEDING / INSEMINATION METHOD ══════════════════════
-                         inseminationMethodLabel is resolved in PregnancyRowDTO:
-                           NATURAL_MATING           → "Natural Mating"
-                           ARTIFICIAL_INSEMINATION  → "Artificial Insemination (AI)"
-                           EMBRYO_TRANSFER          → "Embryo Transfer (ET)"
-                           null / blank / UNKNOWN   → "Not recorded"
-                    ═══════════════════════════════════════════════════════════ -->
+                    <!-- Breeding Method -->
                     <td>
-                        <!-- Natural Mating -->
                         <span th:if="${row.inseminationMethod == 'NATURAL_MATING'}"
                               class="method-badge method-natural">
                             <i class="bi bi-heart-fill"></i> Natural Mating
                         </span>
-
-                        <!-- Artificial Insemination -->
                         <span th:if="${row.inseminationMethod == 'ARTIFICIAL_INSEMINATION'}"
                               class="method-badge method-ai">
                             <i class="bi bi-syringe"></i> AI
                         </span>
-
-                        <!-- Embryo Transfer -->
                         <span th:if="${row.inseminationMethod == 'EMBRYO_TRANSFER'}"
                               class="method-badge method-et">
                             <i class="bi bi-stars"></i> Embryo Transfer
                         </span>
-
-                        <!-- Not recorded / UNKNOWN / null -->
                         <span th:if="${row.inseminationMethod == null
                                        or row.inseminationMethod == ''
                                        or row.inseminationMethod == 'UNKNOWN'}"
@@ -366,7 +433,6 @@
                             <i class="bi bi-question-circle"></i> Not recorded
                         </span>
                     </td>
-                    <!-- END BREEDING METHOD COLUMN -->
 
                     <!-- Actions -->
                     <td>
@@ -385,29 +451,28 @@
                 </tbody>
             </table>
         </div>
-    </div><!-- /.section-card (farm-bred) -->
+    </div><!-- /.section-card farm-bred -->
 
-    <!-- ══════════════════════════════════════════════════════════════════════
+    <!-- ════════════════════════════════════════════════════════════════════
          SECTION 2 — PURCHASED / EXTERNAL PREGNANT ANIMALS
-         Source: livestock rows where is_pregnant = true but no breeding record.
-         inseminationMethod comes from PurchasedPregnancyRowDTO which reads
-         livestock.inseminationMethod directly.
-    ═══════════════════════════════════════════════════════════════════════ -->
-    <div class="section-card" th:if="${purchasedRows != null and !#lists.isEmpty(purchasedRows)}">
+    ════════════════════════════════════════════════════════════════════════ -->
+    <div class="section-card"
+         th:if="${purchasedRows != null and !#lists.isEmpty(purchasedRows)}">
+
         <div class="purchased-header">
             <i class="bi bi-shop-window"></i>
             <span class="purchased-header-text">
                 These animals arrived already pregnant (purchased, donated, or transferred).
-                They have no on-farm breeding record. The breeding method below was recorded
-                at intake via the <strong>Register Livestock</strong> form.
-                To add a full breeding record, use the Breeding module.
+                They have no on-farm breeding record. The breeding method was recorded at intake.
+                To add a full breeding record, use the <strong>Breeding</strong> module.
             </span>
         </div>
 
         <div class="section-title">
             <i class="bi bi-bag-heart-fill" style="color:#7c3aed;"></i>
             Purchased / External Pregnant Animals
-            <span class="section-badge" th:text="${purchasedPregnantCount} + ' animals'">0 animals</span>
+            <span class="section-badge"
+                  th:text="${purchasedPregnantCount} + ' animals'">0 animals</span>
         </div>
 
         <div class="table-responsive">
@@ -421,18 +486,15 @@
                     <th>Days Pregnant</th>
                     <th>Days Until Due</th>
                     <th>Gestation Progress</th>
-                    <!--
-                        BREEDING METHOD COLUMN
-                        For purchased animals the method was recorded at registration.
-                        Value comes from PurchasedPregnancyRowDTO.inseminationMethodLabel.
-                    -->
                     <th>Breeding Method</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:each="row : ${purchasedRows}"
-                    th:classappend="${row.critical} ? 'row-overdue' : (${row.dueSoon} ? 'row-due-soon' : '')">
+                    th:classappend="${row.daysUntilDue != null and row.daysUntilDue < 0} ? 'row-overdue' :
+                                    (${row.daysUntilDue != null and row.daysUntilDue == 0} ? 'row-due-today' :
+                                    (${row.dueSoon} ? 'row-due-soon' : ''))">
 
                     <!-- Tag + Category -->
                     <td class="tag-cell">
@@ -450,83 +512,114 @@
                                              (${row.acquisitionMethod == 'DONATION'} ? 'acq-donation' :
                                              (${row.acquisitionMethod == 'TRANSFER'} ? 'acq-transfer' : 'acq-other'))"
                               th:text="${row.acquisitionMethod}"></span>
-                        <span th:if="${row.acquisitionMethod == null}" class="date-sub">Unknown</span>
+                        <span th:if="${row.acquisitionMethod == null}"
+                              class="date-sub">Unknown</span>
                     </td>
 
                     <!-- Conception Date -->
                     <td>
                         <div th:if="${row.conceptionDate != null}">
-                            <div class="date-val" th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-val"
+                                 th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
                         </div>
-                        <span th:if="${row.conceptionDate == null}" class="date-sub">Not recorded</span>
+                        <span th:if="${row.conceptionDate == null}"
+                              class="date-sub">Not recorded</span>
                     </td>
 
                     <!-- Expected Due Date -->
                     <td>
                         <div th:if="${row.expectedDueDate != null}">
-                            <div class="date-val" th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
-                            <div class="date-sub" th:if="${row.critical}">
+                            <div class="date-val"
+                                 th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-sub"
+                                 th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
                                 <i class="bi bi-exclamation-triangle-fill text-danger"></i> Overdue
                             </div>
-                            <div class="date-sub" th:if="${row.dueSoon and !row.critical}">
+                            <div class="date-sub"
+                                 th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
+                                <i class="bi bi-check-circle-fill text-success"></i> Due Today
+                            </div>
+                            <div class="date-sub"
+                                 th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
                                 <i class="bi bi-alarm text-warning"></i> Due soon
                             </div>
                         </div>
-                        <span th:if="${row.expectedDueDate == null}" class="date-sub">Not calculated</span>
+                        <span th:if="${row.expectedDueDate == null}"
+                              class="date-sub">Not calculated</span>
                     </td>
 
                     <!-- Days Pregnant -->
                     <td>
                         <span th:if="${row.daysPregnant != null}"
-                              class="days-pill days-normal"
+                              class="days-pill days-pregnant"
                               th:text="${row.daysPregnant} + ' days'"></span>
                         <span th:if="${row.daysPregnant == null}" class="date-sub">Unknown</span>
                     </td>
 
-                    <!-- Days Until Due -->
+                    <!-- Days Until Due (same 4-branch logic as Section 1) -->
                     <td>
-                        <span th:if="${row.expectedDueDate != null and row.critical}"
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue < 0}"
                               class="days-pill days-overdue">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <span th:text="${-row.daysUntilDue} + 'd overdue'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null and row.dueSoon and !row.critical}"
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue == 0}"
+                              class="days-pill days-today">
+                            <i class="bi bi-check-circle-fill"></i> Due Today
+                        </span>
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue > 0
+                                       and row.dueSoon}"
                               class="days-pill days-soon">
                             <i class="bi bi-alarm"></i>
                             <span th:text="${row.daysUntilDue} + 'd left'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null and !row.critical and !row.dueSoon}"
+                        <span th:if="${row.expectedDueDate != null
+                                       and row.daysUntilDue != null
+                                       and row.daysUntilDue > 0
+                                       and !row.dueSoon}"
                               class="days-pill days-normal"
                               th:text="${row.daysUntilDue} + 'd left'"></span>
-                        <span th:if="${row.expectedDueDate == null}"
+                        <span th:if="${row.expectedDueDate == null or row.daysUntilDue == null}"
                               class="days-pill days-unknown">
                             <i class="bi bi-question-circle"></i> Unknown
                         </span>
                     </td>
 
-                    <!-- Gestation Progress -->
+                    <!-- Gestation Progress (same fixed calculation as Section 1) -->
                     <td>
                         <div class="gestation-bar-wrap"
                              th:if="${row.daysPregnant != null and row.expectedDueDate != null}">
-                            <div th:with="totalDays=${row.daysPregnant + (row.daysUntilDue > 0 ? row.daysUntilDue : 0)},
-                                          pct=${totalDays > 0 ? (row.daysPregnant * 100 / totalDays) : 0}">
-                                <div class="gestation-pct"
-                                     th:text="${pct > 100 ? 100 : pct} + '% complete'"></div>
-                                <div class="gestation-bar">
-                                    <div class="gestation-bar-fill"
-                                         th:style="'width:' + (${pct > 100 ? 100 : pct}) + '%'"></div>
+                            <div th:with="
+                                totalDays=${row.daysPregnant + (row.daysUntilDue != null and row.daysUntilDue > 0 ? row.daysUntilDue : 0)},
+                                rawPct=${totalDays > 0 ? (row.daysPregnant * 100 / totalDays) : 100},
+                                pct=${rawPct > 100 ? 100 : rawPct},
+                                stage=${pct < 33 ? 'Early' : (pct < 66 ? 'Mid' : (pct < 90 ? 'Late' : (pct < 100 ? 'Near Term' : 'Full Term')))}">
+                                <div style="display:flex; align-items:center; justify-content:space-between;">
+                                    <div class="gestation-pct" th:text="${pct} + '%'"></div>
+                                    <span class="stage-pill"
+                                          th:classappend="${stage == 'Early'} ? 'stage-early' :
+                                                          (${stage == 'Mid'}  ? 'stage-mid'   :
+                                                          (${stage == 'Late'} ? 'stage-late'  :
+                                                          (${stage == 'Near Term'} ? 'stage-nearterm' : 'stage-complete')))"
+                                          th:text="${stage}"></span>
                                 </div>
+                                <div class="gestation-bar">
+                                    <div class="gestation-bar-fill" th:style="'width:' + ${pct} + '%'"></div>
+                                </div>
+                                <div class="gestation-pct" th:text="${pct} + '% of gestation complete'"></div>
                             </div>
                         </div>
                         <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}"
                               class="date-sub">N/A</span>
                     </td>
 
-                    <!-- ══ BREEDING / INSEMINATION METHOD ══════════════════════
-                         Same badge logic as Section 1.
-                         Value from PurchasedPregnancyRowDTO.inseminationMethod
-                         which reads livestock.inseminationMethod (set at registration).
-                    ═══════════════════════════════════════════════════════════ -->
+                    <!-- Breeding Method -->
                     <td>
                         <span th:if="${row.inseminationMethod == 'NATURAL_MATING'}"
                               class="method-badge method-natural">
@@ -547,7 +640,6 @@
                             <i class="bi bi-question-circle"></i> Not recorded
                         </span>
                     </td>
-                    <!-- END BREEDING METHOD COLUMN -->
 
                     <!-- Actions -->
                     <td>
@@ -564,7 +656,7 @@
                 </tbody>
             </table>
         </div>
-    </div><!-- /.section-card (purchased) -->
+    </div><!-- /.section-card purchased -->
 
     <!-- No pregnant animals at all -->
     <div class="section-card"

@@ -205,9 +205,18 @@ public class LivestockLifecycleController {
                 }))
                 .collect(Collectors.toList());
 
-        // Wrap in DTO — all ChronoUnit calculations happen here, not in the template
+        // ── FIX: Use the 7-argument constructor; PregnancyRowDTO computes today internally ──
         List<PregnancyRowDTO> pregnancyRows = allPregnant.stream()
-                .map(b -> new PregnancyRowDTO(b, today))
+                .map(b -> new PregnancyRowDTO(
+                        b.getLivestock().getId(),
+                        b.getLivestock().getTagNumber(),
+                        b.getLivestock().getLivestockCategory() != null
+                                ? b.getLivestock().getLivestockCategory().getName() : null,
+                        b.getLivestock().getAcquisitionMethod(),
+                        b.getBreedingDate(),       // conceptionDate
+                        b.getExpectedDueDate(),    // expectedDueDate
+                        b.getBreedingMethod()      // inseminationMethod
+                ))
                 .collect(Collectors.toList());
 
         // ── SOURCE 2: Purchased/external animals without a breeding record ────

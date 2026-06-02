@@ -30,6 +30,10 @@
         .child-date { color: #0369a1; }
         .child-date-unknown { color: #94a3b8; font-style: italic; }
 
+        /* ── Draft child badge ── */
+        .draft-tag { font-weight: 700; color: #92400e; background: #fef3c7;
+                     padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; }
+
         /* ── Breeding Age Pills ── */
         .breed-pill {
             display: inline-flex; align-items: center; gap: 4px;
@@ -45,6 +49,13 @@
             display: inline-flex; align-items: center; gap: 4px;
             background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
             border-radius: 4px; padding: 1px 7px; font-size: 0.68rem; font-weight: 700;
+        }
+
+        /* ── Pending draft warning banner ── */
+        .draft-warning {
+            background: #fff8e1; border: 1px solid #ffc107; border-radius: 8px;
+            padding: 12px 16px; margin: 0 24px 16px; display: flex;
+            align-items: center; gap: 12px;
         }
     </style>
 </head>
@@ -63,6 +74,27 @@
             <i class="bi bi-arrow-left me-1"></i> Back to Livestock
         </a>
     </div>
+</div>
+
+<!--
+    PENDING DRAFTS BANNER
+    Shown when births have been recorded but the offspring have not yet been
+    given real tag numbers. Staff should click the birth's "linked" button to
+    complete them.  Drafts are hidden from the main livestock list until done.
+-->
+<div th:if="${pendingDraftCount != null and pendingDraftCount > 0}" class="draft-warning">
+    <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+    <div class="flex-grow-1">
+        <strong>Action needed:</strong>
+        <span th:text="${pendingDraftCount}"></span> offspring
+        <span th:text="${pendingDraftCount == 1 ? 'has' : 'have'}"></span>
+        not been fully registered yet. They appear as <code>DRAFT-…</code>
+        placeholders. Click the <strong>"X linked"</strong> button on the relevant
+        birth row below to assign proper tag numbers.
+    </div>
+    <a href="/livestock/list" class="btn btn-sm btn-warning text-nowrap">
+        <i class="bi bi-list me-1"></i> View Livestock
+    </a>
 </div>
 
 <div class="content-card p-0">
@@ -85,14 +117,6 @@
                 <th style="width:40px">#</th>
                 <th>Mother</th>
                 <th>Category</th>
-                <!--
-                    MOTHER BREEDING AGE COLUMN
-                    Shows whether the mother had reached min breeding age on birth date.
-                    Computed server-side in LivestockBirthController.listAll().
-                    Badge colours: green=capable, amber=too young, grey=unknown.
-                    For purchased-pregnant mothers the field is still shown —
-                    the mother IS on record, she just arrived pregnant.
-                -->
                 <th>Mother Breeding Age</th>
                 <th>Birth Date</th>
                 <th>Offspring #</th>
@@ -121,10 +145,6 @@
                 <td>
                     <div th:if="${b.livestock != null}">
                         <strong th:text="${b.livestock.tagNumber}"></strong>
-                        <!--
-                            Show a small badge when the mother arrived pregnant from outside.
-                            This makes it clear this birth was her FIRST on this farm.
-                        -->
                         <div th:if="${b.livestock.acquisitionMethod != null
                                       and b.livestock.acquisitionMethod != 'BIRTH'}"
                              class="mt-1">
@@ -209,17 +229,39 @@
                     <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">—</span>
                 </td>
 
-                <!-- Child Birth Date(s) -->
+                <!-- Child Birth Date(s) — shows mother link inline for easy verification -->
                 <td>
                     <div th:if="${b.children != null and !b.children.empty}">
                         <ul class="child-bd-list">
                             <li th:each="offspring : ${b.children}"
                                 th:if="${offspring.childLivestock != null}">
                                 <i class="bi bi-dot text-success"></i>
-                                <span class="child-tag"
-                                      th:text="${offspring.childLivestock.tagNumber != null
-                                                 ? offspring.childLivestock.tagNumber
-                                                 : '(Draft)'}"></span>
+
+                                <!-- Draft animal indicator -->
+                                <span th:if="${offspring.childLivestock.isDraft}"
+                                      class="draft-tag"
+                                      th:text="${offspring.childLivestock.tagNumber}"></span>
+
+                                <!-- Completed animal -->
+                                <span th:if="${!offspring.childLivestock.isDraft}"
+                                      class="child-tag"
+                                      th:text="${offspring.childLivestock.tagNumber}"></span>
+
+                                <!-- Mother link verification: show green tick if mother is set -->
+                                <span th:if="${offspring.childLivestock.mother != null}"
+                                      title="Mother correctly linked"
+                                      class="text-success"
+                                      style="font-size:0.7rem;">
+                                    <i class="bi bi-person-check-fill"></i>
+                                    <span th:text="${offspring.childLivestock.mother.tagNumber}"></span>
+                                </span>
+                                <span th:if="${offspring.childLivestock.mother == null}"
+                                      title="Mother NOT linked — click 'X linked' to fix"
+                                      class="text-danger"
+                                      style="font-size:0.7rem;">
+                                    <i class="bi bi-person-x-fill"></i> No mother
+                                </span>
+
                                 <span th:if="${offspring.childLivestock.birthDate != null}"
                                       class="child-date">
                                     <i class="bi bi-calendar2-check"></i>
@@ -251,12 +293,18 @@
                     <span th:if="${b.nextBreedingDate == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Animals linked -->
+                <!-- Animals linked — badge is amber if any drafts remain.
+                     hasDraftMap is pre-computed in the controller (Map<UUID,Boolean>)
+                     to avoid unsupported Java lambdas in SpEL/Thymeleaf. -->
                 <td>
                     <a th:href="@{/livestock/births/{id}/children(id=${b.id})}"
-                       class="badge bg-success text-decoration-none">
+                       th:class="${hasDraftMap != null and hasDraftMap[b.id] == true}
+                                  ? 'badge bg-warning text-dark text-decoration-none'
+                                  : 'badge bg-success text-decoration-none'">
                         <i class="bi bi-link-45deg"></i>
                         <span th:text="${b.children.size()}"></span> linked
+                        <span th:if="${hasDraftMap != null and hasDraftMap[b.id] == true}"
+                              class="ms-1">⚠ draft</span>
                     </a>
                 </td>
 

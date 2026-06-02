@@ -26,9 +26,7 @@
             margin-bottom: 16px; margin-top: 24px;
         }
 
-        /* ── All dynamic panels use JS show/hide via display property directly ── */
-
-        /* Birth info banner */
+        /* Info banners */
         .info-banner-blue {
             background: #e0f2fe; border-left: 4px solid #0369a1;
             border-radius: 0 8px 8px 0; padding: 10px 16px;
@@ -39,8 +37,13 @@
             border-left: 4px solid #0369a1; border-radius: 0 8px 8px 0;
             padding: 10px 16px; font-size: 0.83rem; color: #075985; margin-bottom: 12px;
         }
+        .info-banner-green {
+            background: #f0fdf4; border: 1px solid #bbf7d0;
+            border-left: 4px solid #16a34a; border-radius: 0 8px 8px 0;
+            padding: 10px 16px; font-size: 0.83rem; color: #166534; margin-bottom: 12px;
+        }
 
-        /* Pregnancy toggle row */
+        /* Pregnancy toggle box */
         .pregnancy-toggle-box {
             background: #f8fafc; border: 1.5px solid #e2e8f0;
             border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;
@@ -58,11 +61,42 @@
             letter-spacing: .06em; color: #6b21a8; margin-bottom: 14px;
             display: flex; align-items: center; gap: 7px;
         }
-        .purchased-pregnant-info {
-            background: #fdf4ff; border: 1px solid #e9d8fd;
+
+        /* FAO standard callout inside pregnancy panel */
+        .fao-info-box {
+            background: #fff; border: 1px solid #e9d8fd;
             border-left: 4px solid #7c3aed; border-radius: 0 8px 8px 0;
-            padding: 10px 16px; font-size: 0.83rem; color: #4c1d95; margin-bottom: 16px;
+            padding: 10px 16px; font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px;
         }
+        .fao-info-box ul { margin: 6px 0 0 0; padding-left: 18px; }
+        .fao-info-box li { margin-bottom: 3px; }
+
+        /* Computed-field display badge */
+        .computed-field {
+            background: #f1f5f9; border: 1.5px solid #cbd5e1;
+            border-radius: 8px; padding: 10px 14px;
+            font-size: 0.85rem; color: #334155; min-height: 42px;
+        }
+        .computed-field .computed-value {
+            font-weight: 700; color: #1a5f7a; font-size: 0.95rem;
+        }
+        .computed-field .computed-label {
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #94a3b8;
+        }
+        .computed-empty { font-style: italic; color: #94a3b8; font-size: 0.82rem; }
+
+        /* Progress bar */
+        .gestation-bar-wrap { margin-top: 8px; }
+        .gestation-bar-bg {
+            background: #e2e8f0; border-radius: 20px; height: 10px; overflow: hidden;
+        }
+        .gestation-bar-fill {
+            height: 100%; border-radius: 20px;
+            background: linear-gradient(90deg, #7c3aed, #a855f7);
+            transition: width 0.4s ease;
+        }
+        .gestation-bar-label { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
 
         /* Method badge preview */
         .method-preview {
@@ -98,11 +132,19 @@
                 <form th:action="@{/livestock/register/new}" th:object="${livestock}"
                       method="post" id="registerForm">
 
+                    <!--
+                    ════════════════════════════════════════════════════════════
+                    FAO HIDDEN FIELDS
+                    conceptionDate  → submitted directly (primary pregnancy input)
+                    expectedDueDate → NOT submitted from form; server always
+                                      recalculates it from conceptionDate.
+                    pregnancyStatus → managed by hidden field (legacy compat)
+                    ════════════════════════════════════════════════════════════
+                    -->
                     <input type="hidden" th:field="*{pregnancyStatus}"
                            th:value="${livestock.pregnancyStatus != null
-                                       ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
-                    <input type="hidden" id="conceptionDateHidden"  name="conceptionDate">
-                    <input type="hidden" id="expectedDueDateHidden" name="expectedDueDate">
+                                       ? livestock.pregnancyStatus : 'NOT_PREGNANT'}"
+                           id="pregnancyStatusHidden">
 
                     <!-- ══ PHOTO ══════════════════════════════════════════════ -->
                     <div class="section-header"><i class="bi bi-camera me-1"></i> Photo</div>
@@ -132,7 +174,7 @@
                             <label class="form-label">Livestock Category *</label>
                             <select class="form-select" id="livestockCategoryIdValue"
                                     th:field="*{livestockCategoryIdValue}"
-                                    onchange="fetchTagSuggestion(this.value); recalcDueDate();"
+                                    onchange="fetchTagSuggestion(this.value); onCategoryChange();"
                                     required>
                                 <option value="">Select category...</option>
                                 <option th:each="cat : ${categories}"
@@ -149,8 +191,7 @@
                                 <option value="">Select beneficiary...</option>
                                 <option th:each="ab : ${beneficiariesList}"
                                         th:value="${ab.id}"
-                                        th:text="${ab.firstName + ' ' + ab.lastName
-                                                   + ' - ' + ab.nid}">
+                                        th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
                                 </option>
                             </select>
                         </div>
@@ -165,29 +206,24 @@
                             <label class="form-label">Tag Number *</label>
                             <input type="text" class="form-control" id="tagNumber"
                                    th:field="*{tagNumber}"
-                                   th:placeholder="${suggestedTag != null
-                                                     ? suggestedTag : 'Select a category first...'}"
+                                   th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
                                    required>
-                            <div id="lastTagInfo" class="form-text text-muted mt-1"
-                                 style="display:none">
+                            <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none">
                                 <i class="bi bi-tag-fill"></i>
                                 Last in this category: <code id="lastTagValue"></code>
                             </div>
                             <div id="suggestedTagPill"
-                                 style="display:none; margin-top:6px; align-items:center;
-                                        gap:6px; background:#e0f2fe; border:1px solid #bae6fd;
-                                        padding:5px 12px; border-radius:20px; font-size:0.8rem;
-                                        font-weight:600; color:#0369a1; cursor:pointer;"
-                                 onclick="document.getElementById('tagNumber').value =
-                                          this.getAttribute('data-tag')"
+                                 style="display:none; margin-top:6px; align-items:center; gap:6px;
+                                        background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
+                                        border-radius:20px; font-size:0.8rem; font-weight:600;
+                                        color:#0369a1; cursor:pointer;"
+                                 onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
                                  title="Click to use this tag number">
                                 <i class="bi bi-arrow-right-circle-fill"></i>
                                 Next available: <strong id="suggestedTagValue"></strong>
                                 <span style="font-size:0.72rem;opacity:0.75;">(click to use)</span>
                             </div>
-                            <div id="noTagsYet"
-                                 style="display:none; margin-top:6px;
-                                        font-size:0.8rem; color:#64748b;">
+                            <div id="noTagsYet" style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
                                 <i class="bi bi-info-circle"></i>
                                 No animals registered in this category yet.
                             </div>
@@ -234,12 +270,11 @@
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Current Value (RWF)</label>
                             <input type="number" class="form-control" id="currentValue"
-                                   th:field="*{currentValue}" min="0" step="0.01"
-                                   placeholder="0.00">
+                                   th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00">
                         </div>
                     </div>
 
-                    <!-- Birth date row — hidden when BIRTH is selected -->
+                    <!-- Birth date row — hidden for BIRTH acquisition -->
                     <div id="birthDateRow" class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Birth Date</label>
@@ -276,30 +311,25 @@
                         </div>
                     </div>
 
+                    <!-- ══ PREGNANCY TOGGLE ═══════════════════════════════════ -->
                     <!--
-                    ════════════════════════════════════════════════════════════
-                    PREGNANCY TOGGLE BOX
-                    Shown when: Gender = FEMALE AND Acquisition ≠ BIRTH
-                    Hidden for males, no gender selected, and BIRTH animals.
-                    ════════════════════════════════════════════════════════════
+                        Shown when: Gender = FEMALE AND Acquisition ≠ BIRTH
+                        Hidden for males, no gender, and BIRTH animals.
                     -->
-                    <div id="pregnancyToggleBox" class="pregnancy-toggle-box"
-                         style="display:none">
+                    <div id="pregnancyToggleBox" class="pregnancy-toggle-box" style="display:none">
                         <div>
                             <div class="form-check form-switch mb-1">
                                 <input class="form-check-input" type="checkbox" role="switch"
                                        id="isPregnant" th:field="*{isPregnant}"
                                        onchange="onPregnancyToggle(this.checked)">
-                                <label class="form-check-label fw-semibold fs-6"
-                                       for="isPregnant">
+                                <label class="form-check-label fw-semibold fs-6" for="isPregnant">
                                     <i class="bi bi-heart-fill text-danger me-1"></i>
                                     Currently Pregnant?
                                 </label>
                             </div>
                             <div class="pregnancy-toggle-hint">
                                 Check this if the animal arrived already pregnant.
-                                Additional fields will appear to record pregnancy details
-                                and automatically start tracking.
+                                Enter the conception/breeding date below to start automatic tracking.
                             </div>
                         </div>
                     </div>
@@ -316,82 +346,111 @@
                     <!--
                     ════════════════════════════════════════════════════════════
                     PREGNANCY DETAILS PANEL
-                    Shown ONLY when:
-                      • Gender = FEMALE
-                      • Acquisition ≠ BIRTH
-                      • "Currently Pregnant?" is checked
+                    FAO Standard: user enters ONLY the conception/breeding date.
+                    All other fields are derived or helper-only.
                     ════════════════════════════════════════════════════════════
                     -->
-                    <div id="pregnancyDetailsPanel" class="pregnancy-panel"
-                         style="display:none">
+                    <div id="pregnancyDetailsPanel" class="pregnancy-panel" style="display:none">
                         <div class="panel-title">
                             <i class="bi bi-heart-fill" style="color:#7c3aed"></i>
                             Pregnancy Details
                         </div>
 
-                        <div class="purchased-pregnant-info">
-                            <i class="bi bi-info-circle-fill me-1"></i>
-                            <strong>Purchased / received while pregnant.</strong>
-                            Fill in the details below. These will automatically start
-                            pregnancy tracking and appear in the
-                            <em>Pregnancy Tracking</em> dashboard with due-date alerts.
-                            You can leave any field blank and update it later.
+                        <!-- FAO standard explanation -->
+                        <div class="fao-info-box">
+                            <strong><i class="bi bi-info-circle-fill me-1"></i>
+                                International Standard (FAO):
+                            </strong>
+                            <ul>
+                                <li><strong>You enter only:</strong> the Conception / Breeding Date.</li>
+                                <li><strong>System auto-calculates:</strong> Weeks Pregnant, Expected Due Date, Days Remaining, Gestation Progress.</li>
+                                <li>Weeks Pregnant below is a <em>helper field only</em> — it is not stored.
+                                    Enter it to back-calculate the conception date if you only know how far along the animal is.</li>
+                            </ul>
                         </div>
 
                         <div class="row g-3">
 
-                            <!-- Conception Date -->
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">
+                            <!--
+                            ─── PRIMARY INPUT: Conception / Breeding Date ───────────────────
+                            This is the gold-standard entry. Everything else derives from it.
+                            -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-calendar-heart-fill text-danger me-1"></i>
                                     Conception / Breeding Date
-                                    <span class="text-muted fw-normal">(optional)</span>
+                                    <span class="badge bg-danger ms-1" style="font-size:0.65rem;">PRIMARY</span>
                                 </label>
-                                <input type="date" class="form-control"
+                                <input type="date" class="form-control form-control"
                                        id="conceptionDateInput"
-                                       oninput="syncConceptionDate(); recalcDueDate();">
+                                       th:field="*{conceptionDate}"
+                                       oninput="onConceptionDateChange()">
                                 <div class="form-text">
-                                    Approximate date the animal was bred / conceived
+                                    The date the animal was bred or conceived.
+                                    All pregnancy fields are calculated from this.
                                 </div>
                             </div>
 
-                            <!-- Expected Due Date -->
-                            <div class="col-md-4">
+                            <!--
+                            ─── HELPER ONLY: Weeks Pregnant ────────────────────────────────
+                            Back-calculates conceptionDate. NOT stored.
+                            -->
+                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">
-                                    Expected Due / Birth Date
-                                    <span class="text-muted fw-normal">(optional)</span>
-                                </label>
-                                <input type="date" class="form-control"
-                                       id="expectedDueDateInput"
-                                       oninput="syncDueDate();">
-                                <div class="form-text" id="gestationHintText">
-                                    Auto-calculated from conception date + category gestation
-                                </div>
-                            </div>
-
-                            <!-- Weeks Pregnant helper -->
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calculator me-1 text-secondary"></i>
                                     Weeks Pregnant
-                                    <span class="text-muted fw-normal">(estimate, optional)</span>
+                                    <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">HELPER — NOT STORED</span>
                                 </label>
                                 <input type="number" class="form-control"
                                        id="weeksPregnantInput"
                                        min="0" max="60" placeholder="e.g. 8"
-                                       oninput="weeksToConception();">
+                                       oninput="weeksToConception()">
                                 <div class="form-text">
-                                    Enter weeks to auto-calculate conception date.
-                                    <strong>Not stored.</strong>
+                                    <i class="bi bi-arrow-left-right me-1"></i>
+                                    Enter weeks to <strong>back-calculate</strong> the conception date above.
+                                    This field is discarded on save.
                                 </div>
                             </div>
 
-                            <!-- Insemination Method -->
+                            <!-- ─── AUTO-COMPUTED: Expected Due Date ──────────────────────── -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-check-fill text-success me-1"></i>
+                                    Expected Due Date
+                                    <span class="badge bg-success ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                </label>
+                                <div class="computed-field" id="dueDateDisplay">
+                                    <span class="computed-empty">Will be calculated from conception date</span>
+                                </div>
+                                <div class="form-text">
+                                    Calculated by server: conception date + category gestation period.
+                                </div>
+                            </div>
+
+                            <!-- ─── AUTO-COMPUTED: Weeks Pregnant display ─────────────────── -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-activity text-primary me-1"></i>
+                                    Gestation Progress
+                                    <span class="badge bg-primary ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                </label>
+                                <div class="computed-field" id="gestationProgressDisplay">
+                                    <span class="computed-empty">Will be shown after conception date is entered</span>
+                                </div>
+                                <div class="gestation-bar-wrap" id="gestationBarWrap" style="display:none">
+                                    <div class="gestation-bar-bg">
+                                        <div class="gestation-bar-fill" id="gestationBarFill" style="width:0%"></div>
+                                    </div>
+                                    <div class="gestation-bar-label" id="gestationBarLabel"></div>
+                                </div>
+                            </div>
+
+                            <!-- ─── Insemination Method ────────────────────────────────────── -->
                             <div class="col-md-12">
                                 <label class="form-label fw-semibold">
                                     <i class="bi bi-arrow-repeat me-1 text-primary"></i>
                                     How Was This Animal Made Pregnant?
-                                    <span class="text-muted fw-normal">
-                                        (insemination / breeding method)
-                                    </span>
+                                    <span class="text-muted fw-normal">(insemination / breeding method)</span>
                                 </label>
                                 <div class="row g-2 align-items-center">
                                     <div class="col-md-5">
@@ -399,56 +458,40 @@
                                                 th:field="*{inseminationMethod}"
                                                 onchange="updateMethodPreview(this.value)">
                                             <option value="">-- Select method --</option>
-                                            <option value="NATURAL_MATING">
-                                                🐄 Natural Mating
-                                            </option>
-                                            <option value="ARTIFICIAL_INSEMINATION">
-                                                💉 Artificial Insemination (AI)
-                                            </option>
-                                            <option value="EMBRYO_TRANSFER">
-                                                🔬 Embryo Transfer (ET)
-                                            </option>
-                                            <option value="UNKNOWN">
-                                                ❓ Unknown / Not recorded
-                                            </option>
+                                            <option value="NATURAL_MATING">🐄 Natural Mating</option>
+                                            <option value="ARTIFICIAL_INSEMINATION">💉 Artificial Insemination (AI)</option>
+                                            <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer (ET)</option>
+                                            <option value="UNKNOWN">❓ Unknown / Not recorded</option>
                                         </select>
                                     </div>
                                     <div class="col-md-7 d-flex align-items-center">
                                         <div id="methodPreview" class="method-preview"></div>
                                     </div>
                                 </div>
-                                <div class="form-text">
-                                    Shown in Pregnancy Tracking dashboard next to this
-                                    animal's record.
-                                </div>
+                                <div class="form-text">Shown in Pregnancy Tracking dashboard.</div>
                             </div>
 
                         </div><!-- /.row g-3 -->
                     </div><!-- /#pregnancyDetailsPanel -->
 
                     <!-- ══ LOCATION ════════════════════════════════════════════ -->
-                    <div class="section-header">
-                        <i class="bi bi-geo-alt me-1"></i> Location
-                    </div>
+                    <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Location</div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Province</label>
-                            <select class="form-select" id="province"
-                                    onchange="loadDistricts()">
+                            <select class="form-select" id="province" onchange="loadDistricts()">
                                 <option value="">Select province...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">District</label>
-                            <select class="form-select" id="district"
-                                    onchange="loadSectors()" disabled>
+                            <select class="form-select" id="district" onchange="loadSectors()" disabled>
                                 <option value="">Select district...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Sector</label>
-                            <select class="form-select" id="sector"
-                                    onchange="loadCells()" disabled>
+                            <select class="form-select" id="sector" onchange="loadCells()" disabled>
                                 <option value="">Select sector...</option>
                             </select>
                         </div>
@@ -456,20 +499,16 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Cell</label>
-                            <select class="form-select" id="cell"
-                                    onchange="loadVillages()" disabled>
+                            <select class="form-select" id="cell" onchange="loadVillages()" disabled>
                                 <option value="">Select cell...</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Village</label>
-                            <select class="form-select" id="village"
-                                    name="locationId" disabled>
+                            <select class="form-select" id="village" name="locationId" disabled>
                                 <option value="">Select village...</option>
                             </select>
-                            <div class="form-text">
-                                Leave blank to use the beneficiary's location
-                            </div>
+                            <div class="form-text">Leave blank to use the beneficiary's location</div>
                         </div>
                     </div>
 
@@ -489,109 +528,48 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ═══════════════════════════════════════════════════════════════════════════
-    // HELPERS — show / hide using inline style only (no CSS class conflicts)
-    // ═══════════════════════════════════════════════════════════════════════════
-    function show(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = '';
-    }
-    function hide(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = 'none';
-    }
-    function showFlex(id) {
-        var el = document.getElementById(id);
-        if (el) el.style.display = 'flex';
-    }
-    function val(id) {
-        var el = document.getElementById(id);
-        return el ? el.value : '';
-    }
-    function setVal(id, v) {
-        var el = document.getElementById(id);
-        if (el) el.value = v;
-    }
-    function isChecked(id) {
-        var el = document.getElementById(id);
-        return el ? el.checked : false;
-    }
-    function setChecked(id, v) {
-        var el = document.getElementById(id);
-        if (el) el.checked = v;
-    }
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    function show(id)     { var e = document.getElementById(id); if (e) e.style.display = ''; }
+    function hide(id)     { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
+    function showFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'flex'; }
+    function val(id)      { var e = document.getElementById(id); return e ? e.value : ''; }
+    function setVal(id,v) { var e = document.getElementById(id); if (e) e.value = v; }
+    function isChecked(id){ var e = document.getElementById(id); return e ? e.checked : false; }
+    function setChecked(id,v){ var e = document.getElementById(id); if (e) e.checked = v; }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // MAIN FORM STATE MANAGER
-    // Called whenever gender or acquisitionMethod changes.
-    //
-    // Visibility rules:
-    //
-    //  BIRTH + any gender
-    //    birthDateRow        → HIDE
-    //    birthMethodInfo     → SHOW
-    //    pregnancyToggleBox  → HIDE
-    //    pregnancyPanel      → HIDE
-    //    birthPregnancyNote  → SHOW only if FEMALE
-    //
-    //  Non-BIRTH + FEMALE
-    //    birthDateRow        → SHOW
-    //    birthMethodInfo     → HIDE
-    //    pregnancyToggleBox  → SHOW
-    //    pregnancyPanel      → SHOW only if toggle is checked
-    //    birthPregnancyNote  → HIDE
-    //
-    //  Non-BIRTH + MALE or no gender
-    //    birthDateRow        → SHOW
-    //    birthMethodInfo     → HIDE
-    //    pregnancyToggleBox  → HIDE
-    //    pregnancyPanel      → HIDE
-    //    birthPregnancyNote  → HIDE
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MAIN FORM STATE
+    // ═══════════════════════════════════════════════════════════════════════════════
     function onFormChange() {
-        var gender  = val('gender');
-        var acq     = val('acquisitionMethod');
+        var gender   = val('gender');
+        var acq      = val('acquisitionMethod');
         var isBirth  = (acq === 'BIRTH');
         var isFemale = (gender === 'FEMALE');
 
         if (isBirth) {
-            // ── BIRTH animal ──────────────────────────────────────────────────
             hide('birthDateRow');
             show('birthMethodInfo');
             setVal('birthDate', '');
-
             hide('pregnancyToggleBox');
             setChecked('isPregnant', false);
             hide('pregnancyDetailsPanel');
             clearPregnancyPanel();
-
-            setVal('inseminationMethod', '');
-            hide('methodPreview');
-
             setVal('status', 'ACTIVE');
-
-            if (isFemale) {
-                show('birthPregnancyNotice');
-            } else {
-                hide('birthPregnancyNotice');
-            }
-
+            isFemale ? show('birthPregnancyNotice') : hide('birthPregnancyNotice');
         } else {
-            // ── Non-BIRTH animal ──────────────────────────────────────────────
             show('birthDateRow');
             hide('birthMethodInfo');
             hide('birthPregnancyNotice');
-
             if (isFemale) {
                 showFlex('pregnancyToggleBox');
-                // Keep panel in sync with checkbox state
                 if (isChecked('isPregnant')) {
                     show('pregnancyDetailsPanel');
                 } else {
                     hide('pregnancyDetailsPanel');
                 }
             } else {
-                // Male or no gender selected
                 hide('pregnancyToggleBox');
                 setChecked('isPregnant', false);
                 hide('pregnancyDetailsPanel');
@@ -602,9 +580,6 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // PREGNANCY TOGGLE — called when "Currently Pregnant?" checkbox changes
-    // ═══════════════════════════════════════════════════════════════════════════
     function onPregnancyToggle(checked) {
         if (checked) {
             show('pregnancyDetailsPanel');
@@ -618,116 +593,163 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // CLEAR PREGNANCY PANEL INPUTS
-    // ═══════════════════════════════════════════════════════════════════════════
-    function clearPregnancyPanel() {
-        setVal('conceptionDateInput',  '');
-        setVal('expectedDueDateInput', '');
-        setVal('weeksPregnantInput',   '');
-        setVal('conceptionDateHidden', '');
-        setVal('expectedDueDateHidden','');
-        var hint = document.getElementById('gestationHintText');
-        if (hint) hint.textContent =
-            'Auto-calculated from conception date + category gestation period';
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FAO CORE: Conception Date is the primary input.
+    // All computed displays update when it changes.
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Called whenever the Conception Date input changes.
+     * Updates the computed-field displays for due date and gestation progress.
+     */
+    function onConceptionDateChange() {
+        var conceptionVal = val('conceptionDateInput');
+
+        // Clear weeks helper to avoid stale values confusing the user
+        setVal('weeksPregnantInput', '');
+
+        updateComputedDisplays(conceptionVal);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // METHOD BADGE PREVIEW
-    // ═══════════════════════════════════════════════════════════════════════════
-    function updateMethodPreview(value) {
-        var preview = document.getElementById('methodPreview');
-        if (!preview) return;
+    /**
+     * Refreshes the auto-calculated display panels based on conception date.
+     * Does NOT submit anything — purely UI feedback.
+     */
+    function updateComputedDisplays(conceptionVal) {
+        var dueDateEl       = document.getElementById('dueDateDisplay');
+        var progressEl      = document.getElementById('gestationProgressDisplay');
+        var barWrap         = document.getElementById('gestationBarWrap');
+        var barFill         = document.getElementById('gestationBarFill');
+        var barLabel        = document.getElementById('gestationBarLabel');
 
-        var config = {
-            'NATURAL_MATING':          { cls:'natural', icon:'bi-heart-fill',
-                                         text:'Natural Mating' },
-            'ARTIFICIAL_INSEMINATION': { cls:'ai',      icon:'bi-syringe',
-                                         text:'Artificial Insemination (AI)' },
-            'EMBRYO_TRANSFER':         { cls:'et',      icon:'bi-stars',
-                                         text:'Embryo Transfer (ET)' },
-            'UNKNOWN':                 { cls:'unknown', icon:'bi-question-circle-fill',
-                                         text:'Unknown / Not recorded' }
-        };
-
-        if (!value || !config[value]) {
-            preview.style.display = 'none';
+        if (!conceptionVal) {
+            dueDateEl.innerHTML = '<span class="computed-empty">Will be calculated from conception date</span>';
+            progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
+            if (barWrap) barWrap.style.display = 'none';
             return;
         }
 
+        var gestMonths = getGestationMonths();
+        var gestDays   = gestMonths > 0 ? Math.round(gestMonths * 30.4375) : 152; // fallback
+
+        var conception = new Date(conceptionVal);
+        conception.setHours(0,0,0,0);
+        var today      = new Date(); today.setHours(0,0,0,0);
+
+        // Due date
+        var due = new Date(conception);
+        due.setDate(due.getDate() + gestDays);
+        var dueStr = due.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+        dueDateEl.innerHTML = '<div class="computed-label">Expected Due Date</div>'
+            + '<div class="computed-value">' + dueStr + '</div>';
+
+        // Days elapsed / remaining
+        var daysElapsed  = Math.max(0, Math.floor((today - conception) / 86400000));
+        var daysRemaining = Math.round((due - today) / 86400000);
+        var weeksPreg    = Math.floor(daysElapsed / 7);
+        var pct          = Math.min(100, Math.round(daysElapsed * 100 / gestDays));
+
+        var stage = pct < 33 ? 'Early' : pct < 66 ? 'Mid' : pct < 90 ? 'Late' : 'Near Term';
+
+        var daysRemainingLabel = daysRemaining >= 0
+            ? daysRemaining + ' days remaining'
+            : Math.abs(daysRemaining) + ' days overdue';
+
+        progressEl.innerHTML =
+            '<div class="computed-label">Gestation Progress</div>'
+            + '<div class="computed-value">' + pct + '% — ' + stage + ' Stage</div>'
+            + '<div style="font-size:0.78rem;color:#64748b;margin-top:2px;">'
+            + weeksPreg + ' weeks pregnant &bull; ' + daysRemainingLabel
+            + '</div>';
+
+        // Progress bar
+        if (barWrap) {
+            barWrap.style.display = '';
+            barFill.style.width = pct + '%';
+            barLabel.textContent = pct + '% of gestation complete'
+                + (gestMonths > 0 ? ' (' + gestMonths + '-month gestation)' : '');
+        }
+    }
+
+    /** Category change may change gestation period → refresh displays */
+    function onCategoryChange() {
+        var conceptionVal = val('conceptionDateInput');
+        if (conceptionVal) updateComputedDisplays(conceptionVal);
+    }
+
+    function getGestationMonths() {
+        var catSel = document.getElementById('livestockCategoryIdValue');
+        if (!catSel || !catSel.selectedOptions[0]) return 0;
+        return parseInt(catSel.selectedOptions[0].getAttribute('data-gestation') || '0', 10);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // WEEKS → CONCEPTION BACK-CALCULATION (helper field, not stored)
+    // FAO note: weeksPregnant is DERIVED, not primary.
+    // This function exists purely to let the user enter weeks and get
+    // a conception date calculated — the weeks value itself is discarded.
+    // ═══════════════════════════════════════════════════════════════════════════════
+    function weeksToConception() {
+        var weeks = parseInt(val('weeksPregnantInput'), 10);
+        if (isNaN(weeks) || weeks < 0) return;
+
+        var conceived = new Date();
+        conceived.setDate(conceived.getDate() - (weeks * 7));
+        var isoDate = conceived.toISOString().split('T')[0];
+        setVal('conceptionDateInput', isoDate);
+
+        // Trigger Thymeleaf-bound field update via the same input handler
+        var input = document.getElementById('conceptionDateInput');
+        if (input) {
+            input.dispatchEvent(new Event('input'));
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // CLEAR PREGNANCY PANEL
+    // ═══════════════════════════════════════════════════════════════════════════════
+    function clearPregnancyPanel() {
+        setVal('conceptionDateInput',  '');
+        setVal('weeksPregnantInput',   '');
+        var dueDateEl  = document.getElementById('dueDateDisplay');
+        var progressEl = document.getElementById('gestationProgressDisplay');
+        var barWrap    = document.getElementById('gestationBarWrap');
+        if (dueDateEl)  dueDateEl.innerHTML  = '<span class="computed-empty">Will be calculated from conception date</span>';
+        if (progressEl) progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
+        if (barWrap)    barWrap.style.display = 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // METHOD BADGE PREVIEW
+    // ═══════════════════════════════════════════════════════════════════════════════
+    function updateMethodPreview(value) {
+        var preview = document.getElementById('methodPreview');
+        if (!preview) return;
+        var config = {
+            'NATURAL_MATING':          { cls:'natural', icon:'bi-heart-fill',         text:'Natural Mating' },
+            'ARTIFICIAL_INSEMINATION': { cls:'ai',      icon:'bi-syringe',            text:'Artificial Insemination (AI)' },
+            'EMBRYO_TRANSFER':         { cls:'et',      icon:'bi-stars',              text:'Embryo Transfer (ET)' },
+            'UNKNOWN':                 { cls:'unknown', icon:'bi-question-circle-fill',text:'Unknown / Not recorded' }
+        };
+        if (!value || !config[value]) { preview.style.display = 'none'; return; }
         var c = config[value];
         preview.className    = 'method-preview ' + c.cls;
         preview.style.display = 'inline-flex';
         preview.innerHTML    = '<i class="bi ' + c.icon + '"></i> ' + c.text;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // HIDDEN DATE FIELD SYNC
-    // ═══════════════════════════════════════════════════════════════════════════
-    function syncConceptionDate() {
-        setVal('conceptionDateHidden', val('conceptionDateInput'));
-    }
-    function syncDueDate() {
-        setVal('expectedDueDateHidden', val('expectedDueDateInput'));
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // DUE DATE AUTO-CALCULATION
-    // ═══════════════════════════════════════════════════════════════════════════
-    function recalcDueDate() {
-        var conceptionVal = val('conceptionDateInput');
-        if (!conceptionVal) return;
-
-        var catSel = document.getElementById('livestockCategoryIdValue');
-        var gestMonths = 0;
-        if (catSel && catSel.selectedOptions[0]) {
-            gestMonths = parseInt(
-                catSel.selectedOptions[0].getAttribute('data-gestation') || '0', 10);
-        }
-
-        if (gestMonths > 0) {
-            var d = new Date(conceptionVal);
-            d.setMonth(d.getMonth() + gestMonths);
-            setVal('expectedDueDateInput', d.toISOString().split('T')[0]);
-            syncDueDate();
-
-            var hint = document.getElementById('gestationHintText');
-            if (hint && catSel && catSel.selectedOptions[0]) {
-                var catName = catSel.selectedOptions[0].textContent.split(' (')[0];
-                hint.textContent = catName + ' gestation: ~' + gestMonths
-                    + ' months — due date auto-calculated';
-            }
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // WEEKS → CONCEPTION BACK-CALCULATION
-    // ═══════════════════════════════════════════════════════════════════════════
-    function weeksToConception() {
-        var weeks = parseInt(val('weeksPregnantInput'), 10);
-        if (isNaN(weeks) || weeks < 0) return;
-        var conceived = new Date();
-        conceived.setDate(conceived.getDate() - (weeks * 7));
-        setVal('conceptionDateInput', conceived.toISOString().split('T')[0]);
-        syncConceptionDate();
-        recalcDueDate();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     // PHOTO UPLOAD
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     function uploadPhoto() {
         var file = document.getElementById('photoFile').files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
-        if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
-
+        if (file.size > 5 * 1024 * 1024)    { alert('File size must be less than 5MB'); return; }
         var preview = document.getElementById('photoPreview');
         preview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
-
         var formData = new FormData();
         formData.append('file', file);
-
         fetch('/api/upload/photo', { method: 'POST', body: formData })
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -736,27 +758,21 @@
                     setVal('photoUrl', data.url);
                 } else {
                     alert('Upload failed: ' + data.message);
-                    preview.innerHTML = '<div class="text-center text-muted">'
-                        + '<i class="bi bi-box2-heart" style="font-size:3rem"></i>'
-                        + '<p class="small mt-2">Upload failed</p></div>';
+                    preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
                 }
             })
             .catch(function() {
                 alert('Error uploading photo');
-                preview.innerHTML = '<div class="text-center text-muted">'
-                    + '<i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
+                preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
             });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     // TAG NUMBER SUGGESTION
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     function fetchTagSuggestion(categoryId) {
-        hide('suggestedTagPill');
-        hide('lastTagInfo');
-        hide('noTagsYet');
+        hide('suggestedTagPill'); hide('lastTagInfo'); hide('noTagsYet');
         if (!categoryId) return;
-
         fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -764,14 +780,12 @@
                 show('lastTagInfo');
                 if (data.suggestedTag) {
                     document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
-                    document.getElementById('suggestedTagPill')
-                        .setAttribute('data-tag', data.suggestedTag);
+                    document.getElementById('suggestedTagPill').setAttribute('data-tag', data.suggestedTag);
                     document.getElementById('suggestedTagPill').style.display = 'inline-flex';
                     document.getElementById('tagNumber').placeholder = data.suggestedTag;
                 } else {
                     show('noTagsYet');
-                    document.getElementById('tagNumber').placeholder =
-                        'Enter first tag for this category...';
+                    document.getElementById('tagNumber').placeholder = 'Enter first tag for this category...';
                 }
             })
             .catch(function() {
@@ -779,18 +793,16 @@
             });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     // CASCADING LOCATION DROPDOWNS
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     function loadProvinces() {
         fetch('/api/locations/provinces')
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 var s = document.getElementById('province');
                 s.innerHTML = '<option value="">Select province...</option>';
-                data.forEach(function(i) {
-                    s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>';
-                });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
             });
     }
     function loadDistricts() {
@@ -801,9 +813,7 @@
             .then(function(data) {
                 var s = document.getElementById('district');
                 s.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(function(i) {
-                    s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>';
-                });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['sector','cell','village']);
             });
@@ -816,9 +826,7 @@
             .then(function(data) {
                 var s = document.getElementById('sector');
                 s.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(function(i) {
-                    s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>';
-                });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['cell','village']);
             });
@@ -831,9 +839,7 @@
             .then(function(data) {
                 var s = document.getElementById('cell');
                 s.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(function(i) {
-                    s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>';
-                });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['village']);
             });
@@ -846,9 +852,7 @@
             .then(function(data) {
                 var s = document.getElementById('village');
                 s.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(function(i) {
-                    s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>';
-                });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
             });
     }
@@ -860,22 +864,25 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     // PAGE INIT
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function() {
         loadProvinces();
-
-        // Run form state immediately to handle any server-side pre-filled values
-        // (e.g. after a validation error returns the form with existing values)
         onFormChange();
 
-        // If returning after error with isPregnant already checked, show panel
+        // If returning after validation error with isPregnant already checked
         if (isChecked('isPregnant')) {
             show('pregnancyDetailsPanel');
         }
 
-        // If category already selected (after error return), fetch tag suggestion
+        // If returning with a conception date already set, refresh displays
+        var conception = val('conceptionDateInput');
+        if (conception) {
+            updateComputedDisplays(conception);
+        }
+
+        // If category already selected (after error return)
         var catId = val('livestockCategoryIdValue');
         if (catId) fetchTagSuggestion(catId);
     });

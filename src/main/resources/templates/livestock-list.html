@@ -50,17 +50,6 @@
         .age-pill.stage-senior { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
         /* ── Breeding Status Cell ────────────────────────────────── */
-        /*
-         * Shows two stacked pieces of info:
-         *   1. Pregnant badge (females only)
-         *   2. Breeding capability badge (all animals)
-         *
-         * Colour coding for capability:
-         *   green  → capable (age >= min_breeding_age_months)
-         *   amber  → too young (age < min_breeding_age_months)
-         *   grey   → unknown (no birth_date or no category min age)
-         *   purple → currently pregnant
-         */
         .breeding-cell { min-width: 140px; }
 
         .pregnant-badge {
@@ -142,6 +131,103 @@
         .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; }
         .btn-print-all  { display: inline-flex; align-items: center; gap: 7px; padding: 8px 18px; border-radius: 8px; border: 1.5px solid #0f766e; background: #f0fdfa; color: #0f766e; text-decoration: none; }
         .btn-print-all:hover { background: #0f766e; color: white; }
+
+        /* ═══════════════════════════════════════════════════════════
+           RESPONSIVE TABLE → CARD LAYOUT  (≤ 767 px)
+        ═══════════════════════════════════════════════════════════ */
+        @media (max-width: 767.98px) {
+
+            body { padding: 12px; }
+
+            .list-card { padding: 16px 12px; border-radius: 10px; }
+
+            /* ── Header: stack vertically ── */
+            .list-card > .d-flex.justify-content-between {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px;
+            }
+            .list-card > .d-flex.justify-content-between .d-flex.gap-2 {
+                flex-wrap: wrap;
+            }
+            .btn-print-all,
+            .list-card .btn.btn-primary { width: 100%; justify-content: center; }
+
+            /* ── Summary pills: smaller + wrap ── */
+            .sum-pill { font-size: 0.73rem; padding: 4px 10px; }
+
+            /* ── Filters: wrap ── */
+            .row.mb-3 > .col-md-5,
+            .row.mb-3 > .col-md-7 { width: 100%; margin-bottom: 8px; }
+
+            /* ── Bulk bar: wrap ── */
+            .bulk-bar { flex-wrap: wrap; }
+
+            /* ── Hide the table header ── */
+            #dataTable thead { display: none; }
+
+            /* ── Each <tr> becomes a card ── */
+            #dataTable tbody tr[data-status] {
+                display: block;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                margin-bottom: 14px;
+                padding: 14px 12px 10px;
+                box-shadow: 0 1px 5px rgba(0,0,0,0.07);
+            }
+            #dataTable tbody tr.row-sold { background: #fff5f5 !important; }
+            #dataTable tbody tr.row-dead { background: #f9fafb !important; opacity: 0.85; }
+
+            /* ── Each <td> becomes a label + value row ── */
+            #dataTable tbody td {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 6px 0;
+                border: none !important;
+                font-size: 0.85rem;
+                border-bottom: 1px solid #f1f5f9 !important;
+            }
+            #dataTable tbody td:last-child { border-bottom: none !important; }
+
+            /* ── Hide checkbox column and row-number column on mobile ── */
+            #dataTable tbody td.check-col,
+            #dataTable tbody td[data-label="#"] { display: none; }
+
+            /* ── Inject label via data-label attribute ── */
+            #dataTable tbody td[data-label]::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 0.68rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #94a3b8;
+                min-width: 88px;
+                flex-shrink: 0;
+                padding-top: 3px;
+            }
+            /* Hide label for photo cell — just show the image */
+            #dataTable tbody td[data-label="Photo"]::before { display: none; }
+
+            /* ── Remove fixed min-widths that cause overflow ── */
+            .bd-cell,
+            .breeding-cell,
+            .lifecycle-cell { min-width: unset !important; }
+
+            /* ── Actions: wrap buttons ── */
+            .table-actions {
+                flex-wrap: wrap !important;
+                white-space: normal !important;
+                gap: 6px;
+            }
+
+            /* ── Pagination: stack ── */
+            .pagination-wrap {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 </head>
 <body>
@@ -224,18 +310,6 @@
                     <th>Tag Number</th>
                     <th>Category</th>
                     <th>Gender</th>
-                    <!--
-                        BREEDING STATUS COLUMN
-                        Replaces the old simple "Pregnant" yes/no column.
-                        Shows two stacked pieces of info per animal:
-                          1. Pregnancy state (females only): Pregnant / Not Pregnant
-                          2. Breeding capability: Can Conceive | Can Sire | Too Young | Unknown
-                        Capability is derived from:
-                          livestock.birth_date  ──►  age in months
-                          livestock_categories.min_breeding_age_months  ──►  threshold
-                        If birth_date or min_breeding_age_months is NULL the capability
-                        is "Unknown" (shown in grey). No birth_date = no age = no verdict.
-                    -->
                     <th>Breeding Status</th>
                     <th>Beneficiary</th>
                     <th>Location</th>
@@ -259,13 +333,16 @@
                              data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false',
                              data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false'">
 
+                    <!-- Checkbox -->
                     <td class="check-col">
                         <input type="checkbox" class="row-checkbox animal-check" th:value="${item.id}" onchange="updateBulkBar()">
                     </td>
-                    <td th:text="${iterStat.count}"></td>
+
+                    <!-- Row number -->
+                    <td data-label="#" th:text="${iterStat.count}"></td>
 
                     <!-- Photo -->
-                    <td>
+                    <td data-label="Photo">
                         <img th:if="${item.photo != null and !item.photo.isEmpty()}" th:src="${item.photo}" class="animal-photo">
                         <span th:unless="${item.photo != null and !item.photo.isEmpty()}" class="animal-photo-placeholder">
                             <i class="bi bi-box2-heart"></i>
@@ -273,7 +350,7 @@
                     </td>
 
                     <!-- Tag + origin badges -->
-                    <td>
+                    <td data-label="Tag #">
                         <strong th:text="${item.tagNumber}"></strong>
                         <div class="tag-badges">
                             <span th:if="${birthMap != null and birthMap.containsKey(item.id)}" class="born-badge">
@@ -285,39 +362,24 @@
                         </div>
                     </td>
 
-                    <td>
+                    <!-- Category -->
+                    <td data-label="Category">
                         <span th:if="${item.livestockCategory != null}" class="badge bg-info" th:text="${item.livestockCategory.name}"></span>
                         <span th:unless="${item.livestockCategory != null}" class="text-muted">N/A</span>
                     </td>
 
-                    <td>
+                    <!-- Gender -->
+                    <td data-label="Gender">
                         <span th:if="${item.gender == 'MALE'}"   class="badge bg-primary">Male</span>
                         <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger">Female</span>
                         <span th:if="${item.gender == null}"     class="badge bg-secondary">N/A</span>
                     </td>
 
-                    <!-- ══════════════════════════════════════════════════════
-                         BREEDING STATUS COLUMN
-                         ─────────────────────────────────────────────────────
-                         Row 1 (females only):
-                           • Purple "Pregnant" badge when is_pregnant = true
-                           • Light grey "Not Pregnant" when is_pregnant = false/null
-
-                         Row 2 (all animals):
-                           Reads breedingCapableMap[item.id]:
-                           • Key present & true  → green "Can Conceive" (female) / "Can Sire" (male)
-                           • Key present & false → amber "Too Young" with tooltip showing
-                                                   current age vs required minimum
-                           • Key absent          → grey "Unknown" — no birth_date or
-                                                   no min_breeding_age_months set on category
-
-                         The capability is computed server-side in LivestockController.listAll()
-                         using: ChronoUnit.MONTHS.between(birthDate, today) >= minBreedingAgeMonths
-                    ═══════════════════════════════════════════════════════ -->
-                    <td class="breeding-cell"
+                    <!-- Breeding Status -->
+                    <td data-label="Breeding" class="breeding-cell"
                         th:with="capable=${breedingCapableMap != null ? breedingCapableMap[item.id] : null}">
 
-                        <!-- ── Row 1: Pregnancy state (females only) ── -->
+                        <!-- Row 1: Pregnancy state (females only) -->
                         <div th:if="${item.gender == 'FEMALE'}" class="mb-1">
                             <span th:if="${item.isPregnant}" class="pregnant-badge">
                                 <i class="bi bi-heart-fill"></i> Pregnant
@@ -327,9 +389,7 @@
                             </span>
                         </div>
 
-                        <!-- ── Row 2: Breeding capability ── -->
-
-                        <!-- CAPABLE: age >= min_breeding_age_months -->
+                        <!-- Row 2: Breeding capability -->
                         <div th:if="${capable != null and capable}">
                             <span class="breed-pill breed-capable"
                                   th:title="${item.gender == 'FEMALE'} ? 'This female has reached the minimum breeding age and can conceive' : 'This male has reached the minimum breeding age and can sire offspring'">
@@ -340,7 +400,6 @@
                             </span>
                         </div>
 
-                        <!-- TOO YOUNG: age < min_breeding_age_months -->
                         <div th:if="${capable != null and !capable}">
                             <span class="breed-pill breed-too-young"
                                   th:with="minAge=${item.livestockCategory != null ? item.livestockCategory.minBreedingAgeMonths : null}"
@@ -353,28 +412,28 @@
                             </span>
                         </div>
 
-                        <!-- UNKNOWN: no birth_date or no category min age rule -->
                         <div th:if="${capable == null}">
                             <span class="breed-pill breed-unknown"
                                   title="Cannot determine breeding capability: birth date or category minimum age is not recorded.">
                                 <i class="bi bi-question-circle"></i> Unknown
                             </span>
                         </div>
-
                     </td>
-                    <!-- END BREEDING STATUS COLUMN -->
 
-                    <td>
+                    <!-- Beneficiary -->
+                    <td data-label="Beneficiary">
                         <small th:if="${item.beneficiary != null}"
                                th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></small>
                         <small th:unless="${item.beneficiary != null}" class="text-muted">N/A</small>
                     </td>
 
-                    <td>
+                    <!-- Location -->
+                    <td data-label="Location">
                         <small th:text="${item.location != null ? item.location.name : 'N/A'}"></small>
                     </td>
 
-                    <td>
+                    <!-- Status -->
+                    <td data-label="Status">
                         <span th:if="${item.status == 'ACTIVE'}"   class="status-badge status-active">Active</span>
                         <span th:if="${item.status == 'SOLD'}"     class="status-badge status-sold">Sold</span>
                         <span th:if="${item.status == 'DEAD'}"     class="status-badge status-dead">Dead</span>
@@ -382,38 +441,27 @@
                         <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
                     </td>
 
-                    <td>
+                    <!-- Current Value -->
+                    <td data-label="Value">
                         <span th:if="${item.currentValue != null}"
                               th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
                         <span th:unless="${item.currentValue != null}" class="text-muted">Not set</span>
                     </td>
 
-                    <!-- ══════════════════════════════════════════════════════
-                         BIRTH DATE COLUMN
-                         ─────────────────────────────────────────────────────
-                         Shows: origin label  +  formatted date  +  age bracket
-                         Data source priority:
-                           1. item.birthDate          (livestock.birth_date)
-                           2. birthMap[id].birthDate  (livestock_births.birth_date, farm-born fallback)
-                         Age bracket is rendered by JS reading data-bd="yyyy-MM-dd".
-                    ═══════════════════════════════════════════════════════ -->
-                    <td class="bd-cell">
+                    <!-- Birth Date -->
+                    <td data-label="Birth Date" class="bd-cell">
 
-                        <!-- ── Farm-born animal ── -->
+                        <!-- Farm-born animal -->
                         <div th:if="${birthMap != null and birthMap.containsKey(item.id)}">
                             <div class="bd-origin-badge bd-origin-farm">
                                 <i class="bi bi-stars"></i> Born on Farm
                             </div>
-
-                            <!-- Primary: livestock.birth_date -->
                             <div th:if="${item.birthDate != null}" class="bd-date-line">
                                 <span class="bd-date-text"
                                       th:text="${#temporals.format(item.birthDate, 'dd MMM yyyy')}"></span>
                                 <span class="age-pill"
                                       th:attr="data-bd=${#temporals.format(item.birthDate, 'yyyy-MM-dd')}">…</span>
                             </div>
-
-                            <!-- Fallback: livestock_births.birth_date -->
                             <div th:if="${item.birthDate == null and birthMap[item.id].birthDate != null}"
                                  class="bd-date-line">
                                 <span class="bd-date-text"
@@ -421,38 +469,30 @@
                                 <span class="age-pill"
                                       th:attr="data-bd=${#temporals.format(birthMap[item.id].birthDate, 'yyyy-MM-dd')}">…</span>
                             </div>
-
-                            <!-- No date at all -->
                             <div th:if="${item.birthDate == null and birthMap[item.id].birthDate == null}">
                                 <span class="bd-none">Date not recorded</span>
                             </div>
                         </div>
 
-                        <!-- ── Purchased / External animal ── -->
+                        <!-- Purchased / External animal -->
                         <div th:unless="${birthMap != null and birthMap.containsKey(item.id)}">
                             <div class="bd-origin-badge bd-origin-purchase">
                                 <i class="bi bi-shop"></i> Purchased
                             </div>
-
                             <div th:if="${item.birthDate != null}" class="bd-date-line">
                                 <span class="bd-date-text"
                                       th:text="${#temporals.format(item.birthDate, 'dd MMM yyyy')}"></span>
                                 <span class="age-pill"
                                       th:attr="data-bd=${#temporals.format(item.birthDate, 'yyyy-MM-dd')}">…</span>
                             </div>
-
                             <div th:if="${item.birthDate == null}">
                                 <span class="bd-none">Birth date not recorded</span>
                             </div>
                         </div>
-
                     </td>
-                    <!-- END BIRTH DATE COLUMN -->
 
-                    <!-- ══════════════════════════════════════════════════════
-                         HEALTH & SALE COLUMN
-                    ═══════════════════════════════════════════════════════ -->
-                    <td class="lifecycle-cell">
+                    <!-- Health & Sale -->
+                    <td data-label="Health &amp; Sale" class="lifecycle-cell">
 
                         <!-- Treatments -->
                         <div th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}">
@@ -526,7 +566,7 @@
                     </td>
 
                     <!-- Actions -->
-                    <td class="table-actions">
+                    <td data-label="Actions" class="table-actions">
                         <a th:href="@{/livestock/view/{id}(id=${item.id})}"            class="btn btn-sm btn-info"><i class="bi bi-eye"></i></a>
                         <a th:href="@{/livestock/edit/{id}(id=${item.id})}"            class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
                         <a th:href="@{/livestock/qr/eartag/{id}(id=${item.id})}"       class="qr-btn"><i class="bi bi-qr-code"></i></a>
@@ -605,14 +645,6 @@
 <script>
     // ═════════════════════════════════════════════════════════════════════════════
     // AGE BRACKET RENDERER
-    // Reads data-bd="yyyy-MM-dd" on every .age-pill element and writes a
-    // human-readable age string + the correct CSS class for colour coding.
-    //
-    // Life-stage colour coding:
-    //   purple (stage-days)   → 0–29 days   neonate
-    //   blue   (stage-months) → 1–11 months young
-    //   green  (stage-years)  → 1–4 years   adult prime
-    //   amber  (stage-senior) → 5+ years    senior
     // ═════════════════════════════════════════════════════════════════════════════
     (function renderAgeBrackets() {
         'use strict';
