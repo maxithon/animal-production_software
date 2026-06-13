@@ -13,8 +13,6 @@
         /* Tree styles */
         .tree-root  { border: 2px solid #0d6efd; border-radius: 10px; padding: 14px 18px; background: #e8f4ff; }
         .tree-child { border-left: 4px solid #198754; border-radius: 6px; padding: 10px 14px; background: #f0fff4; margin-bottom: 6px; }
-        .tree-grandchild { border-left: 4px solid #0dcaf0; border-radius: 6px; padding: 8px 12px; background: #e8feff; margin-bottom: 6px; margin-left: 24px; }
-        .tree-ggchild { border-left: 4px solid #fd7e14; border-radius: 6px; padding: 8px 12px; background: #fff5e8; margin-bottom: 6px; margin-left: 48px; }
         .connector { color: #adb5bd; }
         .ancestor-box { background: #fff8e1; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 16px; }
     </style>
@@ -111,11 +109,11 @@
             </div>
 
             <!-- Arrow down to children -->
-            <div th:if="${!directChildren.empty}" class="text-center connector my-2">
+            <div th:if="${not #lists.isEmpty(directChildren)}" class="text-center connector my-2">
                 <i class="bi bi-arrow-down"></i>
             </div>
 
-            <!-- Direct children (Gen 1) -->
+            <!-- Direct children (Gen 1) - SIMPLIFIED without any complex checks -->
             <div th:each="child : ${directChildren}" class="mb-1">
                 <div class="tree-child d-flex justify-content-between align-items-center">
                     <div>
@@ -128,42 +126,16 @@
                               class="badge bg-info text-dark ms-1"
                               th:text="${child.gender}"></span>
                     </div>
-                    <div class="d-flex gap-1">
-                        <!-- If this child has its own children, show indicator -->
-                        <span th:if="${child.offspring != null and !child.offspring.empty}"
-                              class="badge bg-warning text-dark">
-                            <i class="bi bi-heart-pulse"></i> Has calves
-                        </span>
+                    <div>
                         <a th:href="@{/livestock/births/family/{id}(id=${child.id})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-diagram-3"></i>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Grandchildren (Gen 2) — children of this child -->
-                <div th:each="grandchild : ${child.offspring}" class="tree-grandchild d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="badge bg-info text-dark me-1">Grandchild</span>
-                        <strong th:text="${grandchild.tagNumber}"></strong>
-                        <span th:if="${grandchild.gender != null}"
-                              class="badge bg-secondary ms-1"
-                              th:text="${grandchild.gender}"></span>
-                    </div>
-                    <div class="d-flex gap-1">
-                        <span th:if="${grandchild.offspring != null and !grandchild.offspring.empty}"
-                              class="badge bg-warning text-dark">
-                            <i class="bi bi-heart-pulse"></i> Has calves
-                        </span>
-                        <a th:href="@{/livestock/births/family/{id}(id=${grandchild.id})}"
-                           class="btn btn-sm btn-outline-info">
-                            <i class="bi bi-diagram-3"></i>
+                            <i class="bi bi-diagram-3"></i> View Tree
                         </a>
                     </div>
                 </div>
             </div>
 
-            <div th:if="${directChildren.empty}" class="text-muted fst-italic small mt-2">
+            <div th:if="${#lists.isEmpty(directChildren)}" class="text-muted fst-italic small mt-2">
                 No children registered yet.
                 <a href="/livestock/births/register">Record a birth</a> to add them.
             </div>
@@ -181,13 +153,13 @@
             <div class="row g-2 text-center">
                 <div class="col-6">
                     <div class="bg-light rounded p-2">
-                        <div class="fs-4 fw-bold text-success" th:text="${directChildren.size()}"></div>
+                        <div class="fs-4 fw-bold text-success" th:text="${#lists.size(directChildren)}"></div>
                         <div class="small text-muted">Direct Children</div>
                     </div>
                 </div>
                 <div class="col-6">
                     <div class="bg-light rounded p-2">
-                        <div class="fs-4 fw-bold text-primary" th:text="${birthsAsMother.size()}"></div>
+                        <div class="fs-4 fw-bold text-primary" th:text="${#lists.size(birthsAsMother)}"></div>
                         <div class="small text-muted">Birth Events</div>
                     </div>
                 </div>
@@ -214,14 +186,14 @@
                 <h6 class="fw-bold mb-0">
                     <i class="bi bi-heart-pulse text-danger me-1"></i>
                     Births (as Mother)
-                    <span class="badge bg-danger ms-1" th:text="${birthsAsMother.size()}"></span>
+                    <span class="badge bg-danger ms-1" th:text="${#lists.size(birthsAsMother)}"></span>
                 </h6>
                 <a href="/livestock/births/register" class="btn btn-sm btn-success">
                     <i class="bi bi-plus"></i>
                 </a>
             </div>
 
-            <div th:if="${birthsAsMother.empty}" class="text-muted fst-italic text-center py-2">
+            <div th:if="${#lists.isEmpty(birthsAsMother)}" class="text-muted fst-italic text-center py-2">
                 No birth events recorded.
             </div>
 
@@ -235,12 +207,18 @@
                     <span th:if="${b.offspringGender == 'FEMALE'}" class="badge bg-danger">Female</span>
                     <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">Mixed</span>
                     &nbsp;·&nbsp;
-                    <span th:text="${b.children.size()}"></span> linked
+                    <span th:text="${b.children != null ? #lists.size(b.children) : 0}"></span> linked
                 </div>
-                <a th:href="@{/livestock/births/{id}/children(id=${b.id})}"
-                   class="btn btn-xs btn-outline-primary mt-1" style="font-size:0.75rem; padding:2px 8px;">
-                    <i class="bi bi-link-45deg"></i> Manage children
-                </a>
+                <div class="mt-2">
+                    <a th:href="@{/livestock/births/{id}/children(id=${b.id})}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-link-45deg"></i> Manage children
+                    </a>
+                    <a th:href="@{/livestock/births/view/{id}(id=${b.id})}"
+                       class="btn btn-sm btn-outline-info ms-1">
+                        <i class="bi bi-eye"></i> View birth
+                    </a>
+                </div>
             </div>
         </div>
 

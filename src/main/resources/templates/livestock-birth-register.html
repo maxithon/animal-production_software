@@ -13,6 +13,19 @@
         .info-box { border-radius: 8px; padding: 14px 18px; font-size: 0.875rem; }
         .info-box-blue  { background: #e0f2fe; border-left: 4px solid #0369a1; color: #0c4a6e; }
         .info-box-amber { background: #fffbeb; border-left: 4px solid #d97706; color: #78350f; }
+        .info-box-green { background: #f0fdf4; border-left: 4px solid #16a34a; color: #14532d; }
+        .info-box-red   { background: #fff1f2; border-left: 4px solid #e11d48; color: #881337; }
+        .child-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #e8f5e9; border: 1px solid #a5d6a7;
+            border-radius: 20px; padding: 4px 12px; font-size: 0.82rem;
+            color: #2e7d32; margin: 3px;
+        }
+        .child-tag .remove-child { cursor: pointer; color: #c62828; font-weight: bold; }
+        #childTagsContainer { min-height: 40px; padding: 8px; border: 1px dashed #ced4da; border-radius: 6px; background: #fafafa; }
+        #childLoadingSpinner { display: none; }
+        #childSection { display: none; }
+        .no-pregnant-warning { display: none; }
     </style>
 </head>
 <body>
@@ -20,7 +33,7 @@
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h4 class="mb-1"><i class="bi bi-heart-pulse text-success me-2"></i>Record Birth</h4>
-        <small class="text-muted">Record a new on-farm birth event — mother must already be registered</small>
+        <small class="text-muted">Link a pregnant mother to her offspring</small>
     </div>
     <div class="d-flex gap-2">
         <a href="/livestock/register" class="btn btn-outline-primary btn-sm">
@@ -35,17 +48,22 @@
 <div class="form-card">
 
     <!-- ══ GUIDANCE BANNER ════════════════════════════════════════════ -->
-    <div class="info-box info-box-blue mb-4">
-        <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i> When to use this form</div>
-        <div>Use this form when a <strong>mother already on your farm</strong> gives birth.
-            The mother must already be registered in the system.</div>
-        <hr class="my-2" style="border-color: #bae6fd;">
-        <div class="fw-bold mb-1"><i class="bi bi-box-arrow-in-down me-1"></i> Animal arriving pregnant from outside?</div>
+    <div class="info-box info-box-blue mb-3">
+        <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i> How this works</div>
         <div>
-            Go to <a href="/livestock/register" class="fw-bold">Register Livestock</a>,
-            set Acquisition Method = <strong>Purchase / Donation / Transfer</strong>,
-            and tick <strong>"Currently Pregnant"</strong>. The system will track the pregnancy automatically.
-            Come back here to record the birth once she delivers on your farm.
+            Select the <strong>pregnant mother</strong> first. The system will then show only
+            <strong>young animals of the same category</strong> that can be linked as her offspring.
+            Both mother and child must already be registered in the system.
+        </div>
+    </div>
+
+    <div class="info-box info-box-amber mb-4">
+        <div class="fw-bold mb-1"><i class="bi bi-box-arrow-in-down me-1"></i> Mother not showing in the list?</div>
+        <div>
+            Only animals marked as <strong>Pregnant</strong> appear in the mother list.
+            To mark an animal as pregnant, go to
+            <a href="/livestock/list" class="fw-bold">Livestock List</a>,
+            edit the animal and set "Currently Pregnant" to Yes, or record a breeding event.
         </div>
     </div>
 
@@ -54,39 +72,50 @@
         <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- No pregnant animals warning (shown via JS if list is empty) -->
+    <div id="noPregnantWarning" class="info-box info-box-red mb-3" style="display:none;">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        <strong>No pregnant animals found.</strong>
+        There are no animals currently marked as pregnant.
+        Please update an animal's pregnancy status before recording a birth.
+        <a href="/livestock/list" class="fw-bold ms-1">Go to Livestock List →</a>
+    </div>
 
     <form th:action="@{/livestock/births/register/new}" th:object="${birth}" method="post">
-
-        <!-- isExternalBirth is always false — births on this form are farm births -->
         <input type="hidden" name="isExternalBirth" value="false">
 
-        <!-- ══ STEP 1: Mother Animal ══════════════════════════════════ -->
+        <!-- ══ STEP 1: Mother ═══════════════════════════════════════ -->
         <h6 class="fw-bold mb-3">
             <span class="badge bg-success me-2">1</span>
-            Mother Animal
+            Mother Animal <span class="text-danger">*</span>
         </h6>
 
         <div class="mb-3">
-            <label class="form-label fw-semibold">Select Mother <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold">Select Pregnant Mother</label>
             <select class="form-select" th:field="*{livestockIdValue}" id="motherSelect" required>
-                <option value="">-- Select the mother animal --</option>
+                <option value="">-- Select a pregnant animal --</option>
                 <option th:each="ls : ${livestockList}"
                         th:value="${ls.id}"
                         th:text="${ls.tagNumber
                             + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')
-                            + ' — ' + (ls.gender != null ? ls.gender : 'Unknown gender')
-                            + (ls.isPregnant != null and ls.isPregnant ? ' [PREGNANT]' : '')}">
+                            + ' — ' + (ls.gender != null ? ls.gender : 'Unknown')
+                            + ' ✦ PREGNANT'}">
                 </option>
             </select>
-            <div class="form-text text-muted">
-                Only active female animals that are old enough are shown.
-                <span id="pregnantHint" class="text-success fw-semibold d-none">
-                    <i class="bi bi-check-circle-fill me-1"></i>Animals marked as pregnant are highlighted.
-                </span>
+            <div class="form-text">
+                <i class="bi bi-filter me-1"></i>
+                Only animals currently marked as <strong>pregnant</strong> are listed.
+                <span id="motherInfo" class="text-success fw-semibold ms-2" style="display:none;"></span>
             </div>
         </div>
 
-        <!-- ══ STEP 2: Birth Details ══════════════════════════════════ -->
+        <!-- ══ STEP 2: Birth Details ════════════════════════════════ -->
         <div class="section-divider"></div>
         <h6 class="fw-bold mb-3">
             <span class="badge bg-success me-2">2</span>
@@ -97,13 +126,19 @@
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Birth Date <span class="text-danger">*</span></label>
                 <input type="date" class="form-control" th:field="*{birthDate}" required>
-                <div class="form-text text-muted">The date the animal gave birth.</div>
+                <div class="form-text">The date the animal gave birth.</div>
             </div>
 
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Number of Offspring</label>
+                <label class="form-label fw-semibold">
+                    Number of Offspring
+                    <span class="text-muted fw-normal">(optional)</span>
+                </label>
                 <input type="number" class="form-control" th:field="*{offspringCount}" min="1" placeholder="e.g. 1">
-                <div class="form-text text-muted">How many animals were born.</div>
+                <div class="form-text">
+                    Leave blank when linking already-registered animals below.
+                    Only fill if offspring are <em>not yet registered</em>.
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -123,30 +158,92 @@
             <div class="col-md-4">
                 <label class="form-label fw-semibold">Next Breeding Date (Mother)</label>
                 <input type="date" class="form-control" th:field="*{nextBreedingDate}">
-                <div class="form-text text-muted">When the mother can be bred again.</div>
+                <div class="form-text">When the mother can be bred again.</div>
             </div>
 
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Source Location / Notes on Origin</label>
-                <input type="text" class="form-control" th:field="*{sourceLocation}"
-                       placeholder="e.g. Born in Barn 2">
-                <div class="form-text text-muted">Optional — where on the farm this occurred.</div>
+                <label class="form-label fw-semibold">Birth Location</label>
+                <input type="text" class="form-control" th:field="*{sourceLocation}" placeholder="e.g. Barn 2">
             </div>
 
             <div class="col-12">
                 <label class="form-label fw-semibold">Notes</label>
-                <textarea class="form-control" th:field="*{notes}" rows="3"
+                <textarea class="form-control" th:field="*{notes}" rows="2"
                           placeholder="Any observations, complications, or notes..."></textarea>
             </div>
         </div>
 
-        <!-- ══ Submit ═════════════════════════════════════════════════ -->
+        <!-- ══ STEP 3: Link Already-Registered Children ═════════════ -->
         <div class="section-divider"></div>
-        <div class="d-flex gap-2">
+        <h6 class="fw-bold mb-1">
+            <span class="badge bg-success me-2">3</span>
+            Link Already-Registered Children
+            <span class="badge bg-secondary ms-2 fw-normal" style="font-size:0.7rem;">Optional</span>
+        </h6>
+        <p class="text-muted small mb-3">
+            Select the mother first — only animals of the <strong>same category</strong>
+            and born within the expected age window will appear.
+        </p>
+
+        <!-- Child section — hidden until mother is chosen -->
+        <div id="childSection">
+            <div class="info-box info-box-green mb-3">
+                <i class="bi bi-filter-circle-fill me-1"></i>
+                <strong>Filtered list:</strong>
+                Showing only <span id="categoryLabel" class="fw-bold"></span> animals
+                born within the expected offspring age window.
+            </div>
+
+            <div id="childLoadingSpinner" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-success" role="status"></div>
+                <span class="ms-2 text-muted small">Loading eligible offspring...</span>
+            </div>
+
+            <div class="row g-2 align-items-end mb-2" id="childSelectRow">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Select Child Animal</label>
+                    <select class="form-select" id="childSelect">
+                        <option value="">-- Select an offspring to link --</option>
+                    </select>
+                    <div class="form-text" id="childCountHint"></div>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-outline-success w-100" onclick="addChild()">
+                        <i class="bi bi-plus-circle me-1"></i> Add Child
+                    </button>
+                </div>
+            </div>
+
+            <div id="noChildrenAvailable" class="info-box info-box-amber mb-3" style="display:none;">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                No eligible offspring found for this mother's category and age window.
+                If the offspring are not yet registered, leave this section empty and
+                use the offspring count above — or
+                <a href="/livestock/register" class="fw-bold">register them first</a>.
+            </div>
+        </div>
+
+        <!-- Selected children display -->
+        <div id="childTagsContainer" class="mb-1">
+            <span class="text-muted small" id="noChildPlaceholder">
+                <i class="bi bi-info-circle me-1"></i>
+                Select a mother first, then eligible offspring will appear.
+            </span>
+        </div>
+        <div class="form-text mb-3">Selected animals will be linked to this birth when you save.</div>
+        <div id="childHiddenInputs"></div>
+
+        <!-- ══ Submit ═══════════════════════════════════════════════ -->
+        <div class="section-divider"></div>
+        <div class="d-flex gap-2 align-items-center">
             <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle me-1"></i> Record Birth &amp; Register Children
+                <i class="bi bi-check-circle me-1"></i> Save Birth Record
             </button>
             <a href="/livestock/births/list" class="btn btn-outline-secondary">Cancel</a>
+            <span class="text-muted small ms-2">
+                <i class="bi bi-info-circle me-1"></i>
+                You can also link children after saving.
+            </span>
         </div>
 
     </form>
@@ -154,12 +251,153 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Highlight if the selected mother is already marked pregnant
-    document.getElementById('motherSelect').addEventListener('change', function () {
-        const hint = document.getElementById('pregnantHint');
-        const text = this.options[this.selectedIndex]?.text || '';
-        hint.classList.toggle('d-none', !text.includes('[PREGNANT]'));
+    // ── State ────────────────────────────────────────────────────────
+    const selectedChildren = {}; // id → display label
+    let eligibleChildren   = []; // loaded from server
+
+    // ── On page load: check if pregnant mothers list is empty ────────
+    window.addEventListener('DOMContentLoaded', () => {
+        const motherSelect = document.getElementById('motherSelect');
+        const optionCount  = motherSelect.options.length - 1; // subtract placeholder
+        if (optionCount === 0) {
+            document.getElementById('noPregnantWarning').style.display = 'block';
+        }
     });
+
+    // ── Mother selection → load eligible children ────────────────────
+    document.getElementById('motherSelect').addEventListener('change', async function () {
+        const motherId = this.value;
+        const selectedText = this.options[this.selectedIndex]?.text || '';
+
+        // Reset children UI
+        selectedChildren_clear();
+        eligibleChildren = [];
+        document.getElementById('childSection').style.display = 'none';
+
+        if (!motherId) return;
+
+        // Show category info
+        const categoryMatch = selectedText.match(/\(([^)]+)\)/);
+        const categoryName  = categoryMatch ? categoryMatch[1] : 'same category';
+        document.getElementById('categoryLabel').textContent = categoryName;
+        document.getElementById('childSection').style.display = 'block';
+
+        // Show spinner, hide select
+        document.getElementById('childLoadingSpinner').style.display  = 'block';
+        document.getElementById('childSelectRow').style.display        = 'none';
+        document.getElementById('noChildrenAvailable').style.display   = 'none';
+
+        try {
+            const resp = await fetch(`/livestock/births/api/children-by-mother?motherId=${motherId}`);
+            if (!resp.ok) throw new Error('Server error: ' + resp.status);
+            eligibleChildren = await resp.json();
+        } catch (e) {
+            console.error('Failed to load children:', e);
+            eligibleChildren = [];
+        }
+
+        document.getElementById('childLoadingSpinner').style.display = 'none';
+
+        if (eligibleChildren.length === 0) {
+            document.getElementById('noChildrenAvailable').style.display = 'block';
+            document.getElementById('childSelectRow').style.display       = 'none';
+        } else {
+            document.getElementById('noChildrenAvailable').style.display  = 'none';
+            document.getElementById('childSelectRow').style.display        = 'flex';
+            populateChildSelect();
+        }
+    });
+
+function populateChildSelect() {
+    const sel = document.getElementById('childSelect');
+    sel.innerHTML = '<option value="">-- Select an offspring to link --</option>';
+
+    for (const child of eligibleChildren) {
+        // Skip already-selected
+        if (selectedChildren[child.id]) continue;
+        const ageDays = child.ageDays;
+        const ageStr  = ageDays < 30
+            ? ageDays + ' days old'
+            : Math.floor(ageDays / 30) + ' months old';
+
+        const option = document.createElement('option');
+        option.value = child.id;
+
+        // Show warning if already has a mother
+        let warningText = '';
+        if (child.alreadyHasMother && child.motherTag) {
+            warningText = ` ⚠️ WARNING: Already has mother ${child.motherTag} - linking will replace it`;
+            option.style.backgroundColor = '#fff3cd';
+            option.style.color = '#856404';
+        }
+
+        option.textContent = `${child.tagNumber} (${child.category}) — ${child.gender} — ${ageStr}${warningText}`;
+        if (child.birthDate) option.textContent += ` — Born ${child.birthDate}`;
+        sel.appendChild(option);
+    }
+
+    document.getElementById('childCountHint').textContent =
+        eligibleChildren.length + ' eligible offspring found for this mother\'s category.';
+}
+
+    function addChild() {
+        const sel   = document.getElementById('childSelect');
+        const id    = sel.value;
+        const label = sel.options[sel.selectedIndex]?.text || '';
+
+        if (!id)               { alert('Please select a child animal first.'); return; }
+        if (selectedChildren[id]) { alert('This animal is already added.');    return; }
+
+        selectedChildren[id] = label;
+        renderChildTags();
+        populateChildSelect(); // re-render without this animal
+        sel.value = '';
+    }
+
+    function removeChild(id) {
+        delete selectedChildren[id];
+        renderChildTags();
+        populateChildSelect(); // put it back
+    }
+
+    function selectedChildren_clear() {
+        for (const k of Object.keys(selectedChildren)) delete selectedChildren[k];
+        renderChildTags();
+    }
+
+    function renderChildTags() {
+        const container   = document.getElementById('childTagsContainer');
+        const hiddenDiv   = document.getElementById('childHiddenInputs');
+        const ids         = Object.keys(selectedChildren);
+
+        if (ids.length === 0) {
+            container.innerHTML = `
+                <span class="text-muted small" id="noChildPlaceholder">
+                    <i class="bi bi-info-circle me-1"></i>
+                    No children selected yet.
+                </span>`;
+            hiddenDiv.innerHTML = '';
+            return;
+        }
+
+        container.innerHTML = ids.map(id => `
+            <span class="child-tag">
+                <i class="bi bi-tag-fill"></i>
+                ${escapeHtml(selectedChildren[id])}
+                <span class="remove-child" onclick="removeChild('${id}')" title="Remove">&times;</span>
+            </span>
+        `).join('');
+
+        hiddenDiv.innerHTML = ids.map(id =>
+            `<input type="hidden" name="linkedChildIds" value="${id}">`
+        ).join('');
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
 </script>
 </body>
 </html>

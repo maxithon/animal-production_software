@@ -367,117 +367,305 @@
     <div class="sidebar-inner">
         <div class="nav-item">
             <button class="nav-btn active" id="dashMenuHeader" onclick="showDashboard(this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-speedometer2"></i></div>Dashboard</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-speedometer2"></i></div>Dashboard
+                </div>
             </button>
         </div>
+
         <div class="nav-section-label">People</div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('representatives',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/representatives/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus-fill"></i>Register</a>
-                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+                <a th:href="@{/representatives/register}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-person-plus-fill"></i>Register
+                </a>
+                <a th:href="@{/representatives/list}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View All
+                </a>
             </div>
         </div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('beneficiaries',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/beneficiaries/register}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-plus"></i>Register</a>
-                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+                <a th:href="@{/beneficiaries/register}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-person-plus"></i>Register
+                </a>
+                <a th:href="@{/beneficiaries/list}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View All
+                </a>
             </div>
         </div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('buyers',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-buyers">
-                <a th:href="@{/buyers}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View Buyers</a>
+                <a th:href="@{/buyers}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View Buyers
+                </a>
             </div>
         </div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('veterinarians',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-heart-pulse"></i></div>Veterinarians</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-heart-pulse"></i></div>Veterinarians
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-veterinarians">
-                <a th:href="@{/veterinarians}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+                <a th:href="@{/veterinarians}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>View All
+                </a>
             </div>
         </div>
+
         <div class="nav-section-label">Livestock</div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('livestock',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-box2-heart"></i></div>Livestock</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-box2-heart"></i></div>Livestock
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-livestock">
-                <a th:href="@{/livestock/categories}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-tag-fill"></i>Categories</a>
-                <a th:href="@{/livestock/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-grid-fill"></i>Livestock List</a>
-                <a th:href="@{/livestock/overview}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-diagram-3"></i>Age &amp; Lifecycle</a>
+                <a th:href="@{/livestock/categories}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-tag-fill"></i>Categories
+                </a>
+                <a th:href="@{/livestock/list}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-grid-fill"></i>Livestock List
+                </a>
+                <a th:href="@{/livestock/deleted}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-trash2-fill"></i>Deleted Animals
+                </a>
+                <a th:href="@{/livestock/overview}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-diagram-3"></i>Age &amp; Lifecycle
+                </a>
+
                 <div class="sub-divider"><span>Lifecycle</span></div>
-                <a th:href="@{/livestock/lifecycle/dashboard}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-diagram-3-fill"></i>Lifecycle Dashboard</a>
-                <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-arrow"></i>Ready to Breed</a>
-                <a th:href="@{/livestock/lifecycle/breeding-management}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-fill"></i>Breeding</a>
-                <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-hourglass-split"></i>Pregnancy Tracking</a>
-                <a th:href="@{/livestock/lifecycle/notifications}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-bell-fill"></i>Notifications</a>
+                <a th:href="@{/livestock/lifecycle/dashboard}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-diagram-3-fill"></i>Lifecycle Dashboard
+                </a>
+                <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-heart-arrow"></i>Ready to Breed
+                </a>
+                <a th:href="@{/livestock/lifecycle/breeding-management}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-heart-fill"></i>Breeding
+                </a>
+                <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-hourglass-split"></i>Pregnancy Tracking
+                </a>
+                <a th:href="@{/livestock/lifecycle/notifications}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-bell-fill"></i>Notifications
+                </a>
+
                 <div class="sub-divider"><span>Events</span></div>
-                <a th:href="@{/livestock/births/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-stars"></i>Births</a>
-                <a th:href="@{/livestock/treatments}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
-                <a th:href="@{/medications}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-capsule-fill"></i>Medications</a>
-                <a th:href="@{/livestock/sick}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-bandaid-fill"></i>Sick Animals</a>
-                <a th:href="@{/livestock/abortions}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-exclamation-triangle-fill"></i>Abortions</a>
+                <a th:href="@{/livestock/births/list}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-stars"></i>Births
+                </a>
+                <a th:href="@{/livestock/treatments}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-heart-pulse-fill"></i>Treatments
+                </a>
+                <a th:href="@{/medications}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-capsule-fill"></i>Medications
+                </a>
+                <a th:href="@{/livestock/sick}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-bandaid-fill"></i>Sick Animals
+                </a>
+                <a th:href="@{/livestock/abortions}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-exclamation-triangle-fill"></i>Abortions
+                </a>
+
                 <div class="sub-divider"><span>Exit</span></div>
-                <a th:href="@{/livestock/sales}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-cash-stack"></i>Sales</a>
-                <a th:href="@{/livestock/deaths}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-x-circle-fill"></i>Deaths</a>
+                <a th:href="@{/livestock/sales}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-cash-stack"></i>Sales
+                </a>
+                <a th:href="@{/livestock/deaths}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-x-circle-fill"></i>Deaths
+                </a>
             </div>
         </div>
+
         <div class="nav-section-label">Reports</div>
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('reports',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-bar-chart-fill"></i></div>Reports</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-bar-chart-fill"></i></div>Reports
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-reports">
                 <div class="sub-divider"><span>Quick Reports</span></div>
-                <a href="#" class="submenu-link" id="birthReportLink" onclick="showBirthReport(event,this)"><i class="bi bi-stars"></i>Birth Report</a>
-                <a th:href="@{/livestock/births/report/born-and-sold}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-arrow-left-right"></i>Born → Sold</a>
-                <a href="#" class="submenu-link" id="treatmentReportLink" onclick="showTreatmentReport(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatment Report</a>
-                <a href="#" class="submenu-link" id="sickReportLink" onclick="showSickReport(event,this)"><i class="bi bi-bandaid-fill"></i>Sick Report</a>
-                <a href="#" class="submenu-link" id="abortionReportLink" onclick="showAbortionReport(event,this)"><i class="bi bi-heartbreak-fill"></i>Abortion Report</a>
-                <a href="#" class="submenu-link" id="salesReportLink" onclick="showSalesReport(event,this)"><i class="bi bi-cash-stack"></i>Sales Report</a>
-                <a href="#" class="submenu-link" id="deathsReportLink" onclick="showDeathsReport(event,this)"><i class="bi bi-x-circle-fill"></i>Deaths Report</a>
+                <a href="#" class="submenu-link" id="birthReportLink"
+                   onclick="showBirthReport(event,this)">
+                    <i class="bi bi-stars"></i>Birth Report
+                </a>
+                <a th:href="@{/livestock/births/report/born-and-sold}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-arrow-left-right"></i>Born → Sold
+                </a>
+                <a href="#" class="submenu-link" id="treatmentReportLink"
+                   onclick="showTreatmentReport(event,this)">
+                    <i class="bi bi-heart-pulse-fill"></i>Treatment Report
+                </a>
+                <a href="#" class="submenu-link" id="sickReportLink"
+                   onclick="showSickReport(event,this)">
+                    <i class="bi bi-bandaid-fill"></i>Sick Report
+                </a>
+                <a href="#" class="submenu-link" id="abortionReportLink"
+                   onclick="showAbortionReport(event,this)">
+                    <i class="bi bi-heartbreak-fill"></i>Abortion Report
+                </a>
+                <a href="#" class="submenu-link" id="salesReportLink"
+                   onclick="showSalesReport(event,this)">
+                    <i class="bi bi-cash-stack"></i>Sales Report
+                </a>
+                <a href="#" class="submenu-link" id="deathsReportLink"
+                   onclick="showDeathsReport(event,this)">
+                    <i class="bi bi-x-circle-fill"></i>Deaths Report
+                </a>
+
                 <div class="sub-divider"><span>Executive</span></div>
-                <a href="#" class="submenu-link" id="overviewReportLink" onclick="showOverviewReport(event,this)"><i class="bi bi-graph-up-arrow"></i>Business Overview</a>
-                <a th:href="@{/livestock/summary-report}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-file-earmark-bar-graph-fill"></i>Summary Report</a>
-                <a th:href="@{/livestock/financial-summary}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-calculator-fill"></i> Financial Summary</a>
+                <a href="#" class="submenu-link" id="overviewReportLink"
+                   onclick="showOverviewReport(event,this)">
+                    <i class="bi bi-graph-up-arrow"></i>Business Overview
+                </a>
+                <a th:href="@{/livestock/summary-report}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i>Summary Report
+                </a>
+                <a th:href="@{/livestock/financial-summary}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-calculator-fill"></i>Financial Summary
+                </a>
+
                 <div class="sub-divider"><span>Analysis</span></div>
-                <div class="submenu-link" style="cursor:pointer;" onclick="toggleNested('category-reports')">
+                <div class="submenu-link" style="cursor:pointer;"
+                     onclick="toggleNested('category-reports')">
                     <i class="bi bi-grid-3x2-gap-fill"></i>Category Reports
-                    <i class="bi bi-chevron-right arrow" style="margin-left:auto;font-size:.65rem;"></i>
+                    <i class="bi bi-chevron-right arrow"
+                       style="margin-left:auto;font-size:.65rem;"></i>
                 </div>
                 <div class="nested-submenu" id="nested-submenu-category-reports">
-                    <a th:href="@{/livestock/category-report}" class="nested-link" onclick="navigateTo(event,this)"><i class="bi bi-grid-fill"></i>All Categories</a>
-                    <a th:href="@{/livestock/category-animals-report}" class="nested-link" onclick="navigateTo(event,this)"><i class="bi bi-filter-square"></i>Animals by Category</a>
+                    <a th:href="@{/livestock/category-report}" class="nested-link"
+                       onclick="navigateTo(event,this)">
+                        <i class="bi bi-grid-fill"></i>All Categories
+                    </a>
+                    <a th:href="@{/livestock/category-animals-report}" class="nested-link"
+                       onclick="navigateTo(event,this)">
+                        <i class="bi bi-filter-square"></i>Animals by Category
+                    </a>
                 </div>
             </div>
         </div>
+
         <div class="nav-section-label">System</div>
+
+        <!-- ── NEW: Audit Log menu ─────────────────────────────────────────── -->
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('auditlog',this)">
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-journal-text"></i></div>Audit Log
+                </div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-auditlog">
+                <a th:href="@{/audit-log/list}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-list-ul"></i>All Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock_birth')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-stars"></i>Birth Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-box2-heart"></i>Livestock Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock_sick')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-bandaid-fill"></i>Sick Animal Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock_breeding')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-heart-fill"></i>Breeding Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock_sale')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-cash-stack"></i>Sales Logs
+                </a>
+                <a th:href="@{/audit-log/list(entityType='livestock_death')}"
+                   class="submenu-link" onclick="navigateTo(event,this)">
+                    <i class="bi bi-x-circle-fill"></i>Death Logs
+                </a>
+            </div>
+        </div>
+        <!-- ── END Audit Log menu ─────────────────────────────────────────── -->
+
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('settings',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-gear-fill"></i></div>Settings</div>
+                <div class="nav-btn-inner">
+                    <div class="nav-icon"><i class="bi bi-gear-fill"></i></div>Settings
+                </div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-settings">
-                <a th:href="@{/settings/profile}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-circle"></i>My Profile</a>
-                <a th:href="@{/settings/change-password}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-key-fill"></i>Change Password</a>
-                <a th:href="@{/settings/manage-users}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-people-fill"></i>Manage Users</a>
+                <a th:href="@{/settings/profile}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-person-circle"></i>My Profile
+                </a>
+                <a th:href="@{/settings/change-password}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-key-fill"></i>Change Password
+                </a>
+                <a th:href="@{/settings/manage-users}" class="submenu-link"
+                   onclick="navigateTo(event,this)">
+                    <i class="bi bi-people-fill"></i>Manage Users
+                </a>
             </div>
         </div>
+
     </div>
 </aside>
 

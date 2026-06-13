@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Audit Log</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; }
+        .page-header {
+            background: white;
+            border-bottom: 1px solid #dee2e6;
+            padding: 20px 30px;
+            margin-bottom: 24px;
+        }
+        .content-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 6px rgba(0,0,0,.08);
+            margin: 0 24px 24px;
+        }
+        .table th {
+            font-size: .8rem;
+            text-transform: uppercase;
+            color: #6c757d;
+            font-weight: 600;
+        }
+        .badge-action {
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+        .action-CREATE     { background: #d1fae5; color: #065f46; }
+        .action-UPDATE     { background: #dbeafe; color: #1e40af; }
+        .action-SOFT_DELETE { background: #fef3c7; color: #92400e; }
+        .action-DELETE     { background: #fee2e2; color: #991b1b; }
+        .entity-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: .72rem;
+            font-weight: 600;
+        }
+        .data-cell {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: .72rem;
+            border-radius: 4px;
+            padding: 3px 6px;
+        }
+        .old-data { background: #fff1f2; color: #881337; }
+        .new-data { background: #f0fdf4; color: #14532d; }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1">
+            <i class="bi bi-journal-text text-primary me-2"></i>Audit Log
+        </h4>
+        <small class="text-muted">
+            Complete history of all create, update, and delete actions across all modules
+        </small>
+    </div>
+    <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="content-card p-3">
+
+    <!-- Filter bar -->
+    <form method="get" action="/audit-log/list" class="row g-2 align-items-center mb-3">
+        <div class="col-md-4">
+            <select name="entityType" class="form-select form-select-sm">
+                <option value="">All Modules</option>
+                <option value="livestock_birth"
+                        th:selected="${entityType == 'livestock_birth'}">Births</option>
+                <option value="livestock"
+                        th:selected="${entityType == 'livestock'}">Livestock</option>
+                <option value="livestock_sick"
+                        th:selected="${entityType == 'livestock_sick'}">Sick Animals</option>
+                <option value="livestock_breeding"
+                        th:selected="${entityType == 'livestock_breeding'}">Breeding</option>
+                <option value="livestock_sale"
+                        th:selected="${entityType == 'livestock_sale'}">Sales</option>
+                <option value="livestock_death"
+                        th:selected="${entityType == 'livestock_death'}">Deaths</option>
+                <option value="livestock_abortion"
+                        th:selected="${entityType == 'livestock_abortion'}">Abortions</option>
+                <option value="livestock_treatment"
+                        th:selected="${entityType == 'livestock_treatment'}">Treatments</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-filter me-1"></i> Filter
+            </button>
+            <a href="/audit-log/list" class="btn btn-sm btn-outline-secondary ms-1">
+                Clear
+            </a>
+        </div>
+        <div class="col-auto ms-auto">
+            <small class="text-muted">
+                Total entries: <strong th:text="${totalItems}">0</strong>
+            </small>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 table-sm">
+            <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Module</th>
+                <th>Action</th>
+                <th>Entity ID</th>
+                <th>Changed By</th>
+                <th>When</th>
+                <th>Before Change</th>
+                <th>After Change</th>
+                <th>Notes</th>
+            </tr>
+            </thead>
+            <tbody>
+
+            <tr th:if="${#lists.isEmpty(logs)}">
+                <td colspan="9" class="text-center py-5 text-muted">
+                    <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+                    No audit entries found.
+                </td>
+            </tr>
+
+            <tr th:each="log, i : ${logs}">
+                <td class="text-muted small"
+                    th:text="${(currentPage * pageSize) + i.count}"></td>
+
+                <td>
+                    <span class="entity-badge" th:text="${log.entityType}"></span>
+                </td>
+
+                <td>
+                    <span class="badge-action"
+                          th:classappend="'action-' + ${log.action}"
+                          th:text="${log.action}">
+                    </span>
+                </td>
+
+                <td>
+                    <code class="small"
+                          th:title="${log.entityId}"
+                          th:text="${#strings.substring(log.entityId.toString(),0,8) + '…'}">
+                    </code>
+                </td>
+
+                <td class="small" th:text="${log.changedBy ?: '—'}"></td>
+
+                <td class="small text-muted">
+                    <span th:text="${#temporals.format(log.changedAt,'dd-MM-yyyy HH:mm')}"></span>
+                </td>
+
+                <td>
+                    <span th:if="${log.oldData != null}"
+                          class="data-cell old-data d-inline-block"
+                          th:title="${log.oldData}"
+                          th:text="${#strings.length(log.oldData) > 50
+                                     ? #strings.substring(log.oldData,0,50) + '…'
+                                     : log.oldData}">
+                    </span>
+                    <span th:if="${log.oldData == null}" class="text-muted small">—</span>
+                </td>
+
+                <td>
+                    <span th:if="${log.newData != null}"
+                          class="data-cell new-data d-inline-block"
+                          th:title="${log.newData}"
+                          th:text="${#strings.length(log.newData) > 50
+                                     ? #strings.substring(log.newData,0,50) + '…'
+                                     : log.newData}">
+                    </span>
+                    <span th:if="${log.newData == null}" class="text-muted small">—</span>
+                </td>
+
+                <td class="small" th:text="${log.notes ?: '—'}"></td>
+            </tr>
+
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center p-3 border-top"
+         th:if="${totalPages > 1}">
+        <small class="text-muted">
+            Page <span th:text="${currentPage + 1}"></span>
+            of <span th:text="${totalPages}"></span>
+            (<span th:text="${totalItems}"></span> total)
+        </small>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item"
+                    th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/audit-log/list(page=${currentPage - 1},
+                                                  size=${pageSize},
+                                                  entityType=${entityType})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    class="page-item"
+                    th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link"
+                       th:href="@{/audit-log/list(page=${i},
+                                                  size=${pageSize},
+                                                  entityType=${entityType})}"
+                       th:text="${i + 1}">
+                    </a>
+                </li>
+                <li class="page-item"
+                    th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="page-link"
+                       th:href="@{/audit-log/list(page=${currentPage + 1},
+                                                  size=${pageSize},
+                                                  entityType=${entityType})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

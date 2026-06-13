@@ -444,76 +444,25 @@ CREATE INDEX idx_aps_log_performed_by     ON aps_log (performed_by);
 CREATE INDEX idx_aps_log_action           ON aps_log (action);
 
 
--- =============================================================================
--- USEFUL QUERIES
--- =============================================================================
-
--- Q1: Animals giving birth THIS month
--- SELECT
---     l.id, l.tag_number, l.gender, l.pregnancy_status,
---     l.expected_due_date,
---     lc.name                             AS category,
---     lc.gestation_period_months,
---     aa.first_name || ' ' || aa.last_name AS owner_name,
---     lb.breeding_date, lb.breeding_method
--- FROM livestock l
--- JOIN livestock_categories lc        ON lc.id = l.livestock_category_id
--- JOIN beneficiaries_amatungo aa         ON aa.id = l.beneficiaries_amatungo_id
--- LEFT JOIN livestock_breeding lb     ON lb.livestock_id = l.id
---     AND lb.status = 'SUCCESS' AND lb.is_deleted = FALSE
--- WHERE l.is_deleted = FALSE
---   AND l.pregnancy_status = 'PREGNANT'
---   AND DATE_TRUNC('month', l.expected_due_date) = DATE_TRUNC('month', CURRENT_DATE)
--- ORDER BY l.expected_due_date ASC;
 
 
--- Q2: Full lifecycle of one animal
--- SELECT
---     l.tag_number, l.gender, l.pregnancy_status,
---     l.first_breeding_date, l.last_breeding_date,
---     l.expected_due_date, l.last_birth_date, l.offspring_count,
---     lc.name AS category, lc.gestation_period_months
--- FROM livestock l
--- JOIN livestock_categories lc ON lc.id = l.livestock_category_id
--- WHERE l.id = :livestock_id AND l.is_deleted = FALSE;
 
 
--- Q3: All breeding history of one animal
--- SELECT
---     lb.breeding_date, lb.breeding_method, lb.status,
---     lb.expected_due_date,
---     v.first_name || ' ' || v.last_name AS vet_name,
---     ml.tag_number AS sire_tag
--- FROM livestock_breeding lb
--- LEFT JOIN veterinarians v   ON v.id = lb.veterinarian_id
--- LEFT JOIN livestock ml      ON ml.id = lb.male_livestock_id
--- WHERE lb.livestock_id = :livestock_id AND lb.is_deleted = FALSE
--- ORDER BY lb.breeding_date DESC;
 
 
--- Q4: Auto-update livestock when breeding is confirmed SUCCESS
--- UPDATE livestock
--- SET
---     pregnancy_status    = 'PREGNANT',
---     last_breeding_date  = lb.breeding_date,
---     conception_date     = lb.breeding_date,
---     first_breeding_date = COALESCE(livestock.first_breeding_date, lb.breeding_date),
---     expected_due_date   = lb.breeding_date
---                           + (lc.gestation_period_months || ' months')::INTERVAL
--- FROM livestock_breeding lb
--- JOIN livestock_categories lc ON lc.id = livestock.livestock_category_id
--- WHERE livestock.id = lb.livestock_id
---   AND lb.id = :breeding_id;
+--audit
+CREATE TABLE audit_log (
+    id          UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+    entity_type VARCHAR(100) NOT NULL,
+    entity_id   UUID         NOT NULL,
+    action      VARCHAR(50)  NOT NULL,
+    changed_by  VARCHAR(255),
+    changed_at  TIMESTAMP    NOT NULL DEFAULT NOW(),
+    old_data    TEXT,
+    new_data    TEXT,
+    notes       TEXT,
+    is_deleted  BOOLEAN      DEFAULT FALSE
+);
 
-
--- Q5: Full audit log for one record
--- SELECT
---     al.table_name, al.action, al.field_changed,
---     al.old_value, al.new_value, al.notes,
---     al.performed_at,
---     u.email AS performed_by
--- FROM aps_log al
--- LEFT JOIN sec_user u ON u.user_id = al.performed_by
--- WHERE al.table_name = 'livestock'
---   AND al.record_id  = :livestock_id
--- ORDER BY al.performed_at DESC;
+CREATE INDEX idx_audit_log_entity ON audit_log (entity_type, entity_id);
+CREATE INDEX idx_audit_log_changed_at ON audit_log (changed_at DESC);
