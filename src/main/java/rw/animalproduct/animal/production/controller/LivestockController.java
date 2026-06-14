@@ -53,7 +53,6 @@ public class LivestockController {
         Page<Livestock> livestockPage = livestockService.getPaged(page, size);
         List<Livestock> livestockList = livestockPage.getContent();
 
-        // Build maps for additional data
         Map<UUID, LivestockBirth> birthMap = new HashMap<>();
         Map<UUID, Object> treatmentMap = new HashMap<>();
         Map<UUID, Object> abortionMap = new HashMap<>();
@@ -63,12 +62,10 @@ public class LivestockController {
         LocalDate today = LocalDate.now();
 
         for (Livestock animal : livestockList) {
-            // Check if born on farm
             birthService.getByLivestockId(animal.getId()).stream()
                     .findFirst()
                     .ifPresent(birth -> birthMap.put(animal.getId(), birth));
 
-            // Calculate breeding capability
             if (animal.getBirthDate() != null && animal.getLivestockCategory() != null
                     && animal.getLivestockCategory().getMinBreedingAgeMonths() != null) {
                 long ageMonths = ChronoUnit.MONTHS.between(animal.getBirthDate(), today);
@@ -79,7 +76,6 @@ public class LivestockController {
             }
         }
 
-        // Stats
         long totalItems      = livestockPage.getTotalElements();
         long totalActive     = livestockRepository.countByStatus(Livestock.STATUS_ACTIVE);
         long totalSold       = livestockRepository.countByStatus(Livestock.STATUS_SOLD);
@@ -88,10 +84,9 @@ public class LivestockController {
         long totalBornOnFarm = livestockList.stream()
                 .filter(a -> Livestock.ACQ_BIRTH.equals(a.getAcquisitionMethod()))
                 .count();
-        long totalTreatments = 0;  // Implement as needed
-        long totalAbortions  = 0;  // Implement as needed
+        long totalTreatments = 0;
+        long totalAbortions  = 0;
 
-        // ── Deleted count for the "Deleted (n)" button ──────────────────────
         long totalDeleted = livestockService.getAllSoftDeleted().size();
 
         model.addAttribute("livestockList", livestockList);
@@ -240,6 +235,10 @@ public class LivestockController {
             return "redirect:/livestock/list?error=notfound";
         }
         model.addAttribute("livestock", livestockOpt.get());
+
+        Map<String, Long> lifecycleStats = new HashMap<>();
+        model.addAttribute("lifecycleStats", lifecycleStats);
+
         return "livestock-view";
     }
 
@@ -249,23 +248,47 @@ public class LivestockController {
         if (livestockOpt.isEmpty()) {
             return "redirect:/livestock/list?error=notfound";
         }
-        model.addAttribute("livestock", livestockOpt.get());
+        Livestock livestock = livestockOpt.get();
+
+        // ── Pre-populate transient ID fields so th:field binding/selection works ──
+        if (livestock.getLivestockCategory() != null) {
+            livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
+        }
+        if (livestock.getBeneficiary() != null) {
+            livestock.setBeneficiaryIdValue(livestock.getBeneficiary().getId().toString());
+        }
+
+        model.addAttribute("livestock", livestock);
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("beneficiaries", beneficiaryRepository.findAll());
         model.addAttribute("locations", locationRepository.findAll());
+
+        // ── Build Province > District > Sector > Cell > Village breadcrumb ──
+        if (livestock.getLocation() != null) {
+            model.addAttribute("locationBreadcrumb", buildLocationBreadcrumb(livestock.getLocation()));
+        } else {
+            model.addAttribute("locationBreadcrumb", new ArrayList<Location>());
+        }
+
         return "livestock-edit";
     }
 
     @PostMapping("/edit/{id}")
-    public String update(@PathVariable UUID id, @ModelAttribute Livestock livestock,
+    public String update(@PathVariable UUID id,
+                         @ModelAttribute Livestock livestock,
+                         @RequestParam(required = false) UUID locationId,
                          RedirectAttributes redirectAttributes) {
         try {
+            if (locationId != null) {
+                locationRepository.findById(locationId).ifPresent(livestock::setLocation);
+            }
             livestockService.update(id, livestock);
             redirectAttributes.addFlashAttribute("success", "Animal updated successfully");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error updating animal: " + e.getMessage());
         }
-        return "redirect:/livestock/view/" + id;
+        // ── After edit, go back to the livestock list (not the view page) ──
+        return "redirect:/livestock/list";
     }
 
     @GetMapping("/register")
@@ -289,5 +312,21 @@ public class LivestockController {
             redirectAttributes.addFlashAttribute("error", "Error registering animal: " + e.getMessage());
             return "redirect:/livestock/register";
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOCATION BREADCRUMB HELPER
+    // Walks up the self-referencing Location tree (Village -> Cell -> Sector ->
+    // District -> Province) via getParent(), and returns the chain ordered
+    // from the root (Province) down to the leaf (Village).
+    // ─────────────────────────────────────────────────────────────────────────
+    private List<Location> buildLocationBreadcrumb(Location location) {
+        List<Location> chain = new ArrayList<>();
+        Location current = location;
+        while (current != null) {
+            chain.add(0, current); // prepend so root (Province) ends up first
+            current = current.getParent();
+        }
+        return chain;
     }
 }

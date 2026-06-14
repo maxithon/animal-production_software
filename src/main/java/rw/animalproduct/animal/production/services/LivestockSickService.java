@@ -24,24 +24,33 @@ public class LivestockSickService {
     private final LivestockSickRepository        sickRepository;
     private final LivestockRepository            livestockRepository;
     private final LivestockSickHistoryRepository historyRepository;
-    // ✅ FIX: Added VeterinarianRepository to properly resolve vet by ID during update
     private final VeterinarianRepository         veterinarianRepository;
+    private final AuditLogService                auditLogService;  // ✅ ADDED
 
-    private static final String STATUS_SOLD = "SOLD";
+    private static final String STATUS_SOLD      = "SOLD";
+    private static final String ENTITY_TYPE      = "livestock_sick";
 
     public LivestockSickService(LivestockSickRepository sickRepository,
                                 LivestockRepository livestockRepository,
                                 LivestockSickHistoryRepository historyRepository,
-                                VeterinarianRepository veterinarianRepository) {
+                                VeterinarianRepository veterinarianRepository,
+                                AuditLogService auditLogService) {  // ✅ ADDED
         this.sickRepository         = sickRepository;
         this.livestockRepository    = livestockRepository;
         this.historyRepository      = historyRepository;
         this.veterinarianRepository = veterinarianRepository;
+        this.auditLogService        = auditLogService;              // ✅ ADDED
     }
 
     // ── Read ──────────────────────────────────────────────────────────
 
+    /** Returns ALL records including soft-deleted ones (for admin/audit use). */
     public List<LivestockSick> getAll() { return sickRepository.findAll(); }
+
+    /** Returns only non-deleted records — use this for the main list page. */
+    public List<LivestockSick> getAllActive() {
+        return sickRepository.findByIsDeletedFalseOrderByReportedDateDesc();
+    }
 
     public Optional<LivestockSick> getById(UUID id) { return sickRepository.findById(id); }
 
@@ -115,6 +124,18 @@ public class LivestockSickService {
                 "Initial sick record created",
                 currentUsername());
 
+        // ✅ Audit log: CREATE
+        auditLogService.log(
+                ENTITY_TYPE,
+                saved.getId(),
+                "CREATE",
+                currentUsername(),
+                null,
+                buildSnapshot(saved),
+                "Sick record created for animal: " +
+                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
+        );
+
         return saved;
     }
 
@@ -126,6 +147,9 @@ public class LivestockSickService {
         if (existingOpt.isEmpty()) return null;
 
         LivestockSick existing = existingOpt.get();
+
+        // Snapshot BEFORE the change for the audit log
+        String snapshotBefore = buildSnapshot(existing);
 
         // Capture old values BEFORE overwriting
         LivestockSick.SickStatus    oldStatus   = existing.getStatus();
@@ -144,8 +168,6 @@ public class LivestockSickService {
         existing.setLivestockIdValue(updated.getLivestockIdValue());
         existing.setVeterinarianIdValue(updated.getVeterinarianIdValue());
 
-        // ✅ FIX: Removed illegal existing.setVetName(updated.getVetName()) call.
-        // Veterinarian is now resolved properly via the VeterinarianRepository.
         resolveAndSetVeterinarian(existing);
         resolveAndSetLivestock(existing);
 
@@ -156,7 +178,6 @@ public class LivestockSickService {
             if (LivestockSick.SickStatus.RECOVERED.equals(existing.getStatus())) {
                 newAnimal.setStatus(Livestock.STATUS_ACTIVE);
             } else if (oldAnimal != null && !oldAnimal.getId().equals(newAnimal.getId())) {
-                // Animal changed — restore old one, mark new one sick
                 oldAnimal.setStatus(Livestock.STATUS_ACTIVE);
                 livestockRepository.save(oldAnimal);
                 newAnimal.setStatus(Livestock.STATUS_SICK);
@@ -184,6 +205,18 @@ public class LivestockSickService {
                     notes, currentUsername());
         }
 
+        // ✅ Audit log: UPDATE
+        auditLogService.log(
+                ENTITY_TYPE,
+                saved.getId(),
+                "UPDATE",
+                currentUsername(),
+                snapshotBefore,
+                buildSnapshot(saved),
+                "Sick record updated for animal: " +
+                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
+        );
+
         return saved;
     }
 
@@ -201,6 +234,8 @@ public class LivestockSickService {
 
         if (oldStatus.equals(newStatus)) return sick; // no change
 
+        String snapshotBefore = buildSnapshot(sick);
+
         sick.setStatus(newStatus);
 
         if (LivestockSick.SickStatus.RECOVERED.equals(newStatus)) {
@@ -215,7 +250,6 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(sick);
 
-        // Always record history for quick updates
         String changeNote = notes != null && !notes.isBlank()
                 ? notes
                 : buildChangeNote(oldStatus, newStatus, oldSeverity, oldSeverity, null);
@@ -223,30 +257,58 @@ public class LivestockSickService {
         recordHistory(saved, newStatus, saved.getSeverityLevel(),
                 changeNote, currentUsername());
 
+        // ✅ Audit log: UPDATE (quick status)
+        auditLogService.log(
+                ENTITY_TYPE,
+                saved.getId(),
+                "UPDATE",
+                currentUsername(),
+                snapshotBefore,
+                buildSnapshot(saved),
+                "Quick status update: " + oldStatus.name() + " → " + newStatus.name() +
+                        (notes != null && !notes.isBlank() ? " | " + notes : "")
+        );
+
         return saved;
     }
 
-    // ── Delete ────────────────────────────────────────────────────────
+    // ── Delete (now SOFT-DELETE) ───────────────────────────────────────
 
     @Transactional
     public void delete(UUID id) {
         Optional<LivestockSick> sickOpt = sickRepository.findById(id);
 
-        sickOpt.ifPresent(sick -> {
-            // History rows are deleted automatically by cascade (CascadeType.ALL on the entity)
-            if (sick.getLivestock() != null) {
-                Livestock animal = sick.getLivestock();
-                if (Livestock.STATUS_SICK.equals(animal.getStatus())) {
-                    animal.setStatus(Livestock.STATUS_ACTIVE);
-                    livestockRepository.save(animal);
-                }
-            }
-            sickRepository.delete(sick);
-        });
+        if (sickOpt.isEmpty()) return;
 
-        if (sickOpt.isEmpty()) {
-            sickRepository.deleteById(id);
+        LivestockSick sick = sickOpt.get();
+
+        // Snapshot BEFORE soft-delete for the audit log
+        String snapshotBefore = buildSnapshot(sick);
+
+        // Restore the animal's status if it was only sick due to this record
+        if (sick.getLivestock() != null) {
+            Livestock animal = sick.getLivestock();
+            if (Livestock.STATUS_SICK.equals(animal.getStatus())) {
+                animal.setStatus(Livestock.STATUS_ACTIVE);
+                livestockRepository.save(animal);
+            }
         }
+
+        // ✅ SOFT-DELETE: flip the flag instead of removing the row
+        sick.setIsDeleted(true);
+        sickRepository.save(sick);
+
+        // ✅ Audit log: SOFT_DELETE
+        auditLogService.log(
+                ENTITY_TYPE,
+                sick.getId(),
+                "SOFT_DELETE",
+                currentUsername(),
+                snapshotBefore,
+                null,
+                "Sick record soft-deleted for animal: " +
+                        (sick.getLivestock() != null ? sick.getLivestock().getTagNumber() : "unknown")
+        );
     }
 
     // ── Private helpers ───────────────────────────────────────────────
@@ -260,10 +322,6 @@ public class LivestockSickService {
         }
     }
 
-    /**
-     * ✅ FIX: Resolves the veterinarian entity from the transient veterinarianIdValue string.
-     * This replaces the old (broken) setVetName() approach.
-     */
     private void resolveAndSetVeterinarian(LivestockSick sick) {
         String vetIdStr = sick.getVeterinarianIdValue();
         if (vetIdStr != null && !vetIdStr.isBlank()) {
@@ -281,6 +339,27 @@ public class LivestockSickService {
                                String changedBy) {
         LivestockSickHistory h = new LivestockSickHistory(sick, status, severity, changedBy, notes);
         historyRepository.save(h);
+    }
+
+    /**
+     * Builds a compact plain-text snapshot of the key fields of a sick record.
+     * Kept as a String (not JSON) so it is human-readable directly in the audit log UI.
+     */
+    private String buildSnapshot(LivestockSick sick) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("animal=").append(sick.getLivestock() != null ? sick.getLivestock().getTagNumber() : "null");
+        sb.append(", status=").append(sick.getStatus() != null ? sick.getStatus().name() : "null");
+        sb.append(", severity=").append(sick.getSeverityLevel() != null ? sick.getSeverityLevel().name() : "null");
+        sb.append(", reported=").append(sick.getReportedDate());
+        sb.append(", recovery=").append(sick.getRecoveryDate());
+        sb.append(", temp=").append(sick.getTemperature());
+        sb.append(", symptoms=").append(sick.getSymptoms());
+        sb.append(", diagnosis=").append(sick.getDiagnosis());
+        sb.append(", vet=").append(sick.getVeterinarian() != null
+                ? sick.getVeterinarian().getFirstName() + " " + sick.getVeterinarian().getLastName()
+                : "null");
+        sb.append(", isDeleted=").append(sick.getIsDeleted());
+        return sb.toString();
     }
 
     /** Reads the currently authenticated username from Spring Security. */

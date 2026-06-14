@@ -8,89 +8,315 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         body { background: #f8f9fa; padding: 20px; }
-        .edit-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .register-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .form-label { font-weight: 500; color: #333; }
-        .btn-update { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
-        .btn-update:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
-        .photo-preview { width: 150px; height: 150px; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px; }
-        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-        #birthMethodInfo {
-            display: none;
-            background: #e0f2fe;
-            border-left: 4px solid #0369a1;
-            border-radius: 0 8px 8px 0;
-            padding: 10px 16px;
-            font-size: 0.85rem;
-            color: #0369a1;
+        .btn-register { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
+        .btn-register:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
+        .photo-preview {
+            width: 200px; height: 200px;
+            border: 2px dashed #ccc; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-top: 10px;
         }
+        .photo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
         .section-header {
             font-size: 1rem; font-weight: 700; color: #1a5f7a;
             border-bottom: 2px solid #e0f2fe; padding-bottom: 6px;
             margin-bottom: 16px; margin-top: 24px;
         }
+
+        .info-banner-blue {
+            background: #e0f2fe; border-left: 4px solid #0369a1;
+            border-radius: 0 8px 8px 0; padding: 10px 16px;
+            font-size: 0.85rem; color: #0369a1; margin-bottom: 12px;
+        }
+        .info-banner-sky {
+            background: #f0f9ff; border: 1px solid #bae6fd;
+            border-left: 4px solid #0369a1; border-radius: 0 8px 8px 0;
+            padding: 10px 16px; font-size: 0.83rem; color: #075985; margin-bottom: 12px;
+        }
+
+        .pregnancy-toggle-box {
+            background: #f8fafc; border: 1.5px solid #e2e8f0;
+            border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        }
+        .pregnancy-toggle-hint { font-size: 0.8rem; color: #64748b; }
+
+        .pregnancy-panel {
+            background: #fdf4ff; border: 1.5px solid #e9d8fd;
+            border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;
+        }
+        .pregnancy-panel .panel-title {
+            font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .06em; color: #6b21a8; margin-bottom: 14px;
+            display: flex; align-items: center; gap: 7px;
+        }
+
+        .fao-info-box {
+            background: #fff; border: 1px solid #e9d8fd;
+            border-left: 4px solid #7c3aed; border-radius: 0 8px 8px 0;
+            padding: 10px 16px; font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px;
+        }
+        .fao-info-box ul { margin: 6px 0 0 0; padding-left: 18px; }
+        .fao-info-box li { margin-bottom: 3px; }
+
+        .computed-field {
+            background: #f1f5f9; border: 1.5px solid #cbd5e1;
+            border-radius: 8px; padding: 10px 14px;
+            font-size: 0.85rem; color: #334155; min-height: 42px;
+        }
+        .computed-field .computed-value {
+            font-weight: 700; color: #1a5f7a; font-size: 0.95rem;
+        }
+        .computed-field .computed-label {
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #94a3b8;
+        }
+        .computed-empty { font-style: italic; color: #94a3b8; font-size: 0.82rem; }
+
+        .gestation-bar-wrap { margin-top: 8px; }
+        .gestation-bar-bg { background: #e2e8f0; border-radius: 20px; height: 10px; overflow: hidden; }
+        .gestation-bar-fill {
+            height: 100%; border-radius: 20px;
+            background: linear-gradient(90deg, #7c3aed, #a855f7);
+            transition: width 0.4s ease;
+        }
+        .gestation-bar-label { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
+
+        .method-preview {
+            display: none; align-items: center; gap: 7px;
+            margin-top: 8px; padding: 5px 14px; border-radius: 20px;
+            font-size: 0.82rem; font-weight: 600;
+        }
+        .method-preview.natural { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .method-preview.ai      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+        .method-preview.et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .method-preview.unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+        /* ── Current value / Change pattern (Category, Beneficiary, Location) ── */
+        .current-value-box {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f0fdf4; border: 1.5px solid #bbf7d0;
+            border-radius: 10px; padding: 12px 16px; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .current-value-box .cv-info { display: flex; align-items: center; gap: 10px; }
+        .current-value-box .cv-icon {
+            color: white; border-radius: 8px;
+            width: 36px; height: 36px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.1rem; flex-shrink: 0;
+        }
+        .current-value-box .cv-name { font-weight: 700; color: #166534; font-size: 0.95rem; word-break: break-word; }
+        .current-value-box .cv-sub  { font-size: 0.75rem; color: #65a374; }
+
+        /* ── Location breadcrumb (Province > District > ... > Village) ──────── */
+        .location-breadcrumb {
+            display: flex; align-items: center; gap: 4px; flex-wrap: wrap;
+            font-weight: 700; color: #166534; font-size: 0.9rem;
+        }
+        .location-breadcrumb .lb-part {
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .location-breadcrumb .lb-part > span:first-child {
+            background: #dcfce7; border: 1px solid #bbf7d0;
+            border-radius: 6px; padding: 1px 8px; font-size: 0.82rem;
+        }
+        .location-breadcrumb .lb-part:last-child > span:first-child {
+            background: #16a34a; color: white; border-color: #16a34a;
+        }
+        .location-breadcrumb .lb-sep { color: #65a374; font-size: 0.75rem; }
+
+        .btn-change {
+            background: white; border: 1.5px solid #16a34a; color: #16a34a;
+            font-size: 0.78rem; font-weight: 600; border-radius: 8px;
+            padding: 5px 12px; white-space: nowrap;
+        }
+        .btn-change:hover { background: #16a34a; color: white; }
+        .change-hint { margin-top: 4px; }
+
+        /* ── "Currently: X" hints under plain date/number inputs ──────────── */
+        .current-hint {
+            font-size: 0.78rem; color: #64748b; margin-top: 4px;
+        }
+        .current-hint strong { color: #1a5f7a; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="edit-card">
+            <div class="register-card">
+
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3><i class="bi bi-pencil-square"></i> Edit Livestock</h3>
+                    <h3><i class="bi bi-pencil-square text-warning"></i> Edit Livestock</h3>
                     <a th:href="@{/livestock/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
                 </div>
 
                 <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
-                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span th:text="${error}"></span>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/livestock/update/{id}(id=${livestock.id})}"
-                      th:object="${livestock}" method="post">
+                <form th:action="@{/livestock/edit/{id}(id=${livestock.id})}" th:object="${livestock}"
+                      method="post" id="editForm">
 
+                    <input type="hidden" th:field="*{id}">
                     <input type="hidden" th:field="*{pregnancyStatus}"
-                           th:value="${livestock.pregnancyStatus != null ? livestock.pregnancyStatus : 'NOT_PREGNANT'}">
+                           th:value="${livestock.pregnancyStatus != null
+                                       ? livestock.pregnancyStatus : 'NOT_PREGNANT'}"
+                           id="pregnancyStatusHidden">
 
                     <!-- ══ PHOTO ══════════════════════════════════════════════ -->
                     <div class="section-header"><i class="bi bi-camera me-1"></i> Photo</div>
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <div th:if="${livestock.photo != null and !livestock.photo.isEmpty()}" class="mb-2">
-                                <p class="text-muted">Current Photo:</p>
-                                <img th:src="${livestock.photo}" alt="Current Photo"
-                                     style="width:150px;height:150px;object-fit:cover;border-radius:8px;">
-                            </div>
-                            <input type="file" id="photoFile" accept="image/*" style="display:none" onchange="uploadPhoto()">
+                            <input type="file" id="photoFile" accept="image/*"
+                                   style="display:none" onchange="uploadPhoto()">
                             <button type="button" class="btn btn-outline-primary"
                                     onclick="document.getElementById('photoFile').click()">
                                 <i class="bi bi-camera-fill"></i> Change Photo
                             </button>
-                            <div class="photo-preview" id="photoPreview" style="display:none"></div>
+                            <div class="photo-preview" id="photoPreview">
+                                <img th:if="${livestock.photo != null and !livestock.photo.isEmpty()}"
+                                     th:src="${livestock.photo}" alt="Current Photo">
+                                <div th:if="${livestock.photo == null or livestock.photo.isEmpty()}"
+                                     class="text-center text-muted">
+                                    <i class="bi bi-box2-heart" style="font-size:3rem"></i>
+                                    <p class="small mt-2">No photo selected</p>
+                                </div>
+                            </div>
                             <input type="hidden" th:field="*{photo}" id="photoUrl">
+                            <div class="form-text">Max 5MB image file</div>
                         </div>
                     </div>
 
-                    <!-- ══ BASIC INFORMATION ═══════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-info-circle me-1"></i> Basic Information</div>
+                    <!-- ══ ASSIGNMENT ═════════════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-tag me-1"></i> Assignment</div>
+                    <div class="row">
+
+                        <!-- ─── Livestock Category ─── -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Livestock Category *</label>
+
+                            <div id="categoryCurrentBox" class="current-value-box"
+                                 th:if="${livestock.livestockCategory != null}">
+                                <div class="cv-info">
+                                    <div class="cv-icon bg-success"><i class="bi bi-check-circle-fill"></i></div>
+                                    <div>
+                                        <div class="cv-name"
+                                             th:text="${livestock.livestockCategory.name + ' (' + livestock.livestockCategory.code + ')'}">
+                                            Cattle (CTL)
+                                        </div>
+                                        <div class="cv-sub">Current category</div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-change" onclick="enableFieldChange('category')">
+                                    <i class="bi bi-pencil"></i> Change
+                                </button>
+                            </div>
+
+                            <div th:if="${livestock.livestockCategory == null}" class="info-banner-blue mb-2">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                No category currently assigned. Please select one below.
+                            </div>
+
+                            <select class="form-select" id="livestockCategoryIdValue"
+                                    th:field="*{livestockCategoryIdValue}"
+                                    th:style="${livestock.livestockCategory != null} ? 'display:none' : ''"
+                                    onchange="onCategoryChange()"
+                                    required>
+                                <option value="">Select category...</option>
+                                <option th:each="cat : ${categories}"
+                                        th:value="${cat.id}"
+                                        th:attr="data-gestation=${cat.gestationPeriodMonths}"
+                                        th:text="${cat.name + ' (' + cat.code + ')'}"
+                                        th:selected="${livestock.livestockCategoryIdValue != null
+                                                       and cat.id.toString() == livestock.livestockCategoryIdValue}">
+                                </option>
+                            </select>
+
+                            <div class="form-text change-hint" id="categoryChangeHint" style="display:none">
+                                Selecting a new category will reassign this animal.
+                                <a href="javascript:void(0)" onclick="cancelFieldChange('category')">Cancel</a>
+                            </div>
+                        </div>
+
+                        <!-- ─── Beneficiary ─── -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Beneficiary (Abaragizwa) *</label>
+
+                            <div id="beneficiaryCurrentBox" class="current-value-box"
+                                 th:if="${livestock.beneficiary != null}">
+                                <div class="cv-info">
+                                    <div class="cv-icon bg-primary"><i class="bi bi-person-fill"></i></div>
+                                    <div>
+                                        <div class="cv-name"
+                                             th:text="${livestock.beneficiary.firstName + ' ' + livestock.beneficiary.lastName + ' - ' + livestock.beneficiary.nid}">
+                                            Jane Doe - 119xxxxxxxxxxx
+                                        </div>
+                                        <div class="cv-sub">Current beneficiary</div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-change" onclick="enableFieldChange('beneficiary')">
+                                    <i class="bi bi-pencil"></i> Change
+                                </button>
+                            </div>
+
+                            <div th:if="${livestock.beneficiary == null}" class="info-banner-blue mb-2">
+                                <i class="bi bi-info-circle-fill me-2"></i>
+                                No beneficiary currently assigned. Please select one below.
+                            </div>
+
+                            <select class="form-select" id="beneficiaryIdValue"
+                                    th:field="*{beneficiaryIdValue}"
+                                    th:style="${livestock.beneficiary != null} ? 'display:none' : ''"
+                                    required>
+                                <option value="">Select beneficiary...</option>
+                                <option th:each="ab : ${beneficiaries}"
+                                        th:value="${ab.id}"
+                                        th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}"
+                                        th:selected="${livestock.beneficiaryIdValue != null
+                                                       and ab.id.toString() == livestock.beneficiaryIdValue}">
+                                </option>
+                            </select>
+
+                            <div class="form-text change-hint" id="beneficiaryChangeHint" style="display:none">
+                                Selecting a new beneficiary will reassign this animal.
+                                <a href="javascript:void(0)" onclick="cancelFieldChange('beneficiary')">Cancel</a>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- ══ BASIC INFORMATION ══════════════════════════════════ -->
+                    <div class="section-header">
+                        <i class="bi bi-info-circle me-1"></i> Basic Information
+                    </div>
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Tag Number *</label>
-                            <input type="text" class="form-control" id="tagNumber" th:field="*{tagNumber}" required>
+                            <input type="text" class="form-control" id="tagNumber"
+                                   th:field="*{tagNumber}" required>
                         </div>
+
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Gender *</label>
                             <select class="form-select" id="gender" th:field="*{gender}"
-                                    onchange="togglePregnancySection()" required>
+                                    onchange="onFormChange()" required>
                                 <option value="">Select gender...</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
                             </select>
                         </div>
+
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Status</label>
-                            <select class="form-select" th:field="*{status}">
+                            <select class="form-select" id="status" th:field="*{status}">
                                 <option value="ACTIVE">Active</option>
                                 <option value="SOLD">Sold</option>
                                 <option value="SICK">Sick</option>
@@ -101,11 +327,11 @@
                     </div>
 
                     <div class="row">
-                        <!-- Acquisition Method -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Acquisition Method</label>
-                            <select class="form-select" id="acquisitionMethod" th:field="*{acquisitionMethod}"
-                                    onchange="handleAcquisitionChange(this.value)">
+                            <select class="form-select" id="acquisitionMethod"
+                                    th:field="*{acquisitionMethod}"
+                                    onchange="onFormChange()">
                                 <option value="">Select method...</option>
                                 <option value="PURCHASE">Purchase</option>
                                 <option value="DONATION">Donation</option>
@@ -116,125 +342,291 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Date Received</label>
-                            <input type="date" class="form-control" th:field="*{dateReceived}">
+                            <input type="date" class="form-control" id="dateReceived"
+                                   th:field="*{dateReceived}">
+                            <div class="current-hint" th:if="${livestock.dateReceived != null}">
+                                Currently: <strong th:text="${#temporals.format(livestock.dateReceived,'dd MMM yyyy')}"></strong>
+                            </div>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Current Value (RWF)</label>
-                            <input type="number" class="form-control" th:field="*{currentValue}" min="0" step="0.01">
+                            <input type="number" class="form-control" id="currentValue"
+                                   th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00">
                         </div>
                     </div>
 
-                    <!-- ══ BIRTH DATE — hidden for BIRTH acquisition ══════════ -->
-                    <div class="row" id="birthDateRow">
+                    <!-- Birth date row — hidden for BIRTH acquisition -->
+                    <div id="birthDateRow" class="row">
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Birth Date</label>
-                            <input type="date" class="form-control" id="birthDate" th:field="*{birthDate}">
-                            <div class="form-text text-muted">Actual date the animal was born.</div>
-                        </div>
-                    </div>
-
-                    <div id="birthMethodInfo" class="mb-3">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <strong>Birth date is managed automatically.</strong>
-                        This animal was born on the farm — its birth date is recorded in the
-                        <strong>Births</strong> module, not here.
-                    </div>
-
-                    <!-- ══ OFFSPRING / BREEDING HISTORY ═══════════════════════ -->
-                    <div class="section-header"><i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History</div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Last Birth Date</label>
-                            <input type="date" class="form-control" th:field="*{lastBirthDate}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Offspring Count</label>
-                            <input type="number" class="form-control" th:field="*{offspringCount}" min="0">
-                        </div>
-                        <div class="col-md-4 mb-3 d-flex align-items-end" id="pregnancyToggleCol">
-                            <div class="form-check form-switch mt-3">
-                                <input class="form-check-input" type="checkbox" id="isPregnant" th:field="*{isPregnant}">
-                                <label class="form-check-label fw-semibold" for="isPregnant">Currently Pregnant?</label>
+                            <input type="date" class="form-control" id="birthDate"
+                                   th:field="*{birthDate}">
+                            <div class="current-hint" th:if="${livestock.birthDate != null}">
+                                Currently: <strong th:text="${#temporals.format(livestock.birthDate,'dd MMM yyyy')}"></strong>
+                            </div>
+                            <div class="form-text text-muted">
+                                The actual date this animal was born (not the arrival date).
                             </div>
                         </div>
                     </div>
 
-                    <!-- ══ ASSIGNMENT ══════════════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-tag me-1"></i> Assignment</div>
+                    <!-- Shown only when BIRTH is selected -->
+                    <div id="birthMethodInfo" class="info-banner-blue mb-3" style="display:none">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Birth date is managed automatically.</strong>
+                        Because this animal was born on the farm, its birth date is
+                        recorded in the <strong>Births</strong> module — no need to enter it here.
+                    </div>
+
+                    <!-- ══ OFFSPRING / BREEDING HISTORY ══════════════════════ -->
+                    <div class="section-header">
+                        <i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History
+                    </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Livestock Category *</label>
-                            <select class="form-select" th:field="*{livestockCategoryIdValue}" required>
-                                <option value="">Select category...</option>
-                                <option th:each="cat : ${categories}"
-                                        th:value="${cat.id}"
-                                        th:text="${cat.name + ' (' + cat.code + ')'}">
-                                </option>
-                            </select>
+                            <label class="form-label">Last Birth Date</label>
+                            <input type="date" class="form-control" id="lastBirthDate"
+                                   th:field="*{lastBirthDate}">
+                            <div class="current-hint" th:if="${livestock.lastBirthDate != null}">
+                                Currently: <strong th:text="${#temporals.format(livestock.lastBirthDate,'dd MMM yyyy')}"></strong>
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Beneficiary (Abaragizwa) *</label>
-                            <select class="form-select" th:field="*{beneficiaryIdValue}" required>
-                                <option value="">Select beneficiary...</option>
-                                <option th:each="ab : ${beneficiariesList}"
-                                        th:value="${ab.id}"
-                                        th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
-                                </option>
-                            </select>
+                            <label class="form-label">Offspring Count</label>
+                            <input type="number" class="form-control" id="offspringCount"
+                                   th:field="*{offspringCount}" min="0">
                         </div>
                     </div>
 
-                    <!-- ══ LOCATION ═══════════════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Location</div>
+                    <!-- ══ PREGNANCY TOGGLE ═══════════════════════════════════ -->
+                    <div id="pregnancyToggleBox" class="pregnancy-toggle-box" style="display:none">
+                        <div>
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       id="isPregnant" th:field="*{isPregnant}"
+                                       onchange="onPregnancyToggle(this.checked)">
+                                <label class="form-check-label fw-semibold fs-6" for="isPregnant">
+                                    <i class="bi bi-heart-fill text-danger me-1"></i>
+                                    Currently Pregnant?
+                                </label>
+                            </div>
+                            <div class="pregnancy-toggle-hint">
+                                Toggle on if this animal is currently pregnant, and provide a
+                                conception/breeding date below.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shown only for BIRTH females -->
+                    <div id="birthPregnancyNotice" class="info-banner-sky" style="display:none">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Pregnancy tracking not applicable here.</strong>
+                        A newborn animal cannot be currently pregnant.
+                        Pregnancy will be tracked through the <strong>Breeding</strong>
+                        module once the animal matures.
+                    </div>
+
+                    <!-- ══ PREGNANCY DETAILS PANEL ═══════════════════════════ -->
+                    <div id="pregnancyDetailsPanel" class="pregnancy-panel" style="display:none">
+                        <div class="panel-title">
+                            <i class="bi bi-heart-fill" style="color:#7c3aed"></i>
+                            Pregnancy Details
+                        </div>
+
+                        <div class="fao-info-box">
+                            <strong><i class="bi bi-info-circle-fill me-1"></i>
+                                International Standard (FAO):
+                            </strong>
+                            <ul>
+                                <li><strong>You enter only:</strong> the Conception / Breeding Date.</li>
+                                <li><strong>System auto-calculates:</strong> Weeks Pregnant, Expected Due Date, Days Remaining, Gestation Progress.</li>
+                                <li>Weeks Pregnant below is a <em>helper field only</em> — it is not stored.
+                                    Enter it to back-calculate the conception date if you only know how far along the animal is.</li>
+                            </ul>
+                        </div>
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-calendar-heart-fill text-danger me-1"></i>
+                                    Conception / Breeding Date
+                                    <span class="badge bg-danger ms-1" style="font-size:0.65rem;">PRIMARY</span>
+                                </label>
+                                <input type="date" class="form-control"
+                                       id="conceptionDateInput"
+                                       th:field="*{conceptionDate}"
+                                       oninput="onConceptionDateChange()">
+                                <div class="current-hint" th:if="${livestock.conceptionDate != null}">
+                                    Currently: <strong th:text="${#temporals.format(livestock.conceptionDate,'dd MMM yyyy')}"></strong>
+                                </div>
+                                <div class="form-text">
+                                    The date the animal was bred or conceived.
+                                    All pregnancy fields are calculated from this.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calculator me-1 text-secondary"></i>
+                                    Weeks Pregnant
+                                    <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">HELPER — NOT STORED</span>
+                                </label>
+                                <input type="number" class="form-control"
+                                       id="weeksPregnantInput"
+                                       min="0" max="60" placeholder="e.g. 8"
+                                       oninput="weeksToConception()">
+                                <div class="form-text">
+                                    <i class="bi bi-arrow-left-right me-1"></i>
+                                    Enter weeks to <strong>back-calculate</strong> the conception date above.
+                                    This field is discarded on save.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-calendar-check-fill text-success me-1"></i>
+                                    Expected Due Date
+                                    <span class="badge bg-success ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                </label>
+                                <div class="computed-field" id="dueDateDisplay">
+                                    <span class="computed-empty">Will be calculated from conception date</span>
+                                </div>
+                                <div class="form-text">
+                                    Calculated by server: conception date + category gestation period.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-activity text-primary me-1"></i>
+                                    Gestation Progress
+                                    <span class="badge bg-primary ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                </label>
+                                <div class="computed-field" id="gestationProgressDisplay">
+                                    <span class="computed-empty">Will be shown after conception date is entered</span>
+                                </div>
+                                <div class="gestation-bar-wrap" id="gestationBarWrap" style="display:none">
+                                    <div class="gestation-bar-bg">
+                                        <div class="gestation-bar-fill" id="gestationBarFill" style="width:0%"></div>
+                                    </div>
+                                    <div class="gestation-bar-label" id="gestationBarLabel"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">
+                                    <i class="bi bi-arrow-repeat me-1 text-primary"></i>
+                                    How Was This Animal Made Pregnant?
+                                    <span class="text-muted fw-normal">(insemination / breeding method)</span>
+                                </label>
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <select class="form-select" id="inseminationMethod"
+                                                th:field="*{inseminationMethod}"
+                                                onchange="updateMethodPreview(this.value)">
+                                            <option value="">-- Select method --</option>
+                                            <option value="NATURAL_MATING">🐄 Natural Mating</option>
+                                            <option value="ARTIFICIAL_INSEMINATION">💉 Artificial Insemination (AI)</option>
+                                            <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer (ET)</option>
+                                            <option value="UNKNOWN">❓ Unknown / Not recorded</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-7 d-flex align-items-center">
+                                        <div id="methodPreview" class="method-preview"></div>
+                                    </div>
+                                </div>
+                                <div class="form-text">Shown in Pregnancy Tracking dashboard.</div>
+                            </div>
+
+                        </div><!-- /.row g-3 -->
+                    </div><!-- /#pregnancyDetailsPanel -->
+
+                    <!-- ══ LOCATION ════════════════════════════════════════════ -->
+                    <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Locations</div>
 
                     <div id="locationMeta"
                          th:attr="data-location-id=${livestock.location != null ? livestock.location.id : ''}">
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Province</label>
-                            <select class="form-select" id="province" onchange="loadDistricts()">
-                                <option value="">Select province...</option>
-                            </select>
+                    <!-- Current location: full administrative breadcrumb -->
+                    <div id="locationCurrentBox" class="current-value-box"
+                         th:if="${livestock.location != null}">
+                        <div class="cv-info">
+                            <div class="cv-icon bg-info"><i class="bi bi-geo-alt-fill"></i></div>
+                            <div>
+                                <div class="location-breadcrumb">
+                                    <span class="lb-part" th:each="loc, iter : ${locationBreadcrumb}">
+                                        <span th:text="${loc.name}">Name</span>
+                                        <span th:if="${!iter.last}" class="lb-sep">›</span>
+                                    </span>
+                                </div>
+                                <div class="cv-sub mt-1">Current location</div>
+                            </div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">District</label>
-                            <select class="form-select" id="district" onchange="loadSectors()" disabled>
-                                <option value="">Select district...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Sector</label>
-                            <select class="form-select" id="sector" onchange="loadCells()" disabled>
-                                <option value="">Select sector...</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Cell</label>
-                            <select class="form-select" id="cell" onchange="loadVillages()" disabled>
-                                <option value="">Select cell...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Village</label>
-                            <select class="form-select" id="village" name="locationId" disabled>
-                                <option value="">Select village...</option>
-                            </select>
-                            <div class="form-text">Leave blank to keep the current location</div>
-                        </div>
+                        <button type="button" class="btn-change" onclick="enableFieldChange('location')">
+                            <i class="bi bi-pencil"></i> Change
+                        </button>
                     </div>
 
-                    <input type="hidden" th:field="*{id}">
+                    <div th:if="${livestock.location == null}" class="info-banner-blue mb-2">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        No location currently assigned. Please select one below.
+                    </div>
+
+                    <!-- Hidden field carries the current location ID forward if "Change" not used -->
+                    <input type="hidden" id="locationIdHidden" name="locationId"
+                           th:if="${livestock.location != null}"
+                           th:value="${livestock.location.id}">
+
+                    <!-- Cascading dropdowns — hidden by default if location already set -->
+                    <div id="locationSelectArea" th:style="${livestock.location != null} ? 'display:none' : ''">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Province</label>
+                                <select class="form-select" id="province" onchange="loadDistricts()">
+                                    <option value="">Select province...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">District</label>
+                                <select class="form-select" id="district" onchange="loadSectors()" disabled>
+                                    <option value="">Select district...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Sector</label>
+                                <select class="form-select" id="sector" onchange="loadCells()" disabled>
+                                    <option value="">Select sector...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cell</label>
+                                <select class="form-select" id="cell" onchange="loadVillages()" disabled>
+                                    <option value="">Select cell...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Village</label>
+                                <select class="form-select" id="village" name="locationId" disabled>
+                                    <option value="">Select village...</option>
+                                </select>
+                                <div class="form-text change-hint" id="locationChangeHint" style="display:none">
+                                    Selecting a new village will reassign this animal's location.
+                                    <a href="javascript:void(0)" onclick="cancelFieldChange('location')">Cancel</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <a th:href="@{/livestock/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
-                        <button type="submit" class="btn btn-update">
-                            <i class="bi bi-check-circle"></i> Update
+                        <button type="submit" class="btn btn-register">
+                            <i class="bi bi-check-circle"></i> Update Livestock
                         </button>
                     </div>
                 </form>
@@ -245,115 +637,294 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const locationMeta = document.getElementById('locationMeta');
-    const currentLocId = locationMeta ? locationMeta.getAttribute('data-location-id') : '';
-    let ancestors = {};
+    // ═══════════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+    function show(id)     { var e = document.getElementById(id); if (e) e.style.display = ''; }
+    function hide(id)     { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
+    function showFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'flex'; }
+    function val(id)      { var e = document.getElementById(id); return e ? e.value : ''; }
+    function setVal(id,v) { var e = document.getElementById(id); if (e) e.value = v; }
+    function isChecked(id){ var e = document.getElementById(id); return e ? e.checked : false; }
+    function setChecked(id,v){ var e = document.getElementById(id); if (e) e.checked = v; }
 
-    document.addEventListener('DOMContentLoaded', function () {
-        loadProvinces();
+    // ═══════════════════════════════════════════════════════════════════════
+    // GENERIC "CURRENT VALUE → CHANGE" TOGGLE (Category, Beneficiary, Location)
+    // ═══════════════════════════════════════════════════════════════════════
+    var fieldConfig = {
+        category:    { box: 'categoryCurrentBox',   target: 'livestockCategoryIdValue', hint: 'categoryChangeHint' },
+        beneficiary: { box: 'beneficiaryCurrentBox', target: 'beneficiaryIdValue',       hint: 'beneficiaryChangeHint' },
+        location:    { box: 'locationCurrentBox',    target: 'locationSelectArea',       hint: 'locationChangeHint' }
+    };
 
-        // Apply acquisition method logic on load (editing existing animal)
-        const acqSelect = document.getElementById('acquisitionMethod');
-        if (acqSelect && acqSelect.value) {
-            handleAcquisitionChange(acqSelect.value);
-        }
+    function enableFieldChange(field) {
+        var cfg = fieldConfig[field];
+        if (!cfg) return;
 
-        // Apply gender-based pregnancy section visibility
-        togglePregnancySection();
-    });
+        hide(cfg.box);
+        show(cfg.target);
+        show(cfg.hint);
 
-    // ─── Acquisition Method logic ─────────────────────────────────────────────
-    function handleAcquisitionChange(method) {
-        const birthDateRow = document.getElementById('birthDateRow');
-        const birthInfo    = document.getElementById('birthMethodInfo');
-        const birthInput   = document.getElementById('birthDate');
+        if (field === 'category') onCategoryChange();
 
-        if (method === 'BIRTH') {
-            birthDateRow.style.display = 'none';
-            birthInfo.style.display    = 'block';
-            birthInput.required        = false;
-        } else {
-            birthDateRow.style.display = '';
-            birthInfo.style.display    = 'none';
-            birthInput.required        = false;
-        }
-    }
-
-    // ─── Pregnancy section ────────────────────────────────────────────────────
-    function togglePregnancySection() {
-        const gender = document.getElementById('gender').value;
-        const col    = document.getElementById('pregnancyToggleCol');
-        const cb     = document.getElementById('isPregnant');
-        if (gender === 'FEMALE') {
-            col.style.display = '';
-        } else {
-            col.style.display = 'none';
-            if (cb) cb.checked = false;
+        if (field === 'location') {
+            var hiddenLoc = document.getElementById('locationIdHidden');
+            if (hiddenLoc) hiddenLoc.disabled = true;
+            loadProvinces();
         }
     }
 
-    // ─── Photo upload ─────────────────────────────────────────────────────────
+    function cancelFieldChange(field) {
+        var cfg = fieldConfig[field];
+        if (!cfg) return;
+
+        show(cfg.box);
+        hide(cfg.target);
+        hide(cfg.hint);
+
+        if (field === 'category' || field === 'beneficiary') {
+            var sel = document.getElementById(cfg.target);
+            if (sel) {
+                Array.from(sel.options).forEach(function(o) {
+                    if (o.hasAttribute('data-original-selected')) sel.value = o.value;
+                });
+            }
+        }
+
+        if (field === 'location') {
+            var hiddenLoc = document.getElementById('locationIdHidden');
+            if (hiddenLoc) hiddenLoc.disabled = false;
+            var village = document.getElementById('village');
+            if (village) village.value = '';
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MAIN FORM STATE
+    // ═══════════════════════════════════════════════════════════════════════
+    function onFormChange() {
+        var gender   = val('gender');
+        var acq      = val('acquisitionMethod');
+        var isBirth  = (acq === 'BIRTH');
+        var isFemale = (gender === 'FEMALE');
+
+        if (isBirth) {
+            hide('birthDateRow');
+            show('birthMethodInfo');
+            setVal('birthDate', '');
+            hide('pregnancyToggleBox');
+            hide('pregnancyDetailsPanel');
+            isFemale ? show('birthPregnancyNotice') : hide('birthPregnancyNotice');
+        } else {
+            show('birthDateRow');
+            hide('birthMethodInfo');
+            hide('birthPregnancyNotice');
+            if (isFemale) {
+                showFlex('pregnancyToggleBox');
+                if (isChecked('isPregnant')) {
+                    show('pregnancyDetailsPanel');
+                } else {
+                    hide('pregnancyDetailsPanel');
+                }
+            } else {
+                hide('pregnancyToggleBox');
+                hide('pregnancyDetailsPanel');
+            }
+        }
+    }
+
+    function onPregnancyToggle(checked) {
+        if (checked) {
+            show('pregnancyDetailsPanel');
+        } else {
+            hide('pregnancyDetailsPanel');
+            clearPregnancyPanel();
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // FAO CORE: Conception Date is the primary input
+    // ═══════════════════════════════════════════════════════════════════════
+    function onConceptionDateChange() {
+        var conceptionVal = val('conceptionDateInput');
+        setVal('weeksPregnantInput', '');
+        updateComputedDisplays(conceptionVal);
+    }
+
+    function updateComputedDisplays(conceptionVal) {
+        var dueDateEl  = document.getElementById('dueDateDisplay');
+        var progressEl = document.getElementById('gestationProgressDisplay');
+        var barWrap    = document.getElementById('gestationBarWrap');
+        var barFill    = document.getElementById('gestationBarFill');
+        var barLabel   = document.getElementById('gestationBarLabel');
+
+        if (!conceptionVal) {
+            dueDateEl.innerHTML = '<span class="computed-empty">Will be calculated from conception date</span>';
+            progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
+            if (barWrap) barWrap.style.display = 'none';
+            return;
+        }
+
+        var gestMonths = getGestationMonths();
+        var gestDays   = gestMonths > 0 ? Math.round(gestMonths * 30.4375) : 152;
+
+        var conception = new Date(conceptionVal);
+        conception.setHours(0,0,0,0);
+        var today = new Date(); today.setHours(0,0,0,0);
+
+        var due = new Date(conception);
+        due.setDate(due.getDate() + gestDays);
+        var dueStr = due.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+        dueDateEl.innerHTML = '<div class="computed-label">Expected Due Date</div>'
+            + '<div class="computed-value">' + dueStr + '</div>';
+
+        var daysElapsed   = Math.max(0, Math.floor((today - conception) / 86400000));
+        var daysRemaining = Math.round((due - today) / 86400000);
+        var weeksPreg     = Math.floor(daysElapsed / 7);
+        var pct           = Math.min(100, Math.round(daysElapsed * 100 / gestDays));
+
+        var stage = pct < 33 ? 'Early' : pct < 66 ? 'Mid' : pct < 90 ? 'Late' : 'Near Term';
+
+        var daysRemainingLabel = daysRemaining >= 0
+            ? daysRemaining + ' days remaining'
+            : Math.abs(daysRemaining) + ' days overdue';
+
+        progressEl.innerHTML =
+            '<div class="computed-label">Gestation Progress</div>'
+            + '<div class="computed-value">' + pct + '% — ' + stage + ' Stage</div>'
+            + '<div style="font-size:0.78rem;color:#64748b;margin-top:2px;">'
+            + weeksPreg + ' weeks pregnant &bull; ' + daysRemainingLabel
+            + '</div>';
+
+        if (barWrap) {
+            barWrap.style.display = '';
+            barFill.style.width = pct + '%';
+            barLabel.textContent = pct + '% of gestation complete'
+                + (gestMonths > 0 ? ' (' + gestMonths + '-month gestation)' : '');
+        }
+    }
+
+    function onCategoryChange() {
+        var conceptionVal = val('conceptionDateInput');
+        if (conceptionVal) updateComputedDisplays(conceptionVal);
+    }
+
+    function getGestationMonths() {
+        var catSel = document.getElementById('livestockCategoryIdValue');
+        if (!catSel || !catSel.selectedOptions[0]) return 0;
+        return parseInt(catSel.selectedOptions[0].getAttribute('data-gestation') || '0', 10);
+    }
+
+    function weeksToConception() {
+        var weeks = parseInt(val('weeksPregnantInput'), 10);
+        if (isNaN(weeks) || weeks < 0) return;
+        var conceived = new Date();
+        conceived.setDate(conceived.getDate() - (weeks * 7));
+        var isoDate = conceived.toISOString().split('T')[0];
+        setVal('conceptionDateInput', isoDate);
+        var input = document.getElementById('conceptionDateInput');
+        if (input) input.dispatchEvent(new Event('input'));
+    }
+
+    function clearPregnancyPanel() {
+        setVal('conceptionDateInput', '');
+        setVal('weeksPregnantInput', '');
+        var dueDateEl  = document.getElementById('dueDateDisplay');
+        var progressEl = document.getElementById('gestationProgressDisplay');
+        var barWrap    = document.getElementById('gestationBarWrap');
+        if (dueDateEl)  dueDateEl.innerHTML  = '<span class="computed-empty">Will be calculated from conception date</span>';
+        if (progressEl) progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
+        if (barWrap)    barWrap.style.display = 'none';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // METHOD BADGE PREVIEW
+    // ═══════════════════════════════════════════════════════════════════════
+    function updateMethodPreview(value) {
+        var preview = document.getElementById('methodPreview');
+        if (!preview) return;
+        var config = {
+            'NATURAL_MATING':          { cls:'natural', icon:'bi-heart-fill',         text:'Natural Mating' },
+            'ARTIFICIAL_INSEMINATION': { cls:'ai',      icon:'bi-syringe',            text:'Artificial Insemination (AI)' },
+            'EMBRYO_TRANSFER':         { cls:'et',      icon:'bi-stars',              text:'Embryo Transfer (ET)' },
+            'UNKNOWN':                 { cls:'unknown', icon:'bi-question-circle-fill',text:'Unknown / Not recorded' }
+        };
+        if (!value || !config[value]) { preview.style.display = 'none'; return; }
+        var c = config[value];
+        preview.className     = 'method-preview ' + c.cls;
+        preview.style.display = 'inline-flex';
+        preview.innerHTML     = '<i class="bi ' + c.icon + '"></i> ' + c.text;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PHOTO UPLOAD
+    // ═══════════════════════════════════════════════════════════════════════
     function uploadPhoto() {
-        const file = document.getElementById('photoFile').files[0];
+        var file = document.getElementById('photoFile').files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
-        if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
-
-        const preview = document.getElementById('photoPreview');
-        preview.style.display = 'flex';
+        if (file.size > 5 * 1024 * 1024)    { alert('File size must be less than 5MB'); return; }
+        var preview = document.getElementById('photoPreview');
         preview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
-
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('file', file);
-
         fetch('/api/upload/photo', { method: 'POST', body: formData })
-            .then(r => r.json())
-            .then(data => {
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
                 if (data.success) {
-                    preview.innerHTML = `<img src="${data.url}" alt="New Photo">`;
-                    document.getElementById('photoUrl').value = data.url;
+                    preview.innerHTML = '<img src="' + data.url + '" alt="Photo">';
+                    setVal('photoUrl', data.url);
                 } else {
                     alert('Upload failed: ' + data.message);
-                    preview.style.display = 'none';
+                    preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
                 }
             })
-            .catch(() => { alert('Error uploading photo'); preview.style.display = 'none'; });
+            .catch(function() {
+                alert('Error uploading photo');
+                preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
+            });
     }
 
-    // ─── Cascading location dropdowns ─────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
+    // CASCADING LOCATION DROPDOWNS (with ancestor preselection)
+    // ═══════════════════════════════════════════════════════════════════════
+    var locationMeta = document.getElementById('locationMeta');
+    var currentLocId = locationMeta ? locationMeta.getAttribute('data-location-id') : '';
+    var ancestors = {};
+
     function loadProvinces() {
         fetch('/api/locations/provinces')
-            .then(r => r.json())
-            .then(data => {
-                const select = document.getElementById('province');
-                select.innerHTML = '<option value="">Select province...</option>';
-                data.forEach(item => { select.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var s = document.getElementById('province');
+                if (!s) return;
+                s.innerHTML = '<option value="">Select province...</option>';
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
 
                 if (currentLocId) {
                     fetch('/api/locations/ancestors/' + currentLocId)
-                        .then(r => r.json())
-                        .then(anc => {
+                        .then(function(r) { return r.json(); })
+                        .then(function(anc) {
                             ancestors = anc;
                             if (ancestors.provinceId) {
-                                select.value = ancestors.provinceId;
+                                s.value = ancestors.provinceId;
                                 loadDistricts(ancestors.districtId);
                             }
                         })
-                        .catch(() => console.warn('Could not load location ancestors.'));
+                        .catch(function() { console.warn('Could not load location ancestors.'); });
                 }
-            })
-            .catch(err => console.error('Error loading provinces:', err));
+            });
     }
 
     function loadDistricts(preselectId) {
-        const provinceId = document.getElementById('province').value;
-        if (!provinceId) { resetSelects(['district','sector','cell','village']); return; }
-        fetch('/api/locations/districts/' + provinceId)
-            .then(r => r.json())
-            .then(data => {
-                const s = document.getElementById('district');
+        var id = val('province');
+        if (!id) { resetSelects(['district','sector','cell','village']); return; }
+        fetch('/api/locations/districts/' + id)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var s = document.getElementById('district');
                 s.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['sector','cell','village']);
                 if (preselectId) { s.value = preselectId; loadSectors(ancestors.sectorId); }
@@ -361,14 +932,14 @@
     }
 
     function loadSectors(preselectId) {
-        const id = document.getElementById('district').value;
+        var id = val('district');
         if (!id) { resetSelects(['sector','cell','village']); return; }
         fetch('/api/locations/sectors/' + id)
-            .then(r => r.json())
-            .then(data => {
-                const s = document.getElementById('sector');
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var s = document.getElementById('sector');
                 s.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['cell','village']);
                 if (preselectId) { s.value = preselectId; loadCells(ancestors.cellId); }
@@ -376,14 +947,14 @@
     }
 
     function loadCells(preselectId) {
-        const id = document.getElementById('sector').value;
+        var id = val('sector');
         if (!id) { resetSelects(['cell','village']); return; }
         fetch('/api/locations/cells/' + id)
-            .then(r => r.json())
-            .then(data => {
-                const s = document.getElementById('cell');
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var s = document.getElementById('cell');
                 s.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 resetSelects(['village']);
                 if (preselectId) { s.value = preselectId; loadVillages(ancestors.villageId); }
@@ -391,26 +962,55 @@
     }
 
     function loadVillages(preselectId) {
-        const id = document.getElementById('cell').value;
+        var id = val('cell');
         if (!id) { resetSelects(['village']); return; }
         fetch('/api/locations/villages/' + id)
-            .then(r => r.json())
-            .then(data => {
-                const s = document.getElementById('village');
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var s = document.getElementById('village');
                 s.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(i => { s.innerHTML += `<option value="${i.id}">${i.name}</option>`; });
+                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
                 s.disabled = false;
                 if (preselectId) s.value = preselectId;
             });
     }
 
     function resetSelects(ids) {
-        ids.forEach(id => {
-            const s = document.getElementById(id);
-            s.innerHTML = `<option value="">Select ${id}...</option>`;
+        ids.forEach(function(id) {
+            var s = document.getElementById(id);
+            if (!s) return;
+            s.innerHTML = '<option value="">Select ' + id + '...</option>';
             s.disabled = true;
         });
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // PAGE INIT
+    // ═══════════════════════════════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', function() {
+        onFormChange();
+
+        if (isChecked('isPregnant')) show('pregnancyDetailsPanel');
+
+        var conception = val('conceptionDateInput');
+        if (conception) updateComputedDisplays(conception);
+
+        // Mark currently-selected category/beneficiary for "Cancel" restore
+        ['livestockCategoryIdValue', 'beneficiaryIdValue'].forEach(function(id) {
+            var sel = document.getElementById(id);
+            if (sel && sel.value) {
+                Array.from(sel.options).forEach(function(o) {
+                    if (o.value === sel.value) o.setAttribute('data-original-selected', 'true');
+                });
+            }
+        });
+
+        // If location is NOT currently set, populate cascading dropdowns immediately
+        var hasLocationBox = document.getElementById('locationCurrentBox');
+        if (!hasLocationBox) {
+            loadProvinces();
+        }
+    });
 </script>
 </body>
 </html>
