@@ -3,128 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <title>Livestock Births</title>
+    <!-- CSRF meta tags - required for Spring Security (this page's delete form was missing it) -->
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f8f9fa; }
-        .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
-        .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); margin: 0 24px 24px; }
-        .table th { font-weight: 600; font-size: 0.85rem; text-transform: uppercase; color: #6c757d; }
+        /* ── Base ── */
+        body { background: #f0f2f5; font-size: 0.875rem; }
 
-        /* ── Mother origin badges ── */
-        .bd-farm {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
-            border-radius: 20px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
+        /* ── Page header ── */
+        .page-header {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 14px 24px;
+            margin-bottom: 20px;
         }
-        .bd-purchased {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #fef9c3; color: #854d0e; border: 1px solid #fde047;
-            border-radius: 20px; padding: 2px 9px; font-size: 0.75rem; font-weight: 700;
+        .page-header h5 { font-size: 1rem; font-weight: 700; margin: 0; }
+        .page-header .subtitle { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+
+        /* ── Summary stats (new) ── */
+        .summary-stats { margin: 0 20px 16px; }
+        .stat-card {
+            background: #fff;
+            border: 1px solid #edf0f3;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 100%;
+        }
+        .stat-icon {
+            width: 32px; height: 32px;
+            border-radius: 7px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; flex-shrink: 0;
+        }
+        .stat-icon.total  { background: #ecfdf5; color: #059669; }
+        .stat-icon.draft  { background: #fffbeb; color: #92400e; }
+        .stat-icon.page   { background: #eff6ff; color: #2563eb; }
+        .stat-icon.unlink { background: #fef2f2; color: #dc2626; }
+        .stat-value { font-size: 0.98rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+        .stat-label {
+            font-size: 0.65rem; font-weight: 600; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.04em;
         }
 
-        /* child birth dates list inside a cell */
-        .child-bd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
-        .child-bd-list li { font-size: 0.78rem; display: flex; align-items: center; gap: 5px; }
-        .child-tag { font-weight: 700; color: #1e293b; }
-        .child-date { color: #0369a1; }
-        .child-date-unknown { color: #94a3b8; font-style: italic; }
+        /* ── Content card ── */
+        .content-card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+            margin: 0 20px 20px;
+        }
 
-        /* ── Draft child badge ── */
-        .draft-tag { font-weight: 700; color: #92400e; background: #fef3c7;
-                     padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; }
-
-        /* ── Breeding Age Pills ── */
-        .breed-pill {
-            display: inline-flex; align-items: center; gap: 4px;
-            border-radius: 20px; padding: 3px 9px; font-size: 0.72rem; font-weight: 700;
+        /* ── Table ── */
+        .births-table { font-size: 0.78rem; }
+        .births-table th {
+            font-size: 0.67rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #94a3b8;
+            padding: 8px 10px;
+            background: #f8fafc;
             white-space: nowrap;
         }
-        .breed-capable    { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .breed-too-young  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .breed-unknown    { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.8; }
+        .births-table td { padding: 6px 10px; vertical-align: middle; }
 
-        /* Purchased-pregnant origin badge shown in Mother cell */
+        /* ── Origin badges ── */
         .orig-purchased {
-            display: inline-flex; align-items: center; gap: 4px;
+            display: inline-flex; align-items: center; gap: 3px;
             background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
-            border-radius: 4px; padding: 1px 7px; font-size: 0.68rem; font-weight: 700;
+            border-radius: 4px; padding: 1px 6px; font-size: 0.67rem; font-weight: 700;
         }
 
-        /* ── Pending draft warning banner ── */
-        .draft-warning {
-            background: #fff8e1; border: 1px solid #ffc107; border-radius: 8px;
-            padding: 12px 16px; margin: 0 24px 16px; display: flex;
-            align-items: center; gap: 12px;
+        /* ── Breeding age pills ── */
+        .breed-pill {
+            display: inline-flex; align-items: center; gap: 3px;
+            border-radius: 20px; padding: 2px 7px;
+            font-size: 0.67rem; font-weight: 700; white-space: nowrap;
         }
+        .breed-capable   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .breed-too-young { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .breed-unknown   { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+        /* ── Child birth date list ── */
+        .child-bd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+        .child-bd-list li { font-size: 0.72rem; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .child-tag      { font-weight: 700; color: #1e293b; }
+        .child-date     { color: #0369a1; }
+        .child-date-unk { color: #94a3b8; font-style: italic; }
+        .draft-tag      { font-weight: 700; color: #92400e; background: #fef3c7;
+                          padding: 1px 5px; border-radius: 4px; font-size: 0.68rem; }
+
+        /* ── Draft warning banner ── */
+        .draft-warning {
+            background: #fffbeb; border: 1px solid #fbbf24; border-radius: 6px;
+            padding: 10px 14px; margin: 0 20px 14px;
+            display: flex; align-items: center; gap: 10px; font-size: 0.78rem;
+        }
+
+        /* ── Action buttons ── */
+        .btn-xs { font-size: 0.72rem; padding: 2px 8px; }
     </style>
 </head>
 <body>
 
+<!-- ── Page header ──────────────────────────────────────────────────────── -->
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
-        <h4 class="mb-1"><i class="bi bi-heart-pulse text-success me-2"></i>Livestock Births</h4>
-        <small class="text-muted">Record and manage all birth events</small>
+        <h5><i class="bi bi-heart-pulse text-success me-2"></i>Livestock Births</h5>
+        <div class="subtitle">Record and manage all birth events</div>
     </div>
     <div class="d-flex gap-2">
-        <a href="/livestock/births/register" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i> Record Birth
+        <a href="/livestock/births/register" class="btn btn-success btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>Record Birth
         </a>
-        <a href="/livestock/list" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back to Livestock
+        <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Livestock
         </a>
     </div>
 </div>
 
-<!--
-    PENDING DRAFTS BANNER
-    Shown when births have been recorded but the offspring have not yet been
-    given real tag numbers. Staff should click the birth's "linked" button to
-    complete them.  Drafts are hidden from the main livestock list until done.
--->
+<!-- -- Quick Summary (new) ------------------------------------------------ -->
+<!-- This view is paginated, so "births" only holds the current page's rows —
+     summing it would understate the real totals. The two cards below use
+     totalItems and pendingDraftCount, which your controller already passes
+     in as page-wide (not per-page) values, so they're accurate. The other
+     two are explicitly labelled "this page" since that's all the template
+     can see. If you want page-wide versions of those too (e.g. total
+     offspring across ALL births, not just this page), add them server-side
+     the same way DashboardController already computes totalMothers /
+     totalLinkedChildren / avgOffspringPerBirth — see note below the table. -->
+<div class="row g-2 summary-stats"
+     th:with="pageOffspringCount=${births == null ? 0 : #aggregates.sum(births.![offspringCount ?: 0])},
+               pageUnlinkedMothers=${births == null ? 0 : births.?[livestock == null].size()}">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon total"><i class="bi bi-heart-pulse"></i></div>
+            <div>
+                <div class="stat-value" th:text="${totalItems != null ? totalItems : 0}">0</div>
+                <div class="stat-label">Total Births</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon draft"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div>
+                <div class="stat-value" th:text="${pendingDraftCount != null ? pendingDraftCount : 0}">0</div>
+                <div class="stat-label">Pending Drafts</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon page"><i class="bi bi-clipboard2-data"></i></div>
+            <div>
+                <div class="stat-value" th:text="${pageOffspringCount}">0</div>
+                <div class="stat-label">Offspring (This Page)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon unlink"><i class="bi bi-person-x-fill"></i></div>
+            <div>
+                <div class="stat-value" th:text="${pageUnlinkedMothers}">0</div>
+                <div class="stat-label">Unrecorded Mother (This Page)</div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- -- End Quick Summary --------------------------------------------------- -->
+
+<!-- Pending drafts banner -->
 <div th:if="${pendingDraftCount != null and pendingDraftCount > 0}" class="draft-warning">
-    <i class="bi bi-exclamation-triangle-fill text-warning fs-4"></i>
+    <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
     <div class="flex-grow-1">
         <strong>Action needed:</strong>
         <span th:text="${pendingDraftCount}"></span> offspring
         <span th:text="${pendingDraftCount == 1 ? 'has' : 'have'}"></span>
-        not been fully registered yet. They appear as <code>DRAFT-…</code>
-        placeholders. Click the <strong>"X linked"</strong> button on the relevant
-        birth row below to assign proper tag numbers.
+        not been fully registered yet (<code>DRAFT-…</code> placeholders).
+        Click the <strong>"X linked"</strong> button on the relevant row to assign tag numbers.
     </div>
-    <a href="/livestock/list" class="btn btn-sm btn-warning text-nowrap">
-        <i class="bi bi-list me-1"></i> View Livestock
+    <a href="/livestock/list" class="btn btn-warning btn-xs text-nowrap">
+        <i class="bi bi-list me-1"></i>View Livestock
     </a>
 </div>
 
 <div class="content-card p-0">
 
-    <div class="p-3">
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show mb-0">
-            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="p-3 pb-0">
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2 mb-2" style="font-size:0.78rem;">
+            <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mb-0">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show py-2 mb-2" style="font-size:0.78rem;">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
     </div>
 
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+        <table class="table table-hover births-table align-middle mb-0">
+            <thead>
             <tr>
-                <th style="width:40px">#</th>
+                <th style="width:32px">#</th>
                 <th>Mother</th>
                 <th>Category</th>
-                <th>Mother Breeding Age</th>
+                <th>Breeding Age</th>
                 <th>Birth Date</th>
                 <th>Offspring #</th>
-                <th>Offspring Gender</th>
+                <th>Gender</th>
                 <th>Child Birth Date(s)</th>
-                <th>Weaning Date</th>
+                <th>Weaning</th>
                 <th>Next Breeding</th>
-                <th>Animals Linked</th>
+                <th>Linked</th>
                 <th>Actions</th>
             </tr>
             </thead>
@@ -132,7 +230,7 @@
 
             <tr th:if="${births == null or births.empty}">
                 <td colspan="12" class="text-center py-5 text-muted">
-                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                     No birth records yet.
                     <a href="/livestock/births/register">Record the first one</a>
                 </td>
@@ -141,70 +239,57 @@
             <tr th:each="b, i : ${births}">
                 <td class="text-muted" th:text="${(currentPage * pageSize) + i.count}"></td>
 
-                <!-- Mother info -->
+                <!-- Mother -->
                 <td>
                     <div th:if="${b.livestock != null}">
                         <strong th:text="${b.livestock.tagNumber}"></strong>
                         <div th:if="${b.livestock.acquisitionMethod != null
-                                      and b.livestock.acquisitionMethod != 'BIRTH'}"
-                             class="mt-1">
+                                      and b.livestock.acquisitionMethod != 'BIRTH'}" class="mt-1">
                             <span class="orig-purchased">
                                 <i class="bi bi-box-arrow-in-down"></i>
-                                Arrived
                                 <span th:text="${b.livestock.acquisitionMethod}"></span>
                             </span>
                         </div>
-                        <div>
-                            <a th:href="@{/livestock/births/family/{id}(id=${b.livestock.id})}"
-                               class="text-muted small">
-                                <i class="bi bi-diagram-3"></i> Family tree
-                            </a>
-                        </div>
+                        <a th:href="@{/livestock/births/family/{id}(id=${b.livestock.id})}"
+                           class="text-muted" style="font-size:0.7rem;">
+                            <i class="bi bi-diagram-3"></i> Family
+                        </a>
                     </div>
-                    <div th:if="${b.livestock == null}" class="text-muted small fst-italic">
-                        Mother not recorded
-                    </div>
+                    <span th:if="${b.livestock == null}" class="text-muted fst-italic" style="font-size:0.72rem;">
+                        Not recorded
+                    </span>
                 </td>
 
-                <!-- Category (from mother) -->
+                <!-- Category -->
                 <td>
                     <span th:if="${b.livestock?.livestockCategory != null}"
-                          class="badge bg-secondary"
+                          class="badge bg-secondary" style="font-size:0.67rem;"
                           th:text="${b.livestock.livestockCategory.name}"></span>
                     <span th:if="${b.livestock?.livestockCategory == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Mother Breeding Age -->
+                <!-- Breeding age -->
                 <td>
                     <div th:if="${b.livestock != null}"
                          th:with="mother=${b.livestock},
                                   capable=${mother != null and breedingCapableMap != null
                                             ? breedingCapableMap[mother.id] : null}">
-
                         <span th:if="${capable != null and capable}"
-                              class="breed-pill breed-capable"
-                              th:with="minAge=${mother.livestockCategory != null ? mother.livestockCategory.minBreedingAgeMonths : null}"
-                              th:title="${minAge != null} ? 'Reached minimum breeding age of ' + minAge + ' months' : 'Reached minimum breeding age'">
-                            <i class="bi bi-check-circle-fill"></i> Breeding Age Met
+                              class="breed-pill breed-capable">
+                            <i class="bi bi-check-circle-fill"></i> Met
                         </span>
-
                         <span th:if="${capable != null and !capable}"
                               class="breed-pill breed-too-young"
-                              th:with="minAge=${mother.livestockCategory != null ? mother.livestockCategory.minBreedingAgeMonths : null}"
-                              th:title="${minAge != null} ? 'Minimum is ' + minAge + ' months. Mother had not reached this age yet.' : 'Below minimum breeding age.'">
-                            <i class="bi bi-exclamation-triangle-fill"></i> Below Min Age
-                            <small th:if="${minAge != null}" style="opacity:0.8;font-size:0.63rem;">
-                                (min <span th:text="${minAge}"></span>mo)
-                            </small>
+                              th:with="minAge=${mother.livestockCategory != null ? mother.livestockCategory.minBreedingAgeMonths : null}">
+                            <i class="bi bi-exclamation-triangle-fill"></i> Too young
+                            <small th:if="${minAge != null}" style="opacity:.8;">(min <span th:text="${minAge}"></span>mo)</small>
                         </span>
-
                         <span th:if="${capable == null}"
-                              class="breed-pill breed-unknown"
-                              title="Cannot determine: birth date or category min breeding age not recorded.">
+                              class="breed-pill breed-unknown">
                             <i class="bi bi-question-circle"></i> Unknown
                         </span>
                     </div>
-                    <div th:if="${b.livestock == null}" class="text-muted small">—</div>
+                    <span th:if="${b.livestock == null}" class="text-muted">—</span>
                 </td>
 
                 <!-- Birth Date -->
@@ -217,66 +302,55 @@
                 <!-- Offspring count -->
                 <td>
                     <span th:if="${b.offspringCount != null}"
-                          class="badge bg-info text-dark"
+                          class="badge bg-info text-dark" style="font-size:0.68rem;"
                           th:text="${b.offspringCount}"></span>
                     <span th:if="${b.offspringCount == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Offspring gender -->
+                <!-- Gender -->
                 <td>
-                    <span th:if="${b.offspringGender == 'MALE'}"   class="badge bg-primary text-white">Male</span>
-                    <span th:if="${b.offspringGender == 'FEMALE'}" class="badge bg-danger text-white">Female</span>
+                    <span th:if="${b.offspringGender == 'MALE'}"   class="badge bg-primary" style="font-size:0.68rem;">M</span>
+                    <span th:if="${b.offspringGender == 'FEMALE'}" class="badge bg-danger"  style="font-size:0.68rem;">F</span>
                     <span th:if="${b.offspringGender == null or b.offspringGender == ''}" class="text-muted">—</span>
                 </td>
 
-                <!-- Child Birth Date(s) — shows mother link inline for easy verification -->
+                <!-- Child Birth Date(s) -->
                 <td>
                     <div th:if="${b.children != null and !b.children.empty}">
                         <ul class="child-bd-list">
                             <li th:each="offspring : ${b.children}"
                                 th:if="${offspring.childLivestock != null}">
                                 <i class="bi bi-dot text-success"></i>
-
-                                <!-- Draft animal indicator -->
                                 <span th:if="${offspring.childLivestock.isDraft}"
                                       class="draft-tag"
                                       th:text="${offspring.childLivestock.tagNumber}"></span>
-
-                                <!-- Completed animal -->
                                 <span th:if="${!offspring.childLivestock.isDraft}"
                                       class="child-tag"
                                       th:text="${offspring.childLivestock.tagNumber}"></span>
 
-                                <!-- Mother link verification: show green tick if mother is set -->
                                 <span th:if="${offspring.childLivestock.mother != null}"
-                                      title="Mother correctly linked"
-                                      class="text-success"
-                                      style="font-size:0.7rem;">
+                                      class="text-success" style="font-size:0.67rem;"
+                                      title="Mother linked">
                                     <i class="bi bi-person-check-fill"></i>
-                                    <span th:text="${offspring.childLivestock.mother.tagNumber}"></span>
                                 </span>
                                 <span th:if="${offspring.childLivestock.mother == null}"
-                                      title="Mother NOT linked — click 'X linked' to fix"
-                                      class="text-danger"
-                                      style="font-size:0.7rem;">
-                                    <i class="bi bi-person-x-fill"></i> No mother
+                                      class="text-danger" style="font-size:0.67rem;"
+                                      title="Mother not linked">
+                                    <i class="bi bi-person-x-fill"></i>
                                 </span>
 
                                 <span th:if="${offspring.childLivestock.birthDate != null}"
-                                      class="child-date">
-                                    <i class="bi bi-calendar2-check"></i>
-                                    <span th:text="${#temporals.format(offspring.childLivestock.birthDate, 'dd-MM-yyyy')}"></span>
-                                </span>
+                                      class="child-date"
+                                      th:text="${#temporals.format(offspring.childLivestock.birthDate, 'dd-MM-yy')}"></span>
                                 <span th:if="${offspring.childLivestock.birthDate == null}"
-                                      class="child-date-unknown">
-                                    <i class="bi bi-calendar2-x"></i> Not recorded
-                                </span>
+                                      class="child-date-unk">no date</span>
                             </li>
                         </ul>
                     </div>
-                    <div th:if="${b.children == null or b.children.empty}">
-                        <span class="text-muted small"><i class="bi bi-link-45deg"></i> No animals linked</span>
-                    </div>
+                    <span th:if="${b.children == null or b.children.empty}"
+                          class="text-muted" style="font-size:0.72rem;">
+                        <i class="bi bi-link-45deg"></i> None
+                    </span>
                 </td>
 
                 <!-- Weaning -->
@@ -293,18 +367,16 @@
                     <span th:if="${b.nextBreedingDate == null}" class="text-muted">—</span>
                 </td>
 
-                <!-- Animals linked — badge is amber if any drafts remain.
-                     hasDraftMap is pre-computed in the controller (Map<UUID,Boolean>)
-                     to avoid unsupported Java lambdas in SpEL/Thymeleaf. -->
+                <!-- Linked badge -->
                 <td>
                     <a th:href="@{/livestock/births/{id}/children(id=${b.id})}"
                        th:class="${hasDraftMap != null and hasDraftMap[b.id] == true}
                                   ? 'badge bg-warning text-dark text-decoration-none'
-                                  : 'badge bg-success text-decoration-none'">
+                                  : 'badge bg-success text-decoration-none'"
+                       style="font-size:0.7rem;">
                         <i class="bi bi-link-45deg"></i>
                         <span th:text="${b.children.size()}"></span> linked
-                        <span th:if="${hasDraftMap != null and hasDraftMap[b.id] == true}"
-                              class="ms-1">⚠ draft</span>
+                        <span th:if="${hasDraftMap != null and hasDraftMap[b.id] == true}">⚠</span>
                     </a>
                 </td>
 
@@ -312,37 +384,42 @@
                 <td>
                     <div class="d-flex gap-1">
                         <a th:href="@{/livestock/births/view/{id}(id=${b.id})}"
-                           class="btn btn-sm btn-outline-info" title="View">
+                           class="btn btn-outline-info btn-xs" title="View">
                             <i class="bi bi-eye"></i>
                         </a>
                         <a th:href="@{/livestock/births/edit/{id}(id=${b.id})}"
-                           class="btn btn-sm btn-warning" title="Edit">
+                           class="btn btn-warning btn-xs" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <button class="btn btn-sm btn-danger" title="Delete"
+                        <button class="btn btn-danger btn-xs" title="Delete"
                                 data-bs-toggle="modal"
                                 th:data-bs-target="'#delModal' + ${b.id}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
 
+                    <!-- Delete confirmation modal -->
                     <div class="modal fade" th:id="'delModal' + ${b.id}" tabindex="-1">
                         <div class="modal-dialog modal-sm">
                             <div class="modal-content">
-                                <div class="modal-header">
-                                    <h6 class="modal-title text-danger">
+                                <div class="modal-header py-2">
+                                    <h6 class="modal-title text-danger" style="font-size:0.85rem;">
                                         <i class="bi bi-exclamation-triangle"></i> Confirm Delete
                                     </h6>
-                                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                                    <button class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
                                 </div>
-                                <div class="modal-body small">
+                                <div class="modal-body" style="font-size:0.78rem;">
                                     Delete birth record dated
                                     <strong th:text="${b.birthDate != null ? #temporals.format(b.birthDate, 'dd-MM-yyyy') : 'N/A'}"></strong>?
-                                    Linked animals will be unlinked.
+                                    <div class="text-muted mt-1">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Record will be soft-deleted and logged in the audit trail.
+                                    </div>
                                 </div>
-                                <div class="modal-footer">
+                                <div class="modal-footer py-2">
                                     <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                     <form th:action="@{/livestock/births/delete/{id}(id=${b.id})}" method="post" class="d-inline">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                         <button class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                 </div>
@@ -356,16 +433,18 @@
     </div>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center p-3 border-top"
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top"
+         style="font-size:0.75rem;"
          th:if="${totalPages > 1}">
-        <small class="text-muted">
+        <span class="text-muted">
             Page <span th:text="${currentPage + 1}"></span> of <span th:text="${totalPages}"></span>
-            (<span th:text="${totalItems}"></span> total)
-        </small>
+            &mdash; <span th:text="${totalItems}"></span> total
+        </span>
         <nav>
             <ul class="pagination pagination-sm mb-0">
                 <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link" th:href="@{/livestock/births/list(page=${currentPage - 1}, size=${pageSize})}">
+                    <a class="page-link"
+                       th:href="@{/livestock/births/list(page=${currentPage - 1}, size=${pageSize})}">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
@@ -376,7 +455,8 @@
                        th:text="${i + 1}"></a>
                 </li>
                 <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="page-link" th:href="@{/livestock/births/list(page=${currentPage + 1}, size=${pageSize})}">
+                    <a class="page-link"
+                       th:href="@{/livestock/births/list(page=${currentPage + 1}, size=${pageSize})}">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

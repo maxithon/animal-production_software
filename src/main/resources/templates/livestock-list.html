@@ -6,107 +6,81 @@
     <title>Livestock List</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ── Base ───────────────────────────────────────────────────────────── */
+        /* ── Reset & Base ───────────────────────────────────────────── */
         *, *::before, *::after { box-sizing: border-box; }
         html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
-        body { background: #f0f4f8; padding: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; }
-
-        /* ── Card ───────────────────────────────────────────────────────────── */
-        .list-card {
-            background: white;
-            border-radius: 14px;
-            padding: 28px 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.07);
-            width: 100%;
-            min-width: 0;
+        body {
+            background: #f0f4f8;
+            padding: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;       /* base = 13px — everything derives from this */
+            color: #1e293b;
+            line-height: 1.4;
         }
 
-        /* ── Header ─────────────────────────────────────────────────────────── */
+        /* ── Card ───────────────────────────────────────────────────── */
+        .list-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.07);
+        }
+
+        /* ── Page Header ────────────────────────────────────────────── */
         .page-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            margin-bottom: 20px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
             flex-wrap: wrap;
         }
-        .page-title { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px; }
-        .page-sub   { font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0; }
-        .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-        /* ── Deleted Animals Button ──────────────────────────────────────────── */
-        .btn-deleted {
-            display: inline-flex;
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
             align-items: center;
             gap: 6px;
-            padding: 7px 14px;
-            border-radius: 8px;
-            border: 1.5px solid #fca5a5;
-            background: #fff5f5;
-            color: #dc2626;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.18s ease;
-            white-space: nowrap;
         }
-        .btn-deleted:hover { background: #dc2626; color: white; border-color: #dc2626; }
+        .page-sub { font-size: 12px; color: #94a3b8; margin: 1px 0 0; }
+        .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+        /* ── Header Buttons ─────────────────────────────────────────── */
+        .btn-deleted, .btn-print-all, .btn-register {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 13px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .btn-deleted  { border: 1px solid #fca5a5; background: #fff5f5; color: #dc2626; }
+        .btn-deleted:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
         .btn-deleted .del-count {
-            background: #fca5a5;
-            color: #7f1d1d;
-            border-radius: 20px;
-            padding: 1px 7px;
-            font-size: 0.72rem;
-            font-weight: 800;
-            transition: all 0.18s ease;
+            background: #fca5a5; color: #7f1d1d; border-radius: 20px;
+            padding: 0 7px; font-size: 11px; font-weight: 800;
+            transition: all 0.15s;
         }
-        .btn-deleted:hover .del-count { background: rgba(255,255,255,0.25); color: white; }
+        .btn-deleted:hover .del-count { background: rgba(255,255,255,0.25); color: #fff; }
+        .btn-print-all { border: 1px solid #0f766e; background: #f0fdfa; color: #0f766e; }
+        .btn-print-all:hover { background: #0f766e; color: #fff; }
+        .btn-register  { background: #1a5f7a; color: #fff; border: 1px solid #1a5f7a; }
+        .btn-register:hover { background: #154e65; border-color: #154e65; color: #fff; }
 
-        /* ── Print All button ───────────────────────────────────────────────── */
-        .btn-print-all {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 7px 16px;
-            border-radius: 8px;
-            border: 1.5px solid #0f766e;
-            background: #f0fdfa;
-            color: #0f766e;
-            text-decoration: none;
-            font-size: 0.82rem;
-            font-weight: 600;
-            white-space: nowrap;
-            transition: all 0.18s ease;
-        }
-        .btn-print-all:hover { background: #0f766e; color: white; }
-
-        /* ── Register button ────────────────────────────────────────────────── */
-        .btn-register {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 7px 16px;
-            border-radius: 8px;
-            background: #1a5f7a;
-            color: white;
-            border: 1.5px solid #1a5f7a;
-            font-size: 0.82rem;
-            font-weight: 600;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: all 0.18s ease;
-        }
-        .btn-register:hover { background: #154e65; border-color: #154e65; color: white; }
-
-        /* ── Summary Strip ──────────────────────────────────────────────────── */
-        .summary-strip { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+        /* ── Summary Strip ──────────────────────────────────────────── */
+        .summary-strip { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
         .sum-pill {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 5px 12px; border-radius: 20px;
-            font-size: 0.78rem; font-weight: 600; border: 1.5px solid;
-            cursor: default;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600; border: 1px solid;
         }
         .sum-pill.all        { background: #f1f5f9; color: #1e293b; border-color: #cbd5e0; }
         .sum-pill.active     { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
@@ -117,202 +91,229 @@
         .sum-pill.treatments { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
         .sum-pill.abortions  { background: #fff1f2; color: #be123c; border-color: #fda4af; }
 
-        /* ── Alerts ─────────────────────────────────────────────────────────── */
-        .alert { border-radius: 10px; font-size: 0.85rem; padding: 10px 16px; margin-bottom: 14px; }
+        /* ── Alerts ─────────────────────────────────────────────────── */
+        .alert { border-radius: 8px; font-size: 11px; padding: 8px 12px; margin-bottom: 10px; }
 
-        /* ── Bulk Bar ───────────────────────────────────────────────────────── */
+        /* ── Bulk Bar ───────────────────────────────────────────────── */
         .bulk-bar {
-            display: none;
-            align-items: center;
-            gap: 12px;
+            display: none; align-items: center; gap: 10px;
             background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            border-radius: 10px;
-            padding: 10px 18px;
-            margin-bottom: 14px;
+            border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;
             flex-wrap: wrap;
         }
         .bulk-bar.visible { display: flex; }
-        .bulk-bar-text  { color: white; font-weight: 700; font-size: 0.85rem; }
-        .bulk-bar-count { background: rgba(255,255,255,0.2); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
-        .btn-bulk       { padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
-        .btn-bulk.teal  { background: white; color: #1a5f7a; }
+        .bulk-bar-text  { color: #fff; font-weight: 700; font-size: 12px; }
+        .bulk-bar-count { background: rgba(255,255,255,0.2); color: #fff; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+        .btn-bulk { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
+        .btn-bulk.teal  { background: #fff; color: #1a5f7a; }
         .btn-bulk.teal:hover { background: #f0fdfa; }
-        .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; }
+        .btn-bulk.clear { background: rgba(255,255,255,0.15); color: #fff; }
         .btn-bulk.clear:hover { background: rgba(255,255,255,0.25); }
 
-        /* ── Search & Filter Row ────────────────────────────────────────────── */
-        .filter-row { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
-        .search-wrap { flex: 1 1 220px; min-width: 0; }
-        .search-wrap .input-group-text { background: #f8f9fb; border-right: none; color: #94a3b8; }
-        .search-wrap .form-control { border-left: none; font-size: 0.85rem; }
+        /* ── Search & Filter Row ────────────────────────────────────── */
+        .filter-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+        .search-wrap { flex: 1 1 200px; min-width: 0; }
+        .search-wrap .input-group-text { background: #f8f9fb; border-right: none; color: #94a3b8; font-size: 13px; padding: 6px 10px; }
+        .search-wrap .form-control { border-left: none; font-size: 12px; padding: 6px 10px; }
         .search-wrap .form-control:focus { box-shadow: none; border-color: #1a5f7a; }
-        .filter-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-        .filter-btn { padding: 5px 13px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; border: 1.5px solid #e2e8f0; cursor: pointer; background: #f8f9fb; color: #475569; transition: all 0.15s; }
-        .filter-btn:hover { border-color: #1a5f7a; color: #1a5f7a; }
-        .filter-btn.active { background: #1a5f7a; color: white; border-color: #1a5f7a; }
-
-        /* ── Table Wrapper: fill width, no overflow ─────────────────────────── */
-        .table-wrap {
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        .filter-pills { display: flex; gap: 4px; flex-wrap: wrap; }
+        .filter-btn {
+            padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            border: 1px solid #e2e8f0; cursor: pointer; background: #f8f9fb; color: #475569;
+            transition: all 0.15s;
         }
+        .filter-btn:hover { border-color: #1a5f7a; color: #1a5f7a; }
+        .filter-btn.active { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+
+        /* ── Table ──────────────────────────────────────────────────── */
+        .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
         #dataTable {
             width: 100%;
             table-layout: auto;
             border-collapse: collapse;
         }
         #dataTable th {
-            font-size: 0.72rem;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: #64748b;
-            padding: 10px 10px;
-            border-bottom: 2px solid #f0f2f5;
+            padding: 8px 9px;
+            border-bottom: 1.5px solid #f0f2f5;
             white-space: nowrap;
             background: #fafbfc;
         }
         #dataTable td {
-            padding: 10px 10px;
+            padding: 8px 9px;
             vertical-align: middle;
             border-bottom: 1px solid #f0f2f5;
+            font-size: 12px;
         }
         #dataTable tbody tr:hover { background: #f8fbff; }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        /* ── Column sizing hints (shrink where possible) ─────────────────────── */
-        .col-check   { width: 34px; min-width: 34px; text-align: center; }
-        .col-num     { width: 36px; min-width: 36px; text-align: center; color: #94a3b8; font-size: 0.8rem; }
-        .col-photo   { width: 56px; min-width: 56px; }
-        .col-tag     { min-width: 110px; }
-        .col-cat     { min-width: 80px; }
-        .col-gender  { min-width: 70px; }
-        .col-breed   { min-width: 130px; }
-        .col-benef   { min-width: 100px; }
-        .col-loc     { min-width: 90px; }
-        .col-status  { min-width: 80px; }
-        .col-value   { min-width: 90px; }
-        .col-bd      { min-width: 140px; }
-        .col-health  { min-width: 150px; }
-        .col-actions { width: 130px; min-width: 130px; white-space: nowrap; }
+        /* ── Column widths ──────────────────────────────────────────── */
+        .col-check   { width: 28px; min-width: 28px; text-align: center; }
+        .col-num     { width: 28px; min-width: 28px; text-align: center; color: #94a3b8; }
+        .col-photo   { width: 44px; min-width: 44px; }
+        .col-tag     { min-width: 100px; }
+        .col-cat     { min-width: 70px; }
+        .col-gender  { min-width: 60px; }
+        .col-breed   { min-width: 110px; }
+        .col-benef   { min-width: 90px; }
+        .col-loc     { min-width: 80px; }
+        .col-status  { min-width: 70px; }
+        .col-value   { min-width: 80px; }
+        .col-bd      { min-width: 120px; }
+        .col-health  { min-width: 130px; }
+        .col-actions { width: 110px; min-width: 110px; white-space: nowrap; }
 
-        /* ── Photo ──────────────────────────────────────────────────────────── */
-        .animal-photo { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 2px solid #e2e8f0; display: block; }
+        /* ── Photo ──────────────────────────────────────────────────── */
+        .animal-photo { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1.5px solid #e2e8f0; display: block; }
         .animal-photo-placeholder {
-            width: 40px; height: 40px; border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 7px;
             background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1rem;
+            color: #fff; font-size: 15px;
         }
 
-        /* ── Status Badge ───────────────────────────────────────────────────── */
-        .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+        /* ── Status Badge ───────────────────────────────────────────── */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 8px; border-radius: 20px;
+            font-size: 11px; font-weight: 700; white-space: nowrap;
+        }
         .status-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .status-sold     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .status-dead     { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
         .status-sick     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
         .status-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
 
-        /* ── Row highlights ─────────────────────────────────────────────────── */
+        /* ── Row tints ──────────────────────────────────────────────── */
         tr.row-sold td { background: #fff8f8 !important; }
         tr.row-dead td { background: #f9fafb !important; opacity: 0.82; }
 
-        /* ── Birth Date Cell ─────────────────────────────────────────────────── */
+        /* ── Birth Date Cell ────────────────────────────────────────── */
         .bd-origin-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 0.62rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.05em; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px;
+            display: inline-flex; align-items: center; gap: 2px;
+            font-size: 10px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.04em; padding: 1px 6px; border-radius: 3px; margin-bottom: 3px;
         }
         .bd-origin-farm     { background: #e0f2fe; color: #0369a1; }
         .bd-origin-purchase { background: #fef9c3; color: #92400e; }
-        .bd-date-line { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-        .bd-date-text { font-size: 0.8rem; font-weight: 700; color: #1e293b; white-space: nowrap; }
-        .bd-none { font-size: 0.73rem; color: #94a3b8; font-style: italic; }
+        .bd-date-line { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+        .bd-date-text { font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap; }
+        .bd-none { font-size: 11px; color: #94a3b8; font-style: italic; }
 
-        /* ── Age Pill ────────────────────────────────────────────────────────── */
-        .age-pill { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: 0.66rem; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
+        /* ── Age Pill ───────────────────────────────────────────────── */
+        .age-pill {
+            display: inline-block; padding: 1px 6px; border-radius: 20px;
+            font-size: 10px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap;
+        }
         .age-pill.stage-days   { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .age-pill.stage-months { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .age-pill.stage-years  { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .age-pill.stage-senior { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
-        /* ── Breeding Cell ───────────────────────────────────────────────────── */
+        /* ── Breeding Cell ──────────────────────────────────────────── */
         .pregnant-badge {
-            display: inline-flex; align-items: center; gap: 4px;
+            display: inline-flex; align-items: center; gap: 3px;
             background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd;
-            border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap;
         }
         .not-pregnant-badge {
-            display: inline-flex; align-items: center; gap: 4px;
+            display: inline-flex; align-items: center; gap: 3px;
             background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0;
-            border-radius: 20px; padding: 2px 8px; font-size: 0.68rem; font-weight: 600; white-space: nowrap;
+            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; white-space: nowrap;
         }
         .breed-pill {
-            display: inline-flex; align-items: center; gap: 4px;
-            border-radius: 20px; padding: 2px 8px; font-size: 0.68rem; font-weight: 700; white-space: nowrap; margin-top: 4px;
+            display: inline-flex; align-items: center; gap: 3px;
+            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700;
+            white-space: nowrap; margin-top: 3px;
         }
         .breed-capable   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .breed-too-young { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .breed-unknown   { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.8; }
 
-        /* ── Health & Sale Cell ──────────────────────────────────────────────── */
-        .lc-row   { display: flex; align-items: flex-start; gap: 5px; font-size: 0.76rem; margin-bottom: 3px; line-height: 1.35; }
-        .lc-icon  { font-size: 0.82rem; flex-shrink: 0; margin-top: 1px; }
-        .lc-label { font-weight: 700; color: #64748b; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.04em; }
-        .lc-value { color: #1e293b; font-weight: 500; font-size: 0.78rem; }
-        .lc-price { color: #059669; font-weight: 700; font-size: 0.78rem; }
-        .lc-none  { color: #94a3b8; font-style: italic; font-size: 0.73rem; }
-        .lc-section-head { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 5px; border-radius: 4px; margin-bottom: 3px; display: inline-block; }
+        /* ── Health & Sale Cell ─────────────────────────────────────── */
+        .lc-row   { display: flex; align-items: flex-start; gap: 4px; font-size: 11px; margin-bottom: 2px; line-height: 1.3; }
+        .lc-icon  { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+        .lc-label { font-weight: 700; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+        .lc-value { color: #1e293b; font-weight: 500; font-size: 11px; }
+        .lc-price { color: #059669; font-weight: 700; font-size: 11px; }
+        .lc-none  { color: #94a3b8; font-style: italic; font-size: 11px; }
+        .lc-section-head {
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; display: inline-block;
+        }
         .lc-head-health { background: #fef9c3; color: #854d0e; }
         .lc-head-sale   { background: #d1fae5; color: #065f46; }
-        .divider-dashed { border-top: 1px dashed #e2e8f0; margin: 5px 0; }
+        .divider-dashed { border-top: 1px dashed #e2e8f0; margin: 4px 0; }
 
-        /* ── Tag Badges ──────────────────────────────────────────────────────── */
-        .born-badge { display: inline-flex; align-items: center; gap: 3px; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 20px; padding: 1px 7px; font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
-        .sold-badge { display: inline-flex; align-items: center; gap: 3px; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 20px; padding: 1px 7px; font-size: 0.65rem; font-weight: 700; white-space: nowrap; }
-        .tag-badges { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; }
+        /* ── Tag Badges ─────────────────────────────────────────────── */
+        .born-badge, .sold-badge {
+            display: inline-flex; align-items: center; gap: 2px;
+            border-radius: 20px; padding: 1px 7px; font-size: 10px; font-weight: 700; white-space: nowrap;
+        }
+        .born-badge { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .sold-badge { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .tag-badges { display: flex; gap: 3px; margin-top: 2px; flex-wrap: wrap; }
 
-        /* ── Actions ─────────────────────────────────────────────────────────── */
+        /* ── Bootstrap badge override (category, gender) ────────────── */
+        .badge { font-size: 10px; padding: 2px 7px; font-weight: 700; }
+
+        /* ── Tag number ─────────────────────────────────────────────── */
+        .tag-num { font-size: 13px; font-weight: 700; color: #0f172a; }
+
+        /* ── Actions ────────────────────────────────────────────────── */
         .action-btn {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 30px; height: 30px; border-radius: 7px;
-            border: 1.5px solid #e2e8f0; background: #f8f9fb;
-            color: #475569; text-decoration: none; font-size: 0.85rem;
+            width: 28px; height: 28px; border-radius: 5px;
+            border: 1px solid #e2e8f0; background: #f8f9fb;
+            color: #475569; text-decoration: none; font-size: 13px;
             transition: all 0.15s; cursor: pointer;
         }
-        .action-btn:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; }
-        .action-btn.view:hover   { background: #0ea5e9; border-color: #0ea5e9; color: white; }
-        .action-btn.edit:hover   { background: #f59e0b; border-color: #f59e0b; color: white; }
-        .action-btn.del:hover    { background: #ef4444; border-color: #ef4444; color: white; }
-        .actions-wrap { display: flex; gap: 4px; align-items: center; }
+        .action-btn:hover { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+        .action-btn.view:hover   { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
+        .action-btn.edit:hover   { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+        .action-btn.del:hover    { background: #ef4444; border-color: #ef4444; color: #fff; }
+        .actions-wrap { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
 
-        /* ── Checkbox ────────────────────────────────────────────────────────── */
-        .row-checkbox { width: 15px; height: 15px; cursor: pointer; accent-color: #1a5f7a; }
+        /* ── Checkbox ───────────────────────────────────────────────── */
+        .row-checkbox { width: 13px; height: 13px; cursor: pointer; accent-color: #1a5f7a; }
 
-        /* ── Pagination ──────────────────────────────────────────────────────── */
-        .pagination-wrap  { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding-top: 16px; border-top: 2px solid #f0f2f5; margin-top: 4px; }
-        .pagination-info  { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .showing-text     { font-size: 0.82rem; color: #64748b; }
-        .page-size-wrap   { display: flex; align-items: center; gap: 6px; }
-        .page-size-label  { font-size: 0.78rem; font-weight: 600; color: #64748b; }
-        .page-size-select { padding: 4px 10px; border: 1.5px solid #e2e8f0; border-radius: 7px; font-size: 0.8rem; cursor: pointer; background: #fafcff; }
-        .pagination-list  { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
-        .pg-btn { display: inline-flex; align-items: center; gap: 4px; padding: 5px 11px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; color: #475569; background: #f8f9fb; border: 1.5px solid #e2e8f0; text-decoration: none; transition: all 0.18s; cursor: pointer; }
-        .pg-btn:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; }
-        .pg-active .pg-btn { background: #1a5f7a; color: white; border-color: #1a5f7a; }
+        /* ── Location / Beneficiary small text ──────────────────────── */
+        .cell-sm { font-size: 12px; color: #334155; }
+        .cell-muted { font-size: 11px; color: #94a3b8; }
+
+        /* ── Value ──────────────────────────────────────────────────── */
+        .value-text { font-size: 12px; font-weight: 600; color: #0f172a; }
+        .value-none { font-size: 11px; color: #94a3b8; font-style: italic; }
+
+        /* ── Pagination ─────────────────────────────────────────────── */
+        .pagination-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1.5px solid #f0f2f5; margin-top: 4px; }
+        .pagination-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .showing-text    { font-size: 12px; color: #64748b; }
+        .page-size-wrap  { display: flex; align-items: center; gap: 5px; }
+        .page-size-label { font-size: 11px; font-weight: 600; color: #64748b; }
+        .page-size-select { padding: 4px 9px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 11px; cursor: pointer; background: #fafcff; }
+        .pagination-list { display: flex; align-items: center; gap: 3px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+        .pg-btn { display: inline-flex; align-items: center; gap: 3px; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; color: #475569; background: #f8f9fb; border: 1px solid #e2e8f0; text-decoration: none; transition: all 0.15s; cursor: pointer; }
+        .pg-btn:hover { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+        .pg-active .pg-btn { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
         li.disabled .pg-btn { opacity: 0.4; pointer-events: none; }
 
-        /* ── Empty state ─────────────────────────────────────────────────────── */
-        .empty-row td { padding: 40px 0; text-align: center; color: #94a3b8; }
-        .empty-icon { font-size: 2.5rem; color: #cbd5e0; margin-bottom: 8px; }
+        /* ── Empty state ────────────────────────────────────────────── */
+        .empty-row td { padding: 36px 0; text-align: center; color: #94a3b8; }
+        .empty-icon { font-size: 2rem; color: #cbd5e0; margin-bottom: 6px; }
 
-        /* ═══════════════════════════════════════════════════════════════════════
-           MOBILE  ≤ 767 px
-        ═══════════════════════════════════════════════════════════════════════ */
+        /* ══════════════════════════════════════════════════════════════
+           MOBILE ≤ 767px
+        ══════════════════════════════════════════════════════════════ */
         @media (max-width: 767.98px) {
-            body { padding: 10px; }
-            .list-card { padding: 14px 12px; border-radius: 10px; }
+            body { padding: 8px; font-size: 12px; }
+            .list-card { padding: 12px 10px; border-radius: 10px; }
 
             .page-header { flex-direction: column; align-items: stretch; }
             .header-actions { justify-content: stretch; }
@@ -321,24 +322,21 @@
             .filter-row { flex-direction: column; }
             .search-wrap { flex: none; width: 100%; }
 
-            .bulk-bar { flex-wrap: wrap; }
-
-            /* Card layout */
             #dataTable thead { display: none; }
             #dataTable tbody tr[data-status] {
                 display: block;
                 border: 1px solid #e2e8f0;
-                border-radius: 12px;
-                margin-bottom: 12px;
-                padding: 12px 10px 8px;
-                box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+                border-radius: 10px;
+                margin-bottom: 10px;
+                padding: 10px 8px 6px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             }
             #dataTable tbody tr.row-sold { background: #fff8f8 !important; }
             #dataTable tbody tr.row-dead { background: #f9fafb !important; opacity: 0.85; }
             #dataTable tbody td {
-                display: flex; align-items: flex-start; gap: 8px;
-                padding: 5px 0; border: none !important;
-                font-size: 0.83rem;
+                display: flex; align-items: flex-start; gap: 7px;
+                padding: 4px 0; border: none !important;
+                font-size: 11px;
                 border-bottom: 1px solid #f1f5f9 !important;
             }
             #dataTable tbody td:last-child { border-bottom: none !important; }
@@ -346,13 +344,11 @@
             #dataTable tbody td.col-num   { display: none; }
             #dataTable tbody td[data-label]::before {
                 content: attr(data-label);
-                font-weight: 700; font-size: 0.66rem; text-transform: uppercase;
+                font-weight: 700; font-size: 9px; text-transform: uppercase;
                 letter-spacing: 0.05em; color: #94a3b8;
-                min-width: 82px; flex-shrink: 0; padding-top: 2px;
+                min-width: 78px; flex-shrink: 0; padding-top: 2px;
             }
             #dataTable tbody td[data-label="Photo"]::before { display: none; }
-            .col-bd, .col-breed, .col-health { min-width: unset !important; }
-            .actions-wrap { flex-wrap: wrap; gap: 6px; }
             .pagination-wrap { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -361,40 +357,37 @@
 <div class="container-fluid px-0">
     <div class="list-card">
 
-        <!-- ── Header ─────────────────────────────────────────────────────── -->
+        <!-- Header -->
         <div class="page-header">
             <div>
                 <h1 class="page-title"><i class="bi bi-grid-fill text-success"></i> Livestock</h1>
-                <p class="page-sub">All registered livestock animals</p>
+                <p class="page-sub">All registered animals</p>
             </div>
             <div class="header-actions">
-                <!-- Deleted Animals Button -->
                 <a th:href="@{/livestock/deleted}" class="btn-deleted">
-                    <i class="bi bi-trash2"></i>
-                    Deleted
+                    <i class="bi bi-trash2"></i> Deleted
                     <span class="del-count" th:text="${totalDeleted != null ? totalDeleted : 0}">0</span>
                 </a>
-
                 <a href="/livestock/qr/eartags/print-all" class="btn-print-all" target="_blank">
                     <i class="bi bi-printer-fill"></i> Print All Ear Tags
                 </a>
                 <a th:href="@{/livestock/register}" class="btn-register">
-                    <i class="bi bi-plus-circle-fill"></i> Register Livestock
+                    <i class="bi bi-plus-circle-fill"></i> Register
                 </a>
             </div>
         </div>
 
-        <!-- ── Alerts ─────────────────────────────────────────────────────── -->
+        <!-- Alerts -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
+            <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${error}"></span>
+            <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${error}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ── Summary Strip ──────────────────────────────────────────────── -->
+        <!-- Summary Strip -->
         <div class="summary-strip">
             <span class="sum-pill all">Total <strong th:text="${totalItems}">0</strong></span>
             <span class="sum-pill active">Active <strong th:text="${totalActive}">0</strong></span>
@@ -406,21 +399,21 @@
             <span class="sum-pill abortions">Abortions <strong th:text="${totalAbortions}">0</strong></span>
         </div>
 
-        <!-- ── Bulk Action Bar ─────────────────────────────────────────────── -->
+        <!-- Bulk Bar -->
         <div class="bulk-bar" id="bulkBar">
-            <i class="bi bi-check2-square" style="color:white;font-size:1rem;"></i>
+            <i class="bi bi-check2-square" style="color:#fff;font-size:14px;"></i>
             <span class="bulk-bar-text">Selected:</span>
             <span class="bulk-bar-count" id="selectedCount">0</span>
             <button class="btn-bulk teal" onclick="printSelected()"><i class="bi bi-printer-fill"></i> Print Ear Tags</button>
-            <button class="btn-bulk teal" onclick="viewQRSelected()"><i class="bi bi-qr-code"></i> View QR Codes</button>
+            <button class="btn-bulk teal" onclick="viewQRSelected()"><i class="bi bi-qr-code"></i> QR Codes</button>
             <button class="btn-bulk clear" onclick="clearSelection()"><i class="bi bi-x-lg"></i> Clear</button>
         </div>
 
-        <!-- ── Search & Filters ───────────────────────────────────────────── -->
+        <!-- Search & Filters -->
         <div class="filter-row">
             <div class="search-wrap">
                 <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search" style="font-size:11px;"></i></span>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search tag, beneficiary, location…">
                 </div>
             </div>
@@ -436,7 +429,7 @@
             </div>
         </div>
 
-        <!-- ── Table ──────────────────────────────────────────────────────── -->
+        <!-- Table -->
         <div class="table-wrap">
             <table id="dataTable">
                 <thead>
@@ -475,15 +468,12 @@
                              data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false',
                              data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false'">
 
-                    <!-- Checkbox -->
                     <td class="col-check">
                         <input type="checkbox" class="row-checkbox animal-check" th:value="${item.id}" onchange="updateBulkBar()">
                     </td>
 
-                    <!-- # -->
                     <td class="col-num" data-label="#" th:text="${iterStat.count}"></td>
 
-                    <!-- Photo -->
                     <td class="col-photo" data-label="Photo">
                         <img th:if="${item.photo != null and !item.photo.isEmpty()}" th:src="${item.photo}" class="animal-photo" alt="">
                         <div th:unless="${item.photo != null and !item.photo.isEmpty()}" class="animal-photo-placeholder">
@@ -491,12 +481,11 @@
                         </div>
                     </td>
 
-                    <!-- Tag -->
                     <td class="col-tag" data-label="Tag #">
-                        <strong th:text="${item.tagNumber}"></strong>
+                        <span class="tag-num" th:text="${item.tagNumber}"></span>
                         <div class="tag-badges">
                             <span th:if="${birthMap != null and birthMap.containsKey(item.id)}" class="born-badge">
-                                <i class="bi bi-stars"></i> Born on Farm
+                                <i class="bi bi-stars"></i> Born
                             </span>
                             <span th:if="${item.status == 'SOLD'}" class="sold-badge">
                                 <i class="bi bi-cash-stack"></i> Sold
@@ -504,29 +493,25 @@
                         </div>
                     </td>
 
-                    <!-- Category -->
                     <td class="col-cat" data-label="Category">
-                        <span th:if="${item.livestockCategory != null}" class="badge bg-info text-dark" style="font-size:0.72rem;" th:text="${item.livestockCategory.name}"></span>
-                        <span th:unless="${item.livestockCategory != null}" class="text-muted" style="font-size:0.8rem;">N/A</span>
+                        <span th:if="${item.livestockCategory != null}" class="badge bg-info text-dark" th:text="${item.livestockCategory.name}"></span>
+                        <span th:unless="${item.livestockCategory != null}" class="cell-muted">N/A</span>
                     </td>
 
-                    <!-- Gender -->
                     <td class="col-gender" data-label="Gender">
-                        <span th:if="${item.gender == 'MALE'}"   class="badge bg-primary" style="font-size:0.72rem;">Male</span>
-                        <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger"  style="font-size:0.72rem;">Female</span>
-                        <span th:if="${item.gender == null}"     class="badge bg-secondary" style="font-size:0.72rem;">N/A</span>
+                        <span th:if="${item.gender == 'MALE'}"   class="badge bg-primary">Male</span>
+                        <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger">Female</span>
+                        <span th:if="${item.gender == null}"     class="badge bg-secondary">N/A</span>
                     </td>
 
-                    <!-- Breeding -->
                     <td class="col-breed" data-label="Breeding"
                         th:with="capable=${breedingCapableMap != null ? breedingCapableMap[item.id] : null}">
-                        <div th:if="${item.gender == 'FEMALE'}" class="mb-1">
-                            <span th:if="${item.isPregnant}" class="pregnant-badge"><i class="bi bi-heart-fill"></i> Pregnant</span>
+                        <div th:if="${item.gender == 'FEMALE'}" style="margin-bottom:2px;">
+                            <span th:if="${item.isPregnant}"   class="pregnant-badge"><i class="bi bi-heart-fill"></i> Pregnant</span>
                             <span th:unless="${item.isPregnant}" class="not-pregnant-badge"><i class="bi bi-dash-circle"></i> Not Pregnant</span>
                         </div>
                         <div th:if="${capable != null and capable}">
-                            <span class="breed-pill breed-capable"
-                                  th:title="${item.gender == 'FEMALE'} ? 'This female has reached the minimum breeding age and can conceive' : 'This male has reached the minimum breeding age and can sire offspring'">
+                            <span class="breed-pill breed-capable">
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span th:if="${item.gender == 'FEMALE'}">Can Conceive</span>
                                 <span th:if="${item.gender == 'MALE'}">Can Sire</span>
@@ -534,36 +519,29 @@
                             </span>
                         </div>
                         <div th:if="${capable != null and !capable}">
-                            <span class="breed-pill breed-too-young"
-                                  th:with="minAge=${item.livestockCategory != null ? item.livestockCategory.minBreedingAgeMonths : null}"
-                                  th:title="${minAge != null} ? 'Minimum breeding age is ' + minAge + ' months for ' + item.livestockCategory.name + 's.' : 'Not yet at minimum breeding age.'">
+                            <span class="breed-pill breed-too-young">
                                 <i class="bi bi-hourglass-split"></i> Too Young
                                 <small th:if="${item.livestockCategory != null and item.livestockCategory.minBreedingAgeMonths != null}"
-                                       style="opacity:0.8;font-size:0.62rem;">
-                                    (min <span th:text="${item.livestockCategory.minBreedingAgeMonths}"></span>mo)
+                                       style="opacity:0.75;">
+                                    (<span th:text="${item.livestockCategory.minBreedingAgeMonths}"></span>mo min)
                                 </small>
                             </span>
                         </div>
                         <div th:if="${capable == null}">
-                            <span class="breed-pill breed-unknown" title="Cannot determine: birth date or category minimum age not recorded.">
-                                <i class="bi bi-question-circle"></i> Unknown
-                            </span>
+                            <span class="breed-pill breed-unknown"><i class="bi bi-question-circle"></i> Unknown</span>
                         </div>
                     </td>
 
-                    <!-- Beneficiary -->
                     <td class="col-benef" data-label="Beneficiary">
-                        <small th:if="${item.beneficiary != null}"
-                               th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></small>
-                        <small th:unless="${item.beneficiary != null}" class="text-muted">N/A</small>
+                        <span th:if="${item.beneficiary != null}" class="cell-sm"
+                              th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></span>
+                        <span th:unless="${item.beneficiary != null}" class="cell-muted">N/A</span>
                     </td>
 
-                    <!-- Location -->
                     <td class="col-loc" data-label="Location">
-                        <small th:text="${item.location != null ? item.location.name : 'N/A'}"></small>
+                        <span class="cell-sm" th:text="${item.location != null ? item.location.name : 'N/A'}"></span>
                     </td>
 
-                    <!-- Status -->
                     <td class="col-status" data-label="Status">
                         <span th:if="${item.status == 'ACTIVE'}"   class="status-badge status-active">Active</span>
                         <span th:if="${item.status == 'SOLD'}"     class="status-badge status-sold">Sold</span>
@@ -572,17 +550,15 @@
                         <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
                     </td>
 
-                    <!-- Value -->
                     <td class="col-value" data-label="Value">
-                        <span th:if="${item.currentValue != null}" style="font-weight:600;font-size:0.8rem;"
+                        <span th:if="${item.currentValue != null}" class="value-text"
                               th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
-                        <span th:unless="${item.currentValue != null}" class="text-muted" style="font-size:0.78rem;">Not set</span>
+                        <span th:unless="${item.currentValue != null}" class="value-none">Not set</span>
                     </td>
 
-                    <!-- Birth Date -->
                     <td class="col-bd" data-label="Birth Date">
                         <div th:if="${birthMap != null and birthMap.containsKey(item.id)}">
-                            <div class="bd-origin-badge bd-origin-farm"><i class="bi bi-stars"></i> Born on Farm</div>
+                            <div class="bd-origin-badge bd-origin-farm"><i class="bi bi-stars"></i> Farm born</div>
                             <div th:if="${item.birthDate != null}" class="bd-date-line">
                                 <span class="bd-date-text" th:text="${#temporals.format(item.birthDate, 'dd MMM yyyy')}"></span>
                                 <span class="age-pill" th:attr="data-bd=${#temporals.format(item.birthDate, 'yyyy-MM-dd')}">…</span>
@@ -592,7 +568,7 @@
                                 <span class="age-pill" th:attr="data-bd=${#temporals.format(birthMap[item.id].birthDate, 'yyyy-MM-dd')}">…</span>
                             </div>
                             <div th:if="${item.birthDate == null and birthMap[item.id].birthDate == null}">
-                                <span class="bd-none">Date not recorded</span>
+                                <span class="bd-none">Not recorded</span>
                             </div>
                         </div>
                         <div th:unless="${birthMap != null and birthMap.containsKey(item.id)}">
@@ -602,12 +578,11 @@
                                 <span class="age-pill" th:attr="data-bd=${#temporals.format(item.birthDate, 'yyyy-MM-dd')}">…</span>
                             </div>
                             <div th:if="${item.birthDate == null}">
-                                <span class="bd-none">Birth date not recorded</span>
+                                <span class="bd-none">Not recorded</span>
                             </div>
                         </div>
                     </td>
 
-                    <!-- Health & Sale -->
                     <td class="col-health" data-label="Health &amp; Sale">
                         <div th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}">
                             <span class="lc-section-head lc-head-health">Health</span>
@@ -666,7 +641,6 @@
                         </div>
                     </td>
 
-                    <!-- Actions -->
                     <td class="col-actions" data-label="Actions">
                         <div class="actions-wrap">
                             <a th:href="@{/livestock/view/{id}(id=${item.id})}"         class="action-btn view"  title="View"><i class="bi bi-eye"></i></a>
@@ -685,12 +659,13 @@
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content border-0 shadow">
                                     <div class="modal-header border-0 pb-0">
-                                        <h5 class="modal-title fw-bold"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Confirm Delete</h5>
+                                        <h5 class="modal-title fw-bold" style="font-size:14px;">
+                                            <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Confirm Delete
+                                        </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <div class="modal-body">
-                                        Are you sure you want to delete <strong th:text="${item.tagNumber}"></strong>?
-                                        This action cannot be undone.
+                                    <div class="modal-body" style="font-size:13px;">
+                                        Delete <strong th:text="${item.tagNumber}"></strong>? This cannot be undone.
                                     </div>
                                     <div class="modal-footer border-0 pt-0">
                                         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -710,12 +685,12 @@
             </table>
         </div>
 
-        <!-- ── Pagination ──────────────────────────────────────────────────── -->
+        <!-- Pagination -->
         <div class="pagination-wrap" th:if="${totalPages > 1}">
             <div class="pagination-info">
                 <span class="showing-text">
                     Page <strong th:text="${currentPage + 1}"></strong> of <strong th:text="${totalPages}"></strong>
-                    &nbsp;·&nbsp; <strong th:text="${totalItems}"></strong> animals total
+                    &nbsp;·&nbsp; <strong th:text="${totalItems}"></strong> total
                 </span>
                 <div class="page-size-wrap">
                     <span class="page-size-label">Per page:</span>
@@ -745,39 +720,32 @@
             </ul>
         </div>
 
-    </div><!-- /.list-card -->
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ── Age Bracket Renderer ──────────────────────────────────────────────────
     (function renderAgeBrackets() {
         var today = new Date();
         today.setHours(0,0,0,0);
-
         document.querySelectorAll('.age-pill[data-bd]').forEach(function(el) {
             var raw = el.getAttribute('data-bd');
             if (!raw || !raw.trim()) return;
             var birth = new Date(raw);
             birth.setHours(0,0,0,0);
             if (isNaN(birth.getTime())) { el.textContent = '(?)'; return; }
-
             var diffDays = Math.floor((today - birth) / 86400000);
             var label, stage;
-
             if (diffDays < 0)        { label = '(future)';    stage = 'stage-days'; }
             else if (diffDays === 0) { label = '(today)';     stage = 'stage-days'; }
-            else if (diffDays < 30)  { label = '(' + diffDays + (diffDays === 1 ? ' day)' : ' days)'); stage = 'stage-days'; }
+            else if (diffDays < 30)  { label = '(' + diffDays + 'd)'; stage = 'stage-days'; }
             else if (diffDays < 365) {
                 var mo = Math.floor(diffDays / 30.4375);
-                label = '(' + mo + (mo === 1 ? ' month)' : ' months)');
-                stage = 'stage-months';
+                label = '(' + mo + 'mo)'; stage = 'stage-months';
             } else {
                 var yrs = Math.floor(diffDays / 365.25);
                 var rem = Math.floor((diffDays - yrs * 365.25) / 30.4375);
-                label = rem > 0
-                    ? '(' + yrs + (yrs === 1 ? ' yr ' : ' yrs ') + rem + ' mo)'
-                    : '(' + yrs + (yrs === 1 ? ' yr)' : ' yrs)');
+                label = rem > 0 ? '(' + yrs + 'y ' + rem + 'mo)' : '(' + yrs + 'y)';
                 stage = yrs >= 5 ? 'stage-senior' : 'stage-years';
             }
             el.textContent = label;
@@ -785,7 +753,6 @@
         });
     }());
 
-    // ── Utilities ─────────────────────────────────────────────────────────────
     function changePageSize(size) {
         window.location.href = '/livestock/list?page=0&size=' + size;
     }

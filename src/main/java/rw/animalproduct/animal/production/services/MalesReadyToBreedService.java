@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import rw.animalproduct.animal.production.dto.MaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.repository.MalesReadyToBreedRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,5 +59,17 @@ public class MalesReadyToBreedService {
         return getAllReadyToBreed().stream()
                 .filter(MaleReadyToBreedDTO::isNeverBred)
                 .count();
+    }
+
+    /**
+     * Returns an immutable empty list to be added to the Spring MVC model.
+     * The Thymeleaf template uses this as the default value in:
+     *   malesByCategory.getOrDefault(categoryName, emptyMaleList)
+     *
+     * This avoids using T(java.util.Collections).emptyList() directly in SpEL,
+     * which is blocked by Thymeleaf 3.1+ for security reasons.
+     */
+    public List<MaleReadyToBreedDTO> emptyList() {
+        return Collections.emptyList();
     }
 }

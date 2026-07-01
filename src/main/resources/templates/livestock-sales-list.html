@@ -11,96 +11,202 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #f8f9fa; padding: 20px; font-family: 'DM Sans', sans-serif; }
-        .page-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        /* ===== Base / compact typography ===== */
+        body {
+            background: #f8f9fa;
+            padding: 20px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem; /* ~14px, was browser default 16px */
+        }
+        .page-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .page-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; }
+        .page-card p.text-muted { font-size: 0.8rem; margin-bottom: 0; }
+
+        .form-label { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; }
+        .form-control, .form-select { font-size: 0.85rem; padding: 0.45rem 0.65rem; }
+        .btn { font-size: 0.8rem; }
+        .btn-sm { font-size: 0.75rem; }
+        small { font-size: 0.75rem; }
+
+        /* ===== Summary stats (new) ===== */
+        .summary-stats { margin-bottom: 20px; }
+        .stat-card {
+            background: #fff;
+            border: 1px solid #edf0f3;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 100%;
+        }
+        .stat-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; flex-shrink: 0;
+        }
+        .stat-icon.revenue   { background: #ecfdf5; color: #059669; }
+        .stat-icon.count     { background: #eff6ff; color: #2563eb; }
+        .stat-icon.month     { background: #fff7ed; color: #ea580c; }
+        .stat-icon.avg       { background: #f5f3ff; color: #7c3aed; }
+        .stat-value { font-size: 1.05rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
+        .stat-label {
+            font-size: 0.68rem; font-weight: 600; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+
+        /* ===== Add form ===== */
         .add-form-section {
             background: #fff8e1; border-left: 4px solid #ffc107;
-            border-radius: 10px; padding: 20px; margin-bottom: 25px;
+            border-radius: 10px; padding: 18px; margin-bottom: 22px;
         }
+        .add-form-section h5 { font-size: 0.95rem; font-weight: 700; }
+
         .buyer-card {
             background: #f0f9ff; border: 1.5px solid #bae6fd;
-            border-radius: 10px; padding: 16px 20px; margin-top: 16px;
+            border-radius: 10px; padding: 14px 18px; margin-top: 14px;
         }
         .buyer-card-title {
-            font-size: 0.82rem; font-weight: 700; color: #0369a1;
+            font-size: 0.75rem; font-weight: 700; color: #0369a1;
             text-transform: uppercase; letter-spacing: 0.05em;
-            display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 6px; margin-bottom: 10px;
         }
-        .buyer-cell { min-width: 180px; }
-        .buyer-row { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; line-height: 1.4; }
-        .buyer-icon { font-size: 0.75rem; flex-shrink: 0; color: #64748b; }
-        .buyer-none { color: #94a3b8; font-style: italic; font-size: 0.78rem; }
+        .buyer-cell { min-width: 170px; }
+        .buyer-row { display: flex; align-items: center; gap: 5px; font-size: 0.76rem; line-height: 1.4; }
+        .buyer-icon { font-size: 0.72rem; flex-shrink: 0; color: #64748b; }
+        .buyer-none { color: #94a3b8; font-style: italic; font-size: 0.74rem; }
 
-        /* Live Search Styles */
+        /* ===== Live search ===== */
         .buyer-search-container { position: relative; }
         .buyer-search-results {
             position: absolute; top: 100%; left: 0; right: 0;
             background: white; border: 1px solid #e2e8f0; border-radius: 8px;
-            max-height: 300px; overflow-y: auto; z-index: 1000;
+            max-height: 280px; overflow-y: auto; z-index: 1000;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none;
         }
         .buyer-search-results.show { display: block; }
         .buyer-search-item {
-            padding: 12px 16px; cursor: pointer;
+            padding: 10px 14px; cursor: pointer; font-size: 0.82rem;
             border-bottom: 1px solid #f1f5f9; transition: background 0.2s;
         }
         .buyer-search-item:hover { background: #f8fafc; }
         .buyer-search-item:last-child { border-bottom: none; }
-        .buyer-search-name { font-weight: 600; color: #1e293b; margin-bottom: 4px; }
-        .buyer-search-details { font-size: 0.85rem; color: #64748b; }
+        .buyer-search-name { font-weight: 600; color: #1e293b; margin-bottom: 3px; font-size: 0.84rem; }
+        .buyer-search-details { font-size: 0.76rem; color: #64748b; }
         .buyer-add-new {
             background: #ecfdf5; color: #059669;
             font-weight: 600; border-top: 2px solid #10b981;
         }
         .buyer-add-new:hover { background: #d1fae5; }
-        .loading-spinner { padding: 16px; text-align: center; color: #64748b; }
-        .no-results { padding: 16px; text-align: center; color: #94a3b8; font-style: italic; }
+        .loading-spinner { padding: 14px; text-align: center; color: #64748b; font-size: 0.8rem; }
+        .no-results { padding: 14px; text-align: center; color: #94a3b8; font-style: italic; font-size: 0.8rem; }
 
         #newBuyerFields { display: none; }
 
         .selected-buyer-display {
             display: none; background: #f0fdf4;
             border: 1px solid #86efac; border-radius: 6px;
-            padding: 10px 12px; margin-top: 8px;
+            padding: 8px 10px; margin-top: 8px;
         }
         .selected-buyer-display.show {
             display: flex; align-items: center; justify-content: space-between;
         }
-        .selected-buyer-info { font-size: 0.9rem; }
+        .selected-buyer-info { font-size: 0.82rem; }
         .selected-buyer-name { font-weight: 600; color: #166534; }
-        .selected-buyer-details { color: #15803d; font-size: 0.85rem; }
+        .selected-buyer-details { color: #15803d; font-size: 0.76rem; }
         .clear-buyer-btn {
             background: none; border: none; color: #dc2626;
             cursor: pointer; padding: 4px 8px; border-radius: 4px;
         }
         .clear-buyer-btn:hover { background: #fee2e2; }
+
+        /* ===== Table ===== */
+        .table { font-size: 0.82rem; }
+        .table thead th {
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+            color: #64748b; font-weight: 700; border-bottom-width: 1px;
+        }
+        .table td, .table th { padding: 0.55rem 0.65rem; vertical-align: middle; }
+        .badge { font-size: 0.7rem; font-weight: 600; }
     </style>
 </head>
 <body>
 <div class="container-fluid"><div class="page-card">
 
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h3><i class="bi bi-currency-dollar text-warning"></i> Livestock Sales</h3>
-            <p class="text-muted mb-0">Record and manage sale transactions</p>
+            <p class="text-muted">Record and manage sale transactions</p>
         </div>
-        <a href="/livestock/list" class="btn btn-secondary">
+        <a href="/livestock/list" class="btn btn-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Back to Livestock
         </a>
     </div>
 
     <!-- Alerts -->
-    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2">
         <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show py-2">
         <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- ══ Add Sale Form ══════════════════════════════════════════════ -->
+    <!-- -- Quick Summary (new) ------------------------------------------ -->
+    <!-- Computed directly from the 'sales' list already passed to this view,
+         so no controller change is required. If you'd rather compute these
+         server-side (recommended once the list grows large), move this logic
+         into the controller and pass plain model attributes instead. -->
+    <div class="row g-2 summary-stats"
+         th:with="totalCount=${sales.size()},
+                   totalRevenue=${sales.isEmpty() ? 0 : #aggregates.sum(sales.![salePrice ?: 0])},
+                   avgPrice=${sales.isEmpty() ? 0 : #aggregates.avg(sales.![salePrice ?: 0])},
+                   thisMonthCount=${sales.?[saleDate != null
+                                     and #temporals.month(saleDate) == #temporals.month(#temporals.createNow())
+                                     and #temporals.year(saleDate)  == #temporals.year(#temporals.createNow())].size()}">
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon count"><i class="bi bi-list-ol"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${totalCount}">0</div>
+                    <div class="stat-label">Total Sales</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon revenue"><i class="bi bi-cash-stack"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${#numbers.formatDecimal(totalRevenue, 1, 'COMMA', 0, 'POINT')}">0</div>
+                    <div class="stat-label">Total Revenue (RWF)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon month"><i class="bi bi-calendar-event"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${thisMonthCount}">0</div>
+                    <div class="stat-label">Sales This Month</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon avg"><i class="bi bi-graph-up"></i></div>
+                <div>
+                    <div class="stat-value" th:text="${#numbers.formatDecimal(avgPrice, 1, 'COMMA', 0, 'POINT')}">0</div>
+                    <div class="stat-label">Avg. Price (RWF)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- -- End Quick Summary --------------------------------------------- -->
+
+    <!-- -- Add Sale Form ---------------------------------------------- -->
     <div class="add-form-section">
         <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Sale</h5>
         <form th:action="@{/livestock/sales/new}" th:object="${sale}" method="post" id="saleForm">
@@ -111,7 +217,7 @@
             <!-- Row 1: Animal, Date, Price, Location, Reason -->
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Animal (Tag) *</label>
+                    <label class="form-label">Animal (Tag) *</label>
                     <select class="form-select" th:field="*{livestockIdValue}" required>
                         <option value="">Select animal...</option>
                         <option th:each="ls : ${livestockList}"
@@ -121,19 +227,19 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-semibold">Sale Date *</label>
+                    <label class="form-label">Sale Date *</label>
                     <input type="date" class="form-control" th:field="*{saleDate}" required>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-semibold">Sale Price (RWF)</label>
+                    <label class="form-label">Sale Price (RWF)</label>
                     <input type="number" class="form-control" th:field="*{salePrice}" min="0" step="0.01" placeholder="0.00">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-semibold">Sale Location</label>
+                    <label class="form-label">Sale Location</label>
                     <input type="text" class="form-control" th:field="*{saleLocation}" placeholder="Location...">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold">Reason</label>
+                    <label class="form-label">Reason</label>
                     <select class="form-select" th:field="*{saleReason}">
                         <option value="">Select reason...</option>
                         <option value="COMMERCIAL">Commercial</option>
@@ -152,7 +258,7 @@
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Search Buyer</label>
+                        <label class="form-label">Search Buyer</label>
                         <div class="buyer-search-container">
                             <input type="text"
                                    class="form-control"
@@ -183,22 +289,22 @@
                 <!-- Add New Buyer Fields (hidden initially) -->
                 <div id="newBuyerFields" class="mt-3">
                     <hr class="my-3">
-                    <h6 class="text-success mb-3"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
+                    <h6 class="text-success mb-3" style="font-size:0.85rem;"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Name *</label>
+                            <label class="form-label">Name *</label>
                             <input type="text" class="form-control" id="newBuyerName" placeholder="Buyer name">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Phone *</label>
+                            <label class="form-label">Phone *</label>
                             <input type="tel" class="form-control" id="newBuyerPhone" placeholder="Phone number">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">Address</label>
+                            <label class="form-label">Address</label>
                             <input type="text" class="form-control" id="newBuyerAddress" placeholder="Address">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold">National ID</label>
+                            <label class="form-label">National ID</label>
                             <input type="text" class="form-control" id="newBuyerNationalId"
                                    placeholder="16 digits" maxlength="16">
                         </div>
@@ -223,9 +329,9 @@
             </div>
         </form>
     </div>
-    <!-- ══ End Add Sale Form ══════════════════════════════════════════ -->
+    <!-- -- End Add Sale Form ------------------------------------------ -->
 
-    <!-- ══ Sales Table ════════════════════════════════════════════════ -->
+    <!-- -- Sales Table ------------------------------------------------ -->
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
@@ -298,19 +404,19 @@
                     <div class="modal fade" th:id="'del' + ${s.id}" tabindex="-1">
                         <div class="modal-dialog"><div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Confirm Delete</h5>
+                                <h5 class="modal-title" style="font-size:1rem;">Confirm Delete</h5>
                                 <button class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body" style="font-size:0.85rem;">
                                 Delete sale record for
                                 <strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'this animal'}"></strong>?
                                 <br><small class="text-danger">The animal's status will be restored to ACTIVE.</small>
                             </div>
                             <div class="modal-footer">
-                                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                                 <form th:action="@{/livestock/sales/delete/{id}(id=${s.id})}" method="post" class="d-inline">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button class="btn btn-danger">Delete</button>
+                                    <button class="btn btn-danger btn-sm">Delete</button>
                                 </form>
                             </div>
                         </div></div>
@@ -326,7 +432,7 @@
             </tbody>
         </table>
     </div>
-    <!-- ══ End Sales Table ════════════════════════════════════════════ -->
+    <!-- -- End Sales Table -------------------------------------------- -->
 
 </div></div>
 
@@ -335,7 +441,7 @@
     (function () {
         'use strict';
 
-        // ── Read CSRF token from meta tags (set by Thymeleaf/Spring Security) ──
+        // -- Read CSRF token from meta tags (set by Thymeleaf/Spring Security) --
         const csrfToken  = document.querySelector('meta[name="_csrf"]')         ? document.querySelector('meta[name="_csrf"]').getAttribute('content')         : null;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')  ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content')  : null;
 
@@ -352,7 +458,7 @@
 
         let searchTimeout;
 
-        // ── Live search ──────────────────────────────────────────────────────────
+        // -- Live search ----------------------------------------------------------
         buyerSearchInput.addEventListener('input', function () {
             const query = this.value.trim();
             clearTimeout(searchTimeout);
@@ -438,7 +544,7 @@
                 .forEach(id => document.getElementById(id).value = '');
         });
 
-        // ── Save new buyer via AJAX (with CSRF token) ────────────────────────────
+        // -- Save new buyer via AJAX (with CSRF token) ----------------------------
         saveNewBuyerBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -493,7 +599,7 @@
             });
         });
 
-        // ── Close dropdown when clicking outside ────────────────────────────────
+        // -- Close dropdown when clicking outside --------------------------------
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.buyer-search-container')) {
                 buyerSearchResults.classList.remove('show');

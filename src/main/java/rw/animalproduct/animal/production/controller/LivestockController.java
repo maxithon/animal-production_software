@@ -225,7 +225,7 @@ public class LivestockController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // VIEW, EDIT, REGISTER PAGES
+    // VIEW (single-animal detail page)
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/view/{id}")
@@ -234,13 +234,85 @@ public class LivestockController {
         if (livestockOpt.isEmpty()) {
             return "redirect:/livestock/list?error=notfound";
         }
-        model.addAttribute("livestock", livestockOpt.get());
+        Livestock livestock = livestockOpt.get();
+        model.addAttribute("livestock", livestock);
 
-        Map<String, Long> lifecycleStats = new HashMap<>();
-        model.addAttribute("lifecycleStats", lifecycleStats);
+        LocalDate today = LocalDate.now();
+
+        // ── Age breakdown ──────────────────────────────────────────────────
+        if (livestock.getBirthDate() != null) {
+            long ageDays    = ChronoUnit.DAYS.between(livestock.getBirthDate(), today);
+            long ageMonths  = ChronoUnit.MONTHS.between(livestock.getBirthDate(), today);
+            model.addAttribute("ageDays", ageDays);
+            model.addAttribute("ageMonths", ageMonths);
+            model.addAttribute("ageYears", ageMonths / 12);
+            model.addAttribute("ageRemainderMonths", ageMonths % 12);
+        }
+
+        // ── Breeding capability ────────────────────────────────────────────
+        Boolean breedingCapable = null;
+        if (livestock.getBirthDate() != null && livestock.getLivestockCategory() != null
+                && livestock.getLivestockCategory().getMinBreedingAgeMonths() != null) {
+            long ageMonths = ChronoUnit.MONTHS.between(livestock.getBirthDate(), today);
+            breedingCapable = ageMonths >= livestock.getLivestockCategory().getMinBreedingAgeMonths();
+        }
+        model.addAttribute("breedingCapable", breedingCapable);
+
+        // ── Lifecycle stage (for this one animal) ──────────────────────────
+        model.addAttribute("lifecycleStage", resolveLifecycleStage(livestock, today));
+
+        // ── Lineage: children born from this animal ────────────────────────
+        model.addAttribute("children", livestockRepository.findByMotherId(id));
+
+        // ── Birth record, if this animal was born on the farm ───────────────
+        birthService.getByLivestockId(id).stream()
+                .findFirst()
+                .ifPresent(birth -> model.addAttribute("birthRecord", birth));
+
+        // ── Location breadcrumb (Province > District > Sector > Cell > Village) ──
+        if (livestock.getLocation() != null) {
+            model.addAttribute("locationBreadcrumb", buildLocationBreadcrumb(livestock.getLocation()));
+        } else {
+            model.addAttribute("locationBreadcrumb", new ArrayList<Location>());
+        }
 
         return "livestock-view";
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LIFECYCLE STAGE HELPER
+    // Same staging logic implied by the lifecycle badges used elsewhere in the
+    // app (NEWBORN / YOUNG / READY_TO_BREED / BREEDING_MALE / PREGNANT / MATURE),
+    // computed here for a single animal rather than the whole herd.
+    // ─────────────────────────────────────────────────────────────────────────
+    private String resolveLifecycleStage(Livestock l, LocalDate today) {
+        if (Boolean.TRUE.equals(l.getIsPregnant())) {
+            return "PREGNANT";
+        }
+        if (l.getBirthDate() == null) {
+            return "UNKNOWN";
+        }
+
+        long ageDays   = ChronoUnit.DAYS.between(l.getBirthDate(), today);
+        long ageMonths = ChronoUnit.MONTHS.between(l.getBirthDate(), today);
+        Integer minBreedAge = l.getLivestockCategory() != null
+                ? l.getLivestockCategory().getMinBreedingAgeMonths() : null;
+
+        if (ageDays <= 30) return "NEWBORN";
+        if (ageMonths < 12) return "YOUNG";
+
+        if ("MALE".equalsIgnoreCase(l.getGender())) {
+            return (minBreedAge != null && ageMonths >= minBreedAge) ? "BREEDING_MALE" : "MATURE";
+        }
+        if ("FEMALE".equalsIgnoreCase(l.getGender())) {
+            return (minBreedAge != null && ageMonths >= minBreedAge) ? "READY_TO_BREED" : "MATURE";
+        }
+        return "MATURE";
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EDIT, REGISTER PAGES
+    // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model) {
