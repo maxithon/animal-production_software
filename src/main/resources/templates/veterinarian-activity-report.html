@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Veterinarian Activity Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { background:#f0f2f5; font-family:'DM Sans',sans-serif; padding:0; margin:0; }
+        .report-banner { background:linear-gradient(135deg,#0f172a 0%,#0e7490 60%,#06b6d4 100%); padding:32px 40px 28px; color:white; }
+        .report-banner h2 { font-family:'Syne',sans-serif; font-size:1.7rem; font-weight:800; margin:0 0 4px; }
+        .print-btn { background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.35); color:white; border-radius:8px; padding:6px 16px; font-size:.83rem; font-weight:600; cursor:pointer; text-decoration:none; }
+        .print-btn:hover { background:rgba(255,255,255,.25); color:white; }
+        .report-body { padding:28px 32px; max-width:1300px; margin:0 auto; }
+        .filter-card { background:white; border-radius:12px; padding:18px 24px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:24px; }
+        .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:24px; }
+        .kpi { background:white; border-radius:12px; padding:18px 20px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-top:4px solid #0e7490; }
+        .kpi .kpi-num { font-family:'Syne',sans-serif; font-size:1.9rem; font-weight:800; color:#0e7490; }
+        .kpi .kpi-lbl { font-size:.7rem; font-weight:600; color:#64748b; margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+        .vet-card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); padding:18px 20px; margin-bottom:14px; }
+        .vet-name { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; }
+        .vet-badge-active { background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; }
+        .vet-badge-inactive { background:#f1f5f9; color:#64748b; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; }
+        .stat-pill { text-align:center; padding:8px 4px; }
+        .stat-pill .n { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; }
+        .stat-pill .l { font-size:.65rem; color:#64748b; text-transform:uppercase; letter-spacing:.04em; }
+        @media print { .no-print{display:none!important;} body{background:white;} }
+    </style>
+</head>
+<body>
+
+<div class="report-banner">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3" style="max-width:1300px;margin:0 auto;">
+        <div>
+            <h2><i class="bi bi-person-badge-fill me-2"></i>Veterinarian Activity Report</h2>
+            <div class="sub" style="opacity:.8;font-size:.88rem;">
+                Caseload &amp; effectiveness · Period:
+                <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong> to
+                <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/livestock" class="print-btn no-print"><i class="bi bi-arrow-left me-1"></i> Back</a>
+            <button class="print-btn no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+        </div>
+    </div>
+</div>
+
+<div class="report-body">
+
+    <div class="filter-card no-print">
+        <form method="get" action="/livestock/veterinarian-activity-report" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">From</label>
+                <input type="date" name="from" class="form-control form-control-sm" th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">To</label>
+                <input type="date" name="to" class="form-control form-control-sm" th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm w-100 text-white fw-bold" style="background:#0e7490;" type="submit">
+                    <i class="bi bi-funnel me-1"></i>Apply
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-num" th:text="${report.activeVets}">0</div><div class="kpi-lbl">Active Veterinarians</div></div>
+        <div class="kpi"><div class="kpi-num" th:text="${report.totalTreatmentsInPeriod}">0</div><div class="kpi-lbl">Treatments (Period)</div></div>
+        <div class="kpi"><div class="kpi-num" th:text="${report.totalSickCasesInPeriod}">0</div><div class="kpi-lbl">Sick Cases (Period)</div></div>
+    </div>
+
+    <div th:each="v : ${report.rows}" class="vet-card">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+            <div>
+                <div class="vet-name" th:text="${v.fullName}">Dr. Name</div>
+                <small class="text-muted">
+                    <span th:if="${v.licenseNumber}" th:text="${v.licenseNumber}">LIC</span>
+                    <span th:if="${v.clinicName}"> · <span th:text="${v.clinicName}">Clinic</span></span>
+                </small>
+            </div>
+            <span th:if="${v.active}" class="vet-badge-active">Active</span>
+            <span th:unless="${v.active}" class="vet-badge-inactive">Inactive</span>
+        </div>
+        <div class="row g-2">
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#0e7490;" th:text="${v.treatmentsHandled}">0</div>
+                <div class="l">Treatments</div>
+            </div>
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#7c3aed;"
+                     th:text="${#numbers.formatDecimal(v.treatmentRevenueHandled,1,'COMMA',0,'POINT')}">0</div>
+                <div class="l">RWF Handled</div>
+            </div>
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#f59e0b;" th:text="${v.sickCasesAttended}">0</div>
+                <div class="l">Sick Cases</div>
+            </div>
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#059669;"
+                     th:text="${#numbers.formatDecimal(v.recoveryRatePercent,1,'POINT',1,'POINT')} + '%'">0%</div>
+                <div class="l">Recovery Rate</div>
+            </div>
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#db2777;" th:text="${v.breedingsAssisted}">0</div>
+                <div class="l">Breedings</div>
+            </div>
+            <div class="col-6 col-md-2 stat-pill">
+                <div class="n" style="color:#dc2626;" th:text="${v.abortionsAttended}">0</div>
+                <div class="l">Abortions</div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${report.rows.isEmpty()}" class="text-center text-muted py-5">
+        No veterinarians registered.
+    </div>
+
+</div>
+</body>
+</html>

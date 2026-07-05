@@ -3,34 +3,52 @@ package rw.animalproduct.animal.production.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.LivestockOffspring;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
-@Repository
 public interface LivestockOffspringRepository extends JpaRepository<LivestockOffspring, UUID> {
 
-    // Find by birth ID (using the birthEvent field)
-    List<LivestockOffspring> findByBirthEventId(UUID birthId);
+    /**
+     * Find all offspring for a specific birth event
+     */
+    List<LivestockOffspring> findByBirthEventId(UUID birthEventId);
 
-    // Alternative method name if you prefer
-    default List<LivestockOffspring> findByBirthId(UUID birthId) {
-        return findByBirthEventId(birthId);
-    }
+    /**
+     * Find all offspring for a specific birth event (non-deleted only)
+     */
+    @Query("SELECT o FROM LivestockOffspring o " +
+            "WHERE o.birthEvent.id = :birthEventId " +
+            "AND o.isDeleted = false")
+    List<LivestockOffspring> findByBirthEventIdAndIsDeletedFalse(@Param("birthEventId") UUID birthEventId);
 
-    // Find by child livestock ID
-    Optional<LivestockOffspring> findByChildLivestockId(UUID childLivestockId);
+    /**
+     * Find all offspring for a specific child livestock
+     */
+    @Query("SELECT o FROM LivestockOffspring o " +
+            "WHERE o.childLivestock.id = :childLivestockId " +
+            "AND o.isDeleted = false")
+    List<LivestockOffspring> findByChildLivestockIdAndIsDeletedFalse(@Param("childLivestockId") UUID childLivestockId);
 
-    // Find all offspring for a specific mother (through births)
-    @Query("SELECT o FROM LivestockOffspring o WHERE o.birthEvent.livestockId = :motherId")
-    List<LivestockOffspring> findByMotherId(@Param("motherId") UUID motherId);
+    /**
+     * Count live offspring for a birth event
+     */
+    @Query("SELECT COUNT(o) FROM LivestockOffspring o " +
+            "WHERE o.birthEvent.id = :birthEventId " +
+            "AND o.isDeleted = false " +
+            "AND o.isAlive = true")
+    long countLiveOffspringByBirthEventId(@Param("birthEventId") UUID birthEventId);
 
-    // Check if a child is linked to any birth
-    boolean existsByChildLivestockId(UUID childLivestockId);
-
-    // Delete by child livestock ID
-    void deleteByChildLivestockId(UUID childLivestockId);
+    /**
+     * Count offspring by gender for a birth event
+     * This gets gender from the child livestock
+     */
+    @Query("SELECT COUNT(o) FROM LivestockOffspring o " +
+            "JOIN o.childLivestock l " +
+            "WHERE o.birthEvent.id = :birthEventId " +
+            "AND o.isDeleted = false " +
+            "AND l.gender = :gender")
+    long countOffspringByGender(@Param("birthEventId") UUID birthEventId,
+                                @Param("gender") String gender);
 }

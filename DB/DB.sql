@@ -160,3 +160,39 @@ CREATE TABLE system_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (performed_by) REFERENCES user(id)
 );
+
+13.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- FAO-STANDARD LIVESTOCK VALUATION HISTORY
+-- Purpose: replace the single, directly-editable `current_value` column with
+-- an append-only valuation ledger. Every value change (market revaluation,
+-- growth adjustment, appraisal, sale, manual correction) becomes a new row.
+-- `livestock.current_value` remains in the schema as a read-only cache of
+-- the most recent valuation (kept in sync by the service layer only).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+CREATE TABLE livestock_valuation_history (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    livestock_id        UUID NOT NULL REFERENCES livestock(id) ON DELETE CASCADE,
+    valuation_date      DATE NOT NULL,
+    value               NUMERIC(12,2) NOT NULL,
+    valuation_method    VARCHAR(30) NOT NULL,   -- INITIAL, MARKET_REVALUATION, GROWTH_ADJUSTMENT, APPRAISAL, SALE_PRICE, MANUAL_ADJUSTMENT
+    notes               VARCHAR(500),
+    recorded_by         VARCHAR(100),
+    created_at          TIMESTAMP NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_valuation_livestock_id ON livestock_valuation_history(livestock_id);
+CREATE INDEX idx_valuation_date ON livestock_valuation_history(livestock_id, valuation_date DESC);
+
+-- ── Backfill: turn every existing current_value into an INITIAL valuation row ──
+INSERT INTO livestock_valuation_history (livestock_id, valuation_date, value, valuation_method, notes, recorded_by)
+SELECT id,
+       COALESCE(date_received, birth_date, created_at::date, CURRENT_DATE),
+       current_value,
+       'INITIAL',
+       'Backfilled from legacy current_value column during migration',
+       'system'
+FROM livestock
+WHERE current_value IS NOT NULL
+  AND (is_deleted = false OR is_deleted IS NULL);

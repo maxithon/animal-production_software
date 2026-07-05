@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Distribution Report</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --fao-primary: #2C6B2F;
+            --fao-primary-light: #4A8C4D;
+            --fao-primary-dark: #1A4A1C;
+            --fao-secondary: #C4963C;
+            --fao-accent: #E84D39;
+            --fao-success: #28A745;
+            --fao-warning: #FFC107;
+            --fao-danger: #DC3545;
+            --fao-info: #17A2B8;
+            --fao-gray-50: #F8F9FA;
+            --fao-gray-100: #F1F3F5;
+            --fao-gray-200: #E9ECEF;
+            --fao-gray-300: #DEE2E6;
+            --fao-gray-400: #CED4DA;
+            --fao-gray-500: #ADB5BD;
+            --fao-gray-600: #6C757D;
+            --fao-gray-700: #495057;
+            --fao-gray-800: #343A40;
+            --fao-gray-900: #212529;
+            --fao-shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --fao-shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --fao-shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --fao-radius: 12px;
+            --fao-radius-sm: 6px;
+            --fao-transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--fao-gray-50);
+            color: var(--fao-gray-900);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Header ── */
+        .fao-header {
+            background: linear-gradient(135deg, var(--fao-primary-dark) 0%, var(--fao-primary) 50%, var(--fao-primary-light) 100%);
+            padding: 16px 24px;
+            position: sticky; top: 0; z-index: 1000;
+            border-bottom: 4px solid var(--fao-secondary);
+            box-shadow: var(--fao-shadow-md);
+        }
+        .fao-header-content { max-width:1440px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+        .fao-header-brand { display:flex; align-items:center; gap:12px; }
+        .fao-logo { width:40px; height:40px; background:rgba(255,255,255,.15); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; color:white; border:2px solid rgba(255,255,255,.3); }
+        .fao-header-title { color:white; font-weight:700; font-size:1.1rem; letter-spacing:-.3px; margin:0; }
+        .fao-header-title small { display:block; font-weight:400; font-size:.7rem; opacity:.75; letter-spacing:.3px; }
+        .fao-header-actions { display:flex; gap:8px; align-items:center; }
+        .fao-btn { padding:6px 16px; border:none; border-radius:var(--fao-radius-sm); font-family:'Inter',sans-serif; font-weight:600; font-size:.75rem; transition:var(--fao-transition); cursor:pointer; display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
+        .fao-btn-outline-light { background:rgba(255,255,255,.1); color:white; border:1.5px solid rgba(255,255,255,.25); }
+        .fao-btn-outline-light:hover { background:rgba(255,255,255,.2); color:white; transform:translateY(-1px); }
+
+        /* ── Body ── */
+        .fao-report-body { max-width:1440px; margin:0 auto; padding:16px 20px 40px; }
+
+        /* ── KPI Cards ── */
+        .fao-kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:12px; }
+        .fao-kpi-card { background:white; border-radius:var(--fao-radius); padding:14px 18px; box-shadow:var(--fao-shadow-sm); border-left:4px solid var(--fao-primary); transition:var(--fao-transition); }
+        .fao-kpi-card:hover { transform:translateY(-2px); box-shadow:var(--fao-shadow-md); }
+        .fao-kpi-value { font-size:1.5rem; font-weight:800; color:var(--fao-gray-900); letter-spacing:-.5px; line-height:1.2; }
+        .fao-kpi-label { font-size:.6rem; font-weight:600; color:var(--fao-gray-600); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+        .fao-kpi-card.health { border-left-color:var(--fao-success); }
+        .fao-kpi-card.sick   { border-left-color:var(--fao-danger); }
+        .fao-kpi-card.value  { border-left-color:var(--fao-secondary); }
+        .fao-kpi-card.locations { border-left-color:var(--fao-info); }
+
+        /* ── Category breakdown bar ── */
+        .fao-category-summary {
+            background: white;
+            border-radius: var(--fao-radius);
+            padding: 14px 18px;
+            margin-bottom: 14px;
+            box-shadow: var(--fao-shadow-sm);
+        }
+        .fao-category-summary-title {
+            font-size: .65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            color: var(--fao-gray-600);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .fao-category-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .fao-cat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: .72rem;
+            font-weight: 700;
+            background: var(--fao-gray-100);
+            color: var(--fao-gray-800);
+            border: 1.5px solid var(--fao-gray-200);
+            transition: var(--fao-transition);
+        }
+        .fao-cat-pill:hover { transform:translateY(-1px); box-shadow:var(--fao-shadow-sm); }
+        .fao-cat-pill .cat-count {
+            background: var(--fao-primary);
+            color: white;
+            border-radius: 20px;
+            padding: 1px 8px;
+            font-size: .65rem;
+            font-weight: 800;
+            min-width: 28px;
+            text-align: center;
+        }
+        /* Rotate colors per category index */
+        .fao-cat-pill:nth-child(1) .cat-count { background: #2C6B2F; }
+        .fao-cat-pill:nth-child(2) .cat-count { background: #C4963C; }
+        .fao-cat-pill:nth-child(3) .cat-count { background: #17A2B8; }
+        .fao-cat-pill:nth-child(4) .cat-count { background: #9C27B0; }
+        .fao-cat-pill:nth-child(5) .cat-count { background: #E84D39; }
+        .fao-cat-pill:nth-child(6) .cat-count { background: #FF5722; }
+        .fao-cat-pill:nth-child(n+7) .cat-count { background: var(--fao-gray-700); }
+
+        /* Also decorate the total KPI card with small category pills */
+        .fao-kpi-cats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .fao-kpi-cat-mini {
+            font-size: .55rem;
+            font-weight: 700;
+            padding: 1px 7px;
+            border-radius: 10px;
+            background: var(--fao-gray-100);
+            color: var(--fao-gray-700);
+            border: 1px solid var(--fao-gray-200);
+            white-space: nowrap;
+        }
+
+        /* ── Controls Bar ── */
+        .fao-controls-bar { background:white; border-radius:var(--fao-radius); padding:12px 16px; margin-bottom:14px; box-shadow:var(--fao-shadow-sm); display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; }
+        .fao-search { flex:1; min-width:200px; position:relative; }
+        .fao-search input { width:100%; padding:8px 12px 8px 36px; border:2px solid var(--fao-gray-200); border-radius:var(--fao-radius-sm); font-family:'Inter',sans-serif; font-size:.8rem; transition:var(--fao-transition); background:var(--fao-gray-50); }
+        .fao-search input:focus { outline:none; border-color:var(--fao-primary); background:white; box-shadow:0 0 0 4px rgba(44,107,47,.1); }
+        .fao-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--fao-gray-500); }
+        .fao-controls-group { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+        .fao-control-btn { padding:6px 12px; border:2px solid var(--fao-gray-200); background:white; border-radius:var(--fao-radius-sm); font-family:'Inter',sans-serif; font-size:.7rem; font-weight:600; cursor:pointer; transition:var(--fao-transition); color:var(--fao-gray-700); }
+        .fao-control-btn:hover { border-color:var(--fao-primary); color:var(--fao-primary); }
+        .fao-control-btn.active { background:var(--fao-primary); color:white; border-color:var(--fao-primary); }
+        .fao-pagination-info { font-size:.75rem; color:var(--fao-gray-600); font-weight:500; white-space:nowrap; }
+
+        /* ── Sort select ── */
+        .fao-sort-select {
+            padding: 6px 10px;
+            border: 2px solid var(--fao-gray-200);
+            border-radius: var(--fao-radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: .72rem;
+            font-weight: 600;
+            color: var(--fao-gray-700);
+            background: white;
+            cursor: pointer;
+            transition: var(--fao-transition);
+        }
+        .fao-sort-select:focus { outline:none; border-color:var(--fao-primary); }
+
+        /* ── Location Cards ── */
+        .fao-location-card { background:white; border-radius:var(--fao-radius); padding:16px 20px; margin-bottom:10px; box-shadow:var(--fao-shadow-sm); border:1px solid transparent; transition:var(--fao-transition); position:relative; overflow:hidden; }
+        .fao-location-card::before { content:''; position:absolute; top:0; left:0; width:4px; height:100%; background:var(--fao-primary); opacity:.3; transition:var(--fao-transition); }
+        .fao-location-card:hover { border-color:var(--fao-gray-300); box-shadow:var(--fao-shadow-md); transform:translateX(4px); }
+        .fao-location-card:hover::before { opacity:1; }
+
+        .fao-location-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+        .fao-location-name { font-weight:700; font-size:.95rem; color:var(--fao-gray-900); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .fao-location-badge { font-size:.55rem; font-weight:600; padding:2px 10px; border-radius:20px; background:var(--fao-gray-200); color:var(--fao-gray-700); text-transform:uppercase; letter-spacing:.3px; }
+        .fao-location-code { font-size:.6rem; color:var(--fao-gray-500); font-weight:500; }
+
+        /* ── Full location path (Province › District › Sector › Cell › Village) ── */
+        .fao-location-path {
+            font-size: .68rem;
+            color: var(--fao-gray-600);
+            font-weight: 500;
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .fao-path-crumb {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .fao-path-crumb .level {
+            font-size: .52rem;
+            font-weight: 700;
+            color: var(--fao-gray-400);
+            text-transform: uppercase;
+        }
+        .fao-path-crumb .val {
+            font-weight: 600;
+            color: var(--fao-primary-dark);
+        }
+        .fao-path-sep {
+            color: var(--fao-gray-400);
+            font-size: .7rem;
+        }
+
+        .fao-productivity-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 12px; border-radius:20px; font-size:.6rem; font-weight:700; }
+        .fao-productivity-badge.high { background:#d4edda; color:#155724; }
+        .fao-productivity-badge.medium { background:#fff3cd; color:#856404; }
+        .fao-productivity-badge.low { background:#f8d7da; color:#721c24; }
+
+        .fao-stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); gap:6px; margin-top:8px; }
+        .fao-stat-item { text-align:center; padding:6px 4px; border-radius:var(--fao-radius-sm); background:var(--fao-gray-50); transition:var(--fao-transition); }
+        .fao-stat-item:hover { background:var(--fao-gray-100); }
+        .fao-stat-value { font-weight:800; font-size:.92rem; display:block; line-height:1.2; }
+        .fao-stat-label { font-size:.52rem; color:var(--fao-gray-600); text-transform:uppercase; letter-spacing:.3px; font-weight:600; }
+        .fao-stat-value.active { color:var(--fao-success); }
+        .fao-stat-value.sick { color:var(--fao-danger); }
+        .fao-stat-value.sold { color:var(--fao-secondary); }
+        .fao-stat-value.dead { color:var(--fao-gray-600); }
+
+        .fao-category-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+        .fao-category-chip { font-size:.6rem; font-weight:600; padding:2px 10px; border-radius:20px; background:#e8f5e9; color:#1b5e20; border:1px solid #c8e6c9; display:inline-flex; align-items:center; gap:4px; }
+        .fao-category-chip .count { background:rgba(0,0,0,.06); border-radius:10px; padding:0 6px; font-size:.55rem; }
+
+        /* ── Pagination ── */
+        .fao-pagination { display:flex; justify-content:center; align-items:center; gap:4px; margin-top:24px; flex-wrap:wrap; }
+        .fao-pagination a, .fao-pagination span.page-btn {
+            padding:6px 14px; border:2px solid var(--fao-gray-200); border-radius:var(--fao-radius-sm);
+            background:white; font-family:'Inter',sans-serif; font-weight:600; font-size:.78rem;
+            cursor:pointer; transition:var(--fao-transition); color:var(--fao-gray-700);
+            text-decoration:none; display:inline-flex; align-items:center; gap:4px;
+        }
+        .fao-pagination a:hover { border-color:var(--fao-primary); color:var(--fao-primary); }
+        .fao-pagination a.active, .fao-pagination span.page-btn.active { background:var(--fao-primary); color:white; border-color:var(--fao-primary); }
+        .fao-pagination a.disabled, .fao-pagination span.page-btn.disabled { opacity:.4; pointer-events:none; cursor:not-allowed; }
+
+        /* page size selector */
+        .fao-page-size-form { display:inline-flex; align-items:center; gap:6px; font-size:.72rem; font-weight:600; color:var(--fao-gray-600); }
+        .fao-page-size-form select { padding:4px 8px; border:2px solid var(--fao-gray-200); border-radius:var(--fao-radius-sm); font-size:.72rem; font-family:'Inter',sans-serif; font-weight:600; cursor:pointer; }
+
+        /* ── Empty State ── */
+        .fao-empty-state { text-align:center; padding:60px 20px; color:var(--fao-gray-600); }
+        .fao-empty-state i { font-size:4rem; color:var(--fao-gray-300); display:block; margin-bottom:16px; }
+
+        /* ── Print ── */
+        @media print {
+            .no-print { display:none !important; }
+            body { background:white !important; }
+            .fao-header { background:var(--fao-primary-dark) !important; position:static !important; }
+            .fao-location-card { break-inside:avoid; border:1px solid var(--fao-gray-300) !important; box-shadow:none !important; transform:none !important; }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width:768px) {
+            .fao-kpi-grid { grid-template-columns:repeat(2,1fr); }
+            .fao-stats-grid { grid-template-columns:repeat(3,1fr); }
+            .fao-controls-bar { flex-direction:column; align-items:stretch; }
+            .fao-search { min-width:100%; }
+        }
+        @media (max-width:480px) {
+            .fao-kpi-grid { grid-template-columns:1fr 1fr; gap:8px; }
+            .fao-kpi-card { padding:10px 14px; }
+            .fao-kpi-value { font-size:1.2rem; }
+            .fao-stats-grid { grid-template-columns:repeat(2,1fr); }
+            .fao-location-card { padding:12px 14px; }
+        }
+
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background:var(--fao-gray-100); }
+        ::-webkit-scrollbar-thumb { background:var(--fao-primary); border-radius:3px; }
+    </style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="fao-header">
+    <div class="fao-header-content">
+        <div class="fao-header-brand">
+            <div class="fao-logo"><i class="fas fa-map-marked-alt"></i></div>
+            <div>
+                <div class="fao-header-title">
+                    Livestock Location Distribution
+                    <small>FAO Standard Report · Only locations with livestock</small>
+                </div>
+            </div>
+        </div>
+        <div class="fao-header-actions no-print">
+            <a href="/livestock" class="fao-btn fao-btn-outline-light"><i class="fas fa-arrow-left"></i> Back</a>
+            <button class="fao-btn fao-btn-outline-light" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+            <button class="fao-btn fao-btn-outline-light" onclick="exportData()"><i class="fas fa-file-export"></i> Export</button>
+            <button class="fao-btn fao-btn-outline-light" onclick="refreshData()"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+    </div>
+</header>
+
+<!-- ── BODY ── -->
+<div class="fao-report-body" id="reportBody">
+
+    <!-- ── KPI Cards ── -->
+    <div class="fao-kpi-grid">
+        <div class="fao-kpi-card locations">
+            <div class="fao-kpi-value" th:text="${report.totalLocations}">0</div>
+            <div class="fao-kpi-label"><i class="fas fa-map-pin"></i> Locations with Livestock</div>
+        </div>
+
+        <!--
+            ENHANCEMENT 3: "Total Livestock" card now shows the grand total PLUS
+            small per-category mini-pills so you can see the breakdown at a glance
+            without scrolling to the category summary below.
+        -->
+        <div class="fao-kpi-card">
+            <div class="fao-kpi-value" th:text="${report.totalAnimals}">0</div>
+            <div class="fao-kpi-label"><i class="fas fa-paw"></i> Total Livestock</div>
+            <div class="fao-kpi-cats" th:if="${not #maps.isEmpty(report.categoryTotals)}">
+                <span th:each="entry : ${report.categoryTotals}"
+                      class="fao-kpi-cat-mini"
+                      th:text="${entry.key} + ': ' + ${entry.value}">Cat: 0</span>
+            </div>
+        </div>
+
+        <div class="fao-kpi-card value">
+            <div class="fao-kpi-value" th:text="${#numbers.formatDecimal(report.totalValue, 1, 'COMMA', 0, 'POINT')}">0</div>
+            <div class="fao-kpi-label"><i class="fas fa-coins"></i> Total Value (RWF)</div>
+        </div>
+        <div class="fao-kpi-card health">
+            <div class="fao-kpi-value">
+                <span th:text="${#numbers.formatDecimal(report.activeRate, 0, 'POINT', 1, 'POINT')}">0</span>%
+            </div>
+            <div class="fao-kpi-label"><i class="fas fa-heartbeat"></i> Active Rate</div>
+        </div>
+        <div class="fao-kpi-card sick">
+            <div class="fao-kpi-value">
+                <span th:text="${#numbers.formatDecimal(report.sickRate, 0, 'POINT', 1, 'POINT')}">0</span>%
+            </div>
+            <div class="fao-kpi-label"><i class="fas fa-thermometer-half"></i> Sick Rate</div>
+        </div>
+        <div class="fao-kpi-card">
+            <div class="fao-kpi-value" th:text="${#numbers.formatDecimal(report.livestockDensityPerLocation, 0, 'POINT', 1, 'POINT')}">0</div>
+            <div class="fao-kpi-label"><i class="fas fa-vector-square"></i> Avg / Location</div>
+        </div>
+    </div>
+
+    <!--
+        ENHANCEMENT 3 (continued): Dedicated category breakdown panel below the KPI row.
+        Each category shown as a large pill with its count prominently displayed.
+        This is the "display below" the user requested.
+    -->
+    <div class="fao-category-summary" th:if="${not #maps.isEmpty(report.categoryTotals)}">
+        <div class="fao-category-summary-title">
+            <i class="fas fa-layer-group"></i>
+            Livestock by Category &mdash; All Locations
+        </div>
+        <div class="fao-category-pills">
+            <span th:each="entry : ${report.categoryTotals}" class="fao-cat-pill">
+                <i class="fas fa-tag" style="font-size:.6rem; opacity:.6;"></i>
+                <span th:text="${entry.key}">Category</span>
+                <span class="cat-count" th:text="${entry.value}">0</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ── Controls Bar ── -->
+    <div class="fao-controls-bar no-print">
+        <div class="fao-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="locationSearch" placeholder="Search locations by name or path..." onkeyup="filterLocations()">
+        </div>
+        <div class="fao-controls-group">
+
+            <!-- Sort selector — submits a real server-side sort request -->
+            <form method="get" th:action="@{/livestock/location-distribution-report}" style="display:inline-flex; align-items:center; gap:6px;">
+                <input type="hidden" name="page" value="0">
+                <input type="hidden" name="size" th:value="${pageSize}">
+                <input type="hidden" name="direction" th:value="${direction}">
+                <select name="sortBy" class="fao-sort-select" onchange="this.form.submit()">
+                    <option value="totalAnimals"      th:selected="${sortBy == 'totalAnimals'}">Sort: Total Animals</option>
+                    <option value="name"              th:selected="${sortBy == 'name'}">Sort: Name</option>
+                    <option value="activeCount"       th:selected="${sortBy == 'activeCount'}">Sort: Active</option>
+                    <option value="sickCount"         th:selected="${sortBy == 'sickCount'}">Sort: Sick</option>
+                    <option value="totalValue"        th:selected="${sortBy == 'totalValue'}">Sort: Value</option>
+                    <option value="healthRate"        th:selected="${sortBy == 'healthRate'}">Sort: Health Rate</option>
+                    <option value="mortalityRate"     th:selected="${sortBy == 'mortalityRate'}">Sort: Mortality</option>
+                    <option value="productivityIndex" th:selected="${sortBy == 'productivityIndex'}">Sort: Productivity</option>
+                    <option value="beneficiaryCount"  th:selected="${sortBy == 'beneficiaryCount'}">Sort: Beneficiaries</option>
+                </select>
+
+                <!-- Toggle direction asc/desc -->
+                <input type="hidden" name="direction"
+                       th:value="${direction == 'desc' ? 'asc' : 'desc'}"
+                       id="directionInput">
+                <button type="button" class="fao-control-btn"
+                        th:title="${direction == 'desc' ? 'Currently descending — click for ascending' : 'Currently ascending — click for descending'}"
+                        onclick="toggleDirection()">
+                    <i class="fas" th:classappend="${direction == 'desc'} ? 'fa-sort-amount-down' : 'fa-sort-amount-up'"></i>
+                    <span th:text="${direction == 'desc'} ? 'Desc' : 'Asc'">Desc</span>
+                </button>
+            </form>
+
+            <button class="fao-control-btn active" onclick="setView('card', this)">
+                <i class="fas fa-th"></i> Cards
+            </button>
+            <button class="fao-control-btn" onclick="setView('list', this)">
+                <i class="fas fa-list"></i> List
+            </button>
+
+            <span class="fao-pagination-info" id="visibleCount">
+                <span th:text="${report.rows.size()}">0</span>
+                of <span th:text="${report.totalElements}">0</span> locations
+            </span>
+        </div>
+    </div>
+
+    <!-- ── Location Cards ── -->
+    <div id="locationContainer">
+        <div th:each="loc : ${report.rows}"
+             class="fao-location-card"
+             th:data-location-name="${loc.locationName}"
+             th:data-location-path="${loc.fullLocationPath}"
+             th:data-location-id="${loc.locationId}">
+
+            <div class="fao-location-header">
+                <div>
+                    <div class="fao-location-name">
+                        <span th:text="${loc.locationName}">Location Name</span>
+                        <span class="fao-location-badge" th:text="${loc.locationType}">Type</span>
+                        <span class="fao-location-code" th:text="'#' + ${#strings.substring(loc.locationId, 0, 8)}">ID</span>
+                    </div>
+
+                    <!--
+                        ENHANCEMENT 2: Full administrative path shown as a breadcrumb trail.
+                        Province › District › Sector › Cell › Village
+                        Each level label + name displayed, levels with no data are skipped.
+                    -->
+                    <div class="fao-location-path" th:if="${loc.fullLocationPath != null and not #strings.isEmpty(loc.fullLocationPath)}">
+                        <i class="fas fa-route" style="font-size:.6rem; color:var(--fao-gray-400); margin-right:2px;"></i>
+
+                        <span class="fao-path-crumb" th:if="${loc.province != null}">
+                            <span class="level">Province</span>
+                            <span class="val" th:text="${loc.province}">—</span>
+                        </span>
+                        <span class="fao-path-sep" th:if="${loc.province != null and loc.district != null}">›</span>
+
+                        <span class="fao-path-crumb" th:if="${loc.district != null}">
+                            <span class="level">District</span>
+                            <span class="val" th:text="${loc.district}">—</span>
+                        </span>
+                        <span class="fao-path-sep" th:if="${loc.district != null and loc.sector != null}">›</span>
+
+                        <span class="fao-path-crumb" th:if="${loc.sector != null}">
+                            <span class="level">Sector</span>
+                            <span class="val" th:text="${loc.sector}">—</span>
+                        </span>
+                        <span class="fao-path-sep" th:if="${loc.sector != null and loc.cell != null}">›</span>
+
+                        <span class="fao-path-crumb" th:if="${loc.cell != null}">
+                            <span class="level">Cell</span>
+                            <span class="val" th:text="${loc.cell}">—</span>
+                        </span>
+                        <span class="fao-path-sep" th:if="${loc.cell != null and loc.village != null}">›</span>
+
+                        <span class="fao-path-crumb" th:if="${loc.village != null}">
+                            <span class="level">Village</span>
+                            <span class="val" th:text="${loc.village}">—</span>
+                        </span>
+                    </div>
+
+                    <div class="fao-category-tags">
+                        <span th:each="entry : ${loc.byCategory}" class="fao-category-chip">
+                            <span th:text="${entry.key}">Cat</span>
+                            <span class="count" th:text="${entry.value}">0</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    <span class="fao-productivity-badge"
+                          th:classappend="${loc.productivityIndex >= 70} ? 'high' : (${loc.productivityIndex >= 40} ? 'medium' : 'low')">
+                        <i class="fas fa-chart-line"></i>
+                        <span th:text="${#numbers.formatDecimal(loc.productivityIndex, 0, 'POINT', 0, 'POINT')}">0</span>% Productivity
+                    </span>
+                </div>
+            </div>
+
+            <div class="fao-stats-grid">
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:var(--fao-primary);" th:text="${loc.totalAnimals}">0</span>
+                    <span class="fao-stat-label">Total</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value active" th:text="${loc.activeCount}">0</span>
+                    <span class="fao-stat-label">Active</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value sick" th:text="${loc.sickCount}">0</span>
+                    <span class="fao-stat-label">Sick</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value sold" th:text="${loc.soldCount}">0</span>
+                    <span class="fao-stat-label">Sold</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value dead" th:text="${loc.deadCount}">0</span>
+                    <span class="fao-stat-label">Dead</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:var(--fao-secondary);"
+                          th:text="${#numbers.formatDecimal(loc.totalValue, 1, 'COMMA', 0, 'POINT')}">0</span>
+                    <span class="fao-stat-label">Value (RWF)</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:var(--fao-info);" th:text="${loc.beneficiaryCount}">0</span>
+                    <span class="fao-stat-label">Beneficiaries</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:var(--fao-gray-600);" th:text="${loc.representativeCount}">0</span>
+                    <span class="fao-stat-label">Reps</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div th:if="${report.rows.isEmpty()}" class="fao-empty-state">
+        <i class="fas fa-map-marked-alt"></i>
+        <h5>No Locations with Livestock</h5>
+        <p class="text-muted">There are currently no locations that have registered livestock.</p>
+    </div>
+
+    <!--
+        ENHANCEMENT 1: Full server-side pagination.
+        pageNumbers is a List<Integer> injected by the controller (0-based).
+        All navigation triggers a real GET request to /livestock/location-distribution-report
+        with the correct page, size, sortBy, and direction parameters.
+        No T(java.util.Collections) and no forbidden SpEL calls.
+    -->
+    <div th:if="${totalPages > 1}" class="fao-pagination no-print">
+
+        <!-- First -->
+        <a th:href="@{/livestock/location-distribution-report(page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+           th:classappend="${currentPage == 0} ? 'disabled'" title="First page">
+            <i class="fas fa-angle-double-left"></i>
+        </a>
+
+        <!-- Prev -->
+        <a th:href="@{/livestock/location-distribution-report(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+           th:classappend="${currentPage == 0} ? 'disabled'" title="Previous page">
+            <i class="fas fa-angle-left"></i>
+        </a>
+
+        <!-- Page numbers — controller injects pageNumbers as List<Integer> -->
+        <th:block th:each="p : ${pageNumbers}">
+            <!-- Show first 2, last 2, and 2 either side of current; collapse others to "…" -->
+            <th:block th:if="${p == 0 or p == totalPages - 1 or (p >= currentPage - 2 and p <= currentPage + 2)}">
+                <a th:href="@{/livestock/location-distribution-report(page=${p}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+                   th:text="${p + 1}"
+                   th:classappend="${p == currentPage} ? 'active'">1</a>
+            </th:block>
+            <!-- Ellipsis before current window -->
+            <span th:if="${p == currentPage - 3 and p > 1}" class="page-btn disabled">…</span>
+            <!-- Ellipsis after current window -->
+            <span th:if="${p == currentPage + 3 and p < totalPages - 2}" class="page-btn disabled">…</span>
+        </th:block>
+
+        <!-- Next -->
+        <a th:href="@{/livestock/location-distribution-report(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+           th:classappend="${currentPage == totalPages - 1} ? 'disabled'" title="Next page">
+            <i class="fas fa-angle-right"></i>
+        </a>
+
+        <!-- Last -->
+        <a th:href="@{/livestock/location-distribution-report(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
+           th:classappend="${currentPage == totalPages - 1} ? 'disabled'" title="Last page">
+            <i class="fas fa-angle-double-right"></i>
+        </a>
+    </div>
+
+    <!-- Page size selector + pagination summary -->
+    <div class="text-center mt-3 no-print" th:if="${totalPages > 0}">
+        <span style="font-size:.72rem; color:var(--fao-gray-600); font-weight:500;">
+            Page <strong th:text="${currentPage + 1}">1</strong>
+            of <strong th:text="${totalPages}">1</strong>
+            &mdash;
+        </span>
+        <form method="get" th:action="@{/livestock/location-distribution-report}"
+              class="fao-page-size-form d-inline-flex">
+            <input type="hidden" name="page" value="0">
+            <input type="hidden" name="sortBy" th:value="${sortBy}">
+            <input type="hidden" name="direction" th:value="${direction}">
+            <label for="pageSizeSelect">Show</label>
+            <select id="pageSizeSelect" name="size" class="fao-sort-select" onchange="this.form.submit()">
+                <option value="10"  th:selected="${pageSize == 10}">10</option>
+                <option value="20"  th:selected="${pageSize == 20}">20</option>
+                <option value="50"  th:selected="${pageSize == 50}">50</option>
+                <option value="100" th:selected="${pageSize == 100}">100</option>
+            </select>
+            <label for="pageSizeSelect">per page</label>
+        </form>
+    </div>
+
+</div><!-- end fao-report-body -->
+
+<!-- ── JAVASCRIPT ── -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    (function () {
+        'use strict';
+
+        const state = {
+            currentPage: /*[[${currentPage}]]*/ 0,
+            totalPages:  /*[[${totalPages}]]*/ 1,
+            pageSize:    /*[[${pageSize}]]*/ 20,
+            sortBy:      /*[[${sortBy}]]*/ 'totalAnimals',
+            direction:   /*[[${direction}]]*/ 'desc'
+        };
+
+        // ── Search / Filter (client-side, within current page) ──
+        window.filterLocations = function () {
+            const term = document.getElementById('locationSearch').value.toLowerCase().trim();
+            const cards = document.querySelectorAll('.fao-location-card');
+            let visible = 0;
+            cards.forEach(card => {
+                const name = (card.getAttribute('data-location-name') || '').toLowerCase();
+                const path = (card.getAttribute('data-location-path') || '').toLowerCase();
+                const matches = name.includes(term) || path.includes(term);
+                card.style.display = matches ? '' : 'none';
+                if (matches) visible++;
+            });
+            document.getElementById('visibleCount').innerHTML =
+                visible + ' of ' + /*[[${report.totalElements}]]*/ 0 + ' locations';
+        };
+
+        // ── View toggle (card / compact list) ──
+        window.setView = function (view, btn) {
+            document.querySelectorAll('.fao-control-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cards  = document.querySelectorAll('.fao-location-card');
+            const grids  = document.querySelectorAll('.fao-stats-grid');
+            const paths  = document.querySelectorAll('.fao-location-path');
+            if (view === 'list') {
+                cards.forEach(c => { c.style.padding = '10px 14px'; c.style.marginBottom = '4px'; });
+                grids.forEach(g => { g.style.gridTemplateColumns = 'repeat(auto-fit, minmax(60px, 1fr))'; });
+                paths.forEach(p => { p.style.display = 'none'; });
+            } else {
+                cards.forEach(c => { c.style.padding = '16px 20px'; c.style.marginBottom = '10px'; });
+                grids.forEach(g => { g.style.gridTemplateColumns = 'repeat(auto-fit, minmax(80px, 1fr))'; });
+                paths.forEach(p => { p.style.display = ''; });
+            }
+        };
+
+        // ── Direction toggle ──
+        window.toggleDirection = function () {
+            const inp = document.getElementById('directionInput');
+            // Flip the hidden input value before submitting the enclosing form
+            inp.value = inp.value === 'desc' ? 'asc' : 'desc';
+            inp.closest('form').submit();
+        };
+
+        // ── Export CSV (current page) ──
+        window.exportData = function () {
+            const rows = [];
+            document.querySelectorAll('.fao-location-card:not([style*="display: none"])').forEach(card => {
+                const name   = (card.querySelector('.fao-location-name span') || {}).textContent || '';
+                const path   = card.getAttribute('data-location-path') || '';
+                const vals   = Array.from(card.querySelectorAll('.fao-stat-value'))
+                                   .map(s => s.textContent.trim().replace(/,/g,''));
+                rows.push([name, path, ...vals.slice(0, 6)].join(','));
+            });
+            const hdr  = 'Location,Full Path,Total,Active,Sick,Sold,Dead,Value';
+            const csv  = [hdr, ...rows].join('\n');
+            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+            const link = document.createElement('a');
+            link.href  = URL.createObjectURL(blob);
+            link.download = 'location_distribution_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        };
+
+        // ── Refresh ──
+        window.refreshData = function () {
+            const btn = document.querySelector('[onclick="refreshData()"]');
+            if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; btn.disabled = true; }
+            setTimeout(() => window.location.reload(), 400);
+        };
+
+        // ── Keyboard shortcuts ──
+        document.addEventListener('keydown', function (e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                const s = document.getElementById('locationSearch');
+                if (s) { s.focus(); s.select(); }
+            }
+            if (e.key === 'Escape') {
+                const s = document.getElementById('locationSearch');
+                if (s && document.activeElement === s) { s.value = ''; filterLocations(); s.blur(); }
+            }
+        });
+
+        // ── Init ──
+        document.addEventListener('DOMContentLoaded', function () {
+            const total = document.querySelectorAll('.fao-location-card').length;
+            document.getElementById('visibleCount').innerHTML =
+                total + ' of ' + /*[[${report.totalElements}]]*/ 0 + ' locations';
+            document.querySelectorAll('.fao-location-card').forEach((c, i) => {
+                c.setAttribute('role', 'article');
+                c.setAttribute('aria-label', 'Location ' + (i + 1));
+            });
+        });
+
+    })();
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

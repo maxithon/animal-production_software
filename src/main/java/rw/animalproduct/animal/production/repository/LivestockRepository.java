@@ -43,6 +43,10 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     @Query("SELECT l FROM Livestock l WHERE l.livestockCategory.id = :categoryId AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByLivestockCategoryId(@Param("categoryId") UUID categoryId);
 
+    // ── NEW: Category query with isDeleted flag ───────────────────────────────
+    @Query("SELECT l FROM Livestock l WHERE l.livestockCategory.id = :categoryId AND l.isDeleted = false")
+    List<Livestock> findByLivestockCategoryIdAndIsDeletedFalse(@Param("categoryId") UUID categoryId);
+
     @Query("SELECT l FROM Livestock l WHERE l.beneficiary.id = :beneficiaryId AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByBeneficiaryId(@Param("beneficiaryId") UUID beneficiaryId);
 
@@ -92,6 +96,10 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
     @Query("SELECT l FROM Livestock l WHERE l.status = :status AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByStatus(@Param("status") String status);
+
+    // ── NEW: Status query with isDeleted flag ─────────────────────────────────
+    @Query("SELECT l FROM Livestock l WHERE l.status = :status AND l.isDeleted = false")
+    List<Livestock> findByStatusAndIsDeletedFalse(@Param("status") String status);
 
     @Query("SELECT l FROM Livestock l WHERE l.status NOT IN :statuses AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByStatusNotIn(@Param("statuses") List<String> statuses);
@@ -164,4 +172,19 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
             ") " +
             "ORDER BY l.tagNumber")
     List<Livestock> findPregnantWithoutBreedingRecord();
+
+    // ── Location distribution report ──────────────────────────────────────────
+    // NOTE: both methods below assume the field linking Livestock -> Location
+    // is named "location". If your entity uses a different field name
+    // (e.g. currentLocation), update "l.location" / "location.id" accordingly.
+
+    @Query("SELECT DISTINCT l.location.id FROM Livestock l " +
+            "WHERE l.location IS NOT NULL " +
+            "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    List<UUID> findDistinctLocationIdsWithLivestock();
+
+    @Query("SELECT l FROM Livestock l " +
+            "WHERE l.location.id IN :locationIds " +
+            "AND (l.isDeleted = false OR l.isDeleted IS NULL)")
+    List<Livestock> findByLocationIdIn(@Param("locationIds") List<UUID> locationIds);
 }

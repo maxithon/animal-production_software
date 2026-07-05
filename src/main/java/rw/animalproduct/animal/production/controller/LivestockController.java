@@ -2,6 +2,7 @@ package rw.animalproduct.animal.production.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +12,9 @@ import rw.animalproduct.animal.production.repository.*;
 import rw.animalproduct.animal.production.services.AuditLogService;
 import rw.animalproduct.animal.production.services.LivestockBirthService;
 import rw.animalproduct.animal.production.services.LivestockService;
+import rw.animalproduct.animal.production.services.LivestockValuationService;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -42,6 +45,9 @@ public class LivestockController {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired
+    private LivestockValuationService valuationService; // FAO-standard valuation history
+
     // ─────────────────────────────────────────────────────────────────────────
     // LIST PAGE
     // ─────────────────────────────────────────────────────────────────────────
@@ -49,6 +55,7 @@ public class LivestockController {
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "10") int size,
+                       @RequestParam(required = false) String filter, // NEW: VALUED | UNVALUED | ACTIVE | SOLD | ...
                        Model model) {
         Page<Livestock> livestockPage = livestockService.getPaged(page, size);
         List<Livestock> livestockList = livestockPage.getContent();
@@ -76,6 +83,10 @@ public class LivestockController {
             }
         }
 
+        // ── FAO STANDARD: bulk latest-valuation lookup for this page of animals ──
+        List<UUID> pageIds = livestockList.stream().map(Livestock::getId).collect(Collectors.toList());
+        Map<UUID, LivestockValuation> latestValuationMap = livestockService.getLatestValuationsForIds(pageIds);
+
         long totalItems      = livestockPage.getTotalElements();
         long totalActive     = livestockRepository.countByStatus(Livestock.STATUS_ACTIVE);
         long totalSold       = livestockRepository.countByStatus(Livestock.STATUS_SOLD);
@@ -86,6 +97,10 @@ public class LivestockController {
                 .count();
         long totalTreatments = 0;
         long totalAbortions  = 0;
+
+        // ── FAO STANDARD: valuation coverage counts (this page — see note below) ──
+        long totalValued   = livestockList.stream().filter(a -> a.getCurrentValue() != null).count();
+        long totalUnvalued = livestockList.size() - totalValued;
 
         long totalDeleted = livestockService.getAllSoftDeleted().size();
 
@@ -101,12 +116,16 @@ public class LivestockController {
         model.addAttribute("totalBornOnFarm", totalBornOnFarm);
         model.addAttribute("totalTreatments", totalTreatments);
         model.addAttribute("totalAbortions", totalAbortions);
+        model.addAttribute("totalValued", totalValued);
+        model.addAttribute("totalUnvalued", totalUnvalued);
         model.addAttribute("totalDeleted", totalDeleted);
         model.addAttribute("birthMap", birthMap);
         model.addAttribute("treatmentMap", treatmentMap);
         model.addAttribute("abortionMap", abortionMap);
         model.addAttribute("saleMap", saleMap);
         model.addAttribute("breedingCapableMap", breedingCapableMap);
+        model.addAttribute("latestValuationMap", latestValuationMap);
+        model.addAttribute("initialFilter", filter); // NEW: lets the page auto-apply a filter pill on load
 
         return "livestock-list";
     }
@@ -239,7 +258,6 @@ public class LivestockController {
 
         LocalDate today = LocalDate.now();
 
-        // ── Age breakdown ──────────────────────────────────────────────────
         if (livestock.getBirthDate() != null) {
             long ageDays    = ChronoUnit.DAYS.between(livestock.getBirthDate(), today);
             long ageMonths  = ChronoUnit.MONTHS.between(livestock.getBirthDate(), today);
@@ -249,7 +267,6 @@ public class LivestockController {
             model.addAttribute("ageRemainderMonths", ageMonths % 12);
         }
 
-        // ── Breeding capability ────────────────────────────────────────────
         Boolean breedingCapable = null;
         if (livestock.getBirthDate() != null && livestock.getLivestockCategory() != null
                 && livestock.getLivestockCategory().getMinBreedingAgeMonths() != null) {
@@ -258,32 +275,79 @@ public class LivestockController {
         }
         model.addAttribute("breedingCapable", breedingCapable);
 
-        // ── Lifecycle stage (for this one animal) ──────────────────────────
         model.addAttribute("lifecycleStage", resolveLifecycleStage(livestock, today));
 
-        // ── Lineage: children born from this animal ────────────────────────
         model.addAttribute("children", livestockRepository.findByMotherId(id));
 
-        // ── Birth record, if this animal was born on the farm ───────────────
         birthService.getByLivestockId(id).stream()
                 .findFirst()
                 .ifPresent(birth -> model.addAttribute("birthRecord", birth));
 
-        // ── Location breadcrumb (Province > District > Sector > Cell > Village) ──
         if (livestock.getLocation() != null) {
             model.addAttribute("locationBreadcrumb", buildLocationBreadcrumb(livestock.getLocation()));
         } else {
             model.addAttribute("locationBreadcrumb", new ArrayList<Location>());
         }
 
+        model.addAttribute("valuationHistory", valuationService.getHistory(id));
+        model.addAttribute("latestValuation", valuationService.getLatest(id).orElse(null));
+        model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(id));
+
         return "livestock-view";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // VALUATION HISTORY (FAO STANDARD) — dedicated page + record endpoint
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @GetMapping("/{id}/valuation-history")
+    public String valuationHistory(@PathVariable UUID id, Model model) {
+        Optional<Livestock> livestockOpt = livestockService.getById(id);
+        if (livestockOpt.isEmpty()) {
+            return "redirect:/livestock/list?error=notfound";
+        }
+        model.addAttribute("livestock", livestockOpt.get());
+        model.addAttribute("valuationHistory", valuationService.getHistory(id));
+        model.addAttribute("changeSincePrevious", valuationService.changeSincePrevious(id));
+        return "livestock-valuation-history";
+    }
+
+    /**
+     * The ONLY endpoint that changes an animal's value.
+     * Appends a new row to livestock_valuation_history and refreshes the
+     * cached current_value on the Livestock row — never overwrites in place.
+     *
+     * NEW: accepts an optional `returnTo` param so the same endpoint can be
+     * called from the list page's quick-action modal (returns to /list) as
+     * well as the detail page's modal (returns to /view/{id}) without
+     * duplicating logic.
+     */
+    @PostMapping("/{id}/valuation")
+    public String recordValuation(@PathVariable UUID id,
+                                  @RequestParam BigDecimal value,
+                                  @RequestParam(required = false)
+                                  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate valuationDate,
+                                  @RequestParam String valuationMethod,
+                                  @RequestParam(required = false) String notes,
+                                  @RequestParam(required = false) String returnTo,
+                                  RedirectAttributes redirectAttributes) {
+        try {
+            valuationService.recordValuation(id, valuationDate, value, valuationMethod, notes, "system");
+            redirectAttributes.addFlashAttribute("success", "New valuation recorded successfully.");
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error recording valuation: " + e.getMessage());
+        }
+
+        if ("list".equals(returnTo)) {
+            return "redirect:/livestock/list";
+        }
+        return "redirect:/livestock/view/" + id;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // LIFECYCLE STAGE HELPER
-    // Same staging logic implied by the lifecycle badges used elsewhere in the
-    // app (NEWBORN / YOUNG / READY_TO_BREED / BREEDING_MALE / PREGNANT / MATURE),
-    // computed here for a single animal rather than the whole herd.
     // ─────────────────────────────────────────────────────────────────────────
     private String resolveLifecycleStage(Livestock l, LocalDate today) {
         if (Boolean.TRUE.equals(l.getIsPregnant())) {
@@ -322,7 +386,6 @@ public class LivestockController {
         }
         Livestock livestock = livestockOpt.get();
 
-        // ── Pre-populate transient ID fields so th:field binding/selection works ──
         if (livestock.getLivestockCategory() != null) {
             livestock.setLivestockCategoryIdValue(livestock.getLivestockCategory().getId().toString());
         }
@@ -335,7 +398,6 @@ public class LivestockController {
         model.addAttribute("beneficiaries", beneficiaryRepository.findAll());
         model.addAttribute("locations", locationRepository.findAll());
 
-        // ── Build Province > District > Sector > Cell > Village breadcrumb ──
         if (livestock.getLocation() != null) {
             model.addAttribute("locationBreadcrumb", buildLocationBreadcrumb(livestock.getLocation()));
         } else {
@@ -359,7 +421,6 @@ public class LivestockController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error updating animal: " + e.getMessage());
         }
-        // ── After edit, go back to the livestock list (not the view page) ──
         return "redirect:/livestock/list";
     }
 
@@ -388,15 +449,12 @@ public class LivestockController {
 
     // ─────────────────────────────────────────────────────────────────────────
     // LOCATION BREADCRUMB HELPER
-    // Walks up the self-referencing Location tree (Village -> Cell -> Sector ->
-    // District -> Province) via getParent(), and returns the chain ordered
-    // from the root (Province) down to the leaf (Village).
     // ─────────────────────────────────────────────────────────────────────────
     private List<Location> buildLocationBreadcrumb(Location location) {
         List<Location> chain = new ArrayList<>();
         Location current = location;
         while (current != null) {
-            chain.add(0, current); // prepend so root (Province) ends up first
+            chain.add(0, current);
             current = current.getParent();
         }
         return chain;

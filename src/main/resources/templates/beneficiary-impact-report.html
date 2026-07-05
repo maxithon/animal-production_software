@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Beneficiary Impact Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; color: #222; }
+        h1 { margin-bottom: 0; }
+        .subtitle { color: #666; margin-top: 4px; margin-bottom: 30px; }
+        .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .stat-card { background: #f4f6f8; border-radius: 8px; padding: 16px 22px; min-width: 160px; }
+        .stat-card .value { font-size: 28px; font-weight: bold; }
+        .stat-card .label { color: #666; font-size: 13px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
+        th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+        th { background: #f0f0f0; }
+        section { margin-bottom: 36px; }
+        h2 { border-bottom: 2px solid #eee; padding-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<h1>Beneficiary Impact Report</h1>
+<p class="subtitle">Generated on <span th:text="${#dates.format(generatedDate, 'dd MMM yyyy, HH:mm')}">date</span></p>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="value" th:text="${totalBeneficiaries}">0</div>
+        <div class="label">Total Beneficiaries</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" th:text="${activeLocations} + ' / ' + ${totalLocations}">0</div>
+        <div class="label">Locations Reached</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" th:text="${withContract}">0</div>
+        <div class="label">Signed Contracts</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" th:text="${contractCompletionRate} + '%'">0%</div>
+        <div class="label">Contract Completion Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="value" th:text="${recentRegistrations}">0</div>
+        <div class="label">New in Last 30 Days</div>
+    </div>
+</div>
+
+<section>
+    <h2>Beneficiaries by Location</h2>
+    <table>
+        <thead>
+        <tr><th>Location</th><th>Beneficiaries</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${locationDistribution}">
+            <td th:text="${entry.key}">Location</td>
+            <td th:text="${entry.value}">0</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Beneficiaries by Representative</h2>
+    <table>
+        <thead>
+        <tr><th>Representative</th><th>Beneficiaries</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${representativeDistribution}">
+            <td th:text="${entry.key}">Representative</td>
+            <td th:text="${entry.value}">0</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Gender Distribution</h2>
+    <table>
+        <thead>
+        <tr><th>Gender</th><th>Count</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${genderDistribution}">
+            <td th:text="${entry.key}">Gender</td>
+            <td th:text="${entry.value}">0</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+<section>
+    <h2>Marital Status Distribution</h2>
+    <table>
+        <thead>
+        <tr><th>Status</th><th>Count</th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${maritalStatusDistribution}">
+            <td th:text="${entry.key}">Status</td>
+            <td th:text="${entry.value}">0</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+
+</body>
+</html>

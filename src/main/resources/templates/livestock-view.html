@@ -95,6 +95,31 @@
         .lineage-empty { color: #94a3b8; font-style: italic; font-size: 0.82rem; }
 
         .badge { font-size: 0.7rem; }
+
+        /* ── FAO VALUATION HISTORY (NEW) ────────────────────────────────── */
+        .valuation-latest-strip {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;
+            padding: 12px 16px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+        }
+        .valuation-latest-value { font-size: 1.05rem; font-weight: 800; color: #166534; }
+        .valuation-latest-meta { font-size: 0.75rem; color: #65a374; }
+        .valuation-delta { font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+        .valuation-delta.up   { background: #d1fae5; color: #065f46; }
+        .valuation-delta.down { background: #fee2e2; color: #991b1b; }
+        .valuation-delta.flat { background: #f1f5f9; color: #64748b; }
+
+        .valuation-table { font-size: 0.8rem; }
+        .valuation-table thead th {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+            color: #94a3b8; font-weight: 700; border-bottom: 2px solid #f1f5f9;
+        }
+        .valuation-table tbody td { vertical-align: middle; }
+        .valuation-table tr.latest-row { background: #f0fdf4; }
+        .valuation-method-badge {
+            font-size: 0.68rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+            background: #ede9fe; color: #5b21b6; white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -135,6 +160,16 @@
         </div>
     </div>
 
+    <!-- ── Alerts ── -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <!-- ── Basic Info ── -->
     <div class="section-card">
         <div class="section-title"><i class="bi bi-info-circle text-primary"></i> Basic Information</div>
@@ -168,7 +203,7 @@
                 <span class="info-label">Current Value</span>
                 <span th:if="${livestock.currentValue != null}" class="info-value price"
                       th:text="${#numbers.formatDecimal(livestock.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</span>
-                <span th:if="${livestock.currentValue == null}" class="info-value muted">Not set</span>
+                <span th:if="${livestock.currentValue == null}" class="info-value muted">Not yet valued</span>
             </div>
             <div class="info-item" th:if="${livestock.status == 'SOLD' and livestock.soldPrice != null}">
                 <span class="info-label">Sold Price</span>
@@ -191,6 +226,75 @@
                 </div>
                 <span th:if="${locationBreadcrumb == null or locationBreadcrumb.empty}" class="info-value muted">Not set</span>
             </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         FAO-STANDARD VALUATION HISTORY (NEW)
+         Value is append-only. This section shows the full ledger and lets
+         the user record a new valuation event — it never edits a value in
+         place. See LivestockValuationService.recordValuation(...).
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="section-title d-flex justify-content-between align-items-center" style="border-bottom:none; margin-bottom:10px; padding-bottom:0;">
+            <span><i class="bi bi-graph-up-arrow text-success"></i> Valuation History</span>
+            <button type="button" class="btn btn-sm btn-outline-success"
+                    data-bs-toggle="modal" data-bs-target="#addValuationModal">
+                <i class="bi bi-plus-circle"></i> Record New Valuation
+            </button>
+        </div>
+
+        <!-- Latest valuation summary strip -->
+        <div class="valuation-latest-strip" th:if="${latestValuation != null}">
+            <div>
+                <div class="valuation-latest-value"
+                     th:text="${#numbers.formatDecimal(latestValuation.value, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</div>
+                <div class="valuation-latest-meta">
+                    As of <strong th:text="${#temporals.format(latestValuation.valuationDate, 'dd MMM yyyy')}"></strong>
+                    &middot; <span th:text="${latestValuation.methodLabel()}"></span>
+                </div>
+            </div>
+            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() > 0}"
+                  class="valuation-delta up">
+                <i class="bi bi-arrow-up-short"></i>
+                +<span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
+            </span>
+            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() < 0}"
+                  class="valuation-delta down">
+                <i class="bi bi-arrow-down-short"></i>
+                <span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
+            </span>
+            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() == 0}"
+                  class="valuation-delta flat">
+                <i class="bi bi-dash"></i> No change since last valuation
+            </span>
+        </div>
+
+        <div th:if="${valuationHistory == null or valuationHistory.empty}" class="lineage-empty">
+            No valuation history yet. Use "Record New Valuation" to start tracking this animal's value over time.
+        </div>
+
+        <div class="table-responsive" th:if="${valuationHistory != null and !valuationHistory.empty}">
+            <table class="table table-sm valuation-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Value (RWF)</th>
+                    <th>Method</th>
+                    <th>Notes</th>
+                    <th>Recorded By</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v, iter : ${valuationHistory}" th:classappend="${iter.first} ? 'latest-row' : ''">
+                    <td th:text="${#temporals.format(v.valuationDate, 'dd MMM yyyy')}">—</td>
+                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(v.value, 1, 'COMMA', 0, 'POINT')}">—</td>
+                    <td><span class="valuation-method-badge" th:text="${v.methodLabel()}"></span></td>
+                    <td th:text="${v.notes != null and !v.notes.isEmpty() ? v.notes : '—'}">—</td>
+                    <td class="text-muted" th:text="${v.recordedBy != null ? v.recordedBy : '—'}">—</td>
+                </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -305,6 +409,67 @@
     </div>
 
 </div>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     MODAL: Record New Valuation (FAO STANDARD — appends, never overwrites)
+══════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addValuationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form th:action="@{/livestock/{id}/valuation(id=${livestock.id})}" method="post" class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-graph-up-arrow text-success"></i> Record New Valuation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border small mb-3">
+                    <i class="bi bi-info-circle-fill text-success me-1"></i>
+                    This adds a new entry to the valuation history — it does not overwrite
+                    or delete any previous valuation.
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Valuation Date</label>
+                    <input type="date" class="form-control" name="valuationDate"
+                           th:value="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"
+                           th:max="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">New Value (RWF)</label>
+                    <input type="number" step="0.01" min="0" class="form-control" name="value" required>
+                    <div class="form-text" th:if="${livestock.currentValue != null}">
+                        Current recorded value:
+                        <strong th:text="${#numbers.formatDecimal(livestock.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></strong>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Valuation Method</label>
+                    <select class="form-select" name="valuationMethod" required>
+                        <option value="MARKET_REVALUATION">Market Revaluation</option>
+                        <option value="GROWTH_ADJUSTMENT">Growth Adjustment</option>
+                        <option value="APPRAISAL">Appraisal</option>
+                        <option value="MANUAL_ADJUSTMENT">Manual Adjustment</option>
+                    </select>
+                </div>
+
+                <div class="mb-1">
+                    <label class="form-label">Notes (optional)</label>
+                    <textarea class="form-control" name="notes" rows="2"
+                              placeholder="e.g. Reweighed at 6 months, local market price update..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Save Valuation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

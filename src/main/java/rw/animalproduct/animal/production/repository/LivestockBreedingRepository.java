@@ -22,8 +22,35 @@ public interface LivestockBreedingRepository extends JpaRepository<LivestockBree
     // ── By livestock ID ───────────────────────────────────────────────────────
     List<LivestockBreeding> findByLivestockIdAndIsDeletedFalse(UUID livestockId);
 
+    // ── By livestock ID and status ────────────────────────────────────────────
+    // FIXES THE ERROR: This method was missing
+    @Query("SELECT b FROM LivestockBreeding b " +
+            "WHERE b.livestock.id = :livestockId " +
+            "AND b.status = :status " +
+            "AND b.isDeleted = false " +
+            "ORDER BY b.breedingDate DESC")
+    List<LivestockBreeding> findByLivestockIdAndStatusAndIsDeletedFalse(
+            @Param("livestockId") UUID livestockId,
+            @Param("status") String status);
+
+    // ── By livestock ID and status (without ordering) ────────────────────────
+    List<LivestockBreeding> findByLivestockIdAndStatusAndIsDeletedFalseOrderByBreedingDateDesc(
+            UUID livestockId,
+            String status);
+
     // ── By status ─────────────────────────────────────────────────────────────
     List<LivestockBreeding> findByStatusAndIsDeletedFalse(String status);
+
+    // ── By status and date range ─────────────────────────────────────────────
+    @Query("SELECT b FROM LivestockBreeding b " +
+            "WHERE b.status = :status " +
+            "AND b.isDeleted = false " +
+            "AND b.expectedDueDate BETWEEN :startDate AND :endDate " +
+            "ORDER BY b.expectedDueDate ASC")
+    List<LivestockBreeding> findByStatusAndExpectedDueDateBetweenAndIsDeletedFalse(
+            @Param("status") String status,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 
     long countByStatusAndIsDeletedFalse(String status);
 
@@ -99,5 +126,22 @@ public interface LivestockBreedingRepository extends JpaRepository<LivestockBree
            """)
     List<LivestockBreeding> findAllActivePregnancies();
 
+    // ── Legacy methods ──────────────────────────────────────────────────────
     List<LivestockBreeding> findByLivestockId(UUID livestockId);
+
+    // ── For BreedingPerformanceService - find by livestock ID and status list ──
+    @Query("SELECT b FROM LivestockBreeding b " +
+            "WHERE b.livestock.id = :livestockId " +
+            "AND b.status IN :statuses " +
+            "AND b.isDeleted = false " +
+            "ORDER BY b.breedingDate DESC")
+    List<LivestockBreeding> findByLivestockIdAndStatusInAndIsDeletedFalse(
+            @Param("livestockId") UUID livestockId,
+            @Param("statuses") List<String> statuses);
+
+    // ── Added for BreedingPerformanceReportController — pulls records within a
+    //    breeding-date range for the /livestock/breeding-performance-report page ──
+    List<LivestockBreeding> findByBreedingDateBetweenAndIsDeletedFalse(
+            LocalDate startDate,
+            LocalDate endDate);
 }

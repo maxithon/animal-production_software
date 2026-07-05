@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herd Movement / Reconciliation Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <style>
+        /* Force landscape + tighter margins when printing, so the wide
+           Movement-by-Category table has room to fit without scrolling */
+        @page { size: A4 landscape; margin: 10mm; }
+
+        :root { --primary:#1a5f7a; --primary-light:#2e8b9e; }
+        body { background:#f8f9fb; font-family:'DM Sans',sans-serif; padding:24px; }
+
+        .action-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; max-width:1200px; margin-left:auto; margin-right:auto; }
+        .btn-back { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; padding:8px 16px; border-radius:8px; font-size:.85rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+        .btn-back:hover { background:#e2e8f0; color:#1a202c; }
+        .btn-print { background:linear-gradient(135deg,#1a5f7a,#2e8b9e); color:white; border:none; padding:8px 20px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+
+        .report-card { background:white; border-radius:14px; padding:32px 36px; box-shadow:0 2px 12px rgba(0,0,0,.08); max-width:1200px; margin:0 auto; }
+
+        .report-header { border-bottom:3px solid #1a5f7a; padding-bottom:18px; margin-bottom:24px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+        .report-header h1 { font-family:'Manrope',sans-serif; font-size:1.5rem; font-weight:800; color:#1a2535; margin:0; display:flex; align-items:center; gap:10px; letter-spacing:-0.01em; }
+        .report-header h1 i { color:#1a5f7a; }
+        .report-meta { font-size:.8rem; color:#64748b; text-align:right; }
+        .type-chip { display:inline-flex; align-items:center; gap:6px; background:#eef2ff; color:#3730a3; border:1.5px solid #c7d2fe; border-radius:20px; padding:4px 14px; font-size:.78rem; font-weight:700; margin-top:6px; }
+        .fao-chip { display:inline-flex; align-items:center; gap:6px; background:#f0fdf4; color:#166534; border:1.5px solid #bbf7d0; border-radius:20px; padding:4px 14px; font-size:.75rem; font-weight:700; margin-top:6px; margin-left:8px; }
+
+        .filter-card { background:#f8fafc; border-radius:12px; padding:16px 20px; margin-bottom:24px; }
+
+        .section-title { font-family:'Manrope',sans-serif; font-size:.85rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#64748b; margin-bottom:14px; display:flex; align-items:center; gap:8px; padding-bottom:8px; border-bottom:2px solid #f0f2f5; flex-wrap:wrap; }
+        .section-badge { font-family:'DM Sans',sans-serif; text-transform:none; letter-spacing:0; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; margin-left:auto; }
+        .section-note { font-size:.72rem; color:#94a3b8; font-weight:500; margin:-8px 0 16px; }
+
+        /* Reconciliation banner */
+        .recon-banner { border-radius:12px; padding:16px 22px; margin-bottom:26px; display:flex; align-items:center; gap:14px; font-weight:700; }
+        .recon-ok   { background:#ecfdf5; border:1.5px solid #6ee7b7; color:#065f46; }
+        .recon-bad  { background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; }
+        .recon-banner i { font-size:1.4rem; }
+        .recon-sub  { font-weight:500; font-size:.8rem; opacity:.85; margin-top:2px; }
+
+        /* KPI strip */
+        .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:14px; margin-bottom:30px; }
+        .kpi-card { border-radius:12px; padding:18px 20px; color:white; position:relative; overflow:hidden; }
+        .kpi-card::after { content:''; position:absolute; top:-18px; right:-18px; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.1); }
+        .kpi-card.opening { background:linear-gradient(145deg,#64748b,#475569); }
+        .kpi-card.born     { background:linear-gradient(145deg,#10b981,#059669); }
+        .kpi-card.purchase { background:linear-gradient(145deg,#0ea5e9,#0284c7); }
+        .kpi-card.donation { background:linear-gradient(145deg,#8b5cf6,#7c3aed); }
+        .kpi-card.sold     { background:linear-gradient(145deg,#f97316,#ea580c); }
+        .kpi-card.dead     { background:linear-gradient(145deg,#ef4444,#dc2626); }
+        .kpi-card.closing  { background:linear-gradient(145deg,#1a5f7a,#2e8b9e); }
+        .kpi-card.tlu      { background:linear-gradient(145deg,#0d9488,#0f766e); }
+        .kpi-card.rate-ok  { background:linear-gradient(145deg,#22c55e,#16a34a); }
+        .kpi-card.rate-warn{ background:linear-gradient(145deg,#f59e0b,#d97706); }
+        .kpi-card.rate-bad { background:linear-gradient(145deg,#ef4444,#b91c1c); }
+        .kpi-icon { font-size:1.2rem; opacity:.85; margin-bottom:8px; display:block; }
+        .kpi-val  { font-family:'Manrope',sans-serif; font-size:1.35rem; font-weight:800; line-height:1; margin-bottom:6px; word-break:break-word; }
+        .kpi-lbl  { font-size:.63rem; font-weight:700; opacity:.85; text-transform:uppercase; letter-spacing:.06em; }
+        .kpi-amount { font-family:'Manrope',sans-serif; font-size:.78rem; font-weight:700; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.25); display:flex; align-items:center; gap:5px; }
+
+        .chart-wrapper { position:relative; height:320px; width:100%; }
+
+        /* Category / structure tables */
+        .rpt-table { width:100%; border-collapse:collapse; }
+        .rpt-table thead th { background:#f8f9fb; padding:10px 12px; font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#64748b; border-bottom:2px solid #e2e8f0; white-space:nowrap; text-align:right; }
+        .rpt-table thead th:first-child { text-align:left; }
+        .rpt-table tbody td { padding:10px 12px; font-size:.82rem; color:#374151; border-bottom:1px solid #f0f2f5; text-align:right; vertical-align:middle; white-space:nowrap; }
+        .rpt-table tbody td:first-child { text-align:left; font-weight:700; color:#1a2535; white-space:normal; }
+        .rpt-table tbody tr:hover { background:#f8fbff; }
+        .rpt-table tbody tr.row-active { background:#eef9ff; }
+        .rpt-table tfoot td { padding:11px 12px; font-size:.84rem; font-weight:800; background:#f0f9ff; border-top:2px solid #bae6fd; text-align:right; }
+        .rpt-table tfoot td:first-child { text-align:left; }
+
+        .badge-ok  { background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 8px; font-size:.68rem; font-weight:700; }
+        .badge-bad { background:#fee2e2; color:#991b1b; border-radius:20px; padding:2px 8px; font-size:.68rem; font-weight:700; }
+        .val-pos   { color:#059669; font-weight:700; }
+        .val-neg   { color:#dc2626; font-weight:700; }
+        .col-group-divider { border-left:2px solid #e2e8f0; }
+
+        .class-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+        .class-adult-female { background:#fce7f3; color:#be185d; }
+        .class-adult-male   { background:#dbeafe; color:#1d4ed8; }
+        .class-young-female { background:#fef3c7; color:#92400e; }
+        .class-young-male   { background:#e0f2fe; color:#0369a1; }
+        .class-unknown      { background:#f1f5f9; color:#64748b; }
+
+        .pct-bar-wrap { background:#f1f5f9; border-radius:6px; height:6px; width:80px; overflow:hidden; display:inline-block; vertical-align:middle; margin-left:8px; }
+        .pct-bar { height:100%; background:linear-gradient(90deg,#1a5f7a,#2e8b9e); }
+
+        /* ══════════════════════════════════════════════════════════
+           PRINT FIXES
+           Problem: .table-responsive uses overflow-x:auto for the
+           on-screen scrollbar, but overflow-x has no effect on print —
+           anything past the page width is simply clipped, invisibly.
+           Fix: on print, (1) switch the page to landscape (done above
+           via @page), (2) remove the scroll container's overflow so
+           nothing is clipped, (3) shrink the table and let long cells
+           wrap instead of forcing nowrap, so 13 columns fit the width.
+        ══════════════════════════════════════════════════════════ */
+        @media print {
+            .action-bar, .no-print { display:none !important; }
+            body { background:white; padding:0; }
+            .report-card { box-shadow:none; padding:12px; max-width:100%; }
+            .kpi-card, .recon-banner { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+            .table-responsive {
+                overflow-x: visible !important;
+                width: 100%;
+            }
+            .rpt-table {
+                width: 100% !important;
+                table-layout: fixed;
+                font-size: 0.62rem;
+            }
+            .rpt-table thead th,
+            .rpt-table tbody td,
+            .rpt-table tfoot td {
+                white-space: normal !important;
+                word-break: break-word;
+                padding: 5px 4px;
+            }
+            .rpt-table tbody tr,
+            .rpt-table thead {
+                page-break-inside: avoid;
+            }
+            .pct-bar-wrap { width: 40px; }
+            .kpi-strip { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+        @media (max-width:600px) { .kpi-strip { grid-template-columns:1fr 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="action-bar no-print">
+    <a href="/admin/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    <button class="btn-print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Report</button>
+</div>
+
+<div class="report-card">
+
+    <div class="report-header">
+        <div>
+            <h1><i class="bi bi-arrow-left-right"></i> Herd Movement &amp; Reconciliation Report</h1>
+            <span class="type-chip"><i class="bi bi-tag-fill"></i> <span th:text="${selectedCategoryName}">All Categories</span></span>
+            <span class="fao-chip"><i class="bi bi-globe2"></i> FAO Livestock Inventory Method</span>
+        </div>
+        <div class="report-meta">
+            <strong>Period</strong>
+            <span th:text="${#temporals.format(fromDate,'dd MMM yyyy')} + ' — ' + ${#temporals.format(toDate,'dd MMM yyyy')}">Period</span>
+        </div>
+    </div>
+
+    <!-- Date + Type Filter -->
+    <div class="filter-card no-print">
+        <form method="get" action="/livestock/herd-movement-report" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">From Date</label>
+                <input type="date" name="from" class="form-control form-control-sm"
+                       th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">To Date</label>
+                <input type="date" name="to" class="form-control form-control-sm"
+                       th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">Livestock Type</label>
+                <select name="categoryId" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${allCategories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${selectedCategoryId != null and cat.id == selectedCategoryId}">
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-funnel me-1"></i> Apply</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reconciliation banner -->
+    <div class="recon-banner" th:classappend="${report.reconciled} ? 'recon-ok' : 'recon-bad'">
+        <i class="bi" th:classappend="${report.reconciled} ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
+        <div>
+            <div th:if="${report.reconciled}">Reconciled — Opening + In − Out = Closing, exactly as expected.</div>
+            <div th:if="${!report.reconciled}">
+                Reconciliation mismatch — expected closing stock of
+                <span th:text="${report.expectedClosingCount}">0</span> but found
+                <span th:text="${report.closingCount}">0</span>.
+            </div>
+            <div class="recon-sub" th:if="${!report.reconciled}">
+                This usually means an animal's dates (received/birth) are missing or fall outside expected ranges — check draft/unresolved records.
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI Strip -->
+    <div class="section-title">
+        <i class="bi bi-lightning-charge-fill"></i> Movement Summary
+        <span class="section-badge" th:text="${selectedCategoryName}">All Categories</span>
+    </div>
+    <div class="kpi-strip">
+        <div class="kpi-card opening">
+            <span class="kpi-icon"><i class="bi bi-archive-fill"></i></span>
+            <div class="kpi-val" th:text="${report.openingCount}">0</div>
+            <div class="kpi-lbl">Opening Stock</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.openingValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card born">
+            <span class="kpi-icon"><i class="bi bi-stars"></i></span>
+            <div class="kpi-val" th:text="'+' + ${report.bornCount}">+0</div>
+            <div class="kpi-lbl">Born</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.bornValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card purchase">
+            <span class="kpi-icon"><i class="bi bi-cart-plus-fill"></i></span>
+            <div class="kpi-val" th:text="'+' + ${report.purchasedCount}">+0</div>
+            <div class="kpi-lbl">Purchased</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.purchasedValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card donation">
+            <span class="kpi-icon"><i class="bi bi-gift-fill"></i></span>
+            <div class="kpi-val" th:text="'+' + ${report.donatedCount}">+0</div>
+            <div class="kpi-lbl">Donated</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.donatedValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card sold">
+            <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+            <div class="kpi-val" th:text="'−' + ${report.soldCount}">-0</div>
+            <div class="kpi-lbl">Sold</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.soldRevenue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card dead">
+            <span class="kpi-icon"><i class="bi bi-x-circle-fill"></i></span>
+            <div class="kpi-val" th:text="'−' + ${report.deadCount}">-0</div>
+            <div class="kpi-lbl">Died</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.deadValueLoss,1,'COMMA',0,'POINT')} + ' RWF lost'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card closing">
+            <span class="kpi-icon"><i class="bi bi-box-seam-fill"></i></span>
+            <div class="kpi-val" th:text="${report.closingCount}">0</div>
+            <div class="kpi-lbl">Closing Stock</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${#numbers.formatDecimal(report.closingValue,1,'COMMA',0,'POINT')} + ' RWF'">0 RWF</span>
+            </div>
+        </div>
+        <div class="kpi-card" th:classappend="${report.netFinancialChange.signum() >= 0} ? 'born' : 'dead'">
+            <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
+            <div class="kpi-val" th:text="${report.netChange}">0</div>
+            <div class="kpi-lbl">Net Financial Change</div>
+            <div class="kpi-amount"><i class="bi bi-cash"></i>
+                <span th:text="${(report.netFinancialChange.signum() >= 0 ? '+' : '−') + #numbers.formatDecimal(report.netFinancialChange.abs(),1,'COMMA',0,'POINT') + ' RWF'}">RWF 0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAO Standard Indicators -->
+    <div class="section-title"><i class="bi bi-clipboard2-data-fill"></i> FAO Standard Indicators</div>
+    <div class="section-note">Mortality &amp; offtake rates are calculated against opening stock, as per FAO livestock survey methodology.</div>
+    <div class="kpi-strip" style="margin-bottom:30px;">
+        <div class="kpi-card tlu">
+            <span class="kpi-icon"><i class="bi bi-globe-americas"></i></span>
+            <div class="kpi-val" th:text="${#numbers.formatDecimal(report.totalClosingTLU,1,2,'POINT')}">0.00</div>
+            <div class="kpi-lbl">Total Herd (TLU)</div>
+            <div class="kpi-amount"><i class="bi bi-info-circle"></i> Tropical Livestock Units</div>
+        </div>
+        <div class="kpi-card" th:classappend="${report.mortalityRatePercent <= 5} ? 'rate-ok' : (${report.mortalityRatePercent <= 15} ? 'rate-warn' : 'rate-bad')">
+            <span class="kpi-icon"><i class="bi bi-heart-pulse"></i></span>
+            <div class="kpi-val" th:text="${report.mortalityRatePercent} + '%'">0%</div>
+            <div class="kpi-lbl">Mortality Rate</div>
+            <div class="kpi-amount"><i class="bi bi-info-circle"></i> Deaths ÷ Opening Stock</div>
+        </div>
+        <div class="kpi-card" th:classappend="${report.offtakeRatePercent <= 20} ? 'rate-ok' : (${report.offtakeRatePercent <= 40} ? 'rate-warn' : 'rate-bad')">
+            <span class="kpi-icon"><i class="bi bi-box-arrow-up-right"></i></span>
+            <div class="kpi-val" th:text="${report.offtakeRatePercent} + '%'">0%</div>
+            <div class="kpi-lbl">Offtake Rate</div>
+            <div class="kpi-amount"><i class="bi bi-info-circle"></i> (Sold + Died) ÷ Opening Stock</div>
+        </div>
+        <div class="kpi-card" th:classappend="${report.herdGrowthRatePercent >= 0} ? 'rate-ok' : 'rate-bad'">
+            <span class="kpi-icon"><i class="bi bi-graph-up"></i></span>
+            <div class="kpi-val" th:text="${(report.herdGrowthRatePercent >= 0 ? '+' : '') + report.herdGrowthRatePercent} + '%'">0%</div>
+            <div class="kpi-lbl">Herd Growth Rate</div>
+            <div class="kpi-amount"><i class="bi bi-info-circle"></i> (Closing − Opening) ÷ Opening</div>
+        </div>
+    </div>
+
+    <!-- Waterfall chart -->
+    <div class="section-title">
+        <i class="bi bi-bar-chart-steps"></i> Movement Waterfall
+        <span class="section-badge" th:text="${selectedCategoryName}">All Categories</span>
+    </div>
+    <div class="chart-wrapper mb-4">
+        <canvas id="waterfallChart"></canvas>
+    </div>
+
+    <!-- Herd Structure by Sex & Age (FAO classification) -->
+    <div class="section-title"><i class="bi bi-diagram-3-fill"></i> Herd Structure by Sex &amp; Age (FAO Classification)</div>
+    <div class="section-note">
+        Closing-stock composition per FAO herd inventory convention. "Adult" = age at/above the category's minimum breeding age
+        (or presumed mature for purchased animals with no recorded birth date).
+    </div>
+    <div class="table-responsive mb-4">
+        <table class="rpt-table">
+            <thead>
+            <tr>
+                <th>Category</th>
+                <th>Class</th>
+                <th>Count</th>
+                <th>Value (RWF)</th>
+                <th>% of Category</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${report.herdStructure}">
+                <td th:text="${s.categoryName}">Category</td>
+                <td>
+                    <span class="class-pill"
+                          th:classappend="${s.sexAgeClass == 'ADULT_FEMALE'} ? 'class-adult-female' : (${s.sexAgeClass == 'ADULT_MALE'} ? 'class-adult-male' : (${s.sexAgeClass == 'YOUNG_FEMALE'} ? 'class-young-female' : (${s.sexAgeClass == 'YOUNG_MALE'} ? 'class-young-male' : 'class-unknown')))"
+                          th:text="${s.sexAgeLabel}">Class</span>
+                </td>
+                <td th:text="${s.count}">0</td>
+                <td th:text="${#numbers.formatDecimal(s.value,1,'COMMA',0,'POINT')}">0</td>
+                <td>
+                    <span th:text="${s.percentOfCategory} + '%'">0%</span>
+                    <span class="pct-bar-wrap"><span class="pct-bar" th:style="'width:' + ${s.percentOfCategory} + '%'"></span></span>
+                </td>
+            </tr>
+            <tr th:if="${report.herdStructure.isEmpty()}">
+                <td colspan="5" class="text-center text-muted py-4">No closing-stock animals to classify in this period.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Category breakdown table -->
+    <div class="section-title">
+        <i class="bi bi-grid-3x3-gap-fill"></i> Movement by Category
+        <span class="section-badge" th:if="${selectedCategoryId != null}">Filtered — clear Type above to see all</span>
+    </div>
+    <div class="table-responsive">
+        <table class="rpt-table">
+            <thead>
+            <tr>
+                <th>Category</th>
+                <th>Opening</th>
+                <th>Born</th>
+                <th>Purchased</th>
+                <th>Donated</th>
+                <th>Sold</th>
+                <th>Died</th>
+                <th>Closing</th>
+                <th>TLU</th>
+                <th class="col-group-divider">Opening Value (RWF)</th>
+                <th>Closing Value (RWF)</th>
+                <th>Net Value Change (RWF)</th>
+                <th>Avg Value/Animal (RWF)</th>
+                <th>Check</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${report.byCategory}"
+                th:classappend="${selectedCategoryId != null and row.categoryName == selectedCategoryName} ? 'row-active' : ''">
+                <td th:text="${row.categoryName}">Category</td>
+                <td th:text="${row.openingCount}">0</td>
+                <td th:text="${row.bornCount}">0</td>
+                <td th:text="${row.purchasedCount}">0</td>
+                <td th:text="${row.donatedCount}">0</td>
+                <td th:text="${row.soldCount}">0</td>
+                <td th:text="${row.deadCount}">0</td>
+                <td th:text="${row.closingCount}">0</td>
+                <td th:text="${#numbers.formatDecimal(row.closingTLU,1,2,'POINT')}">0.00</td>
+                <td class="col-group-divider" th:text="${#numbers.formatDecimal(row.openingValue,1,'COMMA',0,'POINT')}">0</td>
+                <td th:text="${#numbers.formatDecimal(row.closingValue,1,'COMMA',0,'POINT')}">0</td>
+                <td th:class="${row.netValueChange.signum() >= 0} ? 'val-pos' : 'val-neg'"
+                    th:text="${(row.netValueChange.signum() >= 0 ? '+' : '−') + #numbers.formatDecimal(row.netValueChange.abs(),1,'COMMA',0,'POINT')}">0</td>
+                <td th:text="${#numbers.formatDecimal(row.avgValuePerAnimal,1,'COMMA',0,'POINT')}">0</td>
+                <td>
+                    <span th:if="${row.reconciled}" class="badge-ok"><i class="bi bi-check"></i> OK</span>
+                    <span th:if="${!row.reconciled}" class="badge-bad" th:text="'Expected ' + ${row.expectedClosingCount}">Mismatch</span>
+                </td>
+            </tr>
+            <tr th:if="${report.byCategory.isEmpty()}">
+                <td colspan="13" class="text-center text-muted py-4">No livestock records found.</td>
+            </tr>
+            </tbody>
+            <tfoot>
+            <tr>
+                <td>Total</td>
+                <td th:text="${report.openingCount}">0</td>
+                <td th:text="${report.bornCount}">0</td>
+                <td th:text="${report.purchasedCount}">0</td>
+                <td th:text="${report.donatedCount}">0</td>
+                <td th:text="${report.soldCount}">0</td>
+                <td th:text="${report.deadCount}">0</td>
+                <td th:text="${report.closingCount}">0</td>
+                <td th:text="${#numbers.formatDecimal(report.totalClosingTLU,1,2,'POINT')}">0.00</td>
+                <td class="col-group-divider" th:text="${#numbers.formatDecimal(report.openingValue,1,'COMMA',0,'POINT')}">0</td>
+                <td th:text="${#numbers.formatDecimal(report.closingValue,1,'COMMA',0,'POINT')}">0</td>
+                <td th:class="${report.netFinancialChange.signum() >= 0} ? 'val-pos' : 'val-neg'"
+                    th:text="${(report.netFinancialChange.signum() >= 0 ? '+' : '−') + #numbers.formatDecimal(report.netFinancialChange.abs(),1,'COMMA',0,'POINT')}">0</td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <div style="margin-top:32px;padding-top:16px;border-top:2px solid #f0f2f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.75rem;color:#94a3b8;">
+        <span><i class="bi bi-shield-check text-success me-1"></i> Animal Production System — Confidential</span>
+        <span th:text="'Generated on ' + ${#temporals.format(#temporals.createNow(),'dd MMMM yyyy HH:mm')}">Today</span>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    Chart.register(ChartDataLabels);
+
+    function fmtRwf(n) {
+        return Math.round(n).toLocaleString() + ' RWF';
+    }
+
+    var opening   = { count: /*[[${report.openingCount}]]*/ 0,  value: /*[[${report.openingValue}]]*/ 0 };
+    var born      = { count: /*[[${report.bornCount}]]*/ 0,     value: /*[[${report.bornValue}]]*/ 0 };
+    var purchased = { count: /*[[${report.purchasedCount}]]*/ 0, value: /*[[${report.purchasedValue}]]*/ 0 };
+    var donated   = { count: /*[[${report.donatedCount}]]*/ 0,  value: /*[[${report.donatedValue}]]*/ 0 };
+    var sold      = { count: /*[[${report.soldCount}]]*/ 0,     value: /*[[${report.soldRevenue}]]*/ 0 };
+    var dead      = { count: /*[[${report.deadCount}]]*/ 0,     value: /*[[${report.deadValueLoss}]]*/ 0 };
+    var closing   = { count: /*[[${report.closingCount}]]*/ 0,  value: /*[[${report.closingValue}]]*/ 0 };
+
+    var running = opening.count;
+    var steps = [
+        { label: 'Opening',  count: opening.count,   value: opening.value,   base: 0,       color: '#64748b' }
+    ];
+    steps.push({ label: 'Born',      count: born.count,      value: born.value,      base: running, color: '#10b981' }); running += born.count;
+    steps.push({ label: 'Purchased', count: purchased.count, value: purchased.value, base: running, color: '#0ea5e9' }); running += purchased.count;
+    steps.push({ label: 'Donated',   count: donated.count,   value: donated.value,   base: running, color: '#8b5cf6' }); running += donated.count;
+    running -= sold.count;
+    steps.push({ label: 'Sold',      count: sold.count,      value: sold.value,      base: running, color: '#f97316' });
+    running -= dead.count;
+    steps.push({ label: 'Died',      count: dead.count,      value: dead.value,      base: running, color: '#ef4444' });
+    steps.push({ label: 'Closing',   count: closing.count,   value: closing.value,   base: 0,       color: '#1a5f7a' });
+
+    new Chart(document.getElementById('waterfallChart'), {
+        type: 'bar',
+        data: {
+            labels: steps.map(s => s.label),
+            datasets: [
+                {
+                    label: 'base',
+                    data: steps.map(s => s.base),
+                    backgroundColor: 'rgba(0,0,0,0)',
+                    stack: 'stack1',
+                    datalabels: { display: false }
+                },
+                {
+                    label: 'Animals',
+                    data: steps.map(s => s.count),
+                    backgroundColor: steps.map(s => s.color),
+                    borderRadius: 6,
+                    stack: 'stack1',
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        offset: 2,
+                        color: '#1a2535',
+                        font: { weight: 800, size: 11, family: 'Manrope' },
+                        formatter: function(value, ctx) {
+                            var s = steps[ctx.dataIndex];
+                            if (s.count === 0 && s.value === 0) return '';
+                            return s.count + '\n' + fmtRwf(s.value);
+                        },
+                        textAlign: 'center'
+                    }
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 28 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        title: function(items) { return items[0].label; },
+                        label: function(ctx) {
+                            if (ctx.datasetIndex === 0) return null;
+                            var s = steps[ctx.dataIndex];
+                            return [' ' + s.count + ' animals', ' ' + fmtRwf(s.value)];
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false }, ticks: { font: { family: 'Manrope', weight: 700 } } }
+            }
+        }
+    });
+    /*]]>*/
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

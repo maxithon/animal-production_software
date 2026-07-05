@@ -1,0 +1,49 @@
+<!--
+  SALES REPORT ENHANCEMENT — buyer breakdown + sale-reason split.
+
+  1) In your existing sales report Controller, inject SalesAnalyticsService
+     and add to the model:
+
+       model.addAttribute("buyerAnalytics", salesAnalyticsService.generateBuyerAnalytics(fromDate, toDate));
+
+  2) Paste the block below into your existing sales-report.html, anywhere
+     after your current summary cards. Uses Bootstrap classes already
+     loaded on that page.
+-->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-people-fill"></i> Sales by Buyer</h5></div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                    <tr><th>Buyer</th><th>Type</th><th class="text-end">Animals</th><th class="text-end">Total Spent (RWF)</th><th class="text-end">Avg Price</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="b : ${buyerAnalytics.byBuyer}">
+                        <td th:text="${b.buyerName}">Buyer</td>
+                        <td th:text="${b.buyerType}">TYPE</td>
+                        <td class="text-end" th:text="${b.animalsBought}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(b.totalSpent,1,'COMMA',0,'POINT')}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(b.averagePricePaid,1,'COMMA',0,'POINT')}">0</td>
+                    </tr>
+                    <tr th:if="${buyerAnalytics.byBuyer.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-3">No sales in this period.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-tags-fill"></i> Sale Reason Breakdown</h5></div>
+            <div class="card-body">
+                <div th:each="entry : ${buyerAnalytics.countBySaleReason}" class="d-flex justify-content-between border-bottom py-2">
+                    <span th:text="${entry.key}">REASON</span>
+                    <strong th:text="${entry.value}">0</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -251,6 +251,14 @@
         </div>
 
         <!-- ── PEOPLE ─────────────────────────────────── -->
+        <!--
+            CHANGED: Representatives / Beneficiaries are VIEW-ONLY for regular
+            users (per your choice). "Register" links are removed here in the
+            HTML for UX, and the corresponding /representatives/register and
+            /beneficiaries/register URLs are blocked server-side for non-admins
+            in SecurityConfig (hasRole('ADMIN')) — so this is enforced, not
+            just hidden.
+        -->
         <div class="nav-section-label">People</div>
 
         <div class="nav-item">
@@ -262,9 +270,6 @@
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/representatives/register}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-person-plus-fill"></i>Register
-                </a>
                 <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)">
                     <i class="bi bi-list-ul"></i>View All
                 </a>
@@ -280,9 +285,6 @@
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/beneficiaries/register}" class="submenu-link" onclick="navigateTo(event,this)">
-                    <i class="bi bi-person-plus"></i>Register
-                </a>
                 <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)">
                     <i class="bi bi-list-ul"></i>View All
                 </a>
@@ -427,7 +429,8 @@
                 <a th:href="@{/settings/change-password}" class="submenu-link" onclick="navigateTo(event,this)">
                     <i class="bi bi-key-fill"></i>Change Password
                 </a>
-                <!-- NOTE: "Manage Users" is intentionally omitted — ADMIN only -->
+                <!-- NOTE: "Manage Users" is intentionally omitted — ADMIN only,
+                     and blocked server-side in SecurityConfig regardless. -->
             </div>
         </div>
 

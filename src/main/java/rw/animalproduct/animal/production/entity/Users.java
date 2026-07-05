@@ -36,6 +36,10 @@ public class Users {
 
     private String photoUrl;
 
+    // NEW: Link user to a beneficiary
+    @Column(name = "beneficiary_id")
+    private UUID beneficiaryId;
+
     @Transient
     private String userTypeIdValue;
 
@@ -76,6 +80,10 @@ public class Users {
     public String getUserTypeIdValue() { return userTypeIdValue; }
     public void setUserTypeIdValue(String userTypeIdValue) { this.userTypeIdValue = userTypeIdValue; }
 
+    // NEW: Getter and Setter for beneficiaryId
+    public UUID getBeneficiaryId() { return beneficiaryId; }
+    public void setBeneficiaryId(UUID beneficiaryId) { this.beneficiaryId = beneficiaryId; }
+
     @Override
     public String toString() {
         return "Users{" +
@@ -85,6 +93,7 @@ public class Users {
                 ", registrationDate=" + registrationDate +
                 ", userTypeId=" + userTypeId +
                 ", photoUrl='" + photoUrl + '\'' +
+                ", beneficiaryId=" + beneficiaryId +
                 '}';
     }
 }

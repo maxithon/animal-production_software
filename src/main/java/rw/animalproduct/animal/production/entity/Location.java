@@ -108,6 +108,12 @@ public class Location {
         this.locationType = locationType;
     }
 
+    // Alias getter so callers using "type" terminology (e.g. LocationDistributionService)
+    // compile without needing every call site renamed. Delegates to the real field.
+    public String getType() {
+        return locationType;
+    }
+
     public Location getParent() {
         return parent;
     }

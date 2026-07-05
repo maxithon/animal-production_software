@@ -141,6 +141,20 @@
             font-size: 0.78rem; color: #64748b; margin-top: 4px;
         }
         .current-hint strong { color: #1a5f7a; }
+
+        /* ── FAO VALUATION: read-only value display (NEW) ──────────────────── */
+        .value-locked-box {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px;
+            padding: 10px 14px; gap: 10px; flex-wrap: wrap;
+        }
+        .value-locked-amount { font-weight: 700; color: #1a5f7a; font-size: 0.95rem; }
+        .value-locked-empty { font-style: italic; color: #94a3b8; font-size: 0.85rem; }
+        .value-locked-badge {
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; background: #f1f5f9; color: #64748b;
+            padding: 2px 8px; border-radius: 20px; white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -348,10 +362,33 @@
                                 Currently: <strong th:text="${#temporals.format(livestock.dateReceived,'dd MMM yyyy')}"></strong>
                             </div>
                         </div>
+
+                        <!-- ══════════════════════════════════════════════════════
+                             FAO STANDARD CHANGE:
+                             "Current Value" is NO LONGER a free-text/number input
+                             on this form. It is a read-only cache derived from the
+                             append-only valuation history. To change it, use
+                             "Record New Valuation" on the animal's detail page —
+                             that action creates a new history row instead of
+                             silently overwriting this field.
+                        ══════════════════════════════════════════════════════ -->
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Current Value (RWF)</label>
-                            <input type="number" class="form-control" id="currentValue"
-                                   th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00">
+                            <label class="form-label">
+                                Current Value (RWF)
+                                <span class="value-locked-badge ms-1">READ-ONLY</span>
+                            </label>
+                            <div class="value-locked-box">
+                                <span th:if="${livestock.currentValue != null}" class="value-locked-amount"
+                                      th:text="${#numbers.formatDecimal(livestock.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></span>
+                                <span th:if="${livestock.currentValue == null}" class="value-locked-empty">Not yet valued</span>
+                                <i class="bi bi-lock-fill text-muted"></i>
+                            </div>
+                            <div class="form-text">
+                                Value is tracked as history now. Go to this animal's
+                                <a th:href="@{/livestock/view/{id}(id=${livestock.id})}">detail page</a>
+                                and use <strong>"Record New Valuation"</strong> instead of editing it here —
+                                that keeps a full FAO-standard audit trail of every value change.
+                            </div>
                         </div>
                     </div>
 

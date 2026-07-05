@@ -59,4 +59,25 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
     GROUP BY a.representative.id
 """)
     List<Object[]> countByEachSupervisor();
+
+    // ---- Added to support /livestock/beneficiary-impact-report ----
+    // Optional DB-side aggregates if the in-memory grouping in
+    // BeneficiaryImpactReportController ever needs to move to the DB
+    // (e.g. once the beneficiaries table gets large).
+
+    @Query("SELECT a.gender, COUNT(a) FROM Beneficiary a GROUP BY a.gender")
+    List<Object[]> countByGenderGrouped();
+
+    @Query("SELECT a.maritialStatus, COUNT(a) FROM Beneficiary a GROUP BY a.maritialStatus")
+    List<Object[]> countByMaritalStatusGrouped();
+
+    @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.contractAgreement IS NOT NULL AND a.contractAgreement <> ''")
+    long countWithContractAgreement();
+
+    // ---- Added to support /livestock/location-distribution-report ----
+
+    @Query("SELECT a FROM Beneficiary a " +
+            "WHERE a.location.id IN :locationIds " +
+            "AND (a.isDeleted = false OR a.isDeleted IS NULL)")
+    List<Beneficiary> findByLocationIdInAndIsDeletedFalse(@Param("locationIds") List<UUID> locationIds);
 }

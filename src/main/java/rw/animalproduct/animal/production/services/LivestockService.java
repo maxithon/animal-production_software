@@ -26,18 +26,21 @@ public class LivestockService {
     private final BeneficiaryRepository beneficiaryRepository;
     private final LocationRepository locationRepository;
     private final AuditLogService auditLogService;
+    private final LivestockValuationService valuationService; // FAO-standard valuation history
 
     @Autowired
     public LivestockService(LivestockRepository livestockRepository,
                             LivestockCategoryRepository livestockCategoryRepository,
                             BeneficiaryRepository beneficiaryRepository,
                             LocationRepository locationRepository,
-                            AuditLogService auditLogService) {
+                            AuditLogService auditLogService,
+                            LivestockValuationService valuationService) {
         this.livestockRepository = livestockRepository;
         this.livestockCategoryRepository = livestockCategoryRepository;
         this.beneficiaryRepository = beneficiaryRepository;
         this.locationRepository = locationRepository;
         this.auditLogService = auditLogService;
+        this.valuationService = valuationService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -117,6 +120,12 @@ public class LivestockService {
 
         Livestock saved = livestockRepository.save(livestock);
 
+        // FAO STANDARD: seed the valuation history with an INITIAL record
+        // instead of leaving current_value as a bare, directly-editable field.
+        if (saved.getCurrentValue() != null) {
+            valuationService.recordInitialValuation(saved, saved.getCurrentValue(), getCurrentUsername());
+        }
+
         auditLogService.log(
                 "livestock",
                 saved.getId(),
@@ -150,7 +159,12 @@ public class LivestockService {
         existing.setAcquisitionMethod(updated.getAcquisitionMethod());
         existing.setAcquisitionSource(updated.getAcquisitionSource());
         existing.setDateReceived(updated.getDateReceived());
-        existing.setCurrentValue(updated.getCurrentValue());
+
+        // FAO STANDARD CHANGE: currentValue is NO LONGER overwritten here.
+        // It's a read-only cache maintained exclusively by
+        // LivestockValuationService via the append-only valuation history.
+        // existing.setCurrentValue(updated.getCurrentValue());   // ← REMOVED
+
         existing.setLastBirthDate(updated.getLastBirthDate());
         existing.setOffspringCount(updated.getOffspringCount());
         existing.setPhoto(updated.getPhoto());
@@ -200,6 +214,36 @@ public class LivestockService {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // VALUATION (FAO STANDARD) — thin passthroughs kept here for controller
+    // convenience so LivestockController doesn't need to know about both
+    // services for simple cases. The real logic lives in
+    // LivestockValuationService, which remains the single source of truth.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public LivestockValuation recordValuation(UUID id, LocalDate valuationDate, java.math.BigDecimal value,
+                                              String method, String notes, String recordedBy) {
+        return valuationService.recordValuation(id, valuationDate, value, method, notes, recordedBy);
+    }
+
+    public List<LivestockValuation> getValuationHistory(UUID id) {
+        return valuationService.getHistory(id);
+    }
+
+    public Optional<LivestockValuation> getLatestValuation(UUID id) {
+        return valuationService.getLatest(id);
+    }
+
+    /**
+     * NEW: bulk latest-valuation lookup for a page of animals, keyed by
+     * livestock id. Used by the list page to render "Valued" /
+     * "Needs Valuation" badges without an N+1 query per row.
+     */
+    public Map<UUID, LivestockValuation> getLatestValuationsForIds(List<UUID> ids) {
+        return valuationService.getLatestForIds(ids);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // SOFT DELETE (Recommended - hides from UI but keeps in DB)
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -223,7 +267,6 @@ public class LivestockService {
         livestock.setDeletedBy(getCurrentUsername());
         livestock.setUpdatedAt(LocalDateTime.now());
 
-        // Optionally change status to DEAD when soft deleting
         if (!Livestock.STATUS_DEAD.equals(livestock.getStatus())
                 && !Livestock.STATUS_SOLD.equals(livestock.getStatus())) {
             livestock.setStatus(Livestock.STATUS_DEAD);
@@ -288,7 +331,6 @@ public class LivestockService {
         livestock.setDeletedAt(null);
         livestock.setDeletedBy(null);
 
-        // Restore status to ACTIVE if it was DEAD due to deletion
         if (Livestock.STATUS_DEAD.equals(livestock.getStatus())) {
             livestock.setStatus(Livestock.STATUS_ACTIVE);
         }
@@ -388,9 +430,7 @@ public class LivestockService {
 
     private String getCurrentUsername() {
         // TODO: Integrate with Spring Security when available
-        // For now, return a default or try to get from SecurityContext
         try {
-            // You can implement proper security context retrieval here
             return "system";
         } catch (Exception e) {
             return "system";

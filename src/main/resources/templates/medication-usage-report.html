@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Medication Usage Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background:#f0f2f5;
+            font-family:'Inter', sans-serif;
+            padding:0;
+            margin:0;
+        }
+        .report-banner {
+            background:linear-gradient(135deg,#701a75 0%,#a21caf 60%,#e879f9 100%);
+            padding:24px 40px 20px;
+            color:white;
+        }
+        .report-banner h2 {
+            font-family:'Syne',sans-serif;
+            font-size:1.3rem;
+            font-weight:800;
+            margin:0 0 4px;
+        }
+        .report-banner .sub {
+            font-family:'Inter', sans-serif;
+            font-weight:400;
+            font-size:0.8rem;
+        }
+        .print-btn {
+            background:rgba(255,255,255,.15);
+            border:1.5px solid rgba(255,255,255,.35);
+            color:white;
+            border-radius:8px;
+            padding:6px 16px;
+            font-size:.78rem;
+            font-weight:600;
+            cursor:pointer;
+            text-decoration:none;
+            font-family:'Inter', sans-serif;
+        }
+        .print-btn:hover {
+            background:rgba(255,255,255,.25);
+            color:white;
+        }
+        .report-body {
+            padding:24px 32px;
+            max-width:1300px;
+            margin:0 auto;
+        }
+        .filter-card {
+            background:white;
+            border-radius:12px;
+            padding:16px 24px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+            margin-bottom:20px;
+        }
+        .filter-card label {
+            font-family:'Inter', sans-serif;
+            font-weight:600;
+            font-size:.7rem;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .filter-card .btn {
+            font-family:'Inter', sans-serif;
+            font-weight:700;
+            font-size:.8rem;
+        }
+        .kpi-strip {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:12px;
+            margin-bottom:20px;
+        }
+        .kpi {
+            background:white;
+            border-radius:12px;
+            padding:14px 18px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+            border-top:4px solid #a21caf;
+        }
+        .kpi .kpi-num {
+            font-family:'Syne',sans-serif;
+            font-size:1.6rem;
+            font-weight:800;
+            color:#a21caf;
+        }
+        .kpi .kpi-lbl {
+            font-family:'Inter', sans-serif;
+            font-size:.65rem;
+            font-weight:600;
+            color:#64748b;
+            margin-top:4px;
+            text-transform:uppercase;
+            letter-spacing:.05em;
+        }
+        .chart-card {
+            background:white;
+            border-radius:12px;
+            padding:16px 20px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+        }
+        .chart-card h6 {
+            font-family:'Inter', sans-serif;
+            font-weight:700;
+            letter-spacing:.05em;
+            font-size:.7rem;
+        }
+        .chart-wrapper {
+            position:relative;
+            height:240px;
+        }
+        .card-table {
+            background:white;
+            border-radius:12px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06);
+            overflow:hidden;
+        }
+        .card-table .bg-light {
+            font-family:'Inter', sans-serif;
+            font-weight:700;
+            font-size:.85rem;
+            padding:12px 20px;
+        }
+        table.mu th {
+            font-family:'Inter', sans-serif;
+            font-size:.68rem;
+            text-transform:uppercase;
+            letter-spacing:.05em;
+            color:#64748b;
+            font-weight:700;
+            background:#f8fafc;
+            padding:10px 12px;
+        }
+        table.mu td {
+            font-family:'Inter', sans-serif;
+            font-size:.88rem;
+            padding:10px 12px;
+        }
+        table.mu td strong {
+            font-weight:600;
+        }
+        .cat-badge {
+            background:#fae8ff;
+            color:#86198f;
+            border:1px solid #f0abfc;
+            border-radius:20px;
+            padding:2px 9px;
+            font-size:.65rem;
+            font-weight:700;
+            font-family:'Inter', sans-serif;
+        }
+        .text-muted.small {
+            font-family:'Inter', sans-serif;
+            font-size:.75rem;
+        }
+        @media print {
+            .no-print{display:none!important;}
+            body{background:white;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="report-banner">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3" style="max-width:1300px;margin:0 auto;">
+        <div>
+            <h2><i class="bi bi-capsule-pill me-2" style="font-size:1.1rem;"></i>Medication Usage Report</h2>
+            <div class="sub" style="opacity:.85;font-size:.78rem;">
+                Drug usage &amp; spend · Period:
+                <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong> to
+                <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/livestock" class="print-btn no-print"><i class="bi bi-arrow-left me-1"></i> Back</a>
+            <button class="print-btn no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+        </div>
+    </div>
+</div>
+
+<div class="report-body">
+
+    <div class="filter-card no-print">
+        <form method="get" action="/livestock/medication-usage-report" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">From</label>
+                <input type="date" name="from" class="form-control form-control-sm" th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">To</label>
+                <input type="date" name="to" class="form-control form-control-sm" th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm w-100 text-white fw-bold" style="background:#a21caf;font-size:.78rem;" type="submit">
+                    <i class="bi bi-funnel me-1"></i>Apply
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-num" th:text="${report.totalTreatments}">0</div><div class="kpi-lbl">Treatments</div></div>
+        <div class="kpi"><div class="kpi-num" th:text="${#numbers.formatDecimal(report.totalSpend,1,'COMMA',0,'POINT')}">0</div><div class="kpi-lbl">Total Spend (RWF)</div></div>
+        <div class="kpi"><div class="kpi-num" th:text="${report.rows.size()}">0</div><div class="kpi-lbl">Distinct Medications Used</div></div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h6 class="text-uppercase small fw-bold text-muted mb-3">Usage by Therapeutic Category</h6>
+                <div class="chart-wrapper"><canvas id="catChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-card">
+                <h6 class="text-uppercase small fw-bold text-muted mb-3">Top Medications by Spend</h6>
+                <div class="chart-wrapper"><canvas id="topChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-table">
+        <div class="p-3 border-bottom bg-light fw-bold"><i class="bi bi-table me-2"></i>All Medications Used</div>
+        <div class="table-responsive">
+            <table class="table table-hover mu mb-0">
+                <thead>
+                <tr>
+                    <th>Medication</th>
+                    <th>Category</th>
+                    <th class="text-end">Times Used</th>
+                    <th class="text-end">Animals Treated</th>
+                    <th class="text-end">Avg Cost / Use</th>
+                    <th class="text-end">Total Cost</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${report.rows}">
+                    <td>
+                        <strong th:text="${m.medicationName}">Medicine</strong>
+                        <div class="text-muted small" th:text="${m.genericName}">generic</div>
+                    </td>
+                    <td><span class="cat-badge" th:text="${m.category}">CAT</span></td>
+                    <td class="text-end" th:text="${m.timesUsed}">0</td>
+                    <td class="text-end" th:text="${m.distinctAnimalsTreated}">0</td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(m.averageCostPerUse,1,'COMMA',0,'POINT')}">0</td>
+                    <td class="text-end fw-bold" th:text="${#numbers.formatDecimal(m.totalCost,1,'COMMA',0,'POINT')}">0</td>
+                </tr>
+                <tr th:if="${report.rows.isEmpty()}">
+                    <td colspan="6" class="text-center text-muted py-4">No treatments recorded in this period.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    // Set Inter as the default font for Chart.js
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    const catLabels = /*[[${report.countByCategory.keySet()}]]*/ [];
+    const catData    = /*[[${report.countByCategory.values()}]]*/ [];
+    const palette = ['#a21caf','#0ea5e9','#10b981','#f59e0b','#ef4444','#6366f1','#ec4899'];
+
+    if (catLabels.length > 0) {
+        new Chart(document.getElementById('catChart'), {
+            type: 'doughnut',
+            data: { labels: catLabels, datasets: [{ data: catData, backgroundColor: palette, borderColor:'#fff', borderWidth:3 }] },
+            options: {
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{
+                    legend:{
+                        position:'bottom',
+                        labels: {
+                            font: { family: "'Inter', sans-serif", size: 10 },
+                            padding: 12
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    const topLabels = /*[[${report.rows.size() > 0 ? report.rows.![medicationName] : {}}]]*/ [];
+    const topData    = /*[[${report.rows.size() > 0 ? report.rows.![totalCost] : {}}]]*/ [];
+
+    if (topLabels.length > 0) {
+        new Chart(document.getElementById('topChart'), {
+            type: 'bar',
+            data: {
+                labels: topLabels.slice(0, 8),
+                datasets: [{ label:'RWF', data: topData.slice(0, 8), backgroundColor:'rgba(162,28,175,0.65)', borderColor:'rgb(162,28,175)', borderWidth:2, borderRadius:8 }]
+            },
+            options: {
+                indexAxis:'y',
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{
+                    legend:{ display:false },
+                    tooltip: {
+                        titleFont: { family: "'Inter', sans-serif", size: 11 },
+                        bodyFont: { family: "'Inter', sans-serif", size: 11 }
+                    }
+                },
+                scales:{
+                    x:{
+                        beginAtZero: true,
+                        ticks: { font: { family: "'Inter', sans-serif", size: 9 } }
+                    },
+                    y: {
+                        ticks: { font: { family: "'Inter', sans-serif", size: 9 } }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -50,7 +50,7 @@ public class UsersService {
     }
 
     /**
-     * ⭐ NEW: Register a new system user with optional photo
+     * Register a new system user with optional photo
      */
     public Users registerUser(String email, String password, String userTypeIdStr, MultipartFile photo) throws IOException {
         Users user = new Users();
@@ -73,7 +73,7 @@ public class UsersService {
     }
 
     /**
-     * ⭐ NEW: Save photo file and return the URL path
+     * Save photo file and return the URL path
      */
     public String savePhoto(MultipartFile photo) throws IOException {
         // Create upload directory if it doesn't exist
@@ -98,6 +98,13 @@ public class UsersService {
     }
 
     public Optional<Users> getUserByEmail(String email) {
+        return usersRepository.findByEmail(email);
+    }
+
+    /**
+     * Find user by email (alias method for convenience)
+     */
+    public Optional<Users> findByEmail(String email) {
         return usersRepository.findByEmail(email);
     }
 

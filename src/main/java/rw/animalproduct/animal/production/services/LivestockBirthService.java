@@ -1,641 +1,603 @@
 package rw.animalproduct.animal.production.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class LivestockBirthService {
 
-    private final LivestockBirthRepository     birthRepository;
-    private final LivestockRepository          livestockRepository;
-    private final LivestockOffspringRepository offspringRepository;
-    private final LivestockBreedingRepository  breedingRepository;
-    private final LivestockBreedingService     breedingService;
-    private final AuditLogService              auditLogService;
+    private static final Logger log = LoggerFactory.getLogger(LivestockBirthService.class);
 
-    public LivestockBirthService(LivestockBirthRepository birthRepository,
-                                 LivestockRepository livestockRepository,
-                                 LivestockOffspringRepository offspringRepository,
-                                 LivestockBreedingRepository breedingRepository,
-                                 LivestockBreedingService breedingService,
-                                 AuditLogService auditLogService) {
-        this.birthRepository     = birthRepository;
+    private final LivestockBirthRepository birthRepository;
+    private final LivestockRepository livestockRepository;
+    private final LivestockOffspringRepository offspringRepository;
+    private final LivestockBreedingRepository breedingRepository;
+    private final LivestockCategoryRepository categoryRepository;
+
+    public LivestockBirthService(
+            LivestockBirthRepository birthRepository,
+            LivestockRepository livestockRepository,
+            LivestockOffspringRepository offspringRepository,
+            LivestockBreedingRepository breedingRepository,
+            LivestockCategoryRepository categoryRepository) {
+        this.birthRepository = birthRepository;
         this.livestockRepository = livestockRepository;
         this.offspringRepository = offspringRepository;
-        this.breedingRepository  = breedingRepository;
-        this.breedingService     = breedingService;
-        this.auditLogService     = auditLogService;
+        this.breedingRepository = breedingRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    // ── CRUD ─────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────────
+    // CREATE
+    // ─────────────────────────────────────────────────────────────────────────────
 
-    public List<LivestockBirth> getAll() {
-        return birthRepository.findByIsDeletedFalseOrderByBirthDateDesc();
-    }
+    /**
+     * Create a new birth record
+     */
+    public LivestockBirth createBirth(LivestockBirth birth) {
+        log.debug("Creating new birth record");
 
-    public Page<LivestockBirth> getPaged(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, "birthDate");
-        return birthRepository.findByIsDeletedFalseOrderByBirthDateDesc(pageable);
-    }
-
-    public Optional<LivestockBirth> getById(UUID id) {
-        return birthRepository.findById(id);
-    }
-
-    public List<LivestockBirth> getByLivestockId(UUID livestockId) {
-        return birthRepository.findByLivestockId(livestockId);
-    }
-
-    public List<Livestock> getDraftChildrenForBirth(UUID birthId) {
-        Optional<LivestockBirth> birthOpt = birthRepository.findById(birthId);
-        if (birthOpt.isEmpty()) return new ArrayList<>();
-        LivestockBirth birth = birthOpt.get();
-        if (birth.getChildren() == null || birth.getChildren().isEmpty()) return new ArrayList<>();
-        return birth.getChildren().stream()
-                .map(LivestockOffspring::getChildLivestock)
-                .filter(Objects::nonNull)
-                .filter(child -> Boolean.TRUE.equals(child.getIsDraft()))
-                .collect(Collectors.toList());
-    }
-
-    public List<LivestockOffspring> getOffspringLinksForBirth(UUID birthId) {
-        return offspringRepository.findByBirthEventId(birthId);
-    }
-
-    public long countPendingDraftsForBirth(UUID birthId) {
-        return livestockRepository.countByDraftBirthEventIdAndIsDraftTrue(birthId);
-    }
-
-    @Transactional
-    public void completeDraft(UUID draftId, String tagNumber, String gender,
-                              String categoryId, String beneficiaryId,
-                              BigDecimal currentValue, UUID locationId,
-                              String sourceLocation,
-                              BeneficiaryRepository beneficiaryRepository,
-                              LivestockCategoryRepository categoryRepository,
-                              LocationRepository locationRepository) {
-
-        Livestock draft = livestockRepository.findById(draftId)
-                .orElseThrow(() -> new RuntimeException("Draft animal not found"));
-
-        if (!Boolean.TRUE.equals(draft.getIsDraft())) {
-            throw new RuntimeException("This animal is not a draft");
+        // Validate
+        if (birth.getLivestockId() == null) {
+            throw new IllegalArgumentException("Mother livestock ID is required");
         }
 
-        draft.setTagNumber(tagNumber);
-        draft.setGender(gender);
-        draft.setIsDraft(false);
-        draft.setStatus(Livestock.STATUS_ACTIVE);
-        draft.setAcquisitionMethod(Livestock.ACQ_BIRTH);
-        draft.setDateReceived(LocalDate.now());
-
-        if (currentValue != null) draft.setCurrentValue(currentValue);
-
-        if (draft.getMother() == null && draft.getDraftBirthEvent() != null) {
-            Livestock motherFromBirth = draft.getDraftBirthEvent().getLivestock();
-            if (motherFromBirth != null) draft.setMother(motherFromBirth);
+        // Set default values
+        if (birth.getIsDeleted() == null) {
+            birth.setIsDeleted(false);
+        }
+        if (birth.getOffspringCount() == null) {
+            birth.setOffspringCount(0);
         }
 
-        if (draft.getAcquisitionSource() == null || draft.getAcquisitionSource().isBlank()) {
-            draft.setAcquisitionSource(draft.getMother() != null
-                    ? "Born on this farm — Mother: " + draft.getMother().getTagNumber()
-                    : "Born on this farm");
+        // Save birth
+        LivestockBirth savedBirth = birthRepository.save(birth);
+
+        // Update mother's last birth date
+        livestockRepository.findById(birth.getLivestockId()).ifPresent(mother -> {
+            mother.setLastBirthDate(birth.getBirthDate());
+            if (mother.getOffspringCount() == null) {
+                mother.setOffspringCount(0);
+            }
+            mother.setOffspringCount(mother.getOffspringCount() + 1);
+            livestockRepository.save(mother);
+        });
+
+        // Update breeding record if exists
+        if (birth.getBreedingId() != null) {
+            breedingRepository.findById(birth.getBreedingId()).ifPresent(breeding -> {
+                breeding.setStatus(LivestockBreeding.STATUS_COMPLETED);
+                breeding.setNotes((breeding.getNotes() != null ? breeding.getNotes() + " " : "") +
+                        "Birth recorded on " + birth.getBirthDate());
+                breedingRepository.save(breeding);
+            });
         }
 
-        if (categoryId != null && !categoryId.isEmpty()) {
-            UUID catId = UUID.fromString(categoryId);
-            LivestockCategory category = categoryRepository.findById(catId)
-                    .orElseThrow(() -> new RuntimeException("Category not found"));
-            draft.setLivestockCategory(category);
-        }
-
-        if (beneficiaryId != null && !beneficiaryId.isEmpty()) {
-            UUID benId = UUID.fromString(beneficiaryId);
-            Beneficiary beneficiary = beneficiaryRepository.findById(benId)
-                    .orElseThrow(() -> new RuntimeException("Beneficiary not found"));
-            draft.setBeneficiary(beneficiary);
-        }
-
-        if (locationId != null) {
-            Location location = locationRepository.findById(locationId)
-                    .orElseThrow(() -> new RuntimeException("Location not found"));
-            draft.setLocation(location);
-        }
-
-        if (sourceLocation != null && !sourceLocation.isEmpty()) {
-            draft.setAcquisitionSource(sourceLocation);
-        }
-
-        livestockRepository.save(draft);
+        return savedBirth;
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // addNew — OVERLOADED
-    // ═════════════════════════════════════════════════════════════════════════
-
-    @Transactional
-    public LivestockBirth addNew(LivestockBirth birth) {
-        return addNew(birth, null);
-    }
-
-    @Transactional
+    /**
+     * Controller-facing entry point for registering a birth + optionally
+     * linking already-registered children in one step.
+     *
+     * Resolves the transient {@code livestockIdValue} (set by the register/edit
+     * forms) into the real {@code livestockId} FK before delegating to
+     * {@link #createBirth(LivestockBirth)}.
+     */
     public LivestockBirth addNew(LivestockBirth birth, List<UUID> linkedChildIds) {
+        log.debug("Registering new birth (addNew)");
 
-        birth.setIsExternalBirth(false);
         resolveAndSetLivestock(birth);
 
-        Livestock mother = birth.getLivestock();
-        if (mother == null) {
-            throw new RuntimeException(
-                    "Mother animal is required — please select the mother from the list.");
-        }
+        LivestockBirth saved = createBirth(birth);
 
-        boolean isPurchasedPregnant =
-                !Livestock.ACQ_BIRTH.equals(mother.getAcquisitionMethod());
-
-        if (isPurchasedPregnant) {
-            validateBirthInterval(mother, birth.getBirthDate());
-        } else {
-            validateGestationComplete(mother, birth.getBirthDate());
-            validateBirthInterval(mother, birth.getBirthDate());
-            validateDueDateWindow(mother, birth.getBirthDate());
-        }
-
-        mother.setLastBirthDate(birth.getBirthDate());
-        mother.setIsPregnant(false);
-        mother.setPregnancyStatus("NOT_PREGNANT");
-        mother.setStatus(Livestock.STATUS_ACTIVE);
-        mother.setExpectedDueDate(null);
-        mother.setConceptionDate(null);
-        mother.setLastBreedingDate(null);
-
-        if (birth.getOffspringCount() != null) {
-            int current = mother.getOffspringCount() == null ? 0 : mother.getOffspringCount();
-            mother.setOffspringCount(current + birth.getOffspringCount());
-        }
-        livestockRepository.save(mother);
-
-        breedingService.completeBreedingOnBirth(mother.getId(), birth.getBirthDate());
-
-        LivestockBirth saved = birthRepository.save(birth);
-
-        // ── Audit: CREATE ─────────────────────────────────────────────────────
-        auditLogService.log(
-                "livestock_birth",
-                saved.getId(),
-                "CREATE",
-                getCurrentUsername(),
-                null,
-                "Birth recorded for mother: " + mother.getTagNumber()
-                        + " | Date: " + birth.getBirthDate()
-                        + " | Offspring count: " + birth.getOffspringCount(),
-                "New birth event created"
-        );
-
-        // ── Link already-registered children ─────────────────────────────────
-        int alreadyLinkedCount = 0;
-        if (linkedChildIds != null && !linkedChildIds.isEmpty()) {
+        if (linkedChildIds != null) {
             for (UUID childId : linkedChildIds) {
                 try {
-                    linkChild(saved.getId(), childId);
-                    alreadyLinkedCount++;
-                } catch (Exception ex) {
-                    System.err.println("Warning: could not link child "
-                            + childId + ": " + ex.getMessage());
+                    addOffspring(saved.getId(), childId, 1);
+                } catch (Exception e) {
+                    log.warn("Could not link child {} to birth {}: {}", childId, saved.getId(), e.getMessage());
                 }
             }
         }
 
-        // ── Create draft placeholders for remaining unregistered offspring ────
-        int offspringCount = birth.getOffspringCount() != null
-                ? birth.getOffspringCount() : 0;
-        int draftsNeeded = Math.max(0, offspringCount - alreadyLinkedCount);
-
-        for (int i = 0; i < draftsNeeded; i++) {
-            Livestock draft = new Livestock();
-            draft.setIsDraft(true);
-            draft.setDraftBirthEvent(saved);
-            draft.setStatus(Livestock.STATUS_ACTIVE);
-            draft.setAcquisitionMethod(Livestock.ACQ_BIRTH);
-            draft.setGender("UNKNOWN");
-            draft.setBirthDate(birth.getBirthDate());
-            draft.setMother(mother);
-            draft.setTagNumber("DRAFT-"
-                    + saved.getId().toString().substring(0, 8).toUpperCase()
-                    + "-" + (i + 1));
-            draft.setPregnancyStatus("NOT_PREGNANT");
-            draft.setIsPregnant(false);
-            draft.setOffspringCount(0);
-            draft.setIsDeleted(false);
-            draft.setAcquisitionSource(
-                    "Born on this farm — Mother: " + mother.getTagNumber());
-
-            if (saved.getLivestock() != null
-                    && saved.getLivestock().getLivestockCategory() != null) {
-                draft.setLivestockCategory(saved.getLivestock().getLivestockCategory());
-            }
-
-            Livestock savedDraft = livestockRepository.save(draft);
-            LivestockOffspring link = new LivestockOffspring(saved, savedDraft, 1);
-            offspringRepository.save(link);
-        }
-
         return saved;
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // VALIDATION 1 — Gestation period completeness
-    // ═════════════════════════════════════════════════════════════════════════
+    // ─────────────────────────────────────────────────────────────────────────────
+    // READ
+    // ─────────────────────────────────────────────────────────────────────────────
 
-    private void validateGestationComplete(Livestock mother, LocalDate birthDate) {
-        if (mother.getLivestockCategory() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() <= 0) return;
-
-        int gestationMonths = mother.getLivestockCategory().getGestationPeriodMonths();
-        LocalDate effectiveBirthDate = (birthDate != null) ? birthDate : LocalDate.now();
-
-        Optional<LivestockBreeding> activeBreedingOpt = breedingRepository
-                .findByLivestockId(mother.getId()).stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
-                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
-                        || LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
-                .filter(b -> b.getBreedingDate() != null)
-                .max(Comparator.comparing(LivestockBreeding::getBreedingDate));
-
-        if (activeBreedingOpt.isEmpty()) {
-            if (mother.getLastBreedingDate() == null) return;
-            LocalDate expectedBirthDate =
-                    mother.getLastBreedingDate().plusMonths(gestationMonths);
-            if (effectiveBirthDate.isBefore(expectedBirthDate)) {
-                throw new RuntimeException("Animal " + mother.getTagNumber()
-                        + " is not ready to give birth yet. Earliest birth date: "
-                        + expectedBirthDate);
-            }
-            return;
-        }
-
-        LocalDate breedingDate = activeBreedingOpt.get().getBreedingDate();
-        LocalDate expectedBirthDate = breedingDate.plusMonths(gestationMonths);
-
-        if (effectiveBirthDate.isBefore(expectedBirthDate)) {
-            throw new RuntimeException("Animal " + mother.getTagNumber()
-                    + " is not ready to give birth yet. Earliest birth date: "
-                    + expectedBirthDate);
-        }
+    /**
+     * Get all non-deleted birth records
+     */
+    public List<LivestockBirth> getAll() {
+        log.debug("Getting all birth records");
+        return birthRepository.findByIsDeletedFalseOrderByBirthDateDesc();
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // VALIDATION 2 — Minimum interval between consecutive births
-    // ═════════════════════════════════════════════════════════════════════════
+    /**
+     * Paged view of all non-deleted birth records, newest first.
+     * Implemented in-memory (rather than a repository query) so no new
+     * repository method is required.
+     */
+    public Page<LivestockBirth> getPaged(int page, int size) {
+        log.debug("Getting paged birth records: page={}, size={}", page, size);
 
-    private void validateBirthInterval(Livestock mother, LocalDate newBirthDate) {
-        if (mother.getLastBirthDate() == null) return;
-        if (mother.getLivestockCategory() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() <= 0) return;
+        List<LivestockBirth> all = getAll();
+        int total = all.size();
+        int start = Math.min(page * size, total);
+        int end = Math.min(start + size, total);
 
-        boolean hasPreExistingConfirmedPregnancy = breedingRepository
-                .findByLivestockId(mother.getId()).stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
-                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
-                        || LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
-                .filter(b -> b.getBreedingDate() != null)
-                .anyMatch(b -> !b.getBreedingDate().isAfter(mother.getLastBirthDate()));
-
-        if (hasPreExistingConfirmedPregnancy) return;
-
-        int gestationMonths = mother.getLivestockCategory().getGestationPeriodMonths();
-        LocalDate effectiveBirthDate = (newBirthDate != null) ? newBirthDate : LocalDate.now();
-        LocalDate earliestNextBirth =
-                mother.getLastBirthDate().plusMonths(gestationMonths);
-
-        if (effectiveBirthDate.isBefore(earliestNextBirth)) {
-            throw new RuntimeException("Animal " + mother.getTagNumber()
-                    + " gave birth too recently. Earliest next birth date: "
-                    + earliestNextBirth);
-        }
+        Pageable pageable = PageRequest.of(page, size);
+        return new PageImpl<>(all.subList(start, end), pageable, total);
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // VALIDATION 3 — Birth date within due-date window
-    // ═════════════════════════════════════════════════════════════════════════
-
-    private void validateDueDateWindow(Livestock mother, LocalDate birthDate) {
-        if (mother.getLivestockCategory() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() == null
-                || mother.getLivestockCategory().getGestationPeriodMonths() <= 0) return;
-
-        final int DAYS_BEFORE_TOLERANCE = 14;
-        final int DAYS_AFTER_TOLERANCE  = 14;
-        LocalDate effectiveBirthDate = (birthDate != null) ? birthDate : LocalDate.now();
-
-        Optional<LivestockBreeding> activeBreedingOpt = breedingRepository
-                .findByLivestockId(mother.getId()).stream()
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
-                .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
-                        || LivestockBreeding.STATUS_PENDING.equals(b.getStatus()))
-                .filter(b -> b.getExpectedDueDate() != null)
-                .filter(b -> b.getBreedingDate() != null)
-                .max(Comparator.comparing(LivestockBreeding::getBreedingDate));
-
-        if (activeBreedingOpt.isEmpty()) return;
-
-        LocalDate expectedDueDate = activeBreedingOpt.get().getExpectedDueDate();
-        LocalDate earliestAllowedBirth =
-                expectedDueDate.minusDays(DAYS_BEFORE_TOLERANCE);
-        LocalDate latestAllowedBirth =
-                expectedDueDate.plusDays(DAYS_AFTER_TOLERANCE);
-
-        if (effectiveBirthDate.isBefore(earliestAllowedBirth)) {
-            throw new RuntimeException("Animal " + mother.getTagNumber()
-                    + " birth date is too early. Earliest allowed: "
-                    + earliestAllowedBirth);
-        }
-        if (effectiveBirthDate.isAfter(latestAllowedBirth)) {
-            throw new RuntimeException("Animal " + mother.getTagNumber()
-                    + " birth date is too late. Latest allowed: "
-                    + latestAllowedBirth);
-        }
+    /**
+     * Get all births for a specific mother
+     */
+    public List<LivestockBirth> getBirthsByMother(UUID motherId) {
+        log.debug("Getting births for mother: {}", motherId);
+        return birthRepository.findByLivestockIdAndIsDeletedFalse(motherId);
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
+    /**
+     * Alias of {@link #getBirthsByMother(UUID)} for controller readability
+     * (used by the family-tree view).
+     */
+    public List<LivestockBirth> getByLivestockId(UUID livestockId) {
+        return getBirthsByMother(livestockId);
+    }
+
+    /**
+     * Get a birth by ID
+     */
+    public Optional<LivestockBirth> getBirthById(UUID birthId) {
+        log.debug("Getting birth by ID: {}", birthId);
+        return birthRepository.findById(birthId);
+    }
+
+    /**
+     * Alias of {@link #getBirthById(UUID)} for controller readability.
+     */
+    public Optional<LivestockBirth> getById(UUID birthId) {
+        return getBirthById(birthId);
+    }
+
+    /**
+     * Direct (first-generation) children of an animal — i.e. any livestock
+     * whose {@code mother} points to this animal.
+     */
+    public List<Livestock> getDirectChildren(UUID livestockId) {
+        log.debug("Getting direct children for livestock: {}", livestockId);
+        return livestockRepository.findAll().stream()
+                .filter(l -> l.getMother() != null && livestockId.equals(l.getMother().getId()))
+                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Whether an animal has at least one direct child on record.
+     */
+    public boolean hasChildren(UUID livestockId) {
+        return !getDirectChildren(livestockId).isEmpty();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
     // UPDATE
-    // ═════════════════════════════════════════════════════════════════════════
-    @Transactional
-    public LivestockBirth update(UUID id, LivestockBirth updated) {
-        Optional<LivestockBirth> existingOpt = birthRepository.findById(id);
-        if (existingOpt.isEmpty()) return null;
+    // ─────────────────────────────────────────────────────────────────────────────
 
-        LivestockBirth existing = existingOpt.get();
+    /**
+     * Update a birth record
+     */
+    public LivestockBirth updateBirth(UUID birthId, LivestockBirth updatedBirth) {
+        log.debug("Updating birth: {}", birthId);
 
-        // ── CORRECT: old snapshot captured BEFORE any setters ────────────────
-        String oldSnapshot = "Mother: "
-                + (existing.getLivestock() != null
-                ? existing.getLivestock().getTagNumber() : "unknown")
-                + " | Birth Date: " + existing.getBirthDate()
-                + " | Offspring: "  + existing.getOffspringCount()
-                + " | Notes: "      + existing.getNotes();
+        LivestockBirth existingBirth = birthRepository.findById(birthId)
+                .orElseThrow(() -> new RuntimeException("Birth record not found"));
 
-        // ── Now apply changes ─────────────────────────────────────────────────
-        existing.setBirthDate(updated.getBirthDate());
-        existing.setOffspringCount(updated.getOffspringCount());
-        existing.setOffspringGender(updated.getOffspringGender());
-        existing.setWeaningDate(updated.getWeaningDate());
-        existing.setNextBreedingDate(updated.getNextBreedingDate());
-        existing.setNotes(updated.getNotes());
-        existing.setIsExternalBirth(false);
-        existing.setSourceLocation(updated.getSourceLocation());
-        existing.setLivestockIdValue(updated.getLivestockIdValue());
-        resolveAndSetLivestock(existing);
+        // Update fields
+        if (updatedBirth.getLivestockId() != null) {
+            existingBirth.setLivestockId(updatedBirth.getLivestockId());
+        }
+        if (updatedBirth.getBirthDate() != null) {
+            existingBirth.setBirthDate(updatedBirth.getBirthDate());
+        }
+        if (updatedBirth.getOffspringCount() != null) {
+            existingBirth.setOffspringCount(updatedBirth.getOffspringCount());
+        }
+        if (updatedBirth.getOffspringGender() != null) {
+            existingBirth.setOffspringGender(updatedBirth.getOffspringGender());
+        }
+        if (updatedBirth.getWeaningDate() != null) {
+            existingBirth.setWeaningDate(updatedBirth.getWeaningDate());
+        }
+        if (updatedBirth.getNextBreedingDate() != null) {
+            existingBirth.setNextBreedingDate(updatedBirth.getNextBreedingDate());
+        }
+        if (updatedBirth.getNotes() != null) {
+            existingBirth.setNotes(updatedBirth.getNotes());
+        }
+        if (updatedBirth.getSourceLocation() != null) {
+            existingBirth.setSourceLocation(updatedBirth.getSourceLocation());
+        }
+        if (updatedBirth.getIsExternalBirth() != null) {
+            existingBirth.setIsExternalBirth(updatedBirth.getIsExternalBirth());
+        }
 
-        LivestockBirth saved = birthRepository.save(existing);
-
-        // ── New snapshot captured AFTER save ──────────────────────────────────
-        String newSnapshot = "Mother: "
-                + (saved.getLivestock() != null
-                ? saved.getLivestock().getTagNumber() : "unknown")
-                + " | Birth Date: " + saved.getBirthDate()
-                + " | Offspring: "  + saved.getOffspringCount()
-                + " | Notes: "      + saved.getNotes();
-
-        auditLogService.log(
-                "livestock_birth", id, "UPDATE",
-                getCurrentUsername(), oldSnapshot, newSnapshot,
-                "Birth record updated"
-        );
-
-        return saved;
+        return birthRepository.save(existingBirth);
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // DELETE — SOFT DELETE (keeps history, just marks is_deleted = true)
-    // ═════════════════════════════════════════════════════════════════════════
+    /**
+     * Controller-facing entry point for editing a birth. Resolves the
+     * transient {@code livestockIdValue} into {@code livestockId} before
+     * delegating to {@link #updateBirth(UUID, LivestockBirth)}.
+     */
+    public LivestockBirth update(UUID birthId, LivestockBirth birth) {
+        log.debug("Updating birth (update): {}", birthId);
+        resolveAndSetLivestock(birth);
+        return updateBirth(birthId, birth);
+    }
 
-    @Transactional
-    public void delete(UUID id) {
-        LivestockBirth birth = birthRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Birth record not found: " + id));
+    // ─────────────────────────────────────────────────────────────────────────────
+    // DELETE
+    // ─────────────────────────────────────────────────────────────────────────────
 
-        // Build a readable snapshot before soft-deleting
-        String snapshot = "Birth ID: " + id
-                + " | Mother: " + (birth.getLivestock() != null
-                ? birth.getLivestock().getTagNumber() : "unknown")
-                + " | Birth Date: " + birth.getBirthDate()
-                + " | Offspring Count: " + birth.getOffspringCount()
-                + " | Notes: " + birth.getNotes();
+    /**
+     * Delete a birth record (soft delete)
+     */
+    public void deleteBirth(UUID birthId) {
+        log.debug("Soft deleting birth: {}", birthId);
 
-        // Soft delete — set flag only, do NOT remove from DB
+        LivestockBirth birth = birthRepository.findById(birthId)
+                .orElseThrow(() -> new RuntimeException("Birth record not found"));
+
         birth.setIsDeleted(true);
         birthRepository.save(birth);
 
-        // Write audit log so you can always see what was deleted and when
-        auditLogService.log(
-                "livestock_birth",
-                id,
-                "SOFT_DELETE",
-                getCurrentUsername(),
-                snapshot,
-                null,
-                "Birth record soft-deleted. Record is still in the database with is_deleted=true."
-        );
+        // Also soft delete all offspring
+        List<LivestockOffspring> offspring = offspringRepository.findByBirthEventId(birthId);
+        for (LivestockOffspring child : offspring) {
+            child.setIsDeleted(true);
+            offspringRepository.save(child);
+        }
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // CHILD LINKING
-    // ═════════════════════════════════════════════════════════════════════════
+    /**
+     * Alias of {@link #deleteBirth(UUID)} for controller readability.
+     */
+    public void delete(UUID birthId) {
+        deleteBirth(birthId);
+    }
 
-    @Transactional
-    public LivestockOffspring linkChild(UUID birthId, UUID childLivestockId) {
+    // ─────────────────────────────────────────────────────────────────────────────
+    // CHILD LINKING
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Add a child/offspring to a birth event
+     */
+    public LivestockOffspring addOffspring(UUID birthId, UUID childLivestockId, Integer generation) {
+        log.debug("Adding offspring to birth: {}", birthId);
+
         LivestockBirth birth = birthRepository.findById(birthId)
                 .orElseThrow(() -> new RuntimeException("Birth record not found"));
 
         Livestock child = livestockRepository.findById(childLivestockId)
                 .orElseThrow(() -> new RuntimeException("Child livestock not found"));
 
-        boolean alreadyLinked = birth.getChildren() != null
-                && birth.getChildren().stream()
-                .anyMatch(o -> o.getChildLivestock() != null
-                        && o.getChildLivestock().getId().equals(childLivestockId));
-        if (alreadyLinked) {
-            throw new RuntimeException("Animal " + child.getTagNumber()
-                    + " is already linked to this birth.");
+        // Verify child is not already linked to another birth
+        List<LivestockOffspring> existing = offspringRepository.findByChildLivestockIdAndIsDeletedFalse(childLivestockId);
+        if (!existing.isEmpty()) {
+            throw new RuntimeException("This livestock is already linked to a birth event");
         }
 
-        Livestock mother = birth.getLivestock();
+        LivestockOffspring offspring = new LivestockOffspring();
+        offspring.setBirthEvent(birth);
+        offspring.setChildLivestock(child);
+        offspring.setGeneration(generation != null ? generation : 1);
+        offspring.setIsAlive(true);
+        offspring.setIsDeleted(false);
 
-        if (child.getMother() != null && mother != null
-                && !child.getMother().getId().equals(mother.getId())) {
-            System.err.println("WARNING: Animal " + child.getTagNumber()
-                    + " had mother " + child.getMother().getTagNumber()
-                    + " but is being reassigned to " + mother.getTagNumber());
-        }
+        // Update child's mother and status
+        Livestock mother = birth.getLivestockId() != null
+                ? livestockRepository.findById(birth.getLivestockId()).orElse(birth.getLivestock())
+                : birth.getLivestock();
+        child.setMother(mother);
+        child.setBirthDate(birth.getBirthDate());
+        child.setStatus(Livestock.STATUS_ACTIVE);
+        livestockRepository.save(child);
 
-        if (mother != null) {
-            Optional<LivestockOffspring> existingLink =
-                    offspringRepository.findByChildLivestockId(childLivestockId);
-            if (existingLink.isPresent()
-                    && !existingLink.get().getBirthEvent().getId().equals(birthId)) {
-                offspringRepository.delete(existingLink.get());
-                System.err.println("Removed existing birth link for animal "
-                        + child.getTagNumber());
-            }
+        // Update birth's offspring count
+        birth.setOffspringCount((birth.getOffspringCount() != null ? birth.getOffspringCount() : 0) + 1);
+        birthRepository.save(birth);
 
-            child.setMother(mother);
-
-            // FIX: If child has no birth date, copy it from the birth event
-            if (child.getBirthDate() == null && birth.getBirthDate() != null) {
-                child.setBirthDate(birth.getBirthDate());
-            }
-
-            if (child.getAcquisitionSource() == null
-                    || child.getAcquisitionSource().isBlank()
-                    || child.getAcquisitionSource().startsWith("Born on this farm")) {
-                child.setAcquisitionSource(
-                        "Born on this farm — Mother: " + mother.getTagNumber());
-            }
-            livestockRepository.save(child);
-        }
-
-        int generation = (mother != null) ? calculateGeneration(mother) + 1 : 0;
-        LivestockOffspring link = new LivestockOffspring(birth, child, generation);
-        return offspringRepository.save(link);
-    }
-
-    @Transactional
-    public void unlinkChild(UUID childLivestockId) {
-        offspringRepository.findByChildLivestockId(childLivestockId).ifPresent(link -> {
-            Livestock child = link.getChildLivestock();
-            if (child != null) {
-                child.setMother(null);
-                livestockRepository.save(child);
-            }
-            offspringRepository.delete(link);
-        });
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // FAMILY QUERIES
-    // ═════════════════════════════════════════════════════════════════════════
-
-    public List<Livestock> getDirectChildren(UUID livestockId) {
-        return livestockRepository.findByMotherId(livestockId);
-    }
-
-    public boolean hasChildren(UUID livestockId) {
-        return livestockRepository.existsByMotherId(livestockId);
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // REPAIR HELPER
-    // ═════════════════════════════════════════════════════════════════════════
-
-    @Transactional
-    public int repairMissingMotherLinks() {
-        List<Livestock> broken = livestockRepository.findAll().stream()
-                .filter(l -> l.getMother() == null)
-                .filter(l -> l.getDraftBirthEvent() != null)
-                .filter(l -> l.getDraftBirthEvent().getLivestock() != null)
-                .collect(Collectors.toList());
-
-        for (Livestock animal : broken) {
-            Livestock mother = animal.getDraftBirthEvent().getLivestock();
-            animal.setMother(mother);
-            if (animal.getAcquisitionSource() == null
-                    || animal.getAcquisitionSource().isBlank()) {
-                animal.setAcquisitionSource(
-                        "Born on this farm — Mother: " + mother.getTagNumber());
-            }
-            livestockRepository.save(animal);
-        }
-        return broken.size();
-    }
-
-    public List<Livestock> getEligibleChildrenForBirth(UUID birthId) {
-        LivestockBirth birth = birthRepository.findById(birthId)
-                .orElseThrow(() -> new RuntimeException("Birth record not found"));
-
-        Livestock mother = birth.getLivestock();
-        if (mother == null) return new ArrayList<>();
-
-        UUID categoryId = mother.getLivestockCategory() != null
-                ? mother.getLivestockCategory().getId() : null;
-
-        Set<UUID> linkedIds = birth.getChildren().stream()
-                .map(o -> o.getChildLivestock().getId())
-                .collect(Collectors.toSet());
-
-        return livestockRepository.findAll().stream()
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> !l.getId().equals(mother.getId()))
-                .filter(l -> categoryId == null
-                        || (l.getLivestockCategory() != null
-                        && categoryId.equals(l.getLivestockCategory().getId())))
-                .filter(l -> !linkedIds.contains(l.getId()))
-                .collect(Collectors.toList());
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // PRIVATE HELPERS
-    // ═════════════════════════════════════════════════════════════════════════
-
-    private void resolveAndSetLivestock(LivestockBirth birth) {
-        String idStr = birth.getLivestockIdValue();
-        if (idStr != null && !idStr.trim().isEmpty()) {
-            UUID id = UUID.fromString(idStr.trim());
-            Livestock ls = livestockRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException(
-                            "Livestock not found: " + idStr));
-            birth.setLivestock(ls);
-            birth.setLivestockId(id);
-        }
-    }
-
-    private int calculateGeneration(Livestock animal) {
-        int gen = 0;
-        Livestock current = animal;
-        while (current.getMother() != null && gen < 50) {
-            gen++;
-            current = livestockRepository
-                    .findById(current.getMother().getId()).orElse(null);
-            if (current == null) break;
-        }
-        return gen;
+        return offspringRepository.save(offspring);
     }
 
     /**
-     * Get the current username for audit logging.
-     * This method can be enhanced later when Spring Security is added.
-     *
-     * @return the current username or "system" as fallback
+     * Controller-facing alias for linking an already-registered animal as a
+     * child of a birth event.
      */
-    private String getCurrentUsername() {
-        // For now, return a default value
-        // When you add Spring Security, you can uncomment the code below:
+    public LivestockOffspring linkChild(UUID birthId, UUID childLivestockId) {
+        return addOffspring(birthId, childLivestockId, 1);
+    }
 
-        // try {
-        //     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        //     if (auth != null && auth.isAuthenticated() &&
-        //         !(auth.getPrincipal() instanceof String && auth.getPrincipal().equals("anonymousUser"))) {
-        //         return auth.getName();
-        //     }
-        // } catch (Exception e) {
-        //     // Ignore - return default
-        // }
+    /**
+     * Remove an offspring from a birth event
+     */
+    public void removeOffspring(UUID offspringId) {
+        log.debug("Removing offspring: {}", offspringId);
 
-        return "system";
+        LivestockOffspring offspring = offspringRepository.findById(offspringId)
+                .orElseThrow(() -> new RuntimeException("Offspring record not found"));
+
+        // Soft delete
+        offspring.setIsDeleted(true);
+        offspringRepository.save(offspring);
+
+        // Update birth's offspring count
+        LivestockBirth birth = offspring.getBirthEvent();
+        if (birth != null && birth.getOffspringCount() != null && birth.getOffspringCount() > 0) {
+            birth.setOffspringCount(birth.getOffspringCount() - 1);
+            birthRepository.save(birth);
+        }
+    }
+
+    /**
+     * Controller-facing alias: unlink a child animal from whichever birth
+     * event it is currently attached to (looked up by the child's own ID,
+     * since the "Unlink" button on the children page only knows the child).
+     */
+    public void unlinkChild(UUID childLivestockId) {
+        log.debug("Unlinking child livestock: {}", childLivestockId);
+
+        List<LivestockOffspring> links = offspringRepository
+                .findByChildLivestockIdAndIsDeletedFalse(childLivestockId);
+
+        for (LivestockOffspring link : links) {
+            removeOffspring(link.getId());
+        }
+
+        // Clear the mother reference on the child so it becomes available again
+        livestockRepository.findById(childLivestockId).ifPresent(child -> {
+            child.setMother(null);
+            livestockRepository.save(child);
+        });
+    }
+
+    /**
+     * Get all offspring for a birth event
+     */
+    public List<LivestockOffspring> getOffspringByBirth(UUID birthId) {
+        log.debug("Getting offspring for birth: {}", birthId);
+        return offspringRepository.findByBirthEventIdAndIsDeletedFalse(birthId);
+    }
+
+    /**
+     * Count live offspring for a birth event
+     */
+    public long countLiveOffspring(UUID birthId) {
+        log.debug("Counting live offspring for birth: {}", birthId);
+        return offspringRepository.countLiveOffspringByBirthEventId(birthId);
+    }
+
+    /**
+     * Get birth by child livestock ID
+     * This method finds the birth event that produced the given livestock
+     */
+    public Optional<LivestockBirth> getBirthByChildLivestock(UUID childLivestockId) {
+        log.debug("Finding birth by child livestock ID: {}", childLivestockId);
+
+        List<LivestockOffspring> offspring = offspringRepository.findByChildLivestockIdAndIsDeletedFalse(childLivestockId);
+
+        if (offspring.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(offspring.get(0).getBirthEvent());
+    }
+
+    /**
+     * Check if a livestock is linked to a birth event as an offspring
+     */
+    public boolean isChildLivestock(UUID livestockId) {
+        log.debug("Checking if livestock is a child: {}", livestockId);
+        List<LivestockOffspring> offspring = offspringRepository.findByChildLivestockIdAndIsDeletedFalse(livestockId);
+        return !offspring.isEmpty();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // REPORTS / QUERIES
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Get all births in a date range
+     */
+    public List<LivestockBirth> getBirthsByDateRange(LocalDate startDate, LocalDate endDate) {
+        log.debug("Getting births between {} and {}", startDate, endDate);
+        return birthRepository.findByBirthDateBetween(startDate, endDate);
+    }
+
+    /**
+     * Get all births by category
+     */
+    public Map<String, List<LivestockBirth>> getBirthsByCategory() {
+        log.debug("Getting births grouped by category");
+
+        List<LivestockBirth> births = birthRepository.findByIsDeletedFalseOrderByBirthDateDesc();
+        Map<String, List<LivestockBirth>> birthsByCategory = new HashMap<>();
+
+        for (LivestockBirth birth : births) {
+            if (birth.getLivestock() != null && birth.getLivestock().getLivestockCategory() != null) {
+                String categoryName = birth.getLivestock().getLivestockCategory().getName();
+                birthsByCategory.computeIfAbsent(categoryName, k -> new ArrayList<>()).add(birth);
+            } else {
+                birthsByCategory.computeIfAbsent("Unknown", k -> new ArrayList<>()).add(birth);
+            }
+        }
+
+        return birthsByCategory;
+    }
+
+    /**
+     * Get birth statistics summary
+     */
+    public BirthStatistics getBirthStatistics() {
+        log.debug("Getting birth statistics");
+
+        BirthStatistics stats = new BirthStatistics();
+
+        List<LivestockBirth> births = birthRepository.findByIsDeletedFalseOrderByBirthDateDesc();
+        stats.setTotalBirths(births.size());
+
+        int totalOffspring = 0;
+        int liveOffspring = 0;
+        int stillborn = 0;
+
+        for (LivestockBirth birth : births) {
+            totalOffspring += birth.getOffspringCount() != null ? birth.getOffspringCount() : 0;
+
+            List<LivestockOffspring> offspring = offspringRepository.findByBirthEventIdAndIsDeletedFalse(birth.getId());
+            for (LivestockOffspring child : offspring) {
+                if (child.isAlive()) {
+                    liveOffspring++;
+                } else {
+                    stillborn++;
+                }
+            }
+        }
+
+        stats.setTotalOffspring(totalOffspring);
+        stats.setLiveOffspring(liveOffspring);
+        stats.setStillborn(stillborn);
+
+        if (births.size() > 0) {
+            stats.setAverageOffspringPerBirth((double) totalOffspring / births.size());
+        }
+
+        // Count by year
+        Map<Integer, Integer> birthsByYear = new TreeMap<>(Collections.reverseOrder());
+        for (LivestockBirth birth : births) {
+            if (birth.getBirthDate() != null) {
+                int year = birth.getBirthDate().getYear();
+                birthsByYear.merge(year, 1, Integer::sum);
+            }
+        }
+        stats.setBirthsByYear(birthsByYear);
+
+        return stats;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // ADMIN — repair
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Backfills missing {@code mother} / {@code birthDate} links on child
+     * animals whose birth event is known but whose own record fell out of
+     * sync (e.g. imported data, or a link created before this fix existed).
+     *
+     * @return number of livestock records that were fixed
+     */
+    public int repairMissingMotherLinks() {
+        log.debug("Repairing missing mother links");
+
+        int fixed = 0;
+        List<LivestockBirth> allBirths = getAll();
+
+        for (LivestockBirth birth : allBirths) {
+            if (birth.getLivestockId() == null) continue;
+
+            Livestock mother = livestockRepository.findById(birth.getLivestockId()).orElse(null);
+            if (mother == null) continue;
+
+            List<LivestockOffspring> offspring =
+                    offspringRepository.findByBirthEventIdAndIsDeletedFalse(birth.getId());
+
+            for (LivestockOffspring o : offspring) {
+                Livestock child = o.getChildLivestock();
+                if (child == null) continue;
+
+                boolean motherMissing = child.getMother() == null
+                        || !mother.getId().equals(child.getMother().getId());
+                boolean birthDateMissing = child.getBirthDate() == null && birth.getBirthDate() != null;
+
+                if (motherMissing || birthDateMissing) {
+                    child.setMother(mother);
+                    if (birthDateMissing) {
+                        child.setBirthDate(birth.getBirthDate());
+                    }
+                    livestockRepository.save(child);
+                    fixed++;
+                }
+            }
+        }
+
+        log.debug("Repaired {} livestock record(s)", fixed);
+        return fixed;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // PRIVATE HELPERS
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Resolves the transient {@code livestockIdValue} (a String coming from
+     * the registration/edit form's dropdown) into the real {@code livestockId}
+     * FK field, so it actually gets persisted.
+     */
+    private void resolveAndSetLivestock(LivestockBirth birth) {
+        String idStr = birth.getLivestockIdValue();
+        if (idStr != null && !idStr.isBlank()) {
+            birth.setLivestockId(UUID.fromString(idStr));
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // INNER CLASSES
+    // ─────────────────────────────────────────────────────────────────────────────
+
+    public static class BirthStatistics {
+        private int totalBirths;
+        private int totalOffspring;
+        private int liveOffspring;
+        private int stillborn;
+        private double averageOffspringPerBirth;
+        private Map<Integer, Integer> birthsByYear = new HashMap<>();
+
+        public int getTotalBirths() { return totalBirths; }
+        public void setTotalBirths(int totalBirths) { this.totalBirths = totalBirths; }
+
+        public int getTotalOffspring() { return totalOffspring; }
+        public void setTotalOffspring(int totalOffspring) { this.totalOffspring = totalOffspring; }
+
+        public int getLiveOffspring() { return liveOffspring; }
+        public void setLiveOffspring(int liveOffspring) { this.liveOffspring = liveOffspring; }
+
+        public int getStillborn() { return stillborn; }
+        public void setStillborn(int stillborn) { this.stillborn = stillborn; }
+
+        public double getAverageOffspringPerBirth() { return averageOffspringPerBirth; }
+        public void setAverageOffspringPerBirth(double averageOffspringPerBirth) {
+            this.averageOffspringPerBirth = averageOffspringPerBirth;
+        }
+
+        public Map<Integer, Integer> getBirthsByYear() { return birthsByYear; }
+        public void setBirthsByYear(Map<Integer, Integer> birthsByYear) { this.birthsByYear = birthsByYear; }
     }
 }

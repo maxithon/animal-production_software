@@ -47,6 +47,15 @@ public class LivestockBirth {
     @Column(name = "breeding_id")
     private UUID breedingId;
 
+    /**
+     * Read-only JPA association for breeding relationship.
+     * {@code insertable=false, updatable=false} — the FK value is controlled
+     * entirely by {@code breedingId} above.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "breeding_id", insertable = false, updatable = false)
+    private LivestockBreeding breeding;
+
     @Column(name = "veterinarian_id")
     private UUID veterinarianId;
 
@@ -110,5 +119,36 @@ public class LivestockBirth {
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    // ── Helper Methods ──────────────────────────────────────────────────────
+
+    /**
+     * Convenience method to check if this birth is linked to a breeding record.
+     */
+    public boolean hasBreedingRecord() {
+        return breedingId != null;
+    }
+
+    /**
+     * Get the breeding ID safely.
+     */
+    public UUID getBreedingId() {
+        return breedingId;
+    }
+
+    /**
+     * Get the breeding entity (lazy-loaded).
+     * Returns null if no breeding record exists.
+     */
+    public LivestockBreeding getBreeding() {
+        return breeding;
+    }
+
+    /**
+     * Set the breeding ID (use this instead of setBreeding for persistence).
+     */
+    public void setBreedingId(UUID breedingId) {
+        this.breedingId = breedingId;
     }
 }

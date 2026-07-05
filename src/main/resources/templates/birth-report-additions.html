@@ -1,0 +1,36 @@
+<!--
+  BIRTH REPORT ENHANCEMENT — litter size, sex ratio, birth interval.
+
+  1) In your existing birth report Controller, inject BirthAnalyticsService
+     and add to the model:
+
+       model.addAttribute("birthAnalytics", birthAnalyticsService.generateAnalytics(fromDate, toDate));
+
+  2) Paste the block below into your existing birth report template.
+-->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card border-start border-4 border-primary p-3 bg-white rounded shadow-sm">
+            <div class="text-muted small text-uppercase mb-1">Avg. Litter Size</div>
+            <div class="fs-3 fw-bold text-primary" th:text="${#numbers.formatDecimal(birthAnalytics.averageLitterSize,1,'POINT',1,'POINT')}">0</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card border-start border-4 border-danger p-3 bg-white rounded shadow-sm">
+            <div class="text-muted small text-uppercase mb-1">Sex Ratio (F per 100 M)</div>
+            <div class="fs-3 fw-bold text-danger" th:text="${#numbers.formatDecimal(birthAnalytics.sexRatioFemalesPer100Males,1,'POINT',1,'POINT')}">0</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card border-start border-4 border-success p-3 bg-white rounded shadow-sm">
+            <div class="text-muted small text-uppercase mb-1">Avg. Birth Interval</div>
+            <div class="fs-3 fw-bold text-success" th:text="${#numbers.formatDecimal(birthAnalytics.averageBirthIntervalDays,1,'POINT',1,'POINT')} + ' d'">0 d</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card border-start border-4 border-warning p-3 bg-white rounded shadow-sm">
+            <div class="text-muted small text-uppercase mb-1">Total Offspring</div>
+            <div class="fs-3 fw-bold text-warning" th:text="${birthAnalytics.totalOffspring}">0</div>
+        </div>
+    </div>
+</div>

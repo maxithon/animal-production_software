@@ -49,6 +49,24 @@ public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, 
             @Param("from") LocalDate from,
             @Param("to")   LocalDate to);
 
+    // ── Births in a date range with isDeleted flag ─────────────────────────────
+    List<LivestockBirth> findByBirthDateBetweenAndIsDeletedFalse(
+            LocalDate startDate,
+            LocalDate endDate);
+
     // ── Count births for a mother ─────────────────────────────────────────────
     long countByLivestockIdAndIsDeletedFalse(UUID livestockId);
+
+    // ── Births ordered by birth date ascending for calving interval ──────────
+    List<LivestockBirth> findByLivestockIdAndIsDeletedFalseOrderByBirthDateAsc(UUID livestockId);
+
+    // ── Births with breeding relationship loaded (for performance) ───────────
+    @Query("""
+           SELECT b FROM LivestockBirth b
+           LEFT JOIN FETCH b.breeding
+           WHERE b.livestockId = :livestockId
+             AND b.isDeleted = false
+           ORDER BY b.birthDate ASC
+           """)
+    List<LivestockBirth> findByLivestockIdWithBreeding(@Param("livestockId") UUID livestockId);
 }
