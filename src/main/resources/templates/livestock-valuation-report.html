@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuation Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background: #f0f4f8;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: #1e293b;
+        }
+        .report-container { max-width: 1150px; margin: 0 auto; }
+
+        .page-header {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
+        }
+        .page-title {
+            font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;
+            display: flex; align-items: center; gap: 7px;
+        }
+        .page-sub { font-size: 12px; color: #94a3b8; margin: 2px 0 0; }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 6px; font-size: 12px; font-weight: 600;
+            text-decoration: none; border: 1px solid #cbd5e0; background: #f8f9fb; color: #475569;
+        }
+        .btn-back:hover { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+
+        .stats-row { display: flex; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+        .stat-card {
+            flex: 1 1 180px; background: #fff; border-radius: 12px; padding: 16px 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.06);
+        }
+        .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; }
+        .stat-value { font-size: 24px; font-weight: 800; margin-top: 4px; }
+        .stat-value.valued   { color: #059669; }
+        .stat-value.unvalued { color: #d97706; }
+        .stat-value.total    { color: #0f172a; }
+        .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+        .coverage-bar { height: 8px; border-radius: 6px; background: #f1f5f9; overflow: hidden; margin-top: 10px; }
+        .coverage-bar-fill { height: 100%; background: linear-gradient(90deg, #6ee7b7, #059669); border-radius: 6px; }
+
+        .grid-2col { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+        @media (max-width: 900px) { .grid-2col { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: #fff; border-radius: 12px; padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.06);
+            margin-bottom: 16px;
+        }
+        .panel-title {
+            font-size: 13px; font-weight: 700; color: #0f172a; margin: 0 0 12px;
+            display: flex; align-items: center; gap: 6px;
+            padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* ── Animal selector ── */
+        .select-form label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
+        .select-form select { font-size: 13px; }
+        .select-form .form-select:focus { box-shadow: none; border-color: #1a5f7a; }
+        .btn-load { background: #1a5f7a; border-color: #1a5f7a; }
+        .btn-load:hover { background: #154e65; border-color: #154e65; }
+
+        /* ── Needs valuation list ── */
+        .needs-list { max-height: 420px; overflow-y: auto; }
+        .needs-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 8px 4px; border-bottom: 1px solid #f1f5f9; font-size: 12px;
+        }
+        .needs-row:last-child { border-bottom: none; }
+        .needs-tag { font-weight: 700; color: #0f172a; }
+        .needs-meta { font-size: 10.5px; color: #94a3b8; }
+        .needs-empty { text-align: center; padding: 20px 0; color: #94a3b8; font-style: italic; font-size: 12px; }
+        .btn-value-now {
+            font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px;
+            background: #f0fdf4; border: 1px solid #a7f3d0; color: #059669; text-decoration: none;
+            white-space: nowrap;
+        }
+        .btn-value-now:hover { background: #059669; color: #fff; border-color: #059669; }
+
+        /* ── Selected animal report ── */
+        .empty-report {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 60px 20px; color: #94a3b8; text-align: center;
+        }
+        .empty-report i { font-size: 2.4rem; color: #cbd5e0; margin-bottom: 10px; }
+
+        .selected-header {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            flex-wrap: wrap; margin-bottom: 14px;
+        }
+        .selected-tag { font-size: 16px; font-weight: 800; color: #0f172a; }
+        .selected-meta { font-size: 11.5px; color: #64748b; }
+
+        .valuation-latest-strip {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;
+            padding: 12px 16px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+        }
+        .valuation-latest-value { font-size: 1.05rem; font-weight: 800; color: #166534; }
+        .valuation-latest-meta { font-size: 0.75rem; color: #65a374; }
+        .valuation-delta { font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+        .valuation-delta.up   { background: #d1fae5; color: #065f46; }
+        .valuation-delta.down { background: #fee2e2; color: #991b1b; }
+        .valuation-delta.flat { background: #f1f5f9; color: #64748b; }
+
+        .valuation-table { font-size: 0.8rem; }
+        .valuation-table thead th {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+            color: #94a3b8; font-weight: 700; border-bottom: 2px solid #f1f5f9;
+        }
+        .valuation-table tr.latest-row { background: #f0fdf4; }
+        .valuation-method-badge {
+            font-size: 0.68rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+            background: #ede9fe; color: #5b21b6; white-space: nowrap;
+        }
+        .no-history-msg { color: #94a3b8; font-style: italic; font-size: 12px; padding: 10px 0; }
+
+        .link-full-detail {
+            font-size: 11.5px; font-weight: 600; color: #1a5f7a; text-decoration: none;
+        }
+        .link-full-detail:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="report-container">
+
+    <div class="page-header">
+        <div>
+            <h1 class="page-title"><i class="bi bi-graph-up-arrow text-success"></i> Valuation Report</h1>
+            <p class="page-sub">FAO-standard valuation coverage &amp; per-animal history, across all registered animals</p>
+        </div>
+        <a th:href="@{/livestock/list}" class="btn-back"><i class="bi bi-arrow-left"></i> Back to List</a>
+    </div>
+
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- ── Coverage stats (GLOBAL — every animal, not just the current page) ── -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Total Animals</div>
+            <div class="stat-value total" th:text="${(totalValued != null ? totalValued : 0) + (totalUnvalued != null ? totalUnvalued : 0)}">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label"><i class="bi bi-patch-check-fill text-success"></i> Valued</div>
+            <div class="stat-value valued" th:text="${totalValued != null ? totalValued : 0}">0</div>
+            <div class="stat-sub">Have at least one valuation on record</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Needs Valuation</div>
+            <div class="stat-value unvalued" th:text="${totalUnvalued != null ? totalUnvalued : 0}">0</div>
+            <div class="stat-sub">No valuation recorded yet</div>
+        </div>
+        <div class="stat-card" style="flex: 2 1 260px;">
+            <div class="stat-label">Coverage</div>
+            <div class="stat-value total"
+                 th:with="tot=${(totalValued != null ? totalValued : 0) + (totalUnvalued != null ? totalUnvalued : 0)}"
+                 th:text="${tot > 0 ? #numbers.formatDecimal((totalValued * 100.0) / tot, 1, 1) + '%' : '0%'}">0%</div>
+            <div class="coverage-bar">
+                <div class="coverage-bar-fill"
+                     th:with="tot=${(totalValued != null ? totalValued : 0) + (totalUnvalued != null ? totalUnvalued : 0)}"
+                     th:style="'width:' + ${tot > 0 ? (totalValued * 100.0) / tot : 0} + '%'"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid-2col">
+        <!-- ── LEFT COLUMN: select an animal + needs-valuation queue ── -->
+        <div>
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-search"></i> Select an Animal</div>
+                <form class="select-form" method="get" th:action="@{/livestock/valuation-report}">
+                    <label for="animalSelect">Tag Number</label>
+                    <select class="form-select form-select-sm mb-2" id="animalSelect" name="animalId" onchange="this.form.submit()">
+                        <option value="">— Choose an animal —</option>
+                        <option th:each="a : ${allAnimals}"
+                                th:value="${a.id}"
+                                th:selected="${selectedAnimal != null and selectedAnimal.id == a.id}"
+                                th:text="${a.tagNumber + (a.currentValue == null ? '  (needs valuation)' : '')}">
+                            TAG
+                        </option>
+                    </select>
+                    <noscript>
+                        <button type="submit" class="btn btn-sm btn-load text-white w-100">
+                            <i class="bi bi-search"></i> Load Report
+                        </button>
+                    </noscript>
+                </form>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title"><i class="bi bi-exclamation-triangle-fill text-warning"></i> Needs Valuation
+                    <span class="badge bg-warning text-dark ms-auto" th:text="${totalUnvalued != null ? totalUnvalued : 0}">0</span>
+                </div>
+                <div class="needs-list">
+                    <div th:if="${unvaluedAnimals == null or unvaluedAnimals.empty}" class="needs-empty">
+                        Every animal has at least one valuation on record. 🎉
+                    </div>
+                    <div th:each="a : ${unvaluedAnimals}" class="needs-row">
+                        <div>
+                            <div class="needs-tag" th:text="${a.tagNumber}">TAG</div>
+                            <div class="needs-meta"
+                                 th:text="${a.livestockCategory != null ? a.livestockCategory.name : 'Uncategorized'}">Category</div>
+                        </div>
+                        <a th:href="${'/livestock/view/' + a.id + '#valuation-history'}" class="btn-value-now">
+                            <i class="bi bi-graph-up-arrow"></i> Value Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT COLUMN: selected animal's full valuation report ── -->
+        <div class="panel">
+            <div th:if="${selectedAnimal == null}" class="empty-report">
+                <i class="bi bi-clipboard-data"></i>
+                <div>Select an animal on the left to see its full valuation history.</div>
+            </div>
+
+            <div th:if="${selectedAnimal != null}">
+                <div class="selected-header">
+                    <div>
+                        <div class="selected-tag" th:text="${selectedAnimal.tagNumber}">TAG</div>
+                        <div class="selected-meta">
+                            <span th:if="${selectedAnimal.livestockCategory != null}" th:text="${selectedAnimal.livestockCategory.name}">Category</span>
+                            <span th:if="${selectedAnimal.gender != null}"> &middot; <span th:text="${selectedAnimal.gender}"></span></span>
+                        </div>
+                    </div>
+                    <a th:href="@{/livestock/view/{id}(id=${selectedAnimal.id})}" class="link-full-detail">
+                        <i class="bi bi-box-arrow-up-right"></i> Open full detail page
+                    </a>
+                </div>
+
+                <!-- Latest valuation summary -->
+                <div class="valuation-latest-strip" th:if="${latestValuation != null}">
+                    <div>
+                        <div class="valuation-latest-value"
+                             th:text="${#numbers.formatDecimal(latestValuation.value, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</div>
+                        <div class="valuation-latest-meta">
+                            As of <strong th:text="${#temporals.format(latestValuation.valuationDate, 'dd MMM yyyy')}"></strong>
+                            &middot; <span th:text="${latestValuation.methodLabel()}"></span>
+                        </div>
+                    </div>
+                    <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() > 0}"
+                          class="valuation-delta up">
+                        <i class="bi bi-arrow-up-short"></i>
+                        +<span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
+                    </span>
+                    <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() < 0}"
+                          class="valuation-delta down">
+                        <i class="bi bi-arrow-down-short"></i>
+                        <span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
+                    </span>
+                    <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() == 0}"
+                          class="valuation-delta flat">
+                        <i class="bi bi-dash"></i> No change since last valuation
+                    </span>
+                </div>
+
+                <div th:if="${latestValuation == null}" class="no-history-msg">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This animal has no valuation on record yet.
+                    <a th:href="${'/livestock/view/' + selectedAnimal.id + '#valuation-history'}">Record its first valuation</a>.
+                </div>
+
+                <!-- Full history table -->
+                <div class="table-responsive" th:if="${valuationHistory != null and !valuationHistory.empty}">
+                    <table class="table table-sm valuation-table">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Value (RWF)</th>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>Recorded By</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="v, iter : ${valuationHistory}" th:classappend="${iter.first} ? 'latest-row' : ''">
+                            <td th:text="${#temporals.format(v.valuationDate, 'dd MMM yyyy')}">—</td>
+                            <td class="fw-semibold" th:text="${#numbers.formatDecimal(v.value, 1, 'COMMA', 0, 'POINT')}">—</td>
+                            <td><span class="valuation-method-badge" th:text="${v.methodLabel()}"></span></td>
+                            <td th:text="${v.notes != null and !v.notes.isEmpty() ? v.notes : '—'}">—</td>
+                            <td class="text-muted" th:text="${v.recordedBy != null ? v.recordedBy : '—'}">—</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

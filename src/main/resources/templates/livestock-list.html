@@ -158,7 +158,7 @@
         .col-benef   { min-width: 90px; }
         .col-loc     { min-width: 80px; }
         .col-status  { min-width: 70px; }
-        .col-value   { min-width: 110px; }
+        .col-value   { min-width: 130px; }
         .col-bd      { min-width: 120px; }
         .col-health  { min-width: 130px; }
         .col-actions { width: 135px; min-width: 135px; white-space: nowrap; }
@@ -281,6 +281,28 @@
         .valued-badge     { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .not-valued-badge { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
+        /* NEW: link under the Value amount that jumps straight to the
+           valuation history section on the animal's detail page. Same idea
+           as the "detail page → history" link already on the Edit page. */
+        .value-history-link {
+            display: inline-flex; align-items: center; gap: 3px;
+            font-size: 10px; font-weight: 700; color: #1a5f7a; text-decoration: none;
+            margin-top: 4px;
+        }
+        .value-history-link:hover { text-decoration: underline; color: #154e65; }
+
+        /* NEW: FAO Standard notice as an actual text box (readonly textarea)
+           on the valuation form, instead of a plain alert banner. */
+        .fao-standard-box {
+            background: #f0fdf4 !important;
+            border: 1px solid #a7f3d0 !important;
+            color: #166534 !important;
+            font-size: 11px !important;
+            resize: none;
+            cursor: default;
+        }
+        .fao-standard-box:focus { box-shadow: none; border-color: #6ee7b7 !important; }
+
         .pagination-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1.5px solid #f0f2f5; margin-top: 4px; }
         .pagination-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .showing-text    { font-size: 12px; color: #64748b; }
@@ -353,8 +375,11 @@
                     <i class="bi bi-trash2"></i> Deleted
                     <span class="del-count" th:text="${totalDeleted != null ? totalDeleted : 0}">0</span>
                 </a>
-                <!-- Deep-links back into this same page pre-filtered to unvalued animals -->
-                <a th:href="@{/livestock/list(filter='UNVALUED')}" class="btn-valuation-report">
+                <!-- CHANGED: now points to a real report page (search + full
+                     history across ALL animals, not just this page's 10/25/50
+                     rows) instead of a client-side filter pill that could only
+                     ever show unvalued animals on the current page. -->
+                <a th:href="@{/livestock/valuation-report}" class="btn-valuation-report">
                     <i class="bi bi-graph-up-arrow"></i> Valuation Report
                 </a>
                 <a href="/livestock/qr/eartags/print-all" class="btn-print-all" target="_blank">
@@ -386,6 +411,8 @@
             <span class="sum-pill born">Born on Farm <strong th:text="${totalBornOnFarm}">0</strong></span>
             <span class="sum-pill treatments">Treatments <strong th:text="${totalTreatments}">0</strong></span>
             <span class="sum-pill abortions">Abortions <strong th:text="${totalAbortions}">0</strong></span>
+            <!-- These now reflect ALL animals (fixed in the controller), not
+                 just whatever happens to be on the current page. -->
             <span class="sum-pill valued"><i class="bi bi-patch-check-fill me-1"></i>Valued <strong th:text="${totalValued != null ? totalValued : 0}">0</strong></span>
             <span class="sum-pill unvalued"><i class="bi bi-exclamation-triangle-fill me-1"></i>Needs Valuation <strong th:text="${totalUnvalued != null ? totalUnvalued : 0}">0</strong></span>
         </div>
@@ -420,6 +447,12 @@
                 <button class="filter-btn" data-filter="VALUED" onclick="filterByStatus('VALUED',this)"><i class="bi bi-patch-check-fill"></i> Valued</button>
                 <button class="filter-btn" data-filter="UNVALUED" onclick="filterByStatus('UNVALUED',this)"><i class="bi bi-exclamation-triangle-fill"></i> Needs Valuation</button>
             </div>
+        </div>
+        <div class="alert alert-light border small mb-2" style="font-size:11px;" th:if="${initialFilter == 'UNVALUED'}">
+            <i class="bi bi-info-circle-fill text-warning me-1"></i>
+            Showing "Needs Valuation" on this page only. This filter only searches the animals currently
+            loaded on this page — for a complete, all-animal view use the
+            <a th:href="@{/livestock/valuation-report}">Valuation Report</a>.
         </div>
 
         <!-- Table -->
@@ -544,7 +577,11 @@
                         <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
                     </td>
 
-                    <!-- ══ VALUE COLUMN — shows FAO valuation coverage status ══ -->
+                    <!-- ══ VALUE COLUMN — shows FAO valuation coverage status ══
+                         NEW: "View History" link under the amount — same
+                         destination as the link already on the Edit page
+                         (Current Value → detail page → valuation history),
+                         just surfaced here so it's discoverable from the list. -->
                     <td class="col-value" data-label="Value">
                         <div th:if="${item.currentValue != null}">
                             <span class="value-text"
@@ -553,6 +590,11 @@
                                  class="valued-badge">
                                 <i class="bi bi-patch-check-fill"></i>
                                 <span th:text="${'Valued ' + #temporals.format(latestValuationMap[item.id].valuationDate, 'dd MMM yyyy')}"></span>
+                            </div>
+                            <div>
+                                <a th:href="${'/livestock/view/' + item.id + '#valuation-history'}" class="value-history-link">
+                                    <i class="bi bi-clock-history"></i> View History
+                                </a>
                             </div>
                         </div>
                         <div th:unless="${item.currentValue != null}">
@@ -705,10 +747,11 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body" style="font-size:13px;">
-                                        <div class="alert alert-light border small mb-3" style="font-size:11px;">
-                                            <i class="bi bi-info-circle-fill text-success me-1"></i>
-                                            FAO Standard: this adds a new valuation entry to the history —
-                                            it never overwrites the previous value.
+                                        <div class="mb-3">
+                                            <label class="form-label" style="font-size:12px;font-weight:600;">
+                                                <i class="bi bi-info-circle-fill text-success me-1"></i>FAO Standard
+                                            </label>
+                                            <textarea class="form-control form-control-sm fao-standard-box" rows="2" readonly>FAO Standard: this adds a new valuation entry to the history — it never overwrites the previous value.</textarea>
                                         </div>
 
                                         <div class="mb-3">
@@ -721,9 +764,16 @@
                                         <div class="mb-3">
                                             <label class="form-label" style="font-size:12px;font-weight:600;">New Value (RWF)</label>
                                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="value" required>
+                                            <!-- NEW: last valuation date shown alongside the current value, so
+                                                 whoever is recording a new valuation can see when it was last
+                                                 updated, not just what the number currently is. -->
                                             <div class="form-text" style="font-size:11px;" th:if="${item.currentValue != null}">
                                                 Current recorded value:
                                                 <strong th:text="${#numbers.formatDecimal(item.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></strong>
+                                                <span th:if="${latestValuationMap != null and latestValuationMap.containsKey(item.id)}">
+                                                    &middot; last valued on
+                                                    <strong th:text="${#temporals.format(latestValuationMap[item.id].valuationDate, 'dd MMM yyyy')}"></strong>
+                                                </span>
                                             </div>
                                         </div>
 
@@ -741,6 +791,14 @@
                                             <label class="form-label" style="font-size:12px;font-weight:600;">Notes (optional)</label>
                                             <textarea class="form-control form-control-sm" name="notes" rows="2"
                                                       placeholder="e.g. Reweighed, local market price update..."></textarea>
+                                        </div>
+
+                                        <!-- NEW: quick jump to the full history from inside the modal -->
+                                        <div class="text-end" th:if="${item.currentValue != null}">
+                                            <a th:href="${'/livestock/view/' + item.id + '#valuation-history'}"
+                                               style="font-size:11px;font-weight:600;text-decoration:none;color:#1a5f7a;">
+                                                <i class="bi bi-clock-history"></i> View full valuation history
+                                            </a>
                                         </div>
                                     </div>
                                     <div class="modal-footer border-0 pt-0">
@@ -815,6 +873,7 @@
             else if (diffDays < 30)  { label = '(' + diffDays + 'd)'; stage = 'stage-days'; }
             else if (diffDays < 365) {
                 var mo = Math.floor(diffDays / 30.4375);
+                label = '(' + mo + 'mo)'; stage = 'stage-months';
                 label = '(' + mo + 'mo)'; stage = 'stage-months';
             } else {
                 var yrs = Math.floor(diffDays / 365.25);
@@ -895,8 +954,8 @@
         else window.open('/livestock/qr/eartags/print?' + ids.map(function(id) { return 'ids=' + id; }).join('&'), '_blank');
     }
 
-    // ── NEW: auto-apply a filter pill if the server rendered `initialFilter` ──
-    // (e.g. arriving here via the "Valuation Report" button with ?filter=UNVALUED)
+    // ── auto-apply a filter pill if the server rendered `initialFilter` ──
+    // (e.g. arriving here via ?filter=UNVALUED)
     (function applyInitialFilter() {
         var initial = /*[[${initialFilter}]]*/ null;
         if (!initial) return;

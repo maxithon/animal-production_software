@@ -10,6 +10,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.*;
 import rw.animalproduct.animal.production.services.AuditLogService;
+import rw.animalproduct.animal.production.services.LifecycleEmailService;
 import rw.animalproduct.animal.production.services.LivestockBirthService;
 import rw.animalproduct.animal.production.services.LivestockService;
 import rw.animalproduct.animal.production.services.LivestockValuationService;
@@ -48,6 +49,11 @@ public class LivestockController {
     @Autowired
     private LivestockValuationService valuationService; // FAO-standard valuation history
 
+    // NEW: needed to send "animal registered" / "animal updated" emails,
+    // the same way births already trigger notifications.
+    @Autowired
+    private LifecycleEmailService emailService;
+
     // ─────────────────────────────────────────────────────────────────────────
     // LIST PAGE
     // ─────────────────────────────────────────────────────────────────────────
@@ -55,7 +61,7 @@ public class LivestockController {
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "10") int size,
-                       @RequestParam(required = false) String filter, // NEW: VALUED | UNVALUED | ACTIVE | SOLD | ...
+                       @RequestParam(required = false) String filter, // VALUED | UNVALUED | ACTIVE | SOLD | ...
                        Model model) {
         Page<Livestock> livestockPage = livestockService.getPaged(page, size);
         List<Livestock> livestockList = livestockPage.getContent();
@@ -83,7 +89,6 @@ public class LivestockController {
             }
         }
 
-        // ── FAO STANDARD: bulk latest-valuation lookup for this page of animals ──
         List<UUID> pageIds = livestockList.stream().map(Livestock::getId).collect(Collectors.toList());
         Map<UUID, LivestockValuation> latestValuationMap = livestockService.getLatestValuationsForIds(pageIds);
 
@@ -98,9 +103,9 @@ public class LivestockController {
         long totalTreatments = 0;
         long totalAbortions  = 0;
 
-        // ── FAO STANDARD: valuation coverage counts (this page — see note below) ──
-        long totalValued   = livestockList.stream().filter(a -> a.getCurrentValue() != null).count();
-        long totalUnvalued = livestockList.size() - totalValued;
+        List<Livestock> allActiveAnimals = livestockService.getAllIncludingDrafts();
+        long totalValued   = allActiveAnimals.stream().filter(a -> a.getCurrentValue() != null).count();
+        long totalUnvalued = allActiveAnimals.size() - totalValued;
 
         long totalDeleted = livestockService.getAllSoftDeleted().size();
 
@@ -125,7 +130,7 @@ public class LivestockController {
         model.addAttribute("saleMap", saleMap);
         model.addAttribute("breedingCapableMap", breedingCapableMap);
         model.addAttribute("latestValuationMap", latestValuationMap);
-        model.addAttribute("initialFilter", filter); // NEW: lets the page auto-apply a filter pill on load
+        model.addAttribute("initialFilter", filter);
 
         return "livestock-list";
     }
@@ -143,8 +148,21 @@ public class LivestockController {
             if (livestockOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Animal not found");
             } else {
-                String tagNumber = livestockOpt.get().getTagNumber();
+                Livestock before = livestockOpt.get();
+                String tagNumber = before.getTagNumber();
                 livestockService.softDelete(id);
+
+                // NEW: audit trail for soft delete
+                auditLogService.log(
+                        "livestock",
+                        id,
+                        "SOFT_DELETE",
+                        "system",
+                        before,
+                        null,
+                        "Animal " + tagNumber + " was soft-deleted"
+                );
+
                 redirectAttributes.addFlashAttribute("success",
                         "Animal " + tagNumber + " has been deleted. It can be restored by an administrator if needed.");
             }
@@ -165,8 +183,21 @@ public class LivestockController {
             if (livestockOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Animal not found");
             } else {
-                String tagNumber = livestockOpt.get().getTagNumber();
+                Livestock before = livestockOpt.get();
+                String tagNumber = before.getTagNumber();
                 livestockService.hardDelete(id);
+
+                // NEW: audit trail for hard delete
+                auditLogService.log(
+                        "livestock",
+                        id,
+                        "DELETE",
+                        "system",
+                        before,
+                        null,
+                        "Animal " + tagNumber + " was permanently deleted"
+                );
+
                 redirectAttributes.addFlashAttribute("success",
                         "Animal " + tagNumber + " has been permanently removed from the database.");
             }
@@ -184,6 +215,18 @@ public class LivestockController {
     public String restore(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
             livestockService.restore(id);
+
+            // NEW: audit trail for restore
+            auditLogService.log(
+                    "livestock",
+                    id,
+                    "RESTORE",
+                    "system",
+                    null,
+                    null,
+                    "Animal was restored from soft-delete"
+            );
+
             redirectAttributes.addFlashAttribute("success", "Animal successfully restored.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error restoring animal: " + e.getMessage());
@@ -198,6 +241,11 @@ public class LivestockController {
     @PostMapping("/bulk-delete")
     public String bulkDelete(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
         try {
+            for (UUID id : ids) {
+                livestockService.getByIdIncludingDeleted(id).ifPresent(before ->
+                        auditLogService.log("livestock", id, "SOFT_DELETE", "system",
+                                before, null, "Bulk soft-delete"));
+            }
             livestockService.bulkSoftDelete(ids);
             redirectAttributes.addFlashAttribute("success",
                     ids.size() + " animal(s) have been deleted.");
@@ -211,6 +259,8 @@ public class LivestockController {
     public String bulkRestore(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
         try {
             livestockService.bulkRestore(ids);
+            ids.forEach(id -> auditLogService.log("livestock", id, "RESTORE", "system",
+                    null, null, "Bulk restore"));
             redirectAttributes.addFlashAttribute("success",
                     ids.size() + " animal(s) have been restored.");
         } catch (Exception e) {
@@ -222,7 +272,12 @@ public class LivestockController {
     @PostMapping("/bulk-hard-delete")
     public String bulkHardDelete(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
         try {
-            ids.forEach(id -> livestockService.hardDelete(id));
+            for (UUID id : ids) {
+                livestockService.getByIdIncludingDeleted(id).ifPresent(before ->
+                        auditLogService.log("livestock", id, "DELETE", "system",
+                                before, null, "Bulk hard-delete"));
+                livestockService.hardDelete(id);
+            }
             redirectAttributes.addFlashAttribute("success",
                     ids.size() + " animal(s) permanently deleted.");
         } catch (Exception e) {
@@ -293,6 +348,10 @@ public class LivestockController {
         model.addAttribute("latestValuation", valuationService.getLatest(id).orElse(null));
         model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(id));
 
+        // NEW: this animal's own audit history, so the "Audit Log" link on
+        // this page can show only what happened to THIS animal.
+        model.addAttribute("auditHistory", auditLogService.getLogsForEntity("livestock", id));
+
         return "livestock-view";
     }
 
@@ -316,11 +375,10 @@ public class LivestockController {
      * The ONLY endpoint that changes an animal's value.
      * Appends a new row to livestock_valuation_history and refreshes the
      * cached current_value on the Livestock row — never overwrites in place.
-     *
-     * NEW: accepts an optional `returnTo` param so the same endpoint can be
-     * called from the list page's quick-action modal (returns to /list) as
-     * well as the detail page's modal (returns to /view/{id}) without
-     * duplicating logic.
+     * Audit logging AND email notification both happen inside
+     * LivestockValuationService.recordValuation(...) so every code path
+     * that changes a value (this endpoint, registration's initial valuation,
+     * anything added later) gets logged and emailed consistently.
      */
     @PostMapping("/{id}/valuation")
     public String recordValuation(@PathVariable UUID id,
@@ -343,7 +401,53 @@ public class LivestockController {
         if ("list".equals(returnTo)) {
             return "redirect:/livestock/list";
         }
+        if ("report".equals(returnTo)) {
+            return "redirect:/livestock/valuation-report?animalId=" + id;
+        }
         return "redirect:/livestock/view/" + id;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // VALUATION REPORT
+    // ─────────────────────────────────────────────────────────────────────────
+
+    @GetMapping("/valuation-report")
+    public String valuationReport(@RequestParam(required = false) UUID animalId, Model model) {
+        List<Livestock> allAnimals = livestockService.getAllIncludingDrafts();
+
+        List<Livestock> sortedForSelect = allAnimals.stream()
+                .sorted(Comparator.comparing(
+                        a -> a.getTagNumber() != null ? a.getTagNumber() : "",
+                        String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+
+        long totalValued = allAnimals.stream().filter(a -> a.getCurrentValue() != null).count();
+        long totalUnvalued = allAnimals.size() - totalValued;
+
+        List<Livestock> unvaluedAnimals = allAnimals.stream()
+                .filter(a -> a.getCurrentValue() == null)
+                .sorted(Comparator.comparing(
+                        a -> a.getTagNumber() != null ? a.getTagNumber() : "",
+                        String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+
+        model.addAttribute("allAnimals", sortedForSelect);
+        model.addAttribute("totalValued", totalValued);
+        model.addAttribute("totalUnvalued", totalUnvalued);
+        model.addAttribute("unvaluedAnimals", unvaluedAnimals);
+
+        if (animalId != null) {
+            Optional<Livestock> selectedOpt = livestockService.getById(animalId);
+            if (selectedOpt.isPresent()) {
+                Livestock selected = selectedOpt.get();
+                model.addAttribute("selectedAnimal", selected);
+                model.addAttribute("valuationHistory", valuationService.getHistory(animalId));
+                model.addAttribute("latestValuation", valuationService.getLatest(animalId).orElse(null));
+                model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(animalId));
+            }
+        }
+
+        return "livestock-valuation-report";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -413,10 +517,25 @@ public class LivestockController {
                          @RequestParam(required = false) UUID locationId,
                          RedirectAttributes redirectAttributes) {
         try {
+            // NEW: snapshot the animal BEFORE the update so we can log a
+            // real before/after diff, not just "something changed".
+            Optional<Livestock> beforeOpt = livestockService.getByIdIncludingDeleted(id);
+
             if (locationId != null) {
                 locationRepository.findById(locationId).ifPresent(livestock::setLocation);
             }
             livestockService.update(id, livestock);
+
+            beforeOpt.ifPresent(before -> auditLogService.log(
+                    "livestock",
+                    id,
+                    "UPDATE",
+                    "system",
+                    before,
+                    livestock,
+                    "Animal " + before.getTagNumber() + " was updated"
+            ));
+
             redirectAttributes.addFlashAttribute("success", "Animal updated successfully");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error updating animal: " + e.getMessage());
@@ -438,6 +557,27 @@ public class LivestockController {
                            RedirectAttributes redirectAttributes) {
         try {
             Livestock saved = livestockService.addNew(livestock);
+
+            // NEW: audit trail for every new animal registered
+            auditLogService.log(
+                    "livestock",
+                    saved.getId(),
+                    "CREATE",
+                    "system",
+                    null,
+                    saved,
+                    "New animal registered: " + saved.getTagNumber()
+            );
+
+            // NEW: same idea as the newborn-notification email — notify on
+            // registration too. Wrapped so a mail failure never blocks
+            // registration itself.
+            try {
+                emailService.sendAnimalRegisteredNotification(saved);
+            } catch (Exception emailEx) {
+                // swallow — registration must still succeed even if email fails
+            }
+
             redirectAttributes.addFlashAttribute("success",
                     "Animal registered successfully with tag: " + saved.getTagNumber());
             return "redirect:/livestock/view/" + saved.getId();

@@ -1,5 +1,7 @@
 package rw.animalproduct.animal.production.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,21 +28,30 @@ import java.util.stream.Collectors;
  *   - Livestock.currentValue is refreshed as a read-only cache pointing at
  *     the most recent valuation by date — never set directly anywhere else
  *     in the codebase.
+ *
+ * NEW: every valuation change is now (a) written to the audit log AND
+ * (b) emailed to the notification address, mirroring how newborn
+ * registrations already trigger an email via LifecycleEmailService.
  */
 @Service
 public class LivestockValuationService {
 
+    private static final Logger log = LoggerFactory.getLogger(LivestockValuationService.class);
+
     private final LivestockValuationRepository valuationRepository;
     private final LivestockRepository livestockRepository;
     private final AuditLogService auditLogService;
+    private final LifecycleEmailService emailService; // NEW
 
     @Autowired
     public LivestockValuationService(LivestockValuationRepository valuationRepository,
                                      LivestockRepository livestockRepository,
-                                     AuditLogService auditLogService) {
+                                     AuditLogService auditLogService,
+                                     LifecycleEmailService emailService) { // NEW param
         this.valuationRepository = valuationRepository;
         this.livestockRepository = livestockRepository;
         this.auditLogService = auditLogService;
+        this.emailService = emailService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -95,6 +106,16 @@ public class LivestockValuationService {
                 "Valuation recorded via " + method + (notes != null && !notes.isBlank() ? " — " + notes : "")
         );
 
+        // NEW: email notification, same pattern as newborn/lifecycle emails.
+        // Wrapped in try/catch so a mail server hiccup never rolls back a
+        // valid valuation entry.
+        try {
+            emailService.sendValuationChangedNotification(livestock, previousValue, value, method, notes);
+        } catch (Exception e) {
+            log.error("❌ Failed to send valuation-changed email for {}: {}",
+                    livestock.getTagNumber(), e.getMessage());
+        }
+
         return entry;
     }
 
@@ -135,14 +156,6 @@ public class LivestockValuationService {
         return valuationRepository.countByLivestockId(livestockId);
     }
 
-    /**
-     * Bulk latest-valuation lookup, keyed by livestock id, scoped to the
-     * given ids. Used by the livestock list page so it can render "Valued" /
-     * "Needs Valuation" badges for a page of animals without issuing one
-     * query per row. Delegates to the repository's MAX(id)-per-animal query,
-     * which guarantees exactly one row per livestock id even when two
-     * valuations for the same animal share the same valuationDate.
-     */
     public Map<UUID, LivestockValuation> getLatestForIds(List<UUID> livestockIds) {
         if (livestockIds == null || livestockIds.isEmpty()) {
             return Collections.emptyMap();
@@ -151,11 +164,7 @@ public class LivestockValuationService {
         return rows.stream()
                 .collect(Collectors.toMap(v -> v.getLivestock().getId(), v -> v));
     }
-    /**
-     * Change (delta) between the most recent valuation and the one before it.
-     * Positive = value increased, Negative = value dropped. Returns ZERO if
-     * there's fewer than two valuation records.
-     */
+
     public BigDecimal changeSincePrevious(UUID livestockId) {
         List<LivestockValuation> history = getHistory(livestockId);
         if (history.size() < 2) return BigDecimal.ZERO;

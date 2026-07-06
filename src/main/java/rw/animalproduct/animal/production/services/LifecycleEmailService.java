@@ -13,6 +13,7 @@ import org.thymeleaf.context.Context;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -68,7 +69,10 @@ public class LifecycleEmailService {
 
     /** Newborn registered */
     public void sendNewbornNotification(Livestock animal) {
-        if (!emailEnabled) { log.info("Email disabled — skipping newborn notification"); return; }
+        if (!emailEnabled) {
+            log.info("Email disabled — skipping newborn notification");
+            return;
+        }
 
         Context ctx = buildStageContext(animal, "NEWBORN",
                 "🐄🍼", "Newborn Registered",
@@ -251,7 +255,7 @@ public class LifecycleEmailService {
             MimeMessage message = mailSender.createMimeMessage();
             // true = multipart, "UTF-8" = encoding
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(emailFrom);   // ← FIX: from address was never set before
+            helper.setFrom(emailFrom);
             helper.setTo(emailTo);
             helper.setSubject(subject);
             helper.setText(htmlBody, true); // true = HTML
@@ -279,5 +283,91 @@ public class LifecycleEmailService {
 
     private int getDaysOverdue(LocalDate dueDate) {
         return Math.abs((int) java.time.temporal.ChronoUnit.DAYS.between(dueDate, LocalDate.now()));
+    }
+
+    /**
+     * Sent whenever LivestockValuationService.recordValuation(...) appends a
+     * new valuation entry — i.e. any time an animal's value changes, whether
+     * that's the very first valuation at registration or a later revaluation.
+     */
+    public void sendValuationChangedNotification(Livestock animal,
+                                                 BigDecimal oldValue,
+                                                 BigDecimal newValue,
+                                                 String method,
+                                                 String notes) {
+        if (!emailEnabled) {
+            log.debug("⏩ Email disabled — skipping valuation-changed email for {}", animal.getTagNumber());
+            return;
+        }
+        try {
+            Context ctx = new Context();
+            ctx.setVariable("emoji", "💰📊");
+            ctx.setVariable("title", "Animal Valuation Updated");
+            ctx.setVariable("tagNumber", animal.getTagNumber());
+            ctx.setVariable("category", animal.getLivestockCategory() != null
+                    ? animal.getLivestockCategory().getName() : "N/A");
+            ctx.setVariable("oldValue", oldValue != null ? oldValue.toPlainString() : "Not previously valued");
+            ctx.setVariable("newValue", newValue.toPlainString());
+            ctx.setVariable("method", method);
+            ctx.setVariable("notes", (notes != null && !notes.isBlank()) ? notes : "—");
+            ctx.setVariable("today", LocalDate.now().toString());
+
+            String html = templateEngine.process("emails/email-valuation-changed", ctx);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(emailFrom);
+            helper.setTo(emailTo);
+            helper.setSubject("💰 Valuation Updated — " + animal.getTagNumber());
+            helper.setText(html, true);
+            mailSender.send(message);
+
+            log.info("✅ Valuation-changed email sent for {}", animal.getTagNumber());
+        } catch (Exception e) {
+            log.error("❌ Failed to send valuation-changed email for {}: {}",
+                    animal.getTagNumber(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Sent once, right after a new animal is successfully registered
+     * (LivestockController.register(...)). Mirrors sendNewbornNotification
+     * but is for ANY registration (purchase, donation, transfer, birth, etc.),
+     * not specifically newborns.
+     */
+    public void sendAnimalRegisteredNotification(Livestock animal) {
+        if (!emailEnabled) {
+            log.debug("⏩ Email disabled — skipping registration email for {}", animal.getTagNumber());
+            return;
+        }
+        try {
+            Context ctx = new Context();
+            ctx.setVariable("emoji", "🐄📋");
+            ctx.setVariable("title", "New Animal Registered");
+            ctx.setVariable("tagNumber", animal.getTagNumber());
+            ctx.setVariable("category", animal.getLivestockCategory() != null
+                    ? animal.getLivestockCategory().getName() : "N/A");
+            ctx.setVariable("gender", animal.getGender() != null ? animal.getGender() : "Unknown");
+            ctx.setVariable("acquisitionMethod", animal.getAcquisitionMethod() != null
+                    ? animal.getAcquisitionMethod() : "Not set");
+            ctx.setVariable("currentValue", animal.getCurrentValue() != null
+                    ? animal.getCurrentValue().toPlainString() + " RWF" : "Not yet valued");
+            ctx.setVariable("today", LocalDate.now().toString());
+
+            String html = templateEngine.process("emails/email-animal-registered", ctx);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(emailFrom);
+            helper.setTo(emailTo);
+            helper.setSubject("🐄 New Animal Registered — " + animal.getTagNumber());
+            helper.setText(html, true);
+            mailSender.send(message);
+
+            log.info("✅ Registration email sent for {}", animal.getTagNumber());
+        } catch (Exception e) {
+            log.error("❌ Failed to send registration email for {}: {}",
+                    animal.getTagNumber(), e.getMessage(), e);
+        }
     }
 }
