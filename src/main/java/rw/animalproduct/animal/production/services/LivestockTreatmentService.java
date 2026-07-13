@@ -8,9 +8,11 @@ import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.*;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class LivestockTreatmentService {
@@ -46,6 +48,30 @@ public class LivestockTreatmentService {
 
     public Optional<LivestockTreatment> getById(UUID id) {
         return treatmentRepository.findById(id);
+    }
+
+    /**
+     * Returns all non-deleted treatment records for a given animal,
+     * most recent treatment date first.
+     *
+     * Implemented via in-service filtering over findAll() so it works
+     * regardless of what derived-query methods exist on the repository.
+     * If treatment volume grows large, replace this with a proper
+     * repository query, e.g.:
+     *   findByLivestock_IdAndIsDeletedFalseOrderByTreatmentDateDesc(UUID livestockId)
+     */
+    public List<LivestockTreatment> getByLivestock(UUID livestockId) {
+        if (livestockId == null) {
+            return List.of();
+        }
+        return treatmentRepository.findAll().stream()
+                .filter(t -> t.getLivestock() != null
+                        && livestockId.equals(t.getLivestock().getId()))
+                .filter(t -> t.getIsDeleted() == null || !t.getIsDeleted())
+                .sorted(Comparator.comparing(
+                        LivestockTreatment::getTreatmentDate,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
     }
 
     // ── CREATE ───────────────────────────────────────────────────────────────

@@ -27,7 +27,6 @@
         body{font-family:'Inter',sans-serif;background:var(--s2);color:var(--tx1);min-height:100vh;overflow-x:hidden;font-size:.875rem;}
         ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--g4);border-radius:99px;}
 
-        /* ─── HEADER ─── */
         .top-header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--g9);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:1030;box-shadow:0 1px 16px rgba(0,0,0,.25);}
         .logo-area{display:flex;align-items:center;gap:10px;}
         .logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
@@ -42,7 +41,6 @@
         .btn-exit:hover{background:rgba(255,255,255,.16);color:#fff;}
         .menu-toggle{display:none;background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:7px;font-size:.9rem;cursor:pointer;align-items:center;justify-content:center;}
 
-        /* ─── SIDEBAR ─── */
         .sidebar{position:fixed;top:var(--hh);left:0;width:var(--sw);height:calc(100vh - var(--hh));background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:999;transition:transform .3s var(--ease);}
         .sidebar-inner{padding:10px 10px 40px;}
         .nav-section-label{padding:14px 10px 4px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txm);}
@@ -70,56 +68,140 @@
         .nested-link{display:flex;align-items:center;gap:7px;padding:5px 9px;color:var(--tx2);text-decoration:none;font-size:.72rem;border-radius:7px;transition:background .12s,color .12s;cursor:pointer;}
         .nested-link:hover{background:var(--g0);color:var(--g7);}
 
-        /* ─── MAIN ─── */
         .main-content{margin-top:var(--hh);margin-left:var(--sw);padding:18px 22px 40px;min-height:calc(100vh - var(--hh));transition:margin-left .3s var(--ease);}
         .view{display:none;animation:fadeUp .25s var(--ease);}
         .view.active{display:block;}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-        /* ─── HERO BANNER ─── */
-        .hero-banner{background:linear-gradient(130deg,var(--g8) 0%,var(--g9) 65%);border-radius:var(--r3);padding:12px 20px;margin-bottom:16px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;}
+        .hero-banner{background:linear-gradient(130deg,var(--g8) 0%,var(--g9) 65%);border-radius:var(--r3);padding:6px 12px;margin-bottom:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;}
         .hero-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0%,rgba(82,183,136,.2) 0%,transparent 60%);pointer-events:none;}
-        .hero-deco{position:absolute;right:18px;bottom:-14px;font-size:4rem;opacity:.05;pointer-events:none;}
+        .hero-deco{position:absolute;right:16px;bottom:-12px;font-size:3rem;opacity:.05;pointer-events:none;}
         .hero-title{font-size:.95rem;font-weight:600;color:#fff;margin-bottom:1px;letter-spacing:-.01em;}
         .hero-sub{color:var(--g4);font-size:.7rem;}
         .hero-date{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:4px 12px;color:rgba(255,255,255,.7);font-size:.68rem;}
 
+        /* ─── FINANCIAL SUMMARY CARDS - COMPACT ─── */
+        .financial-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .financial-card {
+            background: var(--surface);
+            border-radius: var(--r2);
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            box-shadow: var(--sh0);
+            position: relative;
+            overflow: hidden;
+            transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+        }
+        .financial-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--sh1);
+        }
+        .financial-card .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .financial-card .card-header .icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .82rem;
+            flex-shrink: 0;
+        }
+        .financial-card .card-header .icon.income { background: #d1fae5; color: #065f46; }
+        .financial-card .card-header .icon.expense { background: #ffe4e6; color: #9f1239; }
+        .financial-card .card-header .icon.profit { background: #dbeafe; color: #1e40af; }
+        .financial-card .card-header .title {
+            font-size: .55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--txm);
+        }
+        .financial-card .total-amount {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--tx1);
+            letter-spacing: -.02em;
+            line-height: 1.2;
+        }
+        .financial-card .total-amount.income-color { color: #065f46; }
+        .financial-card .total-amount.expense-color { color: #9f1239; }
+        .financial-card .total-amount.profit-color { color: #1e40af; }
+        .financial-card .breakdown {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid var(--border);
+        }
+        .financial-card .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: .62rem;
+            padding: 1px 0;
+            color: var(--tx2);
+        }
+        .financial-card .breakdown-item .label {
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .financial-card .breakdown-item .label i {
+            font-size: .55rem;
+            width: 12px;
+        }
+        .financial-card .breakdown-item .value {
+            font-weight: 600;
+            color: var(--tx1);
+        }
+
         /* ─── STAT CARDS ─── */
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
-        .stat-card{background:var(--surface);border-radius:var(--r2);padding:14px 16px;border:1px solid var(--border);box-shadow:var(--sh0);transition:transform .2s var(--ease),box-shadow .2s var(--ease);position:relative;overflow:hidden;}
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;}
+        .stat-card{background:var(--surface);border-radius:var(--r2);padding:8px 9px;border:1px solid var(--border);box-shadow:var(--sh0);transition:transform .2s var(--ease),box-shadow .2s var(--ease);position:relative;overflow:hidden;}
         .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
         .stat-card.acc-green::before{background:linear-gradient(90deg,var(--g5),var(--g4));}
         .stat-card.acc-amber::before{background:linear-gradient(90deg,var(--amber),var(--amber-d));}
         .stat-card.acc-sky::before{background:linear-gradient(90deg,var(--sky),#38bdf8);}
         .stat-card.acc-purple::before{background:linear-gradient(90deg,var(--purple),#a78bfa);}
+        .stat-card.acc-rose::before{background:linear-gradient(90deg,var(--rose),#fb7185);}
+        .stat-card.acc-teal::before{background:linear-gradient(90deg,var(--teal),#2dd4bf);}
         .stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
-        .stat-inner{display:flex;align-items:flex-start;gap:12px;}
-        .stat-ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+        .stat-inner{display:flex;align-items:flex-start;gap:10px;}
+        .stat-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
         .stat-ic.green{background:#d8f3dc;color:var(--g7);}
         .stat-ic.amber{background:#fef0e4;color:var(--amber-d);}
         .stat-ic.sky{background:#e0f2fe;color:var(--sky);}
         .stat-ic.purple{background:#ede9fe;color:var(--purple);}
+        .stat-ic.rose{background:#ffe4e6;color:var(--rose);}
+        .stat-ic.teal{background:#ccfbf1;color:var(--teal);}
         .stat-right{flex:1;min-width:0;}
-        .stat-num{font-size:1.5rem;font-weight:800;color:var(--tx1);line-height:1;margin-bottom:1px;letter-spacing:-.03em;}
-        .stat-lbl{font-size:.6rem;color:var(--txm);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-        .stat-sparkline{margin-top:8px;height:36px;position:relative;}
-        .stat-badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
-        .stat-cat-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px;}
-        .stat-cat-pill{font-size:.52rem;font-weight:600;padding:1px 7px;border-radius:10px;background:var(--g0);color:var(--g7);border:1px solid var(--g1);white-space:nowrap;}
-        .stat-cat-pill .cnt{background:var(--g6);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px;font-size:.48rem;}
-        .mini-pill{display:inline-flex;align-items:center;gap:3px;font-size:.55rem;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--s2);border:1px solid var(--border);color:var(--tx2);white-space:nowrap;}
+        .stat-num{font-size:1rem;font-weight:800;color:var(--tx1);line-height:1;margin-bottom:1px;letter-spacing:-.03em;}
+        .stat-lbl{font-size:.55rem;color:var(--txm);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+        .stat-sparkline{margin-top:6px;height:30px;position:relative;}
+        .stat-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
+        .stat-cat-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+        .stat-cat-pill{font-size:.48rem;font-weight:600;padding:1px 6px;border-radius:10px;background:var(--g0);color:var(--g7);border:1px solid var(--g1);white-space:nowrap;}
+        .stat-cat-pill .cnt{background:var(--g6);color:#fff;border-radius:8px;padding:0 4px;margin-left:2px;font-size:.44rem;}
+        .mini-pill{display:inline-flex;align-items:center;gap:3px;font-size:.5rem;font-weight:600;padding:2px 6px;border-radius:10px;background:var(--s2);border:1px solid var(--border);color:var(--tx2);white-space:nowrap;}
         .mini-pill b{color:var(--tx1);font-weight:800;}
-        .stat-mini-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+        .stat-mini-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
 
-        /* ─── SECTION HEADER ─── */
-        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
-        .section-title{font-size:.88rem;font-weight:700;color:var(--tx1);display:flex;align-items:center;gap:8px;}
-        .section-title i{color:var(--g6);font-size:.88rem;}
-        .btn-view-all{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:.68rem;font-weight:600;color:var(--g7);text-decoration:none;transition:background .15s;cursor:pointer;}
+        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
+        .section-title{font-size:.82rem;font-weight:700;color:var(--tx1);display:flex;align-items:center;gap:6px;}
+        .section-title i{color:var(--g6);font-size:.82rem;}
+        .btn-view-all{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:.62rem;font-weight:600;color:var(--g7);text-decoration:none;transition:background .15s;cursor:pointer;}
         .btn-view-all:hover{background:var(--g0);border-color:var(--g4);color:var(--g8);}
 
-        /* ─── ACTIVITY CARDS ─── */
-        .activity-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px;}
+        .activity-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
         .act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:0;text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s var(--ease);position:relative;overflow:hidden;display:block;cursor:pointer;}
         .act-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
         .act-card.births::after{background:linear-gradient(90deg,#0ea5e9,#38bdf8);}
@@ -130,8 +212,8 @@
         .act-card.deaths::after{background:linear-gradient(90deg,#f43f5e,#fb7185);}
         .act-card.born-sold::after{background:linear-gradient(90deg,#6366f1,#818cf8);}
         .act-card:hover{transform:translateY(-3px);box-shadow:var(--sh1);}
-        .act-top{padding:12px 10px 6px;text-align:center;}
-        .act-icon-wrap{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;margin:0 auto 6px;}
+        .act-top{padding:10px 8px 4px;text-align:center;}
+        .act-icon-wrap{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;margin:0 auto 4px;}
         .act-card.births .act-icon-wrap{background:#e0f2fe;}
         .act-card.sales .act-icon-wrap{background:#d1fae5;}
         .act-card.treat .act-icon-wrap{background:#ede9fe;}
@@ -139,136 +221,230 @@
         .act-card.abort .act-icon-wrap{background:#ffedd5;}
         .act-card.deaths .act-icon-wrap{background:#ffe4e6;}
         .act-card.born-sold .act-icon-wrap{background:#e0e7ff;}
-        .act-num{font-size:1.25rem;font-weight:800;color:var(--tx1);line-height:1;letter-spacing:-.02em;}
-        .act-lbl{font-size:.55rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);margin-top:1px;}
-        .act-cat{font-size:.5rem;color:var(--tx2);margin-top:2px;font-weight:500;padding:0 4px 6px;text-align:center;min-height:20px;}
-        .act-chart-wrap{height:28px;padding:0 6px 4px;position:relative;}
+        .act-num{font-size:1rem;font-weight:800;color:var(--tx1);line-height:1;letter-spacing:-.02em;}
+        .act-lbl{font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);margin-top:1px;}
+        .act-cat{font-size:.45rem;color:var(--tx2);margin-top:2px;font-weight:500;padding:0 4px 4px;text-align:center;min-height:18px;}
+        .act-chart-wrap{height:24px;padding:0 4px 2px;position:relative;}
 
-        /* ─── CHART CARDS ─── */
-        .chart-row{display:grid;gap:10px;margin-bottom:10px;}
+        .chart-row{display:grid;gap:8px;margin-bottom:8px;}
         .chart-row.two{grid-template-columns:1fr 1fr;}
         .chart-row.wide{grid-template-columns:2fr 1fr;}
-        .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px 16px;box-shadow:var(--sh0);}
-        .chart-card-title{font-weight:700;font-size:.8rem;color:var(--tx1);display:flex;align-items:center;gap:7px;margin-bottom:1px;}
-        .chart-card-title i{color:var(--g6);font-size:.82rem;}
-        .chart-card-sub{font-size:.65rem;color:var(--txm);margin-bottom:8px;}
-        .chart-legend{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;}
-        .legend-item{display:flex;align-items:center;gap:3px;font-size:.62rem;color:var(--tx2);}
-        .legend-dot{width:7px;height:7px;border-radius:2px;flex-shrink:0;}
-        .chart-wrap-md{position:relative;height:175px;width:100%;}
+        .chart-row.three{grid-template-columns:1fr 1fr 1fr;}
+        .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:12px 14px;box-shadow:var(--sh0);}
+        .chart-card-title{font-weight:700;font-size:.75rem;color:var(--tx1);display:flex;align-items:center;gap:6px;margin-bottom:1px;}
+        .chart-card-title i{color:var(--g6);font-size:.75rem;}
+        .chart-card-sub{font-size:.6rem;color:var(--txm);margin-bottom:6px;}
+        .chart-legend{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+        .legend-item{display:flex;align-items:center;gap:3px;font-size:.58rem;color:var(--tx2);}
+        .legend-dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;}
+        .chart-wrap-md{position:relative;height:150px;width:100%;}
         .chart-wrap-md canvas{max-width:100%;height:100% !important;}
 
-        /* ─── FARM ANALYSIS - PREMIUM SPLIT LAYOUT ─── */
-        .farm-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;align-items:stretch;}
-
-        /* Left: Premium Herd Composition - sized to its own content, not stretched to match the right panel */
-        .herd-composition-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px 14px;box-shadow:var(--sh0);position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease);height:100%;display:flex;flex-direction:column;}
+        /* ─── FARM ANALYSIS - FULL HERD COMPOSITION ─── */
+        .farm-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;align-items:stretch;}
+        .herd-composition-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px;box-shadow:var(--sh0);position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease);height:100%;display:flex;flex-direction:column;}
         .herd-composition-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g5),var(--g4));}
         .herd-composition-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
         .herd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-        .herd-title{font-weight:700;font-size:.8rem;color:var(--tx1);display:flex;align-items:center;gap:6px;}
-        .herd-title i{color:var(--g6);font-size:.8rem;}
-        .herd-badge{background:var(--g1);color:var(--g7);font-size:.5rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--g4);}
-        .herd-subtitle{font-size:.6rem;color:var(--txm);margin-bottom:6px;}
+        .herd-title{font-weight:700;font-size:.78rem;color:var(--tx1);display:flex;align-items:center;gap:6px;}
+        .herd-title i{color:var(--g6);font-size:.78rem;}
+        .herd-badge{background:var(--g1);color:var(--g7);font-size:.48rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--g4);}
+        .herd-subtitle{font-size:.58rem;color:var(--txm);margin-bottom:4px;}
         .herd-content{display:flex;align-items:center;gap:10px;flex:1;min-height:0;}
-        .herd-chart-wrap{flex:0 0 200px;height:200px;position:relative;}
-        .herd-stats-list{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0;justify-content:center;}
-        .herd-stat-row{display:flex;align-items:center;justify-content:space-between;padding:3px 8px;border-radius:4px;transition:background .15s;cursor:default;}
+        .herd-chart-wrap{flex:0 0 180px;height:180px;position:relative;}
+        .herd-stats-list{flex:1;display:flex;flex-direction:column;gap:4px;min-width:0;justify-content:center;}
+        .herd-stat-row{display:flex;align-items:center;justify-content:space-between;padding:2px 8px;border-radius:4px;transition:background .15s;cursor:default;}
         .herd-stat-row:hover{background:var(--s2);}
-        .herd-stat-left{display:flex;align-items:center;gap:6px;}
-        .herd-stat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-        .herd-stat-label{font-size:.65rem;font-weight:500;color:var(--tx2);}
-        .herd-stat-value{font-size:.75rem;font-weight:700;color:var(--tx1);}
-        .herd-stat-percent{font-size:.55rem;color:var(--txm);font-weight:400;margin-left:4px;}
-        .herd-stat-subbreak{display:flex;flex-wrap:wrap;gap:3px;margin:2px 0 4px 22px;}
-        .herd-stat-subbreak .sub-pill{font-size:.5rem;font-weight:600;padding:1px 6px;border-radius:8px;background:var(--g0);color:var(--g7);border:1px solid var(--g1);white-space:nowrap;}
+        .herd-stat-left{display:flex;align-items:center;gap:5px;}
+        .herd-stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+        .herd-stat-label{font-size:.62rem;font-weight:500;color:var(--tx2);}
+        .herd-stat-value{font-size:.7rem;font-weight:700;color:var(--tx1);}
+        .herd-stat-percent{font-size:.5rem;color:var(--txm);font-weight:400;margin-left:3px;}
+        .herd-stat-subbreak{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0 3px 20px;}
+        .herd-stat-subbreak .sub-pill{font-size:.45rem;font-weight:600;padding:1px 5px;border-radius:6px;background:var(--g0);color:var(--g7);border:1px solid var(--g1);white-space:nowrap;}
         .herd-stat-subbreak .sub-pill b{margin-left:2px;}
 
-        /* Right: Quick Stats & KPIs */
-        .right-panel{display:flex;flex-direction:column;gap:8px;height:100%;}
-
-        .farm-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-        .farm-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:7px 10px;text-align:center;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
+        .right-panel{display:flex;flex-direction:column;gap:6px;height:100%;}
+        .farm-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+        .farm-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:5px 6px;text-align:center;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
         .farm-stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
-        .farm-stat-value{font-size:.92rem;font-weight:800;color:var(--tx1);line-height:1.15;letter-spacing:-.02em;}
-        .farm-stat-label{font-size:.48rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);margin-top:1px;}
-        .farm-stat-icon{font-size:.8rem;margin-bottom:1px;display:block;}
+        .farm-stat-value{font-size:.82rem;font-weight:800;color:var(--tx1);line-height:1.15;letter-spacing:-.02em;}
+        .farm-stat-label{font-size:.44rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);margin-top:1px;}
+        .farm-stat-icon{font-size:.7rem;margin-bottom:1px;display:block;}
         .farm-stat-icon.green{color:var(--g5);}
         .farm-stat-icon.blue{color:var(--sky);}
         .farm-stat-icon.amber{color:var(--amber);}
         .farm-stat-icon.purple{color:var(--purple);}
         .farm-stat-icon.rose{color:var(--rose);}
-        .farm-stat-sub{font-size:.46rem;color:var(--txm);margin-top:1px;}
+        .farm-stat-sub{font-size:.42rem;color:var(--txm);margin-top:1px;}
 
-        .kpi-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-        .kpi-mini{background:var(--s2);border:1px solid var(--border);border-radius:var(--r1);padding:5px 10px;position:relative;overflow:hidden;transition:background .15s;}
+        .kpi-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+        .kpi-mini{background:var(--s2);border:1px solid var(--border);border-radius:var(--r1);padding:4px 8px;position:relative;overflow:hidden;transition:background .15s;}
         .kpi-mini:hover{background:var(--g0);}
         .kpi-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;border-radius:0;}
         .kpi-mini.rev::before{background:var(--teal);}
         .kpi-mini.cost::before{background:var(--rose);}
         .kpi-mini.net::before{background:var(--g5);}
         .kpi-mini.rec::before{background:var(--sky);}
-        .kpi-mini-label{font-size:.48rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);}
-        .kpi-mini-val{font-size:.78rem;font-weight:800;line-height:1.15;letter-spacing:-.02em;}
-        .kpi-mini-sub{font-size:.46rem;color:var(--txm);margin-top:1px;line-height:1.25;}
-        .fao-tag{font-size:.42rem;font-weight:700;color:var(--g6);background:#fff;border:1px solid var(--g4);border-radius:6px;padding:0 4px;margin-left:4px;vertical-align:middle;letter-spacing:.03em;}
+        .kpi-mini.fao::before{background:var(--purple);}
+        .kpi-mini.mortality::before{background:var(--rose);}
+        .kpi-mini.offtake::before{background:var(--amber);}
+        .kpi-mini.productivity::before{background:var(--g6);}
+        .kpi-mini-label{font-size:.44rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);}
+        .kpi-mini-val{font-size:.7rem;font-weight:800;line-height:1.15;letter-spacing:-.02em;}
+        .kpi-mini-sub{font-size:.42rem;color:var(--txm);margin-top:1px;line-height:1.2;}
+        .fao-tag{font-size:.38rem;font-weight:700;color:var(--g6);background:#fff;border:1px solid var(--g4);border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle;letter-spacing:.03em;}
 
-        /* ─── SHARED CARD / REPORT ─── */
-        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:18px;box-shadow:var(--sh0);margin-bottom:16px;}
-        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;}
-        .kpi-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:11px 14px;}
-        .kpi-val{font-size:1.2rem;font-weight:800;color:var(--g7);line-height:1;margin-bottom:2px;}
-        .kpi-lbl{font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);}
-        .report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
-        .report-title{font-size:1.1rem;font-weight:800;color:var(--tx1);display:flex;align-items:center;gap:8px;}
+        /* ─── DEATH ANALYSIS + HEALTH COSTS SIDE BY SIDE ─── */
+        .death-health-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .death-analysis-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r3);
+            padding: 12px 14px;
+            box-shadow: var(--sh0);
+        }
+        .death-analysis-card .card-title {
+            font-weight: 700;
+            font-size: .75rem;
+            color: var(--tx1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .death-analysis-card .card-title i {
+            color: var(--rose);
+            font-size: .75rem;
+        }
+        .death-sub-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .death-sub-grid .chart-wrap-md {
+            height: 140px;
+        }
+
+        .health-costs-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--r3);
+            padding: 12px 14px;
+            box-shadow: var(--sh0);
+            display: flex;
+            flex-direction: column;
+        }
+        .health-costs-card .card-title {
+            font-weight: 700;
+            font-size: .75rem;
+            color: var(--tx1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .health-costs-card .card-title i {
+            color: var(--purple);
+            font-size: .75rem;
+        }
+        .health-cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: .68rem;
+        }
+        .health-cost-item:last-child {
+            border-bottom: none;
+        }
+        .health-cost-item .label {
+            color: var(--tx2);
+            font-weight: 500;
+        }
+        .health-cost-item .value {
+            font-weight: 700;
+            color: var(--tx1);
+        }
+        .health-cost-item .value.positive { color: #065f46; }
+        .health-cost-item .value.negative { color: #9f1239; }
+        .health-cost-total {
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 2px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            font-size: .72rem;
+            font-weight: 700;
+        }
+        .health-cost-total .label { color: var(--tx1); }
+        .health-cost-total .value { color: var(--purple); }
+
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px;box-shadow:var(--sh0);margin-bottom:12px;}
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px;}
+        .kpi-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px;}
+        .kpi-val{font-size:1.1rem;font-weight:800;color:var(--g7);line-height:1;margin-bottom:2px;}
+        .kpi-lbl{font-size:.54rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);}
+        .report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+        .report-title{font-size:1rem;font-weight:800;color:var(--tx1);display:flex;align-items:center;gap:6px;}
         .report-title i{color:var(--g6);}
-        .btn-back{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:5px 14px;font-size:.72rem;font-weight:600;color:var(--tx1);cursor:pointer;text-decoration:none;transition:background .15s;}
+        .btn-back{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:.68rem;font-weight:600;color:var(--tx1);cursor:pointer;text-decoration:none;transition:background .15s;}
         .btn-back:hover{background:var(--g0);border-color:var(--g4);color:var(--g7);}
         .data-table{width:100%;border-collapse:collapse;}
-        .data-table thead th{background:var(--s2);padding:7px 10px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);border-bottom:2px solid var(--border);white-space:nowrap;}
-        .data-table tbody td{padding:7px 10px;font-size:.76rem;color:var(--tx1);border-bottom:1px solid var(--border);}
+        .data-table thead th{background:var(--s2);padding:6px 8px;font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);border-bottom:2px solid var(--border);white-space:nowrap;}
+        .data-table tbody td{padding:6px 8px;font-size:.7rem;color:var(--tx1);border-bottom:1px solid var(--border);}
         .data-table tbody tr:last-child td{border-bottom:none;}
         .data-table tbody tr:hover{background:var(--s2);}
-        .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:.58rem;font-weight:600;}
+        .badge{display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:99px;font-size:.54rem;font-weight:600;}
         .badge-success{background:#d1fae5;color:#065f46;}
         .badge-warning{background:#fef3c7;color:#92400e;}
         .badge-danger{background:#ffe4e6;color:#9f1239;}
         .badge-info{background:#e0f2fe;color:#0369a1;}
-        .empty-state{text-align:center;padding:40px 20px;color:var(--txm);}
-        .empty-state i{font-size:2rem;color:var(--border);display:block;margin-bottom:10px;}
-        .loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--txm);gap:8px;}
+        .empty-state{text-align:center;padding:30px 15px;color:var(--txm);}
+        .empty-state i{font-size:1.8rem;color:var(--border);display:block;margin-bottom:8px;}
+        .loading{display:flex;align-items:center;justify-content:center;padding:30px;color:var(--txm);gap:6px;}
         .spin{animation:spin 1s linear infinite;}
         @keyframes spin{to{transform:rotate(360deg);}}
-        .toast-notif{position:fixed;bottom:18px;right:18px;background:var(--surface);border-radius:var(--r2);padding:9px 16px;box-shadow:var(--sh2);display:flex;align-items:center;gap:8px;z-index:1200;animation:slideIn .28s var(--ease);border-left:4px solid var(--teal);font-size:.75rem;font-weight:500;}
+        .toast-notif{position:fixed;bottom:18px;right:18px;background:var(--surface);border-radius:var(--r2);padding:8px 14px;box-shadow:var(--sh2);display:flex;align-items:center;gap:6px;z-index:1200;animation:slideIn .28s var(--ease);border-left:4px solid var(--teal);font-size:.7rem;font-weight:500;}
         @keyframes slideIn{from{transform:translateX(110%);opacity:0;}to{transform:translateX(0);opacity:1;}}
         .iframe-view{height:calc(100vh - var(--hh) - 44px);}
         .content-frame{width:100%;height:100%;border:none;border-radius:var(--r3);background:var(--surface);}
-        .dash-footer{border-top:1px solid var(--border);padding-top:14px;margin-top:6px;text-align:center;color:var(--txm);font-size:.65rem;}
+        .dash-footer{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;text-align:center;color:var(--txm);font-size:.6rem;}
         .sidebar-overlay{display:none;position:fixed;top:var(--hh);left:0;width:100%;height:calc(100vh - var(--hh));background:rgba(0,0,0,.4);z-index:998;}
 
-        .export-bar{display:flex;align-items:center;gap:7px;padding:7px 12px;background:#f8f9fb;border-radius:7px;border:1px solid #e2e8f0;margin-bottom:12px;flex-wrap:wrap;}
-        .export-bar span{font-size:.68rem;font-weight:600;color:#475569;}
-        .btn-export{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:.65rem;font-weight:600;border:none;cursor:pointer;}
+        .export-bar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f8f9fb;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:10px;flex-wrap:wrap;}
+        .export-bar span{font-size:.62rem;font-weight:600;color:#475569;}
+        .btn-export{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:600;border:none;cursor:pointer;}
         .btn-export.csv{background:#dcfce7;color:#16a34a;}
         .btn-export.print{background:#dbeafe;color:#2563eb;}
 
         .table-responsive{overflow-x:auto;}
 
-        /* ─── RESPONSIVE BREAKPOINTS ─── */
         @media(max-width:1300px){
             .stats-grid{grid-template-columns:repeat(2,1fr);}
+            .financial-grid{grid-template-columns:1fr 1fr;}
             .farm-analysis-grid{grid-template-columns:1fr;}
             .farm-stats-grid{grid-template-columns:repeat(2,1fr);}
+            .chart-row.three{grid-template-columns:1fr 1fr;}
+            .death-health-grid{grid-template-columns:1fr;}
         }
         @media(max-width:1100px){
             .activity-grid{grid-template-columns:repeat(4,1fr);}
             .chart-row.wide{grid-template-columns:1fr;}
             .chart-row.two{grid-template-columns:1fr;}
+            .chart-row.three{grid-template-columns:1fr;}
+            .death-sub-grid{grid-template-columns:1fr;}
         }
         @media(max-width:900px){
             .activity-grid{grid-template-columns:repeat(3,1fr);}
+            .financial-grid{grid-template-columns:1fr;}
             .herd-content{flex-direction:column;align-items:center;}
-            .herd-chart-wrap{flex:0 0 170px;height:170px;width:170px;}
+            .herd-chart-wrap{flex:0 0 150px;height:150px;width:150px;}
             .herd-stats-list{width:100%;}
             .herd-stat-subbreak{margin-left:0;justify-content:center;}
         }
@@ -276,25 +452,28 @@
             .menu-toggle{display:flex;}
             .sidebar{transform:translateX(-100%);}
             .sidebar.active{transform:translateX(0);}
-            .main-content{margin-left:0;padding:12px 10px 30px;}
+            .main-content{margin-left:0;padding:10px 8px 20px;}
             .stats-grid{grid-template-columns:1fr 1fr;}
             .activity-grid{grid-template-columns:repeat(2,1fr);}
             .farm-stats-grid{grid-template-columns:1fr 1fr;}
             .kpi-mini-grid{grid-template-columns:1fr 1fr;}
             .hero-date{display:none;}
-            .hero-title{font-size:.8rem;}
-            .hero-sub{font-size:.6rem;}
-            .chart-wrap-md{height:150px;}
-            .stat-num{font-size:1.2rem;}
+            .hero-title{font-size:.75rem;}
+            .hero-sub{font-size:.55rem;}
+            .chart-wrap-md{height:130px;}
+            .stat-num{font-size:1.1rem;}
+            .financial-card .total-amount{font-size:1rem;}
+            .death-health-grid{grid-template-columns:1fr;}
         }
         @media(max-width:480px){
             .stats-grid{grid-template-columns:1fr;}
             .activity-grid{grid-template-columns:1fr 1fr;}
             .farm-stats-grid{grid-template-columns:1fr;}
             .kpi-mini-grid{grid-template-columns:1fr;}
-            .stat-num{font-size:1rem;}
-            .farm-stat-value{font-size:1rem;}
-            .herd-chart-wrap{flex:0 0 130px;height:130px;width:130px;}
+            .stat-num{font-size:.95rem;}
+            .farm-stat-value{font-size:.9rem;}
+            .herd-chart-wrap{flex:0 0 120px;height:120px;width:120px;}
+            .financial-grid{grid-template-columns:1fr;}
         }
         @media print{
             .sidebar,.top-header,.btn-back,.no-print{display:none!important;}
@@ -421,12 +600,12 @@
             </button>
             <div class="submenu" id="submenu-auditlog">
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list')"><i class="bi bi-list-ul"></i>All Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock_birth)')"><i class="bi bi-stars"></i>Birth Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock)')"><i class="bi bi-box2-heart"></i>Livestock Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock_sick)')"><i class="bi bi-bandaid-fill"></i>Sick Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock_breeding)')"><i class="bi bi-heart-fill"></i>Breeding Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock_sale)')"><i class="bi bi-cash-stack"></i>Sales Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list(entityType=livestock_death)')"><i class="bi bi-x-circle-fill"></i>Death Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_birth')"><i class="bi bi-stars"></i>Birth Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock')"><i class="bi bi-box2-heart"></i>Livestock Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sick')"><i class="bi bi-bandaid-fill"></i>Sick Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_breeding')"><i class="bi bi-heart-fill"></i>Breeding Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sale')"><i class="bi bi-cash-stack"></i>Sales Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_death')"><i class="bi bi-x-circle-fill"></i>Death Logs</a>
             </div>
         </div>
 
@@ -451,10 +630,94 @@
         <div class="hero-banner">
             <div>
                 <div class="hero-title">Welcome back, <span style="font-weight:300;opacity:.85;" th:text="${username}">Admin</span> 🌾</div>
-                <div class="hero-sub">Farm is healthy. Here's today's snapshot.</div>
+                <!--                <div class="hero-sub">Farm is healthy. Here's today's snapshot.</div>-->
             </div>
             <div class="hero-date no-print" id="todayDate"></div>
             <div class="hero-deco">🐄🐑</div>
+        </div>
+
+        <!-- ========== FINANCIAL SUMMARY CARDS - COMPACT ========== -->
+        <div class="section-head">
+            <div class="section-title"><i class="bi bi-calculator-fill"></i> Financial Summary</div>
+        </div>
+
+        <div class="financial-grid">
+            <!-- Total Income Card -->
+            <div class="financial-card">
+                <div class="card-header">
+                    <div class="icon income"><i class="bi bi-arrow-up-circle-fill"></i></div>
+                    <div class="title">Total Income</div>
+                </div>
+                <div class="total-amount income-color" th:text="${totalIncomeFormatted}">0 RWF</div>
+                <div class="breakdown">
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-cash-stack"></i> Sales Revenue</span>
+                        <span class="value" th:text="${totalSaleRevenueFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-box2-heart-fill"></i> Current Livestock Value</span>
+                        <span class="value" th:text="${totalCurrentValueFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-stars"></i> Born Animals Value</span>
+                        <span class="value" th:text="${bornAnimalsValueFormatted}">0 RWF</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Expenses Card -->
+            <div class="financial-card">
+                <div class="card-header">
+                    <div class="icon expense"><i class="bi bi-arrow-down-circle-fill"></i></div>
+                    <div class="title">Total Expenses</div>
+                </div>
+                <div class="total-amount expense-color" th:text="${totalExpensesFormatted}">0 RWF</div>
+                <div class="breakdown">
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-heart-pulse-fill"></i> Treatment Costs</span>
+                        <span class="value" th:text="${totalTreatmentCostFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-bandaid-fill"></i> Sick Care Costs</span>
+                        <span class="value" th:text="${totalSickTreatmentCostFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-cart-plus-fill"></i> Purchase Costs</span>
+                        <span class="value" th:text="${purchaseCostsFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-x-circle-fill" style="color:var(--rose);"></i> Loss from Deaths</span>
+                        <span class="value" th:text="${totalDeadValueFormatted}">0 RWF</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Profit Card -->
+            <div class="financial-card">
+                <div class="card-header">
+                    <div class="icon profit"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="title">Net Profit</div>
+                </div>
+                <div class="total-amount" th:style="'color:' + (isProfit ? '#065f46' : '#9f1239')" th:text="${netProfitFormatted}">0 RWF</div>
+                <div class="breakdown">
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-arrow-up" style="color:#065f46;"></i> Total Income</span>
+                        <span class="value positive" th:text="${totalIncomeFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-arrow-down" style="color:#9f1239;"></i> Total Expenses</span>
+                        <span class="value negative" th:text="${totalExpensesFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item" style="border-top:2px solid var(--border);padding-top:4px;margin-top:2px;">
+                        <span class="label" style="font-weight:700;">Net Position</span>
+                        <span class="value" th:style="'font-weight:700;color:' + (isProfit ? '#065f46' : '#9f1239')" th:text="${netProfitFormatted}">0 RWF</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="label" style="font-size:.55rem;" th:if="${isProfit}"><i class="bi bi-check-circle-fill" style="color:var(--teal);"></i> Profitable</span>
+                        <span class="label" style="font-size:.55rem;" th:unless="${isProfit}"><i class="bi bi-exclamation-triangle-fill" style="color:var(--rose);"></i> Loss</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Top stat cards -->
@@ -580,19 +843,115 @@
                     <div class="act-num">→</div>
                     <div class="act-lbl">Born → Sold</div>
                 </div>
-                <div class="act-chart-wrap" style="display:flex;align-items:center;justify-content:center;padding-bottom:8px;">
-                    <span style="font-size:.6rem;color:var(--txm);">lifecycle flow</span>
+                <div class="act-chart-wrap" style="display:flex;align-items:center;justify-content:center;padding-bottom:6px;">
+                    <span style="font-size:.55rem;color:var(--txm);">lifecycle flow</span>
                 </div>
             </a>
         </div>
 
-        <!-- Farm Analysis with Split Layout -->
+        <!-- Farm Analysis with Full Herd Composition -->
         <div id="dashboardOverviewContent"></div>
+
+        <!-- Death Analysis + Health Costs Side by Side -->
+        <div class="section-head">
+            <div class="section-title"><i class="bi bi-bar-chart-fill"></i> Death Analysis &amp; Health Costs</div>
+        </div>
+        <div class="death-health-grid">
+            <!-- Death Analysis -->
+            <div class="death-analysis-card">
+                <div class="card-title"><i class="bi bi-x-circle-fill"></i> Death Analysis <span style="font-size:.55rem;font-weight:400;color:var(--txm);">by cause with value lost</span></div>
+                <div class="death-sub-grid">
+                    <div>
+                        <div style="font-size:.55rem;font-weight:600;color:var(--txm);margin-bottom:2px;">Deaths by Cause</div>
+                        <div class="chart-wrap-md"><canvas id="deathCauseChart"></canvas></div>
+                    </div>
+                    <div>
+                        <div style="font-size:.55rem;font-weight:600;color:var(--txm);margin-bottom:2px;">Value Lost by Cause</div>
+                        <div class="chart-wrap-md"><canvas id="valueLostChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Costs Breakdown -->
+            <div class="health-costs-card">
+                <div class="card-title"><i class="bi bi-heart-pulse-fill" style="color:var(--purple);"></i> Health Costs Breakdown</div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-capsule"></i> Curative Treatment</span>
+                    <span class="value" th:text="${curativeTreatmentCost != null ? #numbers.formatDecimal(curativeTreatmentCost, 0, 'COMMA', 0, 'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span>
+                </div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-shield-check"></i> Preventive Treatment</span>
+                    <span class="value" th:text="${preventiveTreatmentCost != null ? #numbers.formatDecimal(preventiveTreatmentCost, 0, 'COMMA', 0, 'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span>
+                </div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-bandaid-fill"></i> Sick Care Costs</span>
+                    <span class="value" th:text="${totalSickTreatmentCostFormatted}">0 RWF</span>
+                </div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-clipboard-check"></i> Total Treatments</span>
+                    <span class="value" th:text="${totalTreatments != null ? totalTreatments : 0}">0</span>
+                </div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-clock-history"></i> Ongoing</span>
+                    <span class="value" th:text="${ongoingTreatmentCount != null ? ongoingTreatmentCount : 0}">0</span>
+                </div>
+                <div class="health-cost-item">
+                    <span class="label"><i class="bi bi-exclamation-triangle"></i> Unpaid</span>
+                    <span class="value" th:text="${unpaidTreatmentCount != null ? unpaidTreatmentCount : 0}">0</span>
+                </div>
+                <div class="health-cost-total">
+                    <span class="label"><i class="bi bi-heart-pulse-fill"></i> Total Health Costs</span>
+                    <span class="value" th:text="${totalTreatmentCostFormatted}">0 RWF</span>
+                </div>
+                <div style="margin-top:6px;padding-top:4px;border-top:1px solid var(--border);">
+                    <div style="display:flex;justify-content:space-between;font-size:.58rem;">
+                        <span style="color:var(--txm);">Most Treated Animal</span>
+                        <span style="font-weight:700;" th:text="${mostTreatedAnimalTag != null ? mostTreatedAnimalTag : '—'}">—</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:.58rem;margin-top:2px;">
+                        <span style="color:var(--txm);">Treatments This Month</span>
+                        <span style="font-weight:700;" th:text="${treatmentsThisMonth != null ? treatmentsThisMonth : 0}">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAO Standard Indicators -->
+        <div class="section-head">
+            <div class="section-title"><i class="bi bi-award-fill" style="color:var(--g6);"></i> FAO Standard Indicators</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px;">
+            <div class="kpi-mini fao" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="kpi-mini-label">Mortality Rate</div>
+                <div class="kpi-mini-val" style="color:var(--rose);" th:text="${mortalityRate != null ? mortalityRate + '%' : '0%'}">0%</div>
+                <div class="kpi-mini-sub">Deaths / Total Herd</div>
+            </div>
+            <div class="kpi-mini fao" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="kpi-mini-label">Calving Interval</div>
+                <div class="kpi-mini-val" style="color:var(--sky);" th:text="${calvingInterval != null ? calvingInterval + ' mo' : '0 mo'}">0 mo</div>
+                <div class="kpi-mini-sub">Months between births</div>
+            </div>
+            <div class="kpi-mini offtake" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="kpi-mini-label">Offtake Rate</div>
+                <div class="kpi-mini-val" style="color:var(--amber);" th:text="${offtakeRate != null ? offtakeRate + '%' : '0%'}">0%</div>
+                <div class="kpi-mini-sub">Sales / Opening Herd</div>
+            </div>
+            <div class="kpi-mini fao" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="kpi-mini-label">Replacement Rate</div>
+                <div class="kpi-mini-val" style="color:var(--g6);" th:text="${replacementRate != null ? replacementRate + '%' : '0%'}">0%</div>
+                <div class="kpi-mini-sub">Births / Total Herd</div>
+            </div>
+            <div class="kpi-mini productivity" style="background:var(--surface);border:1px solid var(--border);">
+                <div class="kpi-mini-label">Productivity</div>
+                <div class="kpi-mini-val" style="color:var(--teal);" th:text="${productivity != null ? #numbers.formatDecimal(productivity, 0, 'COMMA', 0, 'DEFAULT') : '0'}">0</div>
+                <div class="kpi-mini-sub">RWF per sale</div>
+            </div>
+        </div>
 
         <div class="dash-footer">
             <p>© <span th:text="${#dates.year(#dates.createNow())}"></span> Livestock Manager Pro · Sustainable Farming Solutions</p>
-            <div style="margin-top:4px;"><i class="bi bi-tree-fill" style="color:var(--g5);"></i> Empowering farmers through technology</div>
-            <div style="margin-top:3px;opacity:.7;">Designed by NDAYIZEYE &amp; HABANABAKIZE</div>
+            <div style="margin-top:3px;"><i class="bi bi-tree-fill" style="color:var(--g5);"></i> Empowering farmers through technology</div>
+            <div style="margin-top:2px;opacity:.7;">Designed by NDAYIZEYE &amp; HABANABAKIZE</div>
         </div>
     </div>
 
@@ -671,6 +1030,7 @@
      th:data-monthly-treatments="${monthlyTreatments}"
      th:data-monthly-revenue="${monthlyRevenue}"
      th:data-monthly-costs="${monthlyCosts}"
+     th:data-monthly-death-value="${monthlyDeathValue}"
      th:data-category-breakdown="${categoryBreakdown}"
      th:data-birth-breakdown="${birthBreakdown}"
      th:data-sales-breakdown="${salesBreakdown}"
@@ -679,7 +1039,28 @@
      th:data-abort-breakdown="${abortBreakdown}"
      th:data-death-breakdown="${deathBreakdown}"
      th:data-buyer-count="${buyerCount}"
-     th:data-vet-count="${vetCount}">
+     th:data-vet-count="${vetCount}"
+     th:data-total-current-value="${totalCurrentValue}"
+     th:data-average-current-value="${averageCurrentValue}"
+     th:data-total-dead-value="${totalDeadValue}"
+     th:data-average-dead-value="${averageDeadValue}"
+     th:data-deaths-by-cause="${deathsByCause}"
+     th:data-value-lost-by-cause="${valueLostByCause}"
+     th:data-curative-treatment-cost="${curativeTreatmentCost}"
+     th:data-preventive-treatment-cost="${preventiveTreatmentCost}"
+     th:data-treatment-cost-by-category="${treatmentCostByCategory}"
+     th:data-net-profit="${netProfit}"
+     th:data-is-profit="${isProfit}"
+     th:data-mortality-rate="${mortalityRate}"
+     th:data-calving-interval="${calvingInterval}"
+     th:data-offtake-rate="${offtakeRate}"
+     th:data-replacement-rate="${replacementRate}"
+     th:data-productivity="${productivity}"
+     th:data-net-position="${netPosition}"
+     th:data-total-income="${totalIncome}"
+     th:data-total-expenses="${totalExpenses}"
+     th:data-born-animals-value="${bornAnimalsValue}"
+     th:data-purchase-costs="${purchaseCosts}">
 </div>
 
 <script th:inline="javascript">
@@ -694,7 +1075,8 @@
     var MB=[8,5,12,9,14,7,11,6,10,13,8,5],MS=[4,3,6,5,8,4,7,3,5,9,6,4],
         MD=[1,0,2,1,1,0,2,1,0,2,1,0],MT=[6,4,8,7,10,5,9,4,7,11,7,5],
         MR=[320000,210000,480000,390000,560000,280000,450000,240000,400000,520000,380000,210000],
-        MC=[80000,60000,95000,85000,110000,70000,100000,65000,90000,115000,88000,72000];
+        MC=[80000,60000,95000,85000,110000,70000,100000,65000,90000,115000,88000,72000],
+        MDV=[45000,0,120000,55000,110000,0,95000,0,65000,80000,55000,0];
 
     function arrOr(raw,def){var v=parseJ(raw);return Array.isArray(v)&&v.length===12?v:def;}
 
@@ -738,6 +1120,7 @@
       mTreat:         arrOr(sd('monthlyTreatments'),MT),
       mRevenue:       arrOr(sd('monthlyRevenue'),MR),
       mCosts:         arrOr(sd('monthlyCosts'),MC),
+      mDeathValue:    arrOr(sd('monthlyDeathValue'),MDV),
       catBreak:       parseJ(sd('categoryBreakdown'))||{},
       birthBreak:     parseJ(sd('birthBreakdown'))||{},
       salesBreak:     parseJ(sd('salesBreakdown'))||{},
@@ -746,17 +1129,35 @@
       abortBreak:     parseJ(sd('abortBreakdown'))||{},
       deathBreak:     parseJ(sd('deathBreakdown'))||{},
       buyerCount:     +sd('buyerCount')||0,
-      vetCount:       +sd('vetCount')||0
+      vetCount:       +sd('vetCount')||0,
+      totalCurrentValue: +sd('totalCurrentValue')||0,
+      averageCurrentValue: +sd('averageCurrentValue')||0,
+      totalDeadValue: +sd('totalDeadValue')||0,
+      averageDeadValue: +sd('averageDeadValue')||0,
+      deathsByCause:  parseJ(sd('deathsByCause'))||{},
+      valueLostByCause: parseJ(sd('valueLostByCause'))||{},
+      curativeCost:   +sd('curativeTreatmentCost')||0,
+      preventiveCost: +sd('preventiveTreatmentCost')||0,
+      netProfit:      +sd('netProfit')||0,
+      isProfit:       sd('isProfit')==='true',
+      mortalityRate:  +sd('mortalityRate')||0,
+      calvingInterval:+sd('calvingInterval')||0,
+      offtakeRate:    +sd('offtakeRate')||0,
+      replacementRate:+sd('replacementRate')||0,
+      productivity:   +sd('productivity')||0,
+      netPosition:    +sd('netPosition')||0,
+      totalIncome:    +sd('totalIncome')||0,
+      totalExpenses:  +sd('totalExpenses')||0,
+      bornAnimalsValue: +sd('bornAnimalsValue')||0,
+      purchaseCosts:  +sd('purchaseCosts')||0
     };
 
     var fmt=function(n){return(n==null?'0':(+n).toLocaleString());};
     var fmtC=function(n){return(n==null?'0 RWF':(+n).toLocaleString()+' RWF');};
-    /* Professional currency formatting: full number with thousands separators.
-       No "K" / "M" shorthand anywhere — figures must read as real, exact amounts. */
     var fmtK=function(n){if(n==null)return'0';return Math.round(+n).toLocaleString('en-US');};
     var fmtD=function(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-GB');}catch(e){return'—';}};
     var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var C={births:'#38bdf8',sales:'#34d399',treat:'#a78bfa',sick:'#fbbf24',abort:'#fb923c',deaths:'#fb7185',green:'#52b788',teal:'#14b8a6',rose:'#f43f5e',sky:'#38bdf8'};
+    var C={births:'#38bdf8',sales:'#34d399',treat:'#a78bfa',sick:'#fbbf24',abort:'#fb923c',deaths:'#fb7185',green:'#52b788',teal:'#14b8a6',rose:'#f43f5e',sky:'#38bdf8',purple:'#8b5cf6',amber:'#f4a261'};
 
     function mkLegend(pairs){
       var h='<div class="chart-legend">';
@@ -776,7 +1177,7 @@
       if(type==='birth'){csv='Tag,Category,Birth Date,Offspring,Gender,Children\n';d.recentBirths.forEach(function(b){var cat=b.livestock&&b.livestock.livestockCategory?b.livestock.livestockCategory.name:'—';csv+='"'+((b.livestock&&b.livestock.tagNumber)?b.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(b.birthDate)+'",'+(b.offspringCount||0)+',"'+(b.offspringGender||'—')+'",'+(b.children||0)+'\n';});fn='births.csv';}
       else if(type==='sick'){csv='Tag,Category,Reported,Diagnosis,Severity,Status\n';d.sickList.forEach(function(s){var cat=s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—';csv+='"'+((s.livestock&&s.livestock.tagNumber)?s.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(s.reportedDate)+'","'+(s.diagnosis||'—')+'","'+(s.severityLevel||'—')+'","'+(s.status||'—')+'"\n';});fn='sick.csv';}
       else if(type==='sale'){csv='Tag,Category,Sale Date,Price,Buyer\n';d.salesList.forEach(function(s){var cat=s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—';csv+='"'+((s.livestock&&s.livestock.tagNumber)?s.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(s.saleDate)+'",'+(s.salePrice||0)+',"'+(s.buyer&&s.buyer.name?s.buyer.name:(s.buyerName||'—'))+'"\n';});fn='sales.csv';}
-      else if(type==='death'){csv='Tag,Category,Death Date,Cause\n';d.deathsList.forEach(function(x){var cat=x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—';csv+='"'+((x.livestock&&x.livestock.tagNumber)?x.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(x.deathDate)+'","'+(x.causeOfDeath||'Unknown')+'"\n';});fn='deaths.csv';}
+      else if(type==='death'){csv='Tag,Category,Death Date,Cause,Value Lost\n';d.deathsList.forEach(function(x){var cat=x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—';csv+='"'+((x.livestock&&x.livestock.tagNumber)?x.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(x.deathDate)+'","'+(x.causeOfDeath||'Unknown')+'",'+(x.livestock&&x.livestock.currentValue?x.livestock.currentValue:0)+'\n';});fn='deaths.csv';}
       else if(type==='treat'){csv='Tag,Category,Date,Medication,Type,Status,Cost,Paid\n';d.treatList.forEach(function(t){var cat=t.livestock&&t.livestock.livestockCategory?t.livestock.livestockCategory.name:'—';csv+='"'+((t.livestock&&t.livestock.tagNumber)?t.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(t.treatmentDate)+'","'+(t.medication&&t.medication.name?t.medication.name:'—')+'","'+(t.treatmentType||'—')+'","'+(t.treatmentStatus||'—')+'",'+(t.treatmentCost||0)+','+(t.isPaid?'Yes':'No')+'\n';});fn='treatments.csv';}
       else if(type==='abort'){csv='Tag,Category,Abortion Date,Expected Birth,Pregnancy#\n';d.abortList.forEach(function(a){var cat=a.livestock&&a.livestock.livestockCategory?a.livestock.livestockCategory.name:'—';csv+='"'+((a.livestock&&a.livestock.tagNumber)?a.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(a.abortionDate)+'","'+(a.expectedBirthDate?fmtD(a.expectedBirthDate):'—')+'",'+(a.pregnancyNumber||'—')+'\n';});fn='abortions.csv';}
       if(!csv)return;
@@ -786,7 +1187,7 @@
 
     function drawSparkline(id,data,color){
       var el=document.getElementById(id);if(!el)return;
-      el.width=el.offsetWidth||120;el.height=36;
+      el.width=el.offsetWidth||120;el.height=30;
       var ctx=el.getContext('2d');if(!ctx)return;
       var max=Math.max.apply(null,data)||1;
       var w=el.width/data.length,h=el.height;
@@ -906,6 +1307,9 @@
     var dashCharts=[];
     function destroyCharts(){dashCharts.forEach(function(c){try{c.destroy();}catch(e){}});dashCharts=[];}
 
+    var overviewCharts=[];
+    function destroyOverviewCharts(){overviewCharts.forEach(function(c){try{c.destroy();}catch(e){}});overviewCharts=[];}
+
     function renderDashboardOverview(){
       destroyCharts();
       var container=document.getElementById('dashboardOverviewContent');if(!container)return;
@@ -917,18 +1321,14 @@
       var calvingInterval=d.totalBirths>0?Math.round((d.totalLivestock/d.totalBirths)*12):0;
       var mortalityRate=d.totalLivestock>0?((d.totalDeaths/(d.totalLivestock+d.totalDeaths))*100).toFixed(1):0;
       var replacementRate=d.totalLivestock>0?((d.totalBirths/d.totalLivestock)*100).toFixed(0):0;
-      /* FAO Offtake Rate = (animals sold + slaughtered) / opening herd size * 100.
-         Opening herd approximated as current active herd + everything that has already left it. */
       var openingHerd=activeHerd+d.totalSales+d.totalDeaths;
       var offtakeRate=openingHerd>0?((d.totalSales/openingHerd)*100).toFixed(1):0;
-      /* Productivity: full average revenue per sale — no abbreviation */
       var productivityIdx=d.totalSales>0?Math.round(d.saleRevenue/d.totalSales):0;
       var treatedAnimals=d.totalTreat+d.totalSick;
 
       var total = activeHerd + d.totalSales + d.totalDeaths + d.totalSick;
       var pct = function(v){ return total > 0 ? Math.round((v/total)*100) : 0; };
 
-      // Category breakdown helper — reused for Active, Sold, Deceased and Sick rows
       function buildSubBreakdown(dataObj){
         var entries=Object.entries(dataObj||{}).sort(function(a,b){return b[1]-a[1];});
         if(!entries.length)return '';
@@ -945,12 +1345,11 @@
       var sickBreakdownHtml=buildSubBreakdown(d.sickBreak);
 
       container.innerHTML =
-        '<div class="section-head" style="margin-bottom:10px;">' +
-          '<div class="section-title" title="FAO-standard indicators applied on this dashboard: Mortality Rate, Calving Interval, Herd Replacement (Growth) Rate, and Offtake Rate."><i class="bi bi-graph-up-arrow"></i> Farm Analysis <span style="font-size:.6rem;font-weight:400;color:var(--txm);margin-left:4px;">FAO Standards</span></div>' +
+        '<div class="section-head" style="margin-bottom:6px;">' +
+          '<div class="section-title" title="FAO-standard indicators applied on this dashboard: Mortality Rate, Calving Interval, Herd Replacement (Growth) Rate, and Offtake Rate."><i class="bi bi-graph-up-arrow"></i> Farm Analysis <span style="font-size:.55rem;font-weight:400;color:var(--txm);margin-left:4px;">FAO Standards</span></div>' +
         '</div>' +
 
         '<div class="farm-analysis-grid">' +
-          // LEFT: Herd Composition - Compact with chart + stats list
           '<div class="herd-composition-card">' +
             '<div class="herd-header">' +
               '<div class="herd-title"><i class="bi bi-pie-chart-fill"></i> Herd Composition</div>' +
@@ -972,7 +1371,6 @@
             '</div>' +
           '</div>' +
 
-          // RIGHT: Quick Stats + Mini KPIs
           '<div class="right-panel">' +
             '<div class="farm-stats-grid">' +
               '<div class="farm-stat-card"><span class="farm-stat-icon green">🐄</span><div class="farm-stat-value">' + fmt(activeHerd) + '</div><div class="farm-stat-label">Active Herd</div></div>' +
@@ -994,10 +1392,9 @@
           '</div>' +
         '</div>' +
 
-        // Revenue vs Costs Chart
-        '<div class="chart-row wide" style="margin-top:10px;">' +
+        '<div class="chart-row wide" style="margin-top:8px;">' +
           '<div class="chart-card">' +
-            '<div class="chart-card-title"><i class="bi bi-graph-up"></i> Revenue vs Costs <span style="font-size:.6rem;font-weight:400;color:var(--txm);">Monthly Trend</span></div>' +
+            '<div class="chart-card-title"><i class="bi bi-graph-up"></i> Revenue vs Costs <span style="font-size:.55rem;font-weight:400;color:var(--txm);">Monthly Trend</span></div>' +
             '<div class="chart-card-sub">Financial performance over the last 12 months (RWF)</div>' +
             mkLegend([C.teal,'Revenue',C.rose,'Costs']) +
             '<div class="chart-wrap-md"><canvas id="chartFinance"></canvas></div>' +
@@ -1010,8 +1407,7 @@
           '</div>' +
         '</div>' +
 
-        // Health & Flow Charts Row
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;">' +
           '<div class="chart-card">' +
             '<div class="chart-card-title"><i class="bi bi-heart-pulse-fill"></i> Health Summary</div>' +
             '<div class="chart-card-sub">Sick · critical · recovered</div>' +
@@ -1035,21 +1431,108 @@
       if(ctxD)dashCharts.push(new Chart(ctxD,{type:'doughnut',data:{labels:['Active','Sold','Dead','Sick'],datasets:[{data:[activeHerd,d.totalSales,d.totalDeaths,d.totalSick],backgroundColor:[C.green,C.births,C.deaths,C.sick],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}}));
 
       var ctxFin=document.getElementById('chartFinance');
-      if(ctxFin)dashCharts.push(new Chart(ctxFin,{type:'line',data:{labels:MONTHS,datasets:[{label:'Revenue',data:d.mRevenue,borderColor:C.teal,backgroundColor:'rgba(20,184,166,.07)',fill:true,tension:.4,pointRadius:2,borderWidth:2},{label:'Costs',data:d.mCosts,borderColor:C.rose,backgroundColor:'rgba(244,63,94,.05)',fill:true,tension:.4,pointRadius:2,borderWidth:2,borderDash:[5,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+fmtK(ctx.parsed.y)+' RWF';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:9},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:9},callback:function(v){return fmtK(v);}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
+      if(ctxFin)dashCharts.push(new Chart(ctxFin,{type:'line',data:{labels:MONTHS,datasets:[{label:'Revenue',data:d.mRevenue,borderColor:C.teal,backgroundColor:'rgba(20,184,166,.07)',fill:true,tension:.4,pointRadius:2,borderWidth:2},{label:'Costs',data:d.mCosts,borderColor:C.rose,backgroundColor:'rgba(244,63,94,.05)',fill:true,tension:.4,pointRadius:2,borderWidth:2,borderDash:[5,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+fmtK(ctx.parsed.y)+' RWF';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:8},callback:function(v){return fmtK(v);}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
 
       var ctxAct=document.getElementById('chartActivity');
-      if(ctxAct)dashCharts.push(new Chart(ctxAct,{type:'bar',data:{labels:MONTHS,datasets:[{label:'Births',data:d.mBirths,backgroundColor:C.births,borderRadius:3,borderSkipped:false},{label:'Sales',data:d.mSales,backgroundColor:C.sales,borderRadius:3,borderSkipped:false},{label:'Deaths',data:d.mDeaths,backgroundColor:C.deaths,borderRadius:3,borderSkipped:false},{label:'Treatments',data:d.mTreat,backgroundColor:C.treat,borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9},autoSkip:false}},y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
+      if(ctxAct)dashCharts.push(new Chart(ctxAct,{type:'bar',data:{labels:MONTHS,datasets:[{label:'Births',data:d.mBirths,backgroundColor:C.births,borderRadius:3,borderSkipped:false},{label:'Sales',data:d.mSales,backgroundColor:C.sales,borderRadius:3,borderSkipped:false},{label:'Deaths',data:d.mDeaths,backgroundColor:C.deaths,borderRadius:3,borderSkipped:false},{label:'Treatments',data:d.mTreat,backgroundColor:C.treat,borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},autoSkip:false}},y:{beginAtZero:true,ticks:{font:{size:8}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
 
       var ctxH=document.getElementById('chartHealth');
-      if(ctxH)dashCharts.push(new Chart(ctxH,{type:'bar',data:{labels:['Sick','Critical','Recovering','Recovered','Treatments'],datasets:[{data:[d.totalSick,d.critical,d.totalSick-d.critical-d.recovered,d.recovered,d.totalTreat],backgroundColor:[C.rose,C.abort,'#fbbf24',C.green,C.treat],borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}},y:{grid:{display:false},ticks:{font:{size:9}}}}}}));
+      if(ctxH)dashCharts.push(new Chart(ctxH,{type:'bar',data:{labels:['Sick','Critical','Recovering','Recovered','Treatments'],datasets:[{data:[d.totalSick,d.critical,d.totalSick-d.critical-d.recovered,d.recovered,d.totalTreat],backgroundColor:[C.rose,C.abort,'#fbbf24',C.green,C.treat],borderRadius:5,borderSkipped:false}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{font:{size:8}},grid:{color:'rgba(0,0,0,.04)'}},y:{grid:{display:false},ticks:{font:{size:8}}}}}}));
 
       var ctxFlow=document.getElementById('chartFlow');
-      if(ctxFlow)dashCharts.push(new Chart(ctxFlow,{type:'bar',data:{labels:MONTHS,datasets:[{label:'Births',data:d.mBirths,backgroundColor:C.green,borderRadius:3,borderSkipped:false},{label:'Outflow',data:outflow,backgroundColor:C.rose,borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
+      if(ctxFlow)dashCharts.push(new Chart(ctxFlow,{type:'bar',data:{labels:MONTHS,datasets:[{label:'Births',data:d.mBirths,backgroundColor:C.green,borderRadius:3,borderSkipped:false},{label:'Outflow',data:outflow,backgroundColor:C.rose,borderRadius:3,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:8}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
 
       var ctxR=document.getElementById('chartRadar');
       if(ctxR){
         var maxV=Math.max(d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths,1);
-        dashCharts.push(new Chart(ctxR,{type:'radar',data:{labels:['Births','Sales','Treat.','Sick','Abort.','Deaths'],datasets:[{data:[d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths],backgroundColor:'rgba(82,183,136,.14)',borderColor:C.green,pointBackgroundColor:C.green,borderWidth:2,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{beginAtZero:true,ticks:{font:{size:8},stepSize:Math.ceil(maxV/5)},pointLabels:{font:{size:9}},grid:{color:'rgba(0,0,0,.06)'},angleLines:{color:'rgba(0,0,0,.06)'}}}}}));
+        dashCharts.push(new Chart(ctxR,{type:'radar',data:{labels:['Births','Sales','Treat.','Sick','Abort.','Deaths'],datasets:[{data:[d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths],backgroundColor:'rgba(82,183,136,.14)',borderColor:C.green,pointBackgroundColor:C.green,borderWidth:2,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{beginAtZero:true,ticks:{font:{size:7},stepSize:Math.ceil(maxV/5)},pointLabels:{font:{size:8}},grid:{color:'rgba(0,0,0,.06)'},angleLines:{color:'rgba(0,0,0,.06)'}}}}}));
+      }
+
+      // Death Cause Chart
+      var ctxCause = document.getElementById('deathCauseChart');
+      if(ctxCause) {
+        var deathCauses = d.deathsByCause || {};
+        var labels = Object.keys(deathCauses);
+        var data = Object.values(deathCauses);
+        if(labels.length > 0) {
+          dashCharts.push(new Chart(ctxCause, {
+            type: 'doughnut',
+            data: {
+              labels: labels,
+              datasets: [{
+                data: data,
+                backgroundColor: ['#f43f5e', '#fb7185', '#fda4af', '#fecdd3', '#ffe4e6', '#ffc0cb', '#fbcfe8', '#fce7f3'],
+                borderWidth: 0
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: { font: { size: 8 }, boxWidth: 8, padding: 6 }
+                }
+              }
+            }
+          }));
+        } else {
+          ctxCause.parentElement.innerHTML = '<div style="text-align:center;padding:30px 0;color:var(--txm);font-size:.7rem;">No death records available</div>';
+        }
+      }
+
+      // Value Lost by Cause Chart
+      var ctxValue = document.getElementById('valueLostChart');
+      if(ctxValue) {
+        var valueLost = d.valueLostByCause || {};
+        var labels = Object.keys(valueLost);
+        var data = Object.values(valueLost);
+        if(labels.length > 0) {
+          dashCharts.push(new Chart(ctxValue, {
+            type: 'bar',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Value Lost (RWF)',
+                data: data,
+                backgroundColor: 'rgba(244,63,94,0.7)',
+                borderColor: '#f43f5e',
+                borderWidth: 1,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: function(ctx) {
+                      return 'Value Lost: ' + fmtK(ctx.parsed.y) + ' RWF';
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    font: { size: 8 },
+                    callback: function(v) { return fmtK(v); }
+                  },
+                  grid: { color: 'rgba(0,0,0,.04)' }
+                },
+                x: {
+                  ticks: { font: { size: 8 }, maxRotation: 30 },
+                  grid: { display: false }
+                }
+              }
+            }
+          }));
+        } else {
+          ctxValue.parentElement.innerHTML = '<div style="text-align:center;padding:30px 0;color:var(--txm);font-size:.7rem;">No value loss data available</div>';
+        }
       }
     }
 
@@ -1115,20 +1598,147 @@
       var el=document.getElementById('deathsReportContent');if(!el)return;
       var d=dd;
       if(!d.deathsList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-inbox"></i><p>No death records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalDeaths)+'</div><div class="kpi-lbl">Total Deaths</div></div><div class="kpi-card"><div class="kpi-val">'+d.mostCause+'</div><div class="kpi-lbl">Most Common Cause</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.distinctCauses)+'</div><div class="kpi-lbl">Distinct Causes</div></div></div>'+exportBar('death')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Death Date</th><th>Cause</th></tr></thead><tbody>';
+      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalDeaths)+'</div><div class="kpi-lbl">Total Deaths</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.totalDeadValue)+' RWF</div><div class="kpi-lbl">Value Lost</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.averageDeadValue)+' RWF</div><div class="kpi-lbl">Avg Loss/Death</div></div><div class="kpi-card"><div class="kpi-val">'+d.mostCause+'</div><div class="kpi-lbl">Most Common Cause</div></div></div>'+exportBar('death')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Death Date</th><th>Cause</th><th>Value Lost</th></tr></thead><tbody>';
       d.deathsList.forEach(function(x,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(x.livestock&&x.livestock.tagNumber?x.livestock.tagNumber:'—')+'</strong></td><td>'+(x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(x.deathDate)+'</td><td><span class="badge badge-danger">'+(x.causeOfDeath||'Unknown')+'</span></td></tr>';
+        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(x.livestock&&x.livestock.tagNumber?x.livestock.tagNumber:'—')+'</strong></td><td>'+(x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(x.deathDate)+'</td><td><span class="badge badge-danger">'+(x.causeOfDeath||'Unknown')+'</span></td><td>'+(x.livestock&&x.livestock.currentValue?fmtK(x.livestock.currentValue)+' RWF':'—')+'</td></tr>';
       });
       el.innerHTML=html+'</tbody></table></div>';
     }
 
+    // =========================================================================
+    // BUSINESS OVERVIEW — fetches /livestock/business-overview-data and
+    // renders a real financial + operational picture of the farm.
+    // =========================================================================
+
     function renderOverviewReport(){
       var el=document.getElementById('overviewReportContent');if(!el)return;
-      var d=dd;var net=d.saleRevenue-(d.treatCost+d.sickTreatCost);var profit=net>=0;
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalLivestock)+'</div><div class="kpi-lbl">Total Herd</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.saleRevenue)+' RWF</div><div class="kpi-lbl">Revenue</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.treatCost+d.sickTreatCost)+' RWF</div><div class="kpi-lbl">Costs</div></div><div class="kpi-card"><div class="kpi-val" style="color:'+(profit?'var(--teal)':'var(--rose)')+'">'+fmtK(Math.abs(net))+' RWF</div><div class="kpi-lbl">'+(profit?'Profit':'Loss')+'</div></div></div><div class="card"><div class="chart-card-title"><i class="bi bi-activity"></i> Key Metrics at a Glance</div><div class="chart-wrap-md"><canvas id="overviewChart"></canvas></div></div>';
-      el.innerHTML=html;
-      var ctx=document.getElementById('overviewChart');
-      if(ctx)new Chart(ctx,{type:'bar',data:{labels:['Births','Sales','Treatments','Sick','Abortions','Deaths'],datasets:[{data:[d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths],backgroundColor:[C.births,C.sales,C.treat,C.sick,C.abort,C.deaths],borderRadius:7,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{grid:{display:false}}}}});
+      destroyOverviewCharts();
+      el.innerHTML='<div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading business overview…</div>';
+
+      fetch('/livestock/business-overview-data?months=12', {headers:{'Accept':'application/json'}})
+        .then(function(r){ if(!r.ok) throw new Error('Request failed with status ' + r.status); return r.json(); })
+        .then(function(data){ buildOverview(el, data); })
+        .catch(function(err){
+          el.innerHTML='<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Could not load the business overview right now. Please try again.</p></div>';
+          console.error('Business overview load failed:', err);
+        });
+    }
+
+    function buildOverview(el, o){
+      var isGain = o.businessStatus === 'gain';
+      var isLoss = o.businessStatus === 'loss';
+      var statusColor = isGain ? '#065f46' : (isLoss ? '#9f1239' : '#475569');
+      var statusLabel = isGain ? 'Profitable' : (isLoss ? 'Operating at a Loss' : 'Break-even');
+      var statusIcon  = isGain ? 'bi-graph-up-arrow' : (isLoss ? 'bi-graph-down-arrow' : 'bi-dash-circle');
+
+      var html = '';
+
+      // ── Headline banner ──
+      html += '<div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-left:4px solid '+statusColor+';">' +
+        '<div>' +
+          '<div style="font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);">Overall Business Position</div>' +
+          '<div style="font-size:1.3rem;font-weight:800;color:'+statusColor+';display:flex;align-items:center;gap:6px;"><i class="bi '+statusIcon+'"></i> '+fmtC(o.netPosition)+'</div>' +
+          '<div style="font-size:.65rem;color:var(--txm);margin-top:2px;">'+statusLabel+' · based on income, current herd value, treatment &amp; loss data</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+          '<div class="mini-pill"><i class="bi bi-box2-heart-fill"></i> <b>'+fmt(o.totalAnimals)+'</b> total herd</div>' +
+          '<div class="mini-pill"><i class="bi bi-check-circle-fill" style="color:var(--g6);"></i> <b>'+fmt(o.activeCount)+'</b> active</div>' +
+          '<div class="mini-pill"><i class="bi bi-cash-stack" style="color:var(--teal);"></i> <b>'+fmt(o.soldCount)+'</b> sold</div>' +
+          '<div class="mini-pill"><i class="bi bi-bandaid-fill" style="color:var(--amber-d);"></i> <b>'+fmt(o.sickCount)+'</b> sick</div>' +
+        '</div>' +
+      '</div>';
+
+      // ── Income / Expense / Net cards ──
+      html += '<div class="financial-grid">' +
+        '<div class="financial-card">' +
+          '<div class="card-header"><div class="icon income"><i class="bi bi-arrow-up-circle-fill"></i></div><div class="title">Total Income</div></div>' +
+          '<div class="total-amount income-color">'+fmtC(o.totalIncome)+'</div>' +
+          '<div class="breakdown">' +
+            '<div class="breakdown-item"><span class="label"><i class="bi bi-cash-stack"></i> Sales Revenue</span><span class="value">'+fmtC(o.salesRevenue)+'</span></div>' +
+            '<div class="breakdown-item"><span class="label"><i class="bi bi-box2-heart-fill"></i> Active Stock Value</span><span class="value">'+fmtC(o.activeStockValue)+'</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="financial-card">' +
+          '<div class="card-header"><div class="icon expense"><i class="bi bi-arrow-down-circle-fill"></i></div><div class="title">Total Expenses</div></div>' +
+          '<div class="total-amount expense-color">'+fmtC(o.totalExpenses)+'</div>' +
+          '<div class="breakdown">' +
+            '<div class="breakdown-item"><span class="label"><i class="bi bi-heart-pulse-fill"></i> Treatment Costs</span><span class="value">'+fmtC(o.treatmentCosts)+'</span></div>' +
+            '<div class="breakdown-item"><span class="label"><i class="bi bi-cart-plus-fill"></i> Purchase Costs</span><span class="value">'+fmtC(o.purchaseCosts)+'</span></div>' +
+            '<div class="breakdown-item"><span class="label"><i class="bi bi-x-circle-fill" style="color:var(--rose);"></i> Death Losses</span><span class="value">'+fmtC(o.deathLoss)+'</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="financial-card">' +
+          '<div class="card-header"><div class="icon profit"><i class="bi bi-graph-up-arrow"></i></div><div class="title">Net Position</div></div>' +
+          '<div class="total-amount" style="color:'+statusColor+';">'+fmtC(o.netPosition)+'</div>' +
+          '<div class="breakdown">' +
+            '<div class="breakdown-item"><span class="label">Income</span><span class="value positive">'+fmtC(o.totalIncome)+'</span></div>' +
+            '<div class="breakdown-item"><span class="label">Expenses</span><span class="value negative">'+fmtC(o.totalExpenses)+'</span></div>' +
+            '<div class="breakdown-item" style="border-top:2px solid var(--border);padding-top:4px;margin-top:2px;"><span class="label" style="font-weight:700;">Status</span><span class="value" style="color:'+statusColor+';font-weight:700;">'+statusLabel+'</span></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+      // ── Performance indicators ──
+      var ind = o.indicators || {};
+      html += '<div class="section-head"><div class="section-title"><i class="bi bi-award-fill" style="color:var(--g6);"></i> Performance Indicators</div></div>';
+      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">' +
+        '<div class="kpi-mini fao" style="background:var(--surface);border:1px solid var(--border);"><div class="kpi-mini-label">Mortality Rate</div><div class="kpi-mini-val" style="color:var(--rose);">'+(ind.mortalityRate!=null?ind.mortalityRate:0)+'%</div></div>' +
+        '<div class="kpi-mini offtake" style="background:var(--surface);border:1px solid var(--border);"><div class="kpi-mini-label">Offtake Rate</div><div class="kpi-mini-val" style="color:var(--amber);">'+(ind.offtakeRate!=null?ind.offtakeRate:0)+'%</div></div>' +
+        '<div class="kpi-mini fao" style="background:var(--surface);border:1px solid var(--border);"><div class="kpi-mini-label">Replacement Rate</div><div class="kpi-mini-val" style="color:var(--g6);">'+(ind.replacementRate!=null?ind.replacementRate:0)+'%</div></div>' +
+        '<div class="kpi-mini productivity" style="background:var(--surface);border:1px solid var(--border);"><div class="kpi-mini-label">Avg Sale Price</div><div class="kpi-mini-val" style="color:var(--teal);">'+fmtK(ind.avgSalePrice)+' RWF</div></div>' +
+      '</div>';
+
+      // ── Alerts ──
+      var al = o.alerts || {};
+      var hasAlerts = (al.unpaidTreatments>0) || (al.ongoingTreatments>0) || (al.activeSickCases>0) || (al.pregnantCount>0);
+      if(hasAlerts){
+        html += '<div class="section-head"><div class="section-title"><i class="bi bi-bell-fill" style="color:var(--amber-d);"></i> Attention Needed</div></div>';
+        html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">';
+        if(al.unpaidTreatments>0) html += '<div class="stat-card acc-rose"><div class="stat-inner"><div class="stat-ic rose"><i class="bi bi-receipt"></i></div><div class="stat-right"><div class="stat-num">'+fmt(al.unpaidTreatments)+'</div><div class="stat-lbl">Unpaid Treatments</div><div style="font-size:.55rem;color:var(--txm);margin-top:2px;">'+fmtC(al.unpaidTreatmentValue)+' outstanding</div></div></div></div>';
+        if(al.ongoingTreatments>0) html += '<div class="stat-card acc-purple"><div class="stat-inner"><div class="stat-ic purple"><i class="bi bi-hourglass-split"></i></div><div class="stat-right"><div class="stat-num">'+fmt(al.ongoingTreatments)+'</div><div class="stat-lbl">Ongoing Treatments</div></div></div></div>';
+        if(al.activeSickCases>0) html += '<div class="stat-card acc-amber"><div class="stat-inner"><div class="stat-ic amber"><i class="bi bi-bandaid-fill"></i></div><div class="stat-right"><div class="stat-num">'+fmt(al.activeSickCases)+'</div><div class="stat-lbl">Active Sick Cases</div></div></div></div>';
+        if(al.pregnantCount>0) html += '<div class="stat-card acc-sky"><div class="stat-inner"><div class="stat-ic sky"><i class="bi bi-hourglass-split"></i></div><div class="stat-right"><div class="stat-num">'+fmt(al.pregnantCount)+'</div><div class="stat-lbl">Pregnant Animals</div></div></div></div>';
+        html += '</div>';
+      }
+
+      // ── Trend charts ──
+      html += '<div class="chart-row wide">' +
+        '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-graph-up"></i> Revenue vs Treatment Costs</div><div class="chart-card-sub">Last 12 months</div>' + mkLegend([C.teal,'Revenue',C.rose,'Costs']) + '<div class="chart-wrap-md"><canvas id="ovChartFinance"></canvas></div></div>' +
+        '<div class="chart-card"><div class="chart-card-title"><i class="bi bi-bar-chart-fill"></i> Herd Events</div><div class="chart-card-sub">Births · sales · deaths · treatments</div>' + mkLegend([C.births,'Births',C.sales,'Sales',C.deaths,'Deaths',C.treat,'Treatments']) + '<div class="chart-wrap-md"><canvas id="ovChartEvents"></canvas></div></div>' +
+      '</div>';
+
+      // ── Category performance table ──
+      html += '<div class="section-head"><div class="section-title"><i class="bi bi-grid-3x2-gap-fill"></i> Category Performance</div></div>';
+      var cats = o.categoryPerformance || [];
+      if(!cats.length){
+        html += '<div class="empty-state"><i class="bi bi-inbox"></i><p>No category data available yet.</p></div>';
+      } else {
+        html += '<div class="card" style="padding:0;overflow:hidden;"><div class="table-responsive"><table class="data-table"><thead><tr><th>Category</th><th>Total</th><th>Active</th><th>Revenue</th><th>Costs</th><th>Profit</th><th>Herd Value</th></tr></thead><tbody>';
+        cats.forEach(function(c){
+          var profitPositive = (c.profit>=0);
+          html += '<tr><td><strong>'+c.name+'</strong></td><td>'+fmt(c.total)+'</td><td>'+fmt(c.active)+'</td><td>'+fmtC(c.revenue)+'</td><td>'+fmtC(c.costs)+'</td>' +
+            '<td><span class="badge '+(profitPositive?'badge-success':'badge-danger')+'">'+fmtC(c.profit)+'</span></td><td>'+fmtC(c.value)+'</td></tr>';
+        });
+        html += '</tbody></table></div></div>';
+      }
+
+      el.innerHTML = html;
+
+      // ── Build charts from the fetched series ──
+      var labels = o.monthLabels || [];
+      var ctxFin = document.getElementById('ovChartFinance');
+      if(ctxFin) overviewCharts.push(new Chart(ctxFin,{type:'line',data:{labels:labels,datasets:[
+        {label:'Revenue',data:o.monthlyRevenue,borderColor:C.teal,backgroundColor:'rgba(20,184,166,.07)',fill:true,tension:.4,pointRadius:2,borderWidth:2},
+        {label:'Costs',data:o.monthlyCosts,borderColor:C.rose,backgroundColor:'rgba(244,63,94,.05)',fill:true,tension:.4,pointRadius:2,borderWidth:2,borderDash:[5,3]}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': '+fmtK(ctx.parsed.y)+' RWF';}}}},scales:{x:{grid:{display:false},ticks:{font:{size:8},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:8},callback:function(v){return fmtK(v);}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
+
+      var ctxEv = document.getElementById('ovChartEvents');
+      if(ctxEv) overviewCharts.push(new Chart(ctxEv,{type:'bar',data:{labels:labels,datasets:[
+        {label:'Births',data:o.monthlyBirths,backgroundColor:C.births,borderRadius:3,borderSkipped:false},
+        {label:'Sales',data:o.monthlySales,backgroundColor:C.sales,borderRadius:3,borderSkipped:false},
+        {label:'Deaths',data:o.monthlyDeaths,backgroundColor:C.deaths,borderRadius:3,borderSkipped:false},
+        {label:'Treatments',data:o.monthlyTreatments,backgroundColor:C.treat,borderRadius:3,borderSkipped:false}
+      ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:8},autoSkip:false,maxRotation:45}},y:{beginAtZero:true,ticks:{font:{size:8}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
     }
 
     document.addEventListener('DOMContentLoaded',function(){

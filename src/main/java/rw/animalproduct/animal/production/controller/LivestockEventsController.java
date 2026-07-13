@@ -1572,6 +1572,236 @@ public class LivestockEventsController {
         return "financial-summary";
     }
 
+    // =========================================================================
+    // BUSINESS OVERVIEW — AJAX DATA FOR THE DASHBOARD "BUSINESS OVERVIEW" PANEL
+    // =========================================================================
+    // Returns a single JSON payload with everything the dashboard's Business
+    // Overview view needs: financial position, herd counts, per-category
+    // performance, a 12-month trend series, operational alerts and a small
+    // set of FAO-style herd indicators. Keeping this as one endpoint avoids
+    // multiple round-trips and lets the frontend render instantly.
+    // =========================================================================
+
+    @GetMapping("/business-overview-data")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> businessOverviewData(
+            @RequestParam(value = "months", defaultValue = "12") int months) {
+
+        Map<String, Object> result = new LinkedHashMap<>();
+
+        List<Livestock> allLivestock           = livestockRepository.findAll();
+        List<LivestockSale> allSales           = saleService.getAll();
+        List<LivestockDeath> allDeaths         = deathService.getAll();
+        List<LivestockTreatment> allTreatments = treatmentService.getAll();
+        List<LivestockSick> allSick            = sickService.getAll();
+
+        LocalDate today = LocalDate.now();
+
+        // ---------- Herd counts ----------
+        long totalAnimals  = allLivestock.size();
+        long activeCount   = allLivestock.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count();
+        long soldCount     = allLivestock.stream().filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus())).count();
+        long deadCount     = allLivestock.stream().filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus())).count();
+        long sickCount     = allLivestock.stream().filter(l -> Livestock.STATUS_SICK.equals(l.getStatus())).count();
+        long pregnantCount = allLivestock.stream().filter(l -> Livestock.STATUS_PREGNANT.equals(l.getStatus())).count();
+
+        result.put("totalAnimals",  totalAnimals);
+        result.put("activeCount",   activeCount);
+        result.put("soldCount",     soldCount);
+        result.put("deadCount",     deadCount);
+        result.put("sickCount",     sickCount);
+        result.put("pregnantCount", pregnantCount);
+
+        // ---------- Financial position ----------
+        BigDecimal salesRevenue = allSales.stream()
+                .filter(s -> s.getSalePrice() != null)
+                .map(LivestockSale::getSalePrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal activeStockValue = allLivestock.stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal treatmentCosts = allTreatments.stream()
+                .filter(t -> t.getTreatmentCost() != null)
+                .map(LivestockTreatment::getTreatmentCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal deathLoss = allDeaths.stream()
+                .filter(d -> d.getLivestock() != null && d.getLivestock().getCurrentValue() != null)
+                .map(d -> d.getLivestock().getCurrentValue())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal purchaseCosts = allLivestock.stream()
+                .filter(l -> l.getMother() == null)
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalIncome   = salesRevenue.add(activeStockValue);
+        BigDecimal totalExpenses = treatmentCosts.add(deathLoss).add(purchaseCosts);
+        BigDecimal netPosition   = totalIncome.subtract(totalExpenses);
+        String businessStatus    = netPosition.compareTo(BigDecimal.ZERO) > 0 ? "gain"
+                : netPosition.compareTo(BigDecimal.ZERO) < 0 ? "loss" : "neutral";
+
+        result.put("salesRevenue",     salesRevenue);
+        result.put("activeStockValue", activeStockValue);
+        result.put("treatmentCosts",   treatmentCosts);
+        result.put("deathLoss",        deathLoss);
+        result.put("purchaseCosts",    purchaseCosts);
+        result.put("totalIncome",      totalIncome);
+        result.put("totalExpenses",    totalExpenses);
+        result.put("netPosition",      netPosition);
+        result.put("businessStatus",   businessStatus);
+
+        // ---------- Category performance ----------
+        List<LivestockCategory> categories = allLivestock.stream()
+                .map(Livestock::getLivestockCategory)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> categoryPerformance = new ArrayList<>();
+        for (LivestockCategory cat : categories) {
+            List<Livestock> animals = allLivestock.stream()
+                    .filter(l -> l.getLivestockCategory() != null
+                            && l.getLivestockCategory().getId().equals(cat.getId()))
+                    .collect(Collectors.toList());
+
+            BigDecimal revenue = allSales.stream()
+                    .filter(s -> s.getLivestock() != null && s.getLivestock().getLivestockCategory() != null
+                            && s.getLivestock().getLivestockCategory().getId().equals(cat.getId()))
+                    .filter(s -> s.getSalePrice() != null)
+                    .map(LivestockSale::getSalePrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal costs = allTreatments.stream()
+                    .filter(t -> t.getLivestock() != null && t.getLivestock().getLivestockCategory() != null
+                            && t.getLivestock().getLivestockCategory().getId().equals(cat.getId()))
+                    .filter(t -> t.getTreatmentCost() != null)
+                    .map(LivestockTreatment::getTreatmentCost)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal value = animals.stream()
+                    .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()))
+                    .filter(l -> l.getCurrentValue() != null)
+                    .map(Livestock::getCurrentValue)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("name",    cat.getName());
+            row.put("total",   animals.size());
+            row.put("active",  animals.stream().filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus())).count());
+            row.put("revenue", revenue);
+            row.put("costs",   costs);
+            row.put("profit",  revenue.subtract(costs));
+            row.put("value",   value);
+            categoryPerformance.add(row);
+        }
+        categoryPerformance.sort((a, b) ->
+                ((BigDecimal) b.get("profit")).compareTo((BigDecimal) a.get("profit")));
+        result.put("categoryPerformance", categoryPerformance);
+
+        // ---------- Monthly trend (last N months, oldest first) ----------
+        List<String> monthLabels        = new ArrayList<>();
+        List<BigDecimal> monthlyRevenue = new ArrayList<>();
+        List<BigDecimal> monthlyCosts   = new ArrayList<>();
+        List<Long> monthlyBirths        = new ArrayList<>();
+        List<Long> monthlySales         = new ArrayList<>();
+        List<Long> monthlyDeaths        = new ArrayList<>();
+        List<Long> monthlyTreatments    = new ArrayList<>();
+
+        for (int i = months - 1; i >= 0; i--) {
+            LocalDate monthStart = today.minusMonths(i).withDayOfMonth(1);
+            LocalDate monthEnd   = monthStart.withDayOfMonth(monthStart.lengthOfMonth());
+
+            monthLabels.add(monthStart.getMonth().toString().substring(0, 3) + " " + monthStart.getYear());
+
+            monthlyRevenue.add(allSales.stream()
+                    .filter(s -> s.getSaleDate() != null && !s.getSaleDate().isBefore(monthStart) && !s.getSaleDate().isAfter(monthEnd))
+                    .filter(s -> s.getSalePrice() != null)
+                    .map(LivestockSale::getSalePrice)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+            monthlyCosts.add(allTreatments.stream()
+                    .filter(t -> t.getTreatmentDate() != null && !t.getTreatmentDate().isBefore(monthStart) && !t.getTreatmentDate().isAfter(monthEnd))
+                    .filter(t -> t.getTreatmentCost() != null)
+                    .map(LivestockTreatment::getTreatmentCost)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+            monthlyBirths.add(allLivestock.stream()
+                    .filter(l -> l.getMother() != null && l.getDateReceived() != null
+                            && !l.getDateReceived().isBefore(monthStart) && !l.getDateReceived().isAfter(monthEnd))
+                    .count());
+
+            monthlySales.add(allSales.stream()
+                    .filter(s -> s.getSaleDate() != null && !s.getSaleDate().isBefore(monthStart) && !s.getSaleDate().isAfter(monthEnd))
+                    .count());
+
+            monthlyDeaths.add(allDeaths.stream()
+                    .filter(d -> d.getDeathDate() != null && !d.getDeathDate().isBefore(monthStart) && !d.getDeathDate().isAfter(monthEnd))
+                    .count());
+
+            monthlyTreatments.add(allTreatments.stream()
+                    .filter(t -> t.getTreatmentDate() != null && !t.getTreatmentDate().isBefore(monthStart) && !t.getTreatmentDate().isAfter(monthEnd))
+                    .count());
+        }
+
+        result.put("monthLabels",       monthLabels);
+        result.put("monthlyRevenue",    monthlyRevenue);
+        result.put("monthlyCosts",      monthlyCosts);
+        result.put("monthlyBirths",     monthlyBirths);
+        result.put("monthlySales",      monthlySales);
+        result.put("monthlyDeaths",     monthlyDeaths);
+        result.put("monthlyTreatments", monthlyTreatments);
+
+        // ---------- Operational alerts ----------
+        long unpaidTreatments = allTreatments.stream()
+                .filter(t -> t.getIsPaid() == null || !t.getIsPaid())
+                .count();
+
+        long ongoingTreatments = allTreatments.stream()
+                .filter(t -> t.getTreatmentStatus() == LivestockTreatment.TreatmentStatus.ONGOING)
+                .count();
+
+        long activeSickCases = allSick.stream()
+                .filter(s -> s.getStatus() != LivestockSick.SickStatus.RECOVERED)
+                .count();
+
+        BigDecimal unpaidTreatmentValue = allTreatments.stream()
+                .filter(t -> (t.getIsPaid() == null || !t.getIsPaid()) && t.getTreatmentCost() != null)
+                .map(LivestockTreatment::getTreatmentCost)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<String, Object> alerts = new LinkedHashMap<>();
+        alerts.put("unpaidTreatments",     unpaidTreatments);
+        alerts.put("unpaidTreatmentValue", unpaidTreatmentValue);
+        alerts.put("ongoingTreatments",    ongoingTreatments);
+        alerts.put("activeSickCases",      activeSickCases);
+        alerts.put("pregnantCount",        pregnantCount);
+        result.put("alerts", alerts);
+
+        // ---------- FAO-style herd indicators ----------
+        long openingHerd          = activeCount + soldCount + deadCount;
+        double mortalityRate      = openingHerd > 0 ? Math.round((deadCount * 1000.0 / openingHerd)) / 10.0 : 0;
+        double offtakeRate        = openingHerd > 0 ? Math.round((soldCount * 1000.0 / openingHerd)) / 10.0 : 0;
+        long totalBirths          = allLivestock.stream().filter(l -> l.getMother() != null).count();
+        double replacementRate    = totalAnimals > 0 ? Math.round((totalBirths * 1000.0 / totalAnimals)) / 10.0 : 0;
+        BigDecimal avgSalePrice   = allSales.isEmpty() ? BigDecimal.ZERO
+                : salesRevenue.divide(BigDecimal.valueOf(allSales.size()), 2, RoundingMode.HALF_UP);
+
+        Map<String, Object> indicators = new LinkedHashMap<>();
+        indicators.put("mortalityRate",   mortalityRate);
+        indicators.put("offtakeRate",     offtakeRate);
+        indicators.put("replacementRate", replacementRate);
+        indicators.put("avgSalePrice",    avgSalePrice);
+        result.put("indicators", indicators);
+
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/reproduction-report")
     public String reproductionReport(
             @RequestParam(value = "from", required = false) String fromStr,
