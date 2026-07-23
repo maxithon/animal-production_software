@@ -25,7 +25,8 @@ public class LivestockSickService {
     private final LivestockRepository            livestockRepository;
     private final LivestockSickHistoryRepository historyRepository;
     private final VeterinarianRepository         veterinarianRepository;
-    private final AuditLogService                auditLogService;  // ✅ ADDED
+    private final AuditLogService                auditLogService;
+    private final SickAnimalNotificationService   notificationService;
 
     private static final String STATUS_SOLD      = "SOLD";
     private static final String ENTITY_TYPE      = "livestock_sick";
@@ -34,20 +35,20 @@ public class LivestockSickService {
                                 LivestockRepository livestockRepository,
                                 LivestockSickHistoryRepository historyRepository,
                                 VeterinarianRepository veterinarianRepository,
-                                AuditLogService auditLogService) {  // ✅ ADDED
+                                AuditLogService auditLogService,
+                                SickAnimalNotificationService notificationService) {
         this.sickRepository         = sickRepository;
         this.livestockRepository    = livestockRepository;
         this.historyRepository      = historyRepository;
         this.veterinarianRepository = veterinarianRepository;
-        this.auditLogService        = auditLogService;              // ✅ ADDED
+        this.auditLogService        = auditLogService;
+        this.notificationService    = notificationService;
     }
 
     // ── Read ──────────────────────────────────────────────────────────
 
-    /** Returns ALL records including soft-deleted ones (for admin/audit use). */
     public List<LivestockSick> getAll() { return sickRepository.findAll(); }
 
-    /** Returns only non-deleted records — use this for the main list page. */
     public List<LivestockSick> getAllActive() {
         return sickRepository.findByIsDeletedFalseOrderByReportedDateDesc();
     }
@@ -58,12 +59,10 @@ public class LivestockSickService {
         return sickRepository.findByLivestockId(livestockId);
     }
 
-    /** Full timeline for one sick episode (oldest first). */
     public List<LivestockSickHistory> getHistory(UUID sickId) {
         return historyRepository.findByLivestockSickIdOrderByChangedAtAsc(sickId);
     }
 
-    /** All health history for one livestock animal across all episodes. */
     public List<LivestockSickHistory> getHistoryByAnimal(UUID livestockId) {
         return historyRepository.findByLivestockId(livestockId);
     }
@@ -117,14 +116,12 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(sick);
 
-        // Write the first history entry automatically
         recordHistory(saved,
                 saved.getStatus(),
                 saved.getSeverityLevel(),
                 "Initial sick record created",
                 currentUsername());
 
-        // ✅ Audit log: CREATE
         auditLogService.log(
                 ENTITY_TYPE,
                 saved.getId(),
@@ -135,6 +132,10 @@ public class LivestockSickService {
                 "Sick record created for animal: " +
                         (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
         );
+
+        // Fire the notification email. This is @Async on the notification
+        // service, so it does NOT block this request/response.
+        notificationService.sendSickRecordedEmail(saved);
 
         return saved;
     }
@@ -148,15 +149,12 @@ public class LivestockSickService {
 
         LivestockSick existing = existingOpt.get();
 
-        // Snapshot BEFORE the change for the audit log
         String snapshotBefore = buildSnapshot(existing);
 
-        // Capture old values BEFORE overwriting
         LivestockSick.SickStatus    oldStatus   = existing.getStatus();
         LivestockSick.SeverityLevel oldSeverity = existing.getSeverityLevel();
         Livestock                   oldAnimal   = existing.getLivestock();
 
-        // Apply all field updates
         existing.setReportedDate(updated.getReportedDate());
         existing.setSymptoms(updated.getSymptoms());
         existing.setDiagnosis(updated.getDiagnosis());
@@ -173,7 +171,6 @@ public class LivestockSickService {
 
         Livestock newAnimal = existing.getLivestock();
 
-        // Sync livestock status
         if (newAnimal != null) {
             if (LivestockSick.SickStatus.RECOVERED.equals(existing.getStatus())) {
                 newAnimal.setStatus(Livestock.STATUS_ACTIVE);
@@ -192,7 +189,6 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(existing);
 
-        // Write history only when status OR severity actually changed
         boolean statusChanged   = !oldStatus.equals(saved.getStatus());
         boolean severityChanged = (oldSeverity == null && saved.getSeverityLevel() != null)
                 || (oldSeverity != null && !oldSeverity.equals(saved.getSeverityLevel()));
@@ -205,7 +201,6 @@ public class LivestockSickService {
                     notes, currentUsername());
         }
 
-        // ✅ Audit log: UPDATE
         auditLogService.log(
                 ENTITY_TYPE,
                 saved.getId(),
@@ -220,7 +215,7 @@ public class LivestockSickService {
         return saved;
     }
 
-    // ── Quick status update (for the quick-action buttons in the UI) ──
+    // ── Quick status update ─────────────────────────────────────────
 
     @Transactional
     public LivestockSick quickStatusUpdate(UUID id,
@@ -232,7 +227,7 @@ public class LivestockSickService {
         LivestockSick.SickStatus    oldStatus   = sick.getStatus();
         LivestockSick.SeverityLevel oldSeverity = sick.getSeverityLevel();
 
-        if (oldStatus.equals(newStatus)) return sick; // no change
+        if (oldStatus.equals(newStatus)) return sick;
 
         String snapshotBefore = buildSnapshot(sick);
 
@@ -257,7 +252,6 @@ public class LivestockSickService {
         recordHistory(saved, newStatus, saved.getSeverityLevel(),
                 changeNote, currentUsername());
 
-        // ✅ Audit log: UPDATE (quick status)
         auditLogService.log(
                 ENTITY_TYPE,
                 saved.getId(),
@@ -272,7 +266,21 @@ public class LivestockSickService {
         return saved;
     }
 
-    // ── Delete (now SOFT-DELETE) ───────────────────────────────────────
+    // ── Mark as recovered ────────────────────────────────────────────
+
+    /**
+     * ✅ ADDED — this is what LivestockEventsController.markAsRecovered(id)
+     * calls. It didn't exist before, which is why the build failed. Reuses
+     * quickStatusUpdate() so recovery gets the same recovery-date default,
+     * livestock status sync back to ACTIVE, history entry, and audit log
+     * write as every other status transition — no logic duplicated.
+     */
+    @Transactional
+    public LivestockSick markAsRecovered(UUID id) {
+        return quickStatusUpdate(id, LivestockSick.SickStatus.RECOVERED, "Marked as recovered");
+    }
+
+    // ── Delete (soft-delete) ────────────────────────────────────────
 
     @Transactional
     public void delete(UUID id) {
@@ -282,10 +290,8 @@ public class LivestockSickService {
 
         LivestockSick sick = sickOpt.get();
 
-        // Snapshot BEFORE soft-delete for the audit log
         String snapshotBefore = buildSnapshot(sick);
 
-        // Restore the animal's status if it was only sick due to this record
         if (sick.getLivestock() != null) {
             Livestock animal = sick.getLivestock();
             if (Livestock.STATUS_SICK.equals(animal.getStatus())) {
@@ -294,11 +300,9 @@ public class LivestockSickService {
             }
         }
 
-        // ✅ SOFT-DELETE: flip the flag instead of removing the row
         sick.setIsDeleted(true);
         sickRepository.save(sick);
 
-        // ✅ Audit log: SOFT_DELETE
         auditLogService.log(
                 ENTITY_TYPE,
                 sick.getId(),
@@ -331,7 +335,6 @@ public class LivestockSickService {
         }
     }
 
-    /** Writes one immutable row to livestock_sick_history. */
     private void recordHistory(LivestockSick sick,
                                LivestockSick.SickStatus status,
                                LivestockSick.SeverityLevel severity,
@@ -341,10 +344,6 @@ public class LivestockSickService {
         historyRepository.save(h);
     }
 
-    /**
-     * Builds a compact plain-text snapshot of the key fields of a sick record.
-     * Kept as a String (not JSON) so it is human-readable directly in the audit log UI.
-     */
     private String buildSnapshot(LivestockSick sick) {
         StringBuilder sb = new StringBuilder();
         sb.append("animal=").append(sick.getLivestock() != null ? sick.getLivestock().getTagNumber() : "null");
@@ -362,7 +361,6 @@ public class LivestockSickService {
         return sb.toString();
     }
 
-    /** Reads the currently authenticated username from Spring Security. */
     private String currentUsername() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -374,7 +372,6 @@ public class LivestockSickService {
         return "system";
     }
 
-    /** Builds a human-readable description of what changed. */
     private String buildChangeNote(LivestockSick.SickStatus    oldStatus,
                                    LivestockSick.SickStatus    newStatus,
                                    LivestockSick.SeverityLevel oldSeverity,

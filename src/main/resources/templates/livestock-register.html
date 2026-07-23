@@ -12,11 +12,13 @@
         .form-label { font-weight: 500; color: #333; }
         .btn-register { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
         .btn-register:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
+        .btn-register:disabled { opacity: 0.65; cursor: not-allowed; }
         .photo-preview {
             width: 200px; height: 200px;
             border: 2px dashed #ccc; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             overflow: hidden; margin-top: 10px;
+            transition: border-color 0.15s ease, background 0.15s ease;
         }
         .photo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
@@ -86,7 +88,7 @@
         }
         .computed-empty { font-style: italic; color: #94a3b8; font-size: 0.82rem; }
 
-        /* Progress bar */
+        /* Progress bar (pregnancy gestation) */
         .gestation-bar-wrap { margin-top: 8px; }
         .gestation-bar-bg {
             background: #e2e8f0; border-radius: 20px; height: 10px; overflow: hidden;
@@ -108,6 +110,77 @@
         .method-preview.ai      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .method-preview.et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .method-preview.unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+
+        /* Tag-lookup loading state */
+        .tag-lookup-spinner {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.78rem; color: #64748b; margin-top: 6px;
+        }
+        .tag-lookup-spinner .spinner-border-sm { width: 0.75rem; height: 0.75rem; }
+
+        /* ═══════════════════════════════════════════════════════════════
+           NEW — PROFESSIONAL UX ENHANCEMENTS
+        ═══════════════════════════════════════════════════════════════ */
+
+        /* Sticky progress bar + section quick-nav */
+        .form-nav-sticky {
+            position: sticky; top: 0; z-index: 20;
+            background: rgba(255,255,255,0.97);
+            backdrop-filter: blur(4px);
+            border-bottom: 1px solid #e5e7eb;
+            padding: 10px 6px 8px;
+            margin: 0 -6px 18px;
+        }
+        .progress-track { height: 6px; border-radius: 6px; background: #e2e8f0; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 6px; width: 0%; background: linear-gradient(90deg,#1a5f7a,#2e8b9e); transition: width 0.25s ease; }
+        .progress-label { font-size: 0.72rem; font-weight: 700; color: #64748b; white-space: nowrap; }
+        .nav-pills-mini { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nav-pill-mini {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.72rem; font-weight: 600; color: #64748b;
+            padding: 3px 10px; border-radius: 20px; border: 1px solid #e2e8f0;
+            text-decoration: none; background: #f8fafc; transition: all 0.15s;
+        }
+        .nav-pill-mini:hover { border-color: #1a5f7a; color: #1a5f7a; }
+        .nav-pill-mini.active { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+        .nav-pill-mini.pill-complete { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
+        .nav-pill-mini.active.pill-complete { background: #16a34a; color: #fff; border-color: #16a34a; }
+
+        /* Required field marker + legend */
+        .req-star { color: #dc2626; font-weight: 800; margin-left: 2px; }
+        .required-note { font-size: 0.78rem; color: #64748b; margin-bottom: 16px; }
+
+        /* Draft recovery banner + toast */
+        .draft-banner {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            background: linear-gradient(135deg,#1a5f7a,#2e8b9e); color: #fff;
+            border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+        .draft-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .draft-toast {
+            position: fixed; bottom: 20px; right: 20px; z-index: 1080;
+            background: #0f172a; color: #fff; padding: 8px 16px; border-radius: 8px;
+            font-size: 0.8rem; opacity: 0; transform: translateY(8px);
+            transition: all 0.25s ease; pointer-events: none;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .draft-toast.visible { opacity: 1; transform: translateY(0); }
+
+        /* Drag & drop photo */
+        .photo-preview.drag-over { border-color: #1a5f7a; background: #eef7fb; }
+        .photo-dropzone-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 6px; }
+
+        /* Currency preview */
+        .currency-preview { font-size: 0.78rem; color: #059669; font-weight: 600; margin-top: 4px; min-height: 1.1em; }
+
+        /* Anchor offset so sections don't land under the sticky nav */
+        .form-section { scroll-margin-top: 92px; }
+
+        /* Bootstrap validation feedback */
+        .was-validated .form-select:invalid,
+        .was-validated .form-control:invalid { border-color: #dc2626; }
+        .invalid-feedback { font-size: 0.78rem; }
     </style>
 </head>
 <body>
@@ -116,11 +189,43 @@
         <div class="col-lg-10">
             <div class="register-card">
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <h3><i class="bi bi-plus-circle-fill text-success"></i> Register Livestock</h3>
-                    <a th:href="@{/livestock/list}" class="btn btn-secondary">
+                    <a th:href="@{/livestock/list}" class="btn btn-secondary" onclick="confirmLeaveIfDirty(event)">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
+                </div>
+
+                <!-- ══ Sticky progress bar + section quick-nav ══ -->
+                <div class="form-nav-sticky">
+                    <div class="progress-track">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
+                        <div class="nav-pills-mini" id="navPillsMini">
+                            <a href="#sec-photo" data-target="sec-photo" class="nav-pill-mini"><i class="bi bi-camera"></i> Photo</a>
+                            <a href="#sec-assignment" data-target="sec-assignment" class="nav-pill-mini"><i class="bi bi-tag"></i> Assignment</a>
+                            <a href="#sec-basic" data-target="sec-basic" class="nav-pill-mini"><i class="bi bi-info-circle"></i> Basic Info</a>
+                            <a href="#sec-breeding" data-target="sec-breeding" class="nav-pill-mini"><i class="bi bi-diagram-2"></i> Breeding</a>
+                            <a href="#sec-location" data-target="sec-location" class="nav-pill-mini"><i class="bi bi-geo-alt"></i> Location</a>
+                        </div>
+                        <span class="progress-label" id="progressLabel">0% complete</span>
+                    </div>
+                </div>
+
+                <!-- ══ Draft recovery banner (shown by JS if a saved draft is found) ══ -->
+                <div id="draftBanner" class="draft-banner" style="display:none">
+                    <div><i class="bi bi-clock-history me-1"></i>
+                        We found unsaved details from a previous session on this form.
+                    </div>
+                    <div class="draft-banner-actions">
+                        <button type="button" class="btn btn-sm btn-light fw-bold" onclick="restoreDraft()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Restore
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="discardDraft()">
+                            <i class="bi bi-x-lg"></i> Discard
+                        </button>
+                    </div>
                 </div>
 
                 <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
@@ -129,394 +234,420 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
 
-                <form th:action="@{/livestock/register/new}" th:object="${livestock}"
-                      method="post" id="registerForm">
+                <p class="required-note"><span class="req-star">*</span> indicates a required field</p>
 
-                    <!--
-                    ════════════════════════════════════════════════════════════
-                    FAO HIDDEN FIELDS
-                    conceptionDate  → submitted directly (primary pregnancy input)
-                    expectedDueDate → NOT submitted from form; server always
-                                      recalculates it from conceptionDate.
-                    pregnancyStatus → managed by hidden field (legacy compat)
-                    ════════════════════════════════════════════════════════════
-                    -->
+                <!--
+                ════════════════════════════════════════════════════════════
+                FIX: form used to post to /livestock/register/new, which has
+                no matching @PostMapping — every submit 404'd. The controller
+                only maps POST /livestock/register, so that's what we target.
+                ════════════════════════════════════════════════════════════
+                -->
+                <form th:action="@{/livestock/register}" th:object="${livestock}"
+                      method="post" id="registerForm" novalidate>
+
                     <input type="hidden" th:field="*{pregnancyStatus}"
                            th:value="${livestock.pregnancyStatus != null
                                        ? livestock.pregnancyStatus : 'NOT_PREGNANT'}"
                            id="pregnancyStatusHidden">
 
                     <!-- ══ PHOTO ══════════════════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-camera me-1"></i> Photo</div>
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <input type="file" id="photoFile" accept="image/*"
-                                   style="display:none" onchange="uploadPhoto()">
-                            <button type="button" class="btn btn-outline-primary"
-                                    onclick="document.getElementById('photoFile').click()">
-                                <i class="bi bi-camera-fill"></i> Choose Photo
-                            </button>
-                            <div class="photo-preview" id="photoPreview">
-                                <div class="text-center text-muted">
-                                    <i class="bi bi-box2-heart" style="font-size:3rem"></i>
-                                    <p class="small mt-2">No photo selected</p>
+                    <section id="sec-photo" class="form-section">
+                        <div class="section-header"><i class="bi bi-camera me-1"></i> Photo</div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <input type="file" id="photoFile" accept="image/*"
+                                       style="display:none" onchange="uploadPhoto()">
+                                <button type="button" class="btn btn-outline-primary"
+                                        onclick="document.getElementById('photoFile').click()">
+                                    <i class="bi bi-camera-fill"></i> Choose Photo
+                                </button>
+                                <div class="photo-preview" id="photoPreview">
+                                    <div class="text-center text-muted">
+                                        <i class="bi bi-box2-heart" style="font-size:3rem"></i>
+                                        <p class="small mt-2 mb-0">No photo selected</p>
+                                    </div>
                                 </div>
+                                <div class="photo-dropzone-hint">
+                                    <i class="bi bi-info-circle"></i> You can also drag &amp; drop an image onto the box above.
+                                </div>
+                                <input type="hidden" th:field="*{photo}" id="photoUrl">
+                                <div class="form-text">Max 5MB image file</div>
                             </div>
-                            <input type="hidden" th:field="*{photo}" id="photoUrl">
-                            <div class="form-text">Max 5MB image file</div>
                         </div>
-                    </div>
+                    </section>
 
                     <!-- ══ ASSIGNMENT ═════════════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-tag me-1"></i> Assignment</div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Livestock Category *</label>
-                            <select class="form-select" id="livestockCategoryIdValue"
-                                    th:field="*{livestockCategoryIdValue}"
-                                    onchange="fetchTagSuggestion(this.value); onCategoryChange();"
-                                    required>
-                                <option value="">Select category...</option>
-                                <option th:each="cat : ${categories}"
-                                        th:value="${cat.id}"
-                                        th:attr="data-gestation=${cat.gestationPeriodMonths}"
-                                        th:text="${cat.name + ' (' + cat.code + ')'}">
-                                </option>
-                            </select>
+                    <section id="sec-assignment" class="form-section">
+                        <div class="section-header"><i class="bi bi-tag me-1"></i> Assignment</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Livestock Category <span class="req-star">*</span></label>
+                                <select class="form-select" id="livestockCategoryIdValue"
+                                        th:field="*{livestockCategoryIdValue}"
+                                        onchange="fetchTagSuggestion(this.value); onCategoryChange();"
+                                        autofocus
+                                        required>
+                                    <option value="">Select category...</option>
+                                    <option th:each="cat : ${categories}"
+                                            th:value="${cat.id}"
+                                            th:attr="data-gestation=${cat.gestationPeriodMonths}"
+                                            th:text="${cat.name + ' (' + cat.code + ')'}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">Please select a livestock category.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Beneficiary (Abaragizwa) <span class="req-star">*</span></label>
+                                <!--
+                                ════════════════════════════════════════════════════
+                                FIX: this loop previously read ${beneficiariesList},
+                                which the controller never populated (it only set
+                                "beneficiaries") — so the dropdown always rendered
+                                with zero options. The controller now sets BOTH
+                                "beneficiaries" and "beneficiariesList" to the same
+                                list, so this works whichever name you standardize
+                                on. Left as beneficiariesList here to match what
+                                was already written into this template.
+                                ════════════════════════════════════════════════════
+                                -->
+                                <select class="form-select" id="beneficiaryIdValue"
+                                        th:field="*{beneficiaryIdValue}" required>
+                                    <option value="">Select beneficiary...</option>
+                                    <option th:each="ab : ${beneficiariesList}"
+                                            th:value="${ab.id}"
+                                            th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
+                                    </option>
+                                </select>
+                                <div class="invalid-feedback">Please select a beneficiary.</div>
+                                <div class="form-text" th:if="${beneficiariesList == null or #lists.isEmpty(beneficiariesList)}">
+                                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                                    No beneficiaries found. Register a beneficiary first.
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Beneficiary (Abaragizwa) *</label>
-                            <select class="form-select" id="beneficiaryIdValue"
-                                    th:field="*{beneficiaryIdValue}" required>
-                                <option value="">Select beneficiary...</option>
-                                <option th:each="ab : ${beneficiariesList}"
-                                        th:value="${ab.id}"
-                                        th:text="${ab.firstName + ' ' + ab.lastName + ' - ' + ab.nid}">
-                                </option>
-                            </select>
-                        </div>
-                    </div>
+                    </section>
 
                     <!-- ══ BASIC INFORMATION ══════════════════════════════════ -->
-                    <div class="section-header">
-                        <i class="bi bi-info-circle me-1"></i> Basic Information
-                    </div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Tag Number *</label>
-                            <input type="text" class="form-control" id="tagNumber"
-                                   th:field="*{tagNumber}"
-                                   th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
-                                   required>
-                            <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none">
-                                <i class="bi bi-tag-fill"></i>
-                                Last in this category: <code id="lastTagValue"></code>
+                    <section id="sec-basic" class="form-section">
+                        <div class="section-header">
+                            <i class="bi bi-info-circle me-1"></i> Basic Information
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Tag Number <span class="req-star">*</span></label>
+                                <input type="text" class="form-control" id="tagNumber"
+                                       th:field="*{tagNumber}"
+                                       th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
+                                       required>
+
+                                <!-- Loading indicator while the suggestion lookup is in flight -->
+                                <div id="tagLookupSpinner" class="tag-lookup-spinner" style="display:none">
+                                    <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
+                                    Checking existing tags in this category…
+                                </div>
+
+                                <div id="lastTagInfo" class="form-text text-muted mt-1" style="display:none">
+                                    <i class="bi bi-tag-fill"></i>
+                                    Last in this category: <code id="lastTagValue"></code>
+                                </div>
+                                <div id="suggestedTagPill"
+                                     style="display:none; margin-top:6px; align-items:center; gap:6px;
+                                            background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
+                                            border-radius:20px; font-size:0.8rem; font-weight:600;
+                                            color:#0369a1; cursor:pointer;"
+                                     onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
+                                     title="Click to use this tag number">
+                                    <i class="bi bi-arrow-right-circle-fill"></i>
+                                    Next available: <strong id="suggestedTagValue"></strong>
+                                    <span style="font-size:0.72rem;opacity:0.75;">(click to use)</span>
+                                </div>
+                                <div id="noTagsYet" style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
+                                    <i class="bi bi-info-circle"></i>
+                                    No animals registered in this category yet — you'll be the first.
+                                </div>
+                                <div id="tagLookupError" style="display:none; margin-top:6px; font-size:0.8rem; color:#dc2626;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    Couldn't check existing tags — you can still type one manually.
+                                </div>
+                                <div class="invalid-feedback">Please enter a tag number.</div>
                             </div>
-                            <div id="suggestedTagPill"
-                                 style="display:none; margin-top:6px; align-items:center; gap:6px;
-                                        background:#e0f2fe; border:1px solid #bae6fd; padding:5px 12px;
-                                        border-radius:20px; font-size:0.8rem; font-weight:600;
-                                        color:#0369a1; cursor:pointer;"
-                                 onclick="document.getElementById('tagNumber').value = this.getAttribute('data-tag')"
-                                 title="Click to use this tag number">
-                                <i class="bi bi-arrow-right-circle-fill"></i>
-                                Next available: <strong id="suggestedTagValue"></strong>
-                                <span style="font-size:0.72rem;opacity:0.75;">(click to use)</span>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Gender <span class="req-star">*</span></label>
+                                <select class="form-select" id="gender" th:field="*{gender}"
+                                        onchange="onFormChange()" required>
+                                    <option value="">Select gender...</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                </select>
+                                <div class="invalid-feedback">Please select the animal's gender.</div>
                             </div>
-                            <div id="noTagsYet" style="display:none; margin-top:6px; font-size:0.8rem; color:#64748b;">
-                                <i class="bi bi-info-circle"></i>
-                                No animals registered in this category yet.
-                            </div>
-                        </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Gender *</label>
-                            <select class="form-select" id="gender" th:field="*{gender}"
-                                    onchange="onFormChange()" required>
-                                <option value="">Select gender...</option>
-                                <option value="MALE">Male</option>
-                                <option value="FEMALE">Female</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Status</label>
-                            <select class="form-select" id="status" th:field="*{status}">
-                                <option value="ACTIVE">Active</option>
-                                <option value="SICK">Sick</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Acquisition Method</label>
-                            <select class="form-select" id="acquisitionMethod"
-                                    th:field="*{acquisitionMethod}"
-                                    onchange="onFormChange()">
-                                <option value="">Select method...</option>
-                                <option value="PURCHASE">Purchase</option>
-                                <option value="DONATION">Donation</option>
-                                <option value="BIRTH">Birth (born on this farm)</option>
-                                <option value="TRANSFER">Transfer</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Date Received</label>
-                            <input type="date" class="form-control" id="dateReceived"
-                                   th:field="*{dateReceived}">
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Current Value (RWF)</label>
-                            <input type="number" class="form-control" id="currentValue"
-                                   th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00">
-                        </div>
-                    </div>
-
-                    <!-- Birth date row — hidden for BIRTH acquisition -->
-                    <div id="birthDateRow" class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Birth Date</label>
-                            <input type="date" class="form-control" id="birthDate"
-                                   th:field="*{birthDate}">
-                            <div class="form-text text-muted">
-                                The actual date this animal was born (not the arrival date).
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" id="status" th:field="*{status}">
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="SICK">Sick</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Shown only when BIRTH is selected -->
-                    <div id="birthMethodInfo" class="info-banner-blue mb-3" style="display:none">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <strong>Birth date is managed automatically.</strong>
-                        Because this animal was born on the farm, its birth date will be
-                        recorded in the <strong>Births</strong> module — no need to enter it here.
-                    </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Acquisition Method</label>
+                                <select class="form-select" id="acquisitionMethod"
+                                        th:field="*{acquisitionMethod}"
+                                        onchange="onFormChange()">
+                                    <option value="">Select method...</option>
+                                    <option value="PURCHASE">Purchase</option>
+                                    <option value="DONATION">Donation</option>
+                                    <option value="BIRTH">Birth (born on this farm)</option>
+                                    <option value="TRANSFER">Transfer</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Date Received</label>
+                                <input type="date" class="form-control" id="dateReceived"
+                                       th:field="*{dateReceived}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Current Value (RWF)</label>
+                                <input type="number" class="form-control" id="currentValue"
+                                       th:field="*{currentValue}" min="0" step="0.01" placeholder="0.00"
+                                       oninput="updateCurrencyPreview()">
+                                <div class="currency-preview" id="currentValuePreview"></div>
+                            </div>
+                        </div>
+
+                        <!-- Birth date row — hidden for BIRTH acquisition -->
+                        <div id="birthDateRow" class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Birth Date</label>
+                                <input type="date" class="form-control" id="birthDate"
+                                       th:field="*{birthDate}">
+                                <div class="form-text text-muted">
+                                    The actual date this animal was born (not the arrival date).
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shown only when BIRTH is selected -->
+                        <div id="birthMethodInfo" class="info-banner-blue mb-3" style="display:none">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Birth date is managed automatically.</strong>
+                            Because this animal was born on the farm, its birth date will be
+                            recorded in the <strong>Births</strong> module — no need to enter it here.
+                        </div>
+                    </section>
 
                     <!-- ══ OFFSPRING / BREEDING HISTORY ══════════════════════ -->
-                    <div class="section-header">
-                        <i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Last Birth Date</label>
-                            <input type="date" class="form-control" id="lastBirthDate"
-                                   th:field="*{lastBirthDate}">
+                    <section id="sec-breeding" class="form-section">
+                        <div class="section-header">
+                            <i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Offspring Count</label>
-                            <input type="number" class="form-control" id="offspringCount"
-                                   th:field="*{offspringCount}" min="0" value="0">
-                        </div>
-                    </div>
-
-                    <!-- ══ PREGNANCY TOGGLE ═══════════════════════════════════ -->
-                    <!--
-                        Shown when: Gender = FEMALE AND Acquisition ≠ BIRTH
-                        Hidden for males, no gender, and BIRTH animals.
-                    -->
-                    <div id="pregnancyToggleBox" class="pregnancy-toggle-box" style="display:none">
-                        <div>
-                            <div class="form-check form-switch mb-1">
-                                <input class="form-check-input" type="checkbox" role="switch"
-                                       id="isPregnant" th:field="*{isPregnant}"
-                                       onchange="onPregnancyToggle(this.checked)">
-                                <label class="form-check-label fw-semibold fs-6" for="isPregnant">
-                                    <i class="bi bi-heart-fill text-danger me-1"></i>
-                                    Currently Pregnant?
-                                </label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Birth Date</label>
+                                <input type="date" class="form-control" id="lastBirthDate"
+                                       th:field="*{lastBirthDate}">
                             </div>
-                            <div class="pregnancy-toggle-hint">
-                                Check this if the animal arrived already pregnant.
-                                Enter the conception/breeding date below to start automatic tracking.
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Offspring Count</label>
+                                <input type="number" class="form-control" id="offspringCount"
+                                       th:field="*{offspringCount}" min="0" value="0">
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Shown only for BIRTH females -->
-                    <div id="birthPregnancyNotice" class="info-banner-sky" style="display:none">
-                        <i class="bi bi-info-circle-fill me-2"></i>
-                        <strong>Pregnancy tracking not applicable here.</strong>
-                        A newborn animal cannot be currently pregnant.
-                        Pregnancy will be tracked through the <strong>Breeding</strong>
-                        module once the animal matures.
-                    </div>
-
-                    <!--
-                    ════════════════════════════════════════════════════════════
-                    PREGNANCY DETAILS PANEL
-                    FAO Standard: user enters ONLY the conception/breeding date.
-                    All other fields are derived or helper-only.
-                    ════════════════════════════════════════════════════════════
-                    -->
-                    <div id="pregnancyDetailsPanel" class="pregnancy-panel" style="display:none">
-                        <div class="panel-title">
-                            <i class="bi bi-heart-fill" style="color:#7c3aed"></i>
-                            Pregnancy Details
+                        <!-- ══ PREGNANCY TOGGLE ═══════════════════════════════════ -->
+                        <div id="pregnancyToggleBox" class="pregnancy-toggle-box" style="display:none">
+                            <div>
+                                <div class="form-check form-switch mb-1">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           id="isPregnant" th:field="*{isPregnant}"
+                                           onchange="onPregnancyToggle(this.checked)">
+                                    <label class="form-check-label fw-semibold fs-6" for="isPregnant">
+                                        <i class="bi bi-heart-fill text-danger me-1"></i>
+                                        Currently Pregnant?
+                                    </label>
+                                </div>
+                                <div class="pregnancy-toggle-hint">
+                                    Check this if the animal arrived already pregnant.
+                                    Enter the conception/breeding date below to start automatic tracking.
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- FAO standard explanation -->
-                        <div class="fao-info-box">
-                            <strong><i class="bi bi-info-circle-fill me-1"></i>
-                                International Standard (FAO):
-                            </strong>
-                            <ul>
-                                <li><strong>You enter only:</strong> the Conception / Breeding Date.</li>
-                                <li><strong>System auto-calculates:</strong> Weeks Pregnant, Expected Due Date, Days Remaining, Gestation Progress.</li>
-                                <li>Weeks Pregnant below is a <em>helper field only</em> — it is not stored.
-                                    Enter it to back-calculate the conception date if you only know how far along the animal is.</li>
-                            </ul>
+                        <!-- Shown only for BIRTH females -->
+                        <div id="birthPregnancyNotice" class="info-banner-sky" style="display:none">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Pregnancy tracking not applicable here.</strong>
+                            A newborn animal cannot be currently pregnant.
+                            Pregnancy will be tracked through the <strong>Breeding</strong>
+                            module once the animal matures.
                         </div>
 
-                        <div class="row g-3">
-
-                            <!--
-                            ─── PRIMARY INPUT: Conception / Breeding Date ───────────────────
-                            This is the gold-standard entry. Everything else derives from it.
-                            -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">
-                                    <i class="bi bi-calendar-heart-fill text-danger me-1"></i>
-                                    Conception / Breeding Date
-                                    <span class="badge bg-danger ms-1" style="font-size:0.65rem;">PRIMARY</span>
-                                </label>
-                                <input type="date" class="form-control form-control"
-                                       id="conceptionDateInput"
-                                       th:field="*{conceptionDate}"
-                                       oninput="onConceptionDateChange()">
-                                <div class="form-text">
-                                    The date the animal was bred or conceived.
-                                    All pregnancy fields are calculated from this.
-                                </div>
+                        <div id="pregnancyDetailsPanel" class="pregnancy-panel" style="display:none">
+                            <div class="panel-title">
+                                <i class="bi bi-heart-fill" style="color:#7c3aed"></i>
+                                Pregnancy Details
                             </div>
 
-                            <!--
-                            ─── HELPER ONLY: Weeks Pregnant ────────────────────────────────
-                            Back-calculates conceptionDate. NOT stored.
-                            -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-calculator me-1 text-secondary"></i>
-                                    Weeks Pregnant
-                                    <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">HELPER — NOT STORED</span>
-                                </label>
-                                <input type="number" class="form-control"
-                                       id="weeksPregnantInput"
-                                       min="0" max="60" placeholder="e.g. 8"
-                                       oninput="weeksToConception()">
-                                <div class="form-text">
-                                    <i class="bi bi-arrow-left-right me-1"></i>
-                                    Enter weeks to <strong>back-calculate</strong> the conception date above.
-                                    This field is discarded on save.
-                                </div>
+                            <div class="fao-info-box">
+                                <strong><i class="bi bi-info-circle-fill me-1"></i>
+                                    International Standard (FAO):
+                                </strong>
+                                <ul>
+                                    <li><strong>You enter only:</strong> the Conception / Breeding Date.</li>
+                                    <li><strong>System auto-calculates:</strong> Weeks Pregnant, Expected Due Date, Days Remaining, Gestation Progress.</li>
+                                    <li>Weeks Pregnant below is a <em>helper field only</em> — it is not stored.
+                                        Enter it to back-calculate the conception date if you only know how far along the animal is.</li>
+                                </ul>
                             </div>
 
-                            <!-- ─── AUTO-COMPUTED: Expected Due Date ──────────────────────── -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-calendar-check-fill text-success me-1"></i>
-                                    Expected Due Date
-                                    <span class="badge bg-success ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
-                                </label>
-                                <div class="computed-field" id="dueDateDisplay">
-                                    <span class="computed-empty">Will be calculated from conception date</span>
-                                </div>
-                                <div class="form-text">
-                                    Calculated by server: conception date + category gestation period.
-                                </div>
-                            </div>
+                            <div class="row g-3">
 
-                            <!-- ─── AUTO-COMPUTED: Weeks Pregnant display ─────────────────── -->
-                            <div class="col-md-6">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-activity text-primary me-1"></i>
-                                    Gestation Progress
-                                    <span class="badge bg-primary ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
-                                </label>
-                                <div class="computed-field" id="gestationProgressDisplay">
-                                    <span class="computed-empty">Will be shown after conception date is entered</span>
-                                </div>
-                                <div class="gestation-bar-wrap" id="gestationBarWrap" style="display:none">
-                                    <div class="gestation-bar-bg">
-                                        <div class="gestation-bar-fill" id="gestationBarFill" style="width:0%"></div>
-                                    </div>
-                                    <div class="gestation-bar-label" id="gestationBarLabel"></div>
-                                </div>
-                            </div>
-
-                            <!-- ─── Insemination Method ────────────────────────────────────── -->
-                            <div class="col-md-12">
-                                <label class="form-label fw-semibold">
-                                    <i class="bi bi-arrow-repeat me-1 text-primary"></i>
-                                    How Was This Animal Made Pregnant?
-                                    <span class="text-muted fw-normal">(insemination / breeding method)</span>
-                                </label>
-                                <div class="row g-2 align-items-center">
-                                    <div class="col-md-5">
-                                        <select class="form-select" id="inseminationMethod"
-                                                th:field="*{inseminationMethod}"
-                                                onchange="updateMethodPreview(this.value)">
-                                            <option value="">-- Select method --</option>
-                                            <option value="NATURAL_MATING">🐄 Natural Mating</option>
-                                            <option value="ARTIFICIAL_INSEMINATION">💉 Artificial Insemination (AI)</option>
-                                            <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer (ET)</option>
-                                            <option value="UNKNOWN">❓ Unknown / Not recorded</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-7 d-flex align-items-center">
-                                        <div id="methodPreview" class="method-preview"></div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        <i class="bi bi-calendar-heart-fill text-danger me-1"></i>
+                                        Conception / Breeding Date
+                                        <span class="badge bg-danger ms-1" style="font-size:0.65rem;">PRIMARY</span>
+                                        <span class="req-star" id="conceptionRequiredStar" style="display:none">*</span>
+                                    </label>
+                                    <input type="date" class="form-control form-control"
+                                           id="conceptionDateInput"
+                                           th:field="*{conceptionDate}"
+                                           oninput="onConceptionDateChange()">
+                                    <div class="invalid-feedback">Conception date is required when marking an animal as pregnant.</div>
+                                    <div class="form-text">
+                                        The date the animal was bred or conceived.
+                                        All pregnancy fields are calculated from this.
                                     </div>
                                 </div>
-                                <div class="form-text">Shown in Pregnancy Tracking dashboard.</div>
-                            </div>
 
-                        </div><!-- /.row g-3 -->
-                    </div><!-- /#pregnancyDetailsPanel -->
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-calculator me-1 text-secondary"></i>
+                                        Weeks Pregnant
+                                        <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">HELPER — NOT STORED</span>
+                                    </label>
+                                    <input type="number" class="form-control"
+                                           id="weeksPregnantInput"
+                                           min="0" max="60" placeholder="e.g. 8"
+                                           oninput="weeksToConception()">
+                                    <div class="form-text">
+                                        <i class="bi bi-arrow-left-right me-1"></i>
+                                        Enter weeks to <strong>back-calculate</strong> the conception date above.
+                                        This field is discarded on save.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-calendar-check-fill text-success me-1"></i>
+                                        Expected Due Date
+                                        <span class="badge bg-success ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                    </label>
+                                    <div class="computed-field" id="dueDateDisplay">
+                                        <span class="computed-empty">Will be calculated from conception date</span>
+                                    </div>
+                                    <div class="form-text">
+                                        Calculated by server: conception date + category gestation period.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-activity text-primary me-1"></i>
+                                        Gestation Progress
+                                        <span class="badge bg-primary ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
+                                    </label>
+                                    <div class="computed-field" id="gestationProgressDisplay">
+                                        <span class="computed-empty">Will be shown after conception date is entered</span>
+                                    </div>
+                                    <div class="gestation-bar-wrap" id="gestationBarWrap" style="display:none">
+                                        <div class="gestation-bar-bg">
+                                            <div class="gestation-bar-fill" id="gestationBarFill" style="width:0%"></div>
+                                        </div>
+                                        <div class="gestation-bar-label" id="gestationBarLabel"></div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-arrow-repeat me-1 text-primary"></i>
+                                        How Was This Animal Made Pregnant?
+                                        <span class="text-muted fw-normal">(insemination / breeding method)</span>
+                                    </label>
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-5">
+                                            <select class="form-select" id="inseminationMethod"
+                                                    th:field="*{inseminationMethod}"
+                                                    onchange="updateMethodPreview(this.value)">
+                                                <option value="">-- Select method --</option>
+                                                <option value="NATURAL_MATING">🐄 Natural Mating</option>
+                                                <option value="ARTIFICIAL_INSEMINATION">💉 Artificial Insemination (AI)</option>
+                                                <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer (ET)</option>
+                                                <option value="UNKNOWN">❓ Unknown / Not recorded</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-7 d-flex align-items-center">
+                                            <div id="methodPreview" class="method-preview"></div>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">Shown in Pregnancy Tracking dashboard.</div>
+                                </div>
+
+                            </div><!-- /.row g-3 -->
+                        </div><!-- /#pregnancyDetailsPanel -->
+                    </section>
 
                     <!-- ══ LOCATION ════════════════════════════════════════════ -->
-                    <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Location</div>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Province</label>
-                            <select class="form-select" id="province" onchange="loadDistricts()">
-                                <option value="">Select province...</option>
-                            </select>
+                    <section id="sec-location" class="form-section">
+                        <div class="section-header"><i class="bi bi-geo-alt me-1"></i> Location</div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Province</label>
+                                <select class="form-select" id="province" onchange="loadDistricts()">
+                                    <option value="">Select province...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">District</label>
+                                <select class="form-select" id="district" onchange="loadSectors()" disabled>
+                                    <option value="">Select district...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Sector</label>
+                                <select class="form-select" id="sector" onchange="loadCells()" disabled>
+                                    <option value="">Select sector...</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">District</label>
-                            <select class="form-select" id="district" onchange="loadSectors()" disabled>
-                                <option value="">Select district...</option>
-                            </select>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Cell</label>
+                                <select class="form-select" id="cell" onchange="loadVillages()" disabled>
+                                    <option value="">Select cell...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Village</label>
+                                <select class="form-select" id="village" name="locationId" disabled>
+                                    <option value="">Select village...</option>
+                                </select>
+                                <div class="form-text">Leave blank to use the beneficiary's location</div>
+                            </div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Sector</label>
-                            <select class="form-select" id="sector" onchange="loadCells()" disabled>
-                                <option value="">Select sector...</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Cell</label>
-                            <select class="form-select" id="cell" onchange="loadVillages()" disabled>
-                                <option value="">Select cell...</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Village</label>
-                            <select class="form-select" id="village" name="locationId" disabled>
-                                <option value="">Select village...</option>
-                            </select>
-                            <div class="form-text">Leave blank to use the beneficiary's location</div>
-                        </div>
-                    </div>
+                    </section>
 
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a th:href="@{/livestock/list}" class="btn btn-secondary me-2">
+                        <a th:href="@{/livestock/list}" class="btn btn-secondary me-2" onclick="confirmLeaveIfDirty(event)">
                             <i class="bi bi-x-circle"></i> Cancel
                         </a>
-                        <button type="submit" class="btn btn-register">
+                        <button type="submit" class="btn btn-register" id="submitBtn">
                             <i class="bi bi-check-circle"></i> Register Livestock
                         </button>
                     </div>
@@ -526,6 +657,9 @@
     </div>
 </div>
 
+<!-- Ephemeral "Draft saved" toast -->
+<div id="draftToast" class="draft-toast"><i class="bi bi-check2-circle"></i> Draft saved</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -534,6 +668,7 @@
     function show(id)     { var e = document.getElementById(id); if (e) e.style.display = ''; }
     function hide(id)     { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
     function showFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'flex'; }
+    function showInlineFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'inline-flex'; }
     function val(id)      { var e = document.getElementById(id); return e ? e.value : ''; }
     function setVal(id,v) { var e = document.getElementById(id); if (e) e.value = v; }
     function isChecked(id){ var e = document.getElementById(id); return e ? e.checked : false; }
@@ -578,49 +713,46 @@
                 hide('methodPreview');
             }
         }
+        updateProgress();
     }
 
     function onPregnancyToggle(checked) {
+        var conceptionInput = document.getElementById('conceptionDateInput');
         if (checked) {
             show('pregnancyDetailsPanel');
             setVal('status', 'PREGNANT');
+            // Conception date becomes genuinely required once the animal
+            // is flagged as pregnant — both enforced (native required) and
+            // shown (asterisk) so the rule is obvious, not just implied.
+            if (conceptionInput) conceptionInput.required = true;
+            show('conceptionRequiredStar');
         } else {
             hide('pregnancyDetailsPanel');
             clearPregnancyPanel();
             setVal('status', 'ACTIVE');
             setVal('inseminationMethod', '');
             hide('methodPreview');
+            if (conceptionInput) conceptionInput.required = false;
+            hide('conceptionRequiredStar');
         }
+        updateProgress();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // FAO CORE: Conception Date is the primary input.
-    // All computed displays update when it changes.
     // ═══════════════════════════════════════════════════════════════════════════════
-
-    /**
-     * Called whenever the Conception Date input changes.
-     * Updates the computed-field displays for due date and gestation progress.
-     */
     function onConceptionDateChange() {
         var conceptionVal = val('conceptionDateInput');
-
-        // Clear weeks helper to avoid stale values confusing the user
         setVal('weeksPregnantInput', '');
-
         updateComputedDisplays(conceptionVal);
     }
 
-    /**
-     * Refreshes the auto-calculated display panels based on conception date.
-     * Does NOT submit anything — purely UI feedback.
-     */
     function updateComputedDisplays(conceptionVal) {
-        var dueDateEl       = document.getElementById('dueDateDisplay');
-        var progressEl      = document.getElementById('gestationProgressDisplay');
-        var barWrap         = document.getElementById('gestationBarWrap');
-        var barFill         = document.getElementById('gestationBarFill');
-        var barLabel        = document.getElementById('gestationBarLabel');
+        var dueDateEl  = document.getElementById('dueDateDisplay');
+        var progressEl = document.getElementById('gestationProgressDisplay');
+        var barWrap    = document.getElementById('gestationBarWrap');
+        var barFill    = document.getElementById('gestationBarFill');
+        var barLabel   = document.getElementById('gestationBarLabel');
 
         if (!conceptionVal) {
             dueDateEl.innerHTML = '<span class="computed-empty">Will be calculated from conception date</span>';
@@ -630,20 +762,18 @@
         }
 
         var gestMonths = getGestationMonths();
-        var gestDays   = gestMonths > 0 ? Math.round(gestMonths * 30.4375) : 152; // fallback
+        var gestDays   = gestMonths > 0 ? Math.round(gestMonths * 30.4375) : 152;
 
         var conception = new Date(conceptionVal);
         conception.setHours(0,0,0,0);
         var today      = new Date(); today.setHours(0,0,0,0);
 
-        // Due date
         var due = new Date(conception);
         due.setDate(due.getDate() + gestDays);
         var dueStr = due.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
         dueDateEl.innerHTML = '<div class="computed-label">Expected Due Date</div>'
             + '<div class="computed-value">' + dueStr + '</div>';
 
-        // Days elapsed / remaining
         var daysElapsed  = Math.max(0, Math.floor((today - conception) / 86400000));
         var daysRemaining = Math.round((due - today) / 86400000);
         var weeksPreg    = Math.floor(daysElapsed / 7);
@@ -662,7 +792,6 @@
             + weeksPreg + ' weeks pregnant &bull; ' + daysRemainingLabel
             + '</div>';
 
-        // Progress bar
         if (barWrap) {
             barWrap.style.display = '';
             barFill.style.width = pct + '%';
@@ -671,7 +800,6 @@
         }
     }
 
-    /** Category change may change gestation period → refresh displays */
     function onCategoryChange() {
         var conceptionVal = val('conceptionDateInput');
         if (conceptionVal) updateComputedDisplays(conceptionVal);
@@ -683,12 +811,6 @@
         return parseInt(catSel.selectedOptions[0].getAttribute('data-gestation') || '0', 10);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // WEEKS → CONCEPTION BACK-CALCULATION (helper field, not stored)
-    // FAO note: weeksPregnant is DERIVED, not primary.
-    // This function exists purely to let the user enter weeks and get
-    // a conception date calculated — the weeks value itself is discarded.
-    // ═══════════════════════════════════════════════════════════════════════════════
     function weeksToConception() {
         var weeks = parseInt(val('weeksPregnantInput'), 10);
         if (isNaN(weeks) || weeks < 0) return;
@@ -698,16 +820,12 @@
         var isoDate = conceived.toISOString().split('T')[0];
         setVal('conceptionDateInput', isoDate);
 
-        // Trigger Thymeleaf-bound field update via the same input handler
         var input = document.getElementById('conceptionDateInput');
         if (input) {
             input.dispatchEvent(new Event('input'));
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // CLEAR PREGNANCY PANEL
-    // ═══════════════════════════════════════════════════════════════════════════════
     function clearPregnancyPanel() {
         setVal('conceptionDateInput',  '');
         setVal('weeksPregnantInput',   '');
@@ -739,11 +857,15 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // PHOTO UPLOAD
+    // PHOTO UPLOAD (click + drag & drop share the same handler)
     // ═══════════════════════════════════════════════════════════════════════════════
     function uploadPhoto() {
         var file = document.getElementById('photoFile').files[0];
         if (!file) return;
+        handlePhotoFile(file);
+    }
+
+    function handlePhotoFile(file) {
         if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
         if (file.size > 5 * 1024 * 1024)    { alert('File size must be less than 5MB'); return; }
         var preview = document.getElementById('photoPreview');
@@ -756,6 +878,9 @@
                 if (data.success) {
                     preview.innerHTML = '<img src="' + data.url + '" alt="Photo">';
                     setVal('photoUrl', data.url);
+                    markDirty();
+                    scheduleAutosave();
+                    updateProgress();
                 } else {
                     alert('Upload failed: ' + data.message);
                     preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
@@ -767,28 +892,73 @@
             });
     }
 
+    function initPhotoDropzone() {
+        var zone = document.getElementById('photoPreview');
+        if (!zone) return;
+        ['dragenter', 'dragover'].forEach(function(evt) {
+            zone.addEventListener(evt, function(e) {
+                e.preventDefault(); e.stopPropagation();
+                zone.classList.add('drag-over');
+            });
+        });
+        ['dragleave', 'drop'].forEach(function(evt) {
+            zone.addEventListener(evt, function(e) {
+                e.preventDefault(); e.stopPropagation();
+                zone.classList.remove('drag-over');
+            });
+        });
+        zone.addEventListener('drop', function(e) {
+            var file = e.dataTransfer.files && e.dataTransfer.files[0];
+            if (file) handlePhotoFile(file);
+        });
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════════
     // TAG NUMBER SUGGESTION
+    // Calls /livestock/api/suggest-tag, with a visible loading state and an
+    // explicit error state instead of silent failure.
     // ═══════════════════════════════════════════════════════════════════════════════
     function fetchTagSuggestion(categoryId) {
-        hide('suggestedTagPill'); hide('lastTagInfo'); hide('noTagsYet');
-        if (!categoryId) return;
+        hide('suggestedTagPill');
+        hide('lastTagInfo');
+        hide('noTagsYet');
+        hide('tagLookupError');
+
+        if (!categoryId) {
+            document.getElementById('tagNumber').placeholder = 'Select a category first...';
+            return;
+        }
+
+        show('tagLookupSpinner');
+        document.getElementById('tagNumber').placeholder = 'Checking existing tags…';
+
         fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
-            .then(function(r) { return r.json(); })
+            .then(function(r) {
+                if (!r.ok) throw new Error('Request failed: ' + r.status);
+                return r.json();
+            })
             .then(function(data) {
-                document.getElementById('lastTagValue').textContent = data.lastTag;
-                show('lastTagInfo');
+                hide('tagLookupSpinner');
+
+                if (data.lastTag) {
+                    document.getElementById('lastTagValue').textContent = data.lastTag;
+                    show('lastTagInfo');
+                } else {
+                    show('noTagsYet');
+                }
+
                 if (data.suggestedTag) {
                     document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
                     document.getElementById('suggestedTagPill').setAttribute('data-tag', data.suggestedTag);
-                    document.getElementById('suggestedTagPill').style.display = 'inline-flex';
+                    showInlineFlex('suggestedTagPill');
                     document.getElementById('tagNumber').placeholder = data.suggestedTag;
                 } else {
-                    show('noTagsYet');
                     document.getElementById('tagNumber').placeholder = 'Enter first tag for this category...';
                 }
             })
             .catch(function() {
+                hide('tagLookupSpinner');
+                show('tagLookupError');
                 document.getElementById('tagNumber').placeholder = 'Enter tag number...';
             });
     }
@@ -865,26 +1035,250 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
+    // NEW — PROFESSIONAL UX ENHANCEMENTS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    var formDirty = false;
+    var isSubmitting = false;
+    var autosaveTimer = null;
+    var DRAFT_KEY = 'livestockRegisterDraft_v1';
+
+    function markDirty() { formDirty = true; }
+
+    function isVisible(el) {
+        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+    }
+
+    // ── Sticky progress bar + per-section completion ──
+    function updateProgress() {
+        var requiredEls = Array.prototype.filter.call(
+            document.querySelectorAll('#registerForm [required]'), isVisible);
+        var filled = requiredEls.filter(function(el) {
+            if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+            return el.value !== null && el.value !== '';
+        });
+        var pct = requiredEls.length ? Math.round(filled.length * 100 / requiredEls.length) : 100;
+
+        var fill  = document.getElementById('progressFill');
+        var label = document.getElementById('progressLabel');
+        if (fill)  fill.style.width = pct + '%';
+        if (label) label.textContent = pct + '% complete';
+
+        document.querySelectorAll('.form-section').forEach(function(sec) {
+            var pill = document.querySelector('.nav-pill-mini[data-target="' + sec.id + '"]');
+            if (!pill) return;
+            var secRequired = Array.prototype.filter.call(sec.querySelectorAll('[required]'), isVisible);
+            if (secRequired.length === 0) { pill.classList.remove('pill-complete'); return; }
+            var secComplete = secRequired.every(function(el) {
+                if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
+                return el.value !== null && el.value !== '';
+            });
+            pill.classList.toggle('pill-complete', secComplete);
+        });
+    }
+
+    function initSectionScrollSpy() {
+        var sections = document.querySelectorAll('.form-section');
+        if (!sections.length || !('IntersectionObserver' in window)) return;
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                var pill = document.querySelector('.nav-pill-mini[data-target="' + entry.target.id + '"]');
+                if (!pill) return;
+                pill.classList.toggle('active', entry.isIntersecting);
+            });
+        }, { rootMargin: '-120px 0px -70% 0px', threshold: 0 });
+        sections.forEach(function(s) { observer.observe(s); });
+    }
+
+    // ── Draft autosave / restore ──
+    // Cascading location selects (province/district/sector/cell/village) are
+    // intentionally excluded: they're populated asynchronously, and safely
+    // restoring a saved selection would require chaining several fetch calls
+    // in sequence. Everything else on the form is captured.
+    function getDraftableFields() {
+        var excludeIds = ['province', 'district', 'sector', 'cell', 'village'];
+        return Array.prototype.filter.call(
+            document.querySelectorAll('#registerForm input, #registerForm select, #registerForm textarea'),
+            function(el) { return el.type !== 'file' && excludeIds.indexOf(el.id) === -1; }
+        );
+    }
+
+    function scheduleAutosave() {
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(saveDraft, 700);
+    }
+
+    function saveDraft() {
+        try {
+            var data = {};
+            getDraftableFields().forEach(function(el) {
+                if (!el.id) return;
+                data[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+            });
+            localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), data: data }));
+            showDraftToast();
+        } catch (e) { /* localStorage unavailable — silently skip autosave */ }
+    }
+
+    function showDraftToast() {
+        var toast = document.getElementById('draftToast');
+        if (!toast) return;
+        toast.classList.add('visible');
+        clearTimeout(toast._hideTimer);
+        toast._hideTimer = setTimeout(function() { toast.classList.remove('visible'); }, 1800);
+    }
+
+    function checkForDraft() {
+        var raw;
+        try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
+        if (!raw) return;
+        try {
+            var parsed = JSON.parse(raw);
+            if (parsed && parsed.data && Object.keys(parsed.data).length) {
+                show('draftBanner');
+            }
+        } catch (e) { /* corrupt draft — ignore */ }
+    }
+
+    function restoreDraft() {
+        var raw;
+        try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
+        if (!raw) return;
+        try {
+            var parsed = JSON.parse(raw);
+            Object.keys(parsed.data || {}).forEach(function(id) {
+                var el = document.getElementById(id);
+                if (!el) return;
+                if (el.type === 'checkbox' || el.type === 'radio') el.checked = parsed.data[id];
+                else el.value = parsed.data[id];
+            });
+            hide('draftBanner');
+
+            onFormChange();
+            if (isChecked('isPregnant')) onPregnancyToggle(true);
+            var conception = val('conceptionDateInput');
+            if (conception) updateComputedDisplays(conception);
+            var catId = val('livestockCategoryIdValue');
+            if (catId) fetchTagSuggestion(catId);
+            updateMethodPreview(val('inseminationMethod'));
+            updateCurrencyPreview();
+            updateProgress();
+        } catch (e) { /* ignore corrupt draft */ }
+    }
+
+    function discardDraft() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+        hide('draftBanner');
+    }
+
+    function clearDraftSilently() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+    }
+
+    // ── Unsaved-changes protection ──
+    window.addEventListener('beforeunload', function(e) {
+        if (formDirty && !isSubmitting) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    function confirmLeaveIfDirty(e) {
+        if (formDirty && !isSubmitting) {
+            var ok = window.confirm('You have unsaved changes. Leave this page without saving?');
+            if (!ok) e.preventDefault();
+        }
+    }
+
+    // ── Currency preview (Current Value field) ──
+    function updateCurrencyPreview() {
+        var input   = document.getElementById('currentValue');
+        var preview = document.getElementById('currentValuePreview');
+        if (!input || !preview) return;
+        var num = parseFloat(input.value);
+        if (isNaN(num)) { preview.textContent = ''; return; }
+        preview.textContent = '≈ ' + num.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' RWF';
+    }
+
+    // ── Auto-dismiss alerts ──
+    function initAutoDismissAlerts() {
+        document.querySelectorAll('.alert.alert-dismissible').forEach(function(el) {
+            setTimeout(function() {
+                var alert = bootstrap.Alert.getOrCreateInstance(el);
+                if (alert) alert.close();
+            }, 6000);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FORM-WIDE LISTENERS (progress tracking, autosave, dirty flag)
+    // ═══════════════════════════════════════════════════════════════════════════════
+    document.getElementById('registerForm').addEventListener('input', function() {
+        markDirty();
+        updateProgress();
+        scheduleAutosave();
+    });
+    document.getElementById('registerForm').addEventListener('change', function() {
+        markDirty();
+        updateProgress();
+        scheduleAutosave();
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FORM VALIDATION + SUBMIT
+    // Bootstrap-style validation: block submit until all required fields are
+    // valid, show inline feedback, and jump to the first problem field.
+    // ═══════════════════════════════════════════════════════════════════════════════
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        var form = this;
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            form.classList.add('was-validated');
+            var firstInvalid = form.querySelector(':invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+            return;
+        }
+
+        isSubmitting = true;
+        clearDraftSilently();
+
+        var btn = document.getElementById('submitBtn');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Registering…';
+        }
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════════
     // PAGE INIT
     // ═══════════════════════════════════════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function() {
         loadProvinces();
         onFormChange();
 
-        // If returning after validation error with isPregnant already checked
         if (isChecked('isPregnant')) {
-            show('pregnancyDetailsPanel');
+            onPregnancyToggle(true);
         }
 
-        // If returning with a conception date already set, refresh displays
         var conception = val('conceptionDateInput');
         if (conception) {
             updateComputedDisplays(conception);
         }
 
-        // If category already selected (after error return)
         var catId = val('livestockCategoryIdValue');
         if (catId) fetchTagSuggestion(catId);
+
+        // Professional UX enhancements
+        initSectionScrollSpy();
+        initPhotoDropzone();
+        initAutoDismissAlerts();
+        checkForDraft();
+        updateCurrencyPreview();
+        updateProgress();
     });
 </script>
 </body>

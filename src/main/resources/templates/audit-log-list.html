@@ -2,241 +2,806 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Audit Log</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        body { background: #f8f9fa; }
+        :root {
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #f0f2f8;
+            --border: #e2e6f0;
+            --accent: #4f7dff;
+            --accent-glow: rgba(79, 125, 255, 0.12);
+            --success: #16a34a;
+            --success-bg: rgba(22,163,74,0.1);
+            --danger: #dc2626;
+            --danger-bg: rgba(220,38,38,0.1);
+            --warning: #d97706;
+            --warning-bg: rgba(217,119,6,0.1);
+            --purple: #7c3aed;
+            --purple-bg: rgba(124,58,237,0.1);
+            --teal: #0d9488;
+            --teal-bg: rgba(13,148,136,0.1);
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        .dashboard-wrapper { max-width: 1400px; margin: 0 auto; padding: 28px 24px 60px; }
+
+        /* ── Header ── */
         .page-header {
-            background: white;
-            border-bottom: 1px solid #dee2e6;
-            padding: 20px 30px;
-            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
-        .content-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 1px 6px rgba(0,0,0,.08);
-            margin: 0 24px 24px;
+        .page-title { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
+        .page-title .icon-badge {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: var(--accent-glow); color: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
         }
-        .table th {
-            font-size: .8rem;
-            text-transform: uppercase;
-            color: #6c757d;
-            font-weight: 600;
+        .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; margin-left: 48px; }
+        .btn-back {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; padding: 9px 16px;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all .15s;
         }
-        .badge-action {
-            border-radius: 6px;
-            padding: 2px 8px;
-            font-size: .72rem;
-            font-weight: 700;
+        .btn-back:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+        /* ── Module Tabs ── */
+        .module-tabs {
+            display: flex; gap: 4px; margin-bottom: 20px; overflow-x: auto;
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 4px;
         }
-        .action-CREATE     { background: #d1fae5; color: #065f46; }
-        .action-UPDATE     { background: #dbeafe; color: #1e40af; }
-        .action-SOFT_DELETE { background: #fef3c7; color: #92400e; }
-        .action-DELETE     { background: #fee2e2; color: #991b1b; }
-        .entity-badge {
-            background: #e0e7ff;
-            color: #3730a3;
-            border-radius: 6px;
-            padding: 2px 8px;
-            font-size: .72rem;
-            font-weight: 600;
+        .module-tab {
+            display: flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 7px;
+            text-decoration: none; color: var(--text-muted); font-size: 0.82rem; font-weight: 600;
+            white-space: nowrap; transition: all .15s; flex-shrink: 0;
         }
-        .data-cell {
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: .72rem;
-            border-radius: 4px;
-            padding: 3px 6px;
+        .module-tab:hover { background: var(--surface-2); color: var(--text-secondary); }
+        .module-tab.active { background: var(--accent); color: #fff; }
+        .module-tab .tab-count {
+            font-family: 'DM Mono', monospace; font-size: 0.7rem; font-weight: 700;
+            background: rgba(0,0,0,0.06); padding: 1px 6px; border-radius: 10px;
         }
-        .old-data { background: #fff1f2; color: #881337; }
-        .new-data { background: #f0fdf4; color: #14532d; }
+        .module-tab.active .tab-count { background: rgba(255,255,255,0.25); color: #fff; }
+        .module-tab:not(.active) .tab-count { color: var(--text-muted); }
+        .tab-divider { width: 1px; background: var(--border); margin: 4px 2px; flex-shrink: 0; }
+
+        /* ── Live overview (ALWAYS shown, on every audit-log page) ── */
+        .live-overview-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 18px 20px; margin-bottom: 18px;
+        }
+        .live-overview-header {
+            display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700;
+            color: var(--text-primary); margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .live-overview-header i { color: var(--accent); }
+        .live-overview-sub { font-size: 0.74rem; font-weight: 500; color: var(--text-muted); margin-left: 2px; }
+
+        .live-overview-group + .live-overview-group { margin-top: 16px; }
+        .live-overview-group-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+            color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .live-overview-group-label i { font-size: 0.8rem; }
+
+        .live-overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+        .live-stat {
+            display: flex; align-items: center; gap: 10px; padding: 11px 13px; border-radius: var(--radius-sm);
+            background: var(--surface-2); border: 1px solid var(--border); text-decoration: none; transition: all .15s;
+        }
+        .live-stat:hover { border-color: var(--accent); background: var(--accent-glow); transform: translateY(-1px); }
+        .live-stat.active-stat { border-color: var(--accent); background: var(--accent-glow); }
+        .live-stat-icon {
+            width: 34px; height: 34px; border-radius: 9px; background: var(--accent-glow); color: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
+        }
+        .live-overview-group.livestock .live-stat-icon { background: var(--teal-bg); color: var(--teal); }
+        .live-stat-value { font-size: 1.2rem; font-weight: 800; font-family: 'DM Mono', monospace; color: var(--text-primary); line-height: 1.1; }
+        .live-stat-label { font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+        /* ── Filtered-view hero banner (page-specific info) ── */
+        .module-hero {
+            display: flex; align-items: center; gap: 16px; background: var(--surface);
+            border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 18px;
+        }
+        .module-hero-icon {
+            width: 52px; height: 52px; border-radius: 14px; background: var(--accent-glow); color: var(--accent);
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0;
+        }
+        .module-hero-value { font-size: 1.9rem; font-weight: 800; font-family: 'DM Mono', monospace; line-height: 1.1; }
+        .module-hero-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+
+        /* ── KPI Cards ── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; align-items: stretch; }
+        .kpi-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 18px 20px; position: relative; overflow: hidden; transition: transform .15s, border-color .15s;
+            display: flex; flex-direction: column; min-height: 128px;
+        }
+        .kpi-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+        .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+        .kpi-card.c-total::before  { background: var(--accent); }
+        .kpi-card.c-create::before { background: var(--success); }
+        .kpi-card.c-update::before { background: var(--warning); }
+        .kpi-card.c-delete::before { background: var(--danger); }
+        .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .kpi-icon {
+            width: 34px; height: 34px; border-radius: 9px; display:flex; align-items:center; justify-content:center; font-size: .95rem;
+        }
+        .c-total .kpi-icon  { background: var(--accent-glow); color: var(--accent); }
+        .c-create .kpi-icon { background: var(--success-bg); color: var(--success); }
+        .c-update .kpi-icon { background: var(--warning-bg); color: var(--warning); }
+        .c-delete .kpi-icon { background: var(--danger-bg); color: var(--danger); }
+        .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-top: 12px; }
+        .kpi-value { font-size: 1.7rem; font-weight: 800; font-family: 'DM Mono', monospace; margin-top: 2px; }
+        .kpi-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 6px; }
+
+        .kpi-breakdown { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+        .breakdown-chip {
+            font-size: 0.68rem; font-weight: 600; color: var(--text-secondary);
+            background: var(--surface-2); border: 1px solid var(--border);
+            border-radius: 20px; padding: 2px 8px; display: inline-flex; gap: 4px; align-items: center;
+        }
+        .breakdown-chip strong { color: var(--text-primary); font-family: 'DM Mono', monospace; }
+        .breakdown-empty { font-size: 0.72rem; color: var(--text-muted); font-style: italic; }
+
+        /* ── Toolbar ── */
+        .toolbar-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px 18px; margin-bottom: 18px;
+        }
+        .toolbar-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .search-wrap { position: relative; flex: 1; min-width: 220px; }
+        .search-wrap svg { position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-muted); pointer-events:none; }
+        .search-input {
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.85rem; padding: 9px 12px 9px 34px; width: 100%; outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .form-select-pill, .btn-clear-filter {
+            background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-family: inherit; font-size: 0.83rem; padding: 9px 12px; color: var(--text-secondary); outline: none; cursor: pointer;
+        }
+        .form-select-pill:focus { border-color: var(--accent); }
+        .btn-filter-submit {
+            background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff;
+            font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 9px 18px; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; transition: opacity .2s;
+        }
+        .btn-filter-submit:hover { opacity: .88; }
+        .btn-clear-filter { text-decoration: none; display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); }
+        .btn-clear-filter:hover { color: var(--danger); border-color: var(--danger); }
+        .active-filter-chip {
+            background: var(--accent-glow); color: var(--accent); font-size: 0.78rem; font-weight: 600;
+            padding: 5px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px;
+        }
+
+        /* ── Table Card ── */
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        thead tr { background: var(--surface-2); }
+        thead th {
+            padding: 12px 16px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--text-muted); white-space: nowrap; border-bottom: 1px solid var(--border);
+        }
+        tbody tr.log-row { border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+        tbody tr.log-row:hover { background: rgba(79,125,255,0.04); }
+        tbody tr.log-row.expanded { background: rgba(79,125,255,0.05); }
+        td { padding: 13px 16px; font-size: 0.85rem; color: var(--text-secondary); vertical-align: middle; }
+
+        .action-pill {
+            display: inline-flex; align-items: center; gap: 5px; font-size: 0.73rem; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: .03em;
+        }
+        .action-CREATE      { background: var(--success-bg); color: var(--success); }
+        .action-UPDATE      { background: var(--warning-bg); color: var(--warning); }
+        .action-SOFT_DELETE { background: var(--purple-bg);  color: var(--purple); }
+        .action-DELETE      { background: var(--danger-bg);  color: var(--danger); }
+
+        .entity-pill {
+            background: var(--surface-2); border: 1px solid var(--border); color: var(--text-secondary);
+            font-size: 0.74rem; font-weight: 600; padding: 3px 10px; border-radius: 6px; display: inline-flex;
+            align-items: center; gap: 5px;
+        }
+        .entity-pill i { color: var(--accent); }
+
+        .user-chip { display: flex; align-items: center; gap: 8px; }
+        .user-avatar {
+            width: 26px; height: 26px; border-radius: 50%; background: var(--accent);
+            color: #fff; font-size: 0.68rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .id-chip { font-family: 'DM Mono', monospace; font-size: 0.76rem; background: var(--surface-2); padding: 2px 7px; border-radius: 5px; }
+
+        .when-cell { display: flex; flex-direction: column; }
+        .when-date { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
+        .when-time { font-size: 0.72rem; color: var(--text-muted); }
+
+        .expand-caret { transition: transform .2s; color: var(--text-muted); }
+        tr.expanded .expand-caret { transform: rotate(90deg); color: var(--accent); }
+
+        .detail-row td { background: var(--surface-2); padding: 0; }
+        .detail-panel { padding: 18px 22px 22px 52px; display: none; }
+        .detail-panel.show { display: block; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 12px; }
+        @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
+        .detail-block {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden;
+        }
+        .detail-block-header {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+            padding: 8px 12px; border-bottom: 1px solid var(--border);
+        }
+        .detail-block.before .detail-block-header { color: var(--danger); background: var(--danger-bg); }
+        .detail-block.after  .detail-block-header { color: var(--success); background: var(--success-bg); }
+        .detail-block pre {
+            margin: 0; padding: 12px; font-family: 'DM Mono', monospace; font-size: 0.76rem;
+            white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow-y: auto; color: var(--text-secondary);
+        }
+        .detail-notes {
+            font-size: 0.82rem; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+        }
+
+        .empty-state { text-align: center; padding: 70px 20px; color: var(--text-muted); }
+        .empty-state i { font-size: 2.6rem; opacity: .35; margin-bottom: 14px; display: block; }
+        .empty-state p { font-size: 0.9rem; margin: 0; }
+
+        .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+        .pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+        .pagination-info strong { color: var(--text-secondary); }
+        .pagination { margin: 0; }
+        .page-link { border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.82rem; }
+        .page-item.active .page-link { background: var(--accent); border-color: var(--accent); }
+        .page-link:hover { background: var(--surface-2); color: var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <div>
-        <h4 class="mb-1">
-            <i class="bi bi-journal-text text-primary me-2"></i>Audit Log
-        </h4>
-        <small class="text-muted">
-            Complete history of all create, update, and delete actions across all modules
-        </small>
+<div class="dashboard-wrapper">
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <div class="page-title">
+                <span class="icon-badge"><i class="bi bi-journal-text"></i></span>
+                Audit Log
+            </div>
+            <div class="page-subtitle" th:if="${!filtered}">
+                Full history of create, update, and delete actions across every module
+            </div>
+            <div class="page-subtitle" th:if="${filtered}">
+                Showing activity for <strong th:text="${filterLabel}"></strong> only
+            </div>
+        </div>
+        <a href="/livestock/list" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
     </div>
-    <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-</div>
 
-<div class="content-card p-3">
+    <!-- ══════════════════════════════════════════════════════════════════
+         MODULE TABS — master data + livestock, pure navigation.
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="module-tabs">
+        <a href="/audit-log/list" class="module-tab" th:classappend="${!filtered} ? 'active'">
+            <i class="bi bi-grid-3x3-gap"></i> All Logs
+        </a>
 
-    <!-- Filter bar -->
-    <form method="get" action="/audit-log/list" class="row g-2 align-items-center mb-3">
-        <div class="col-md-4">
-            <select name="entityType" class="form-select form-select-sm">
+        <a href="/audit-log/list?entityType=representative" class="module-tab"
+           th:classappend="${entityType == 'representative'} ? 'active'">
+            <i class="bi bi-person-badge"></i> Representatives
+            <span class="tab-count" th:text="${liveCounts.get('representative')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=beneficiary" class="module-tab"
+           th:classappend="${entityType == 'beneficiary'} ? 'active'">
+            <i class="bi bi-people"></i> Beneficiaries
+            <span class="tab-count" th:text="${liveCounts.get('beneficiary')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=buyer" class="module-tab"
+           th:classappend="${entityType == 'buyer'} ? 'active'">
+            <i class="bi bi-cart-check"></i> Buyers
+            <span class="tab-count" th:text="${liveCounts.get('buyer')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=veterinarian" class="module-tab"
+           th:classappend="${entityType == 'veterinarian'} ? 'active'">
+            <i class="bi bi-person-vcard"></i> Veterinarians
+            <span class="tab-count" th:text="${liveCounts.get('veterinarian')}">0</span>
+        </a>
+
+        <div class="tab-divider"></div>
+
+        <!-- NEW: Livestock module tabs -->
+        <a href="/audit-log/list?entityType=livestock_birth" class="module-tab"
+           th:classappend="${entityType == 'livestock_birth'} ? 'active'">
+            <i class="bi bi-egg-fried"></i> Births
+            <span class="tab-count" th:text="${liveCounts.get('livestock_birth')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=livestock" class="module-tab"
+           th:classappend="${entityType == 'livestock'} ? 'active'">
+            <i class="bi bi-clipboard-data"></i> Livestock
+            <span class="tab-count" th:text="${liveCounts.get('livestock')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=livestock_sick" class="module-tab"
+           th:classappend="${entityType == 'livestock_sick'} ? 'active'">
+            <i class="bi bi-thermometer-half"></i> Sick
+            <span class="tab-count" th:text="${liveCounts.get('livestock_sick')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=livestock_breeding" class="module-tab"
+           th:classappend="${entityType == 'livestock_breeding'} ? 'active'">
+            <i class="bi bi-heart-pulse"></i> Breeding
+            <span class="tab-count" th:text="${liveCounts.get('livestock_breeding')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=livestock_sale" class="module-tab"
+           th:classappend="${entityType == 'livestock_sale'} ? 'active'">
+            <i class="bi bi-cash-coin"></i> Sales
+            <span class="tab-count" th:text="${liveCounts.get('livestock_sale')}">0</span>
+        </a>
+        <a href="/audit-log/list?entityType=livestock_death" class="module-tab"
+           th:classappend="${entityType == 'livestock_death'} ? 'active'">
+            <i class="bi bi-emoji-frown"></i> Deaths
+            <span class="tab-count" th:text="${liveCounts.get('livestock_death')}">0</span>
+        </a>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         LIVE OVERVIEW — now shown on EVERY audit-log page, filtered or not.
+         Split into Master Data and Livestock groups so it stays scannable.
+         Whichever module is currently selected gets a visual highlight, so
+         each page still surfaces "information related to that page" on top
+         of the full picture.
+         ══════════════════════════════════════════════════════════════════ -->
+    <div class="live-overview-card">
+        <div class="live-overview-header">
+            <i class="bi bi-database-check"></i> Live System Counts
+            <span class="live-overview-sub">— what's actually registered right now, not audit trail entries</span>
+        </div>
+
+        <div class="live-overview-group">
+            <div class="live-overview-group-label"><i class="bi bi-people-fill"></i> Master Data</div>
+            <div class="live-overview-grid">
+                <a href="/audit-log/list?entityType=representative" class="live-stat"
+                   th:classappend="${entityType == 'representative'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('representative')}">0</div>
+                        <div class="live-stat-label">Representatives</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=beneficiary" class="live-stat"
+                   th:classappend="${entityType == 'beneficiary'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-people"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('beneficiary')}">0</div>
+                        <div class="live-stat-label">Beneficiaries</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=buyer" class="live-stat"
+                   th:classappend="${entityType == 'buyer'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-cart-check"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('buyer')}">0</div>
+                        <div class="live-stat-label">Buyers</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=veterinarian" class="live-stat"
+                   th:classappend="${entityType == 'veterinarian'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-person-vcard"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('veterinarian')}">0</div>
+                        <div class="live-stat-label">Veterinarians</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- NEW: Livestock group, always visible alongside Master Data -->
+        <div class="live-overview-group livestock">
+            <div class="live-overview-group-label"><i class="bi bi-clipboard-data"></i> Livestock</div>
+            <div class="live-overview-grid">
+                <a href="/audit-log/list?entityType=livestock_birth" class="live-stat"
+                   th:classappend="${entityType == 'livestock_birth'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-egg-fried"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock_birth')}">0</div>
+                        <div class="live-stat-label">Births</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=livestock" class="live-stat"
+                   th:classappend="${entityType == 'livestock'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-clipboard-data"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock')}">0</div>
+                        <div class="live-stat-label">Livestock</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=livestock_sick" class="live-stat"
+                   th:classappend="${entityType == 'livestock_sick'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-thermometer-half"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock_sick')}">0</div>
+                        <div class="live-stat-label">Sick</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=livestock_breeding" class="live-stat"
+                   th:classappend="${entityType == 'livestock_breeding'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-heart-pulse"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock_breeding')}">0</div>
+                        <div class="live-stat-label">Breeding</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=livestock_sale" class="live-stat"
+                   th:classappend="${entityType == 'livestock_sale'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-cash-coin"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock_sale')}">0</div>
+                        <div class="live-stat-label">Sales</div>
+                    </div>
+                </a>
+                <a href="/audit-log/list?entityType=livestock_death" class="live-stat"
+                   th:classappend="${entityType == 'livestock_death'} ? 'active-stat'">
+                    <div class="live-stat-icon"><i class="bi bi-emoji-frown"></i></div>
+                    <div>
+                        <div class="live-stat-value" th:text="${liveCounts.get('livestock_death')}">0</div>
+                        <div class="live-stat-label">Deaths</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         FILTERED VIEW hero: ONLY the currently-selected module's own live
+         count. Works generically for any entity type now (master data or
+         livestock) via entityIcons, so this page-specific info block no
+         longer needs a hardcoded ternary per module.
+         ══════════════════════════════════════════════════════════════════ -->
+    <div th:if="${filtered and liveCount != null}" class="module-hero">
+        <div class="module-hero-icon">
+            <i th:class="${entityIcons.get(entityType)} ?: 'bi bi-folder2'"></i>
+        </div>
+        <div>
+            <div class="module-hero-value" th:text="${liveCount}">0</div>
+            <div class="module-hero-label">Currently Registered <span th:text="${filterLabel}"></span></div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         KPI CARDS — audit trail activity (create/update/delete), always
+         scoped to whatever module is currently selected (or all of them).
+         ══════════════════════════════════════════════════════════════════ -->
+
+    <!-- ── Scoped view: one category filtered ── -->
+    <div th:if="${filtered}" class="kpi-grid">
+        <div class="kpi-card c-total">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-collection"></i></div></div>
+            <div class="kpi-label">Audit Entries</div>
+            <div class="kpi-value" th:text="${grandTotal}">0</div>
+            <div class="kpi-sub">Includes edited &amp; deleted records over time</div>
+        </div>
+        <div class="kpi-card c-create">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-plus-circle"></i></div></div>
+            <div class="kpi-label">Created</div>
+            <div class="kpi-value" th:text="${createCount}">0</div>
+            <div class="kpi-sub" th:text="${createCount} + ' Created on ' + ${filterLabel}"></div>
+        </div>
+        <div class="kpi-card c-update">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-pencil-square"></i></div></div>
+            <div class="kpi-label">Updated</div>
+            <div class="kpi-value" th:text="${updateCount}">0</div>
+            <div class="kpi-sub" th:text="${updateCount} + ' Updated on ' + ${filterLabel}"></div>
+        </div>
+        <div class="kpi-card c-delete">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-trash3"></i></div></div>
+            <div class="kpi-label">Deleted</div>
+            <div class="kpi-value" th:text="${deleteCount}">0</div>
+            <div class="kpi-sub" th:text="${deleteCount} + ' Deleted on ' + ${filterLabel}"></div>
+        </div>
+    </div>
+
+    <!-- ── All Logs view: totals + per-category breakdown ── -->
+    <div th:unless="${filtered}" class="kpi-grid">
+
+        <div class="kpi-card c-total">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-collection"></i></div></div>
+            <div class="kpi-label">Total Entries</div>
+            <div class="kpi-value" th:text="${grandTotal}">0</div>
+            <div class="kpi-breakdown">
+                <span class="breakdown-chip" th:each="entry : ${totalBreakdown}">
+                    <strong th:text="${entry.value}"></strong>
+                    <span th:text="${entityLabels.get(entry.key)} ?: ${entry.key}"></span>
+                </span>
+                <span th:if="${#maps.isEmpty(totalBreakdown)}" class="breakdown-empty">No activity yet</span>
+            </div>
+        </div>
+
+        <div class="kpi-card c-create">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-plus-circle"></i></div></div>
+            <div class="kpi-label">Created</div>
+            <div class="kpi-value" th:text="${createCount}">0</div>
+            <div class="kpi-breakdown">
+                <span class="breakdown-chip" th:each="entry : ${createdBreakdown}">
+                    <strong th:text="${entry.value}"></strong>
+                    <span th:text="${entityLabels.get(entry.key)} ?: ${entry.key}"></span>
+                </span>
+                <span th:if="${#maps.isEmpty(createdBreakdown)}" class="breakdown-empty">Nothing created yet</span>
+            </div>
+        </div>
+
+        <div class="kpi-card c-update">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-pencil-square"></i></div></div>
+            <div class="kpi-label">Updated</div>
+            <div class="kpi-value" th:text="${updateCount}">0</div>
+            <div class="kpi-breakdown">
+                <span class="breakdown-chip" th:each="entry : ${updatedBreakdown}">
+                    <strong th:text="${entry.value}"></strong>
+                    <span th:text="${entityLabels.get(entry.key)} ?: ${entry.key}"></span>
+                </span>
+                <span th:if="${#maps.isEmpty(updatedBreakdown)}" class="breakdown-empty">Nothing updated yet</span>
+            </div>
+        </div>
+
+        <div class="kpi-card c-delete">
+            <div class="kpi-top"><div class="kpi-icon"><i class="bi bi-trash3"></i></div></div>
+            <div class="kpi-label">Deleted</div>
+            <div class="kpi-value" th:text="${deleteCount}">0</div>
+            <div class="kpi-breakdown">
+                <span class="breakdown-chip" th:each="entry : ${deletedBreakdown}">
+                    <strong th:text="${entry.value}"></strong>
+                    <span th:text="${entityLabels.get(entry.key)} ?: ${entry.key}"></span>
+                </span>
+                <span th:if="${#maps.isEmpty(deletedBreakdown)}" class="breakdown-empty">Nothing deleted yet</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar-card">
+        <form method="get" action="/audit-log/list" class="toolbar-row">
+            <div class="search-wrap">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <input type="text" class="search-input" id="clientSearch"
+                       placeholder="Search this page by name, ID, notes…">
+            </div>
+
+            <select name="entityType" class="form-select-pill">
                 <option value="">All Modules</option>
-                <option value="livestock_birth"
-                        th:selected="${entityType == 'livestock_birth'}">Births</option>
-                <option value="livestock"
-                        th:selected="${entityType == 'livestock'}">Livestock</option>
-                <option value="livestock_sick"
-                        th:selected="${entityType == 'livestock_sick'}">Sick Animals</option>
-                <option value="livestock_breeding"
-                        th:selected="${entityType == 'livestock_breeding'}">Breeding</option>
-                <option value="livestock_sale"
-                        th:selected="${entityType == 'livestock_sale'}">Sales</option>
-                <option value="livestock_death"
-                        th:selected="${entityType == 'livestock_death'}">Deaths</option>
-                <option value="livestock_abortion"
-                        th:selected="${entityType == 'livestock_abortion'}">Abortions</option>
-                <option value="livestock_treatment"
-                        th:selected="${entityType == 'livestock_treatment'}">Treatments</option>
+                <optgroup label="Master Data">
+                    <option value="representative" th:selected="${entityType == 'representative'}">Representatives</option>
+                    <option value="beneficiary"     th:selected="${entityType == 'beneficiary'}">Beneficiaries</option>
+                    <option value="buyer"           th:selected="${entityType == 'buyer'}">Buyers</option>
+                    <option value="veterinarian"    th:selected="${entityType == 'veterinarian'}">Veterinarians</option>
+                </optgroup>
+                <optgroup label="Livestock">
+                    <option value="livestock_birth"    th:selected="${entityType == 'livestock_birth'}">Births</option>
+                    <option value="livestock"          th:selected="${entityType == 'livestock'}">Livestock</option>
+                    <option value="livestock_sick"     th:selected="${entityType == 'livestock_sick'}">Sick Animals</option>
+                    <option value="livestock_breeding" th:selected="${entityType == 'livestock_breeding'}">Breeding</option>
+                    <option value="livestock_sale"     th:selected="${entityType == 'livestock_sale'}">Sales</option>
+                    <option value="livestock_death"    th:selected="${entityType == 'livestock_death'}">Deaths</option>
+                    <option value="livestock_abortion" th:selected="${entityType == 'livestock_abortion'}">Abortions</option>
+                    <option value="livestock_treatment" th:selected="${entityType == 'livestock_treatment'}">Treatments</option>
+                </optgroup>
             </select>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-sm btn-primary">
-                <i class="bi bi-filter me-1"></i> Filter
+
+            <select id="actionFilter" class="form-select-pill">
+                <option value="">All Actions</option>
+                <option value="CREATE">Create</option>
+                <option value="UPDATE">Update</option>
+                <option value="DELETE">Delete</option>
+                <option value="SOFT_DELETE">Soft Delete</option>
+            </select>
+
+            <button type="submit" class="btn-filter-submit">
+                <i class="bi bi-filter"></i> Apply
             </button>
-            <a href="/audit-log/list" class="btn btn-sm btn-outline-secondary ms-1">
-                Clear
+
+            <a th:if="${entityType != null and !entityType.isEmpty()}"
+               href="/audit-log/list" class="btn-clear-filter">
+                <i class="bi bi-x-circle"></i> Clear
             </a>
-        </div>
-        <div class="col-auto ms-auto">
-            <small class="text-muted">
-                Total entries: <strong th:text="${totalItems}">0</strong>
-            </small>
-        </div>
-    </form>
 
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 table-sm">
-            <thead class="table-light">
-            <tr>
-                <th>#</th>
-                <th>Module</th>
-                <th>Action</th>
-                <th>Entity ID</th>
-                <th>Changed By</th>
-                <th>When</th>
-                <th>Before Change</th>
-                <th>After Change</th>
-                <th>Notes</th>
-            </tr>
-            </thead>
-            <tbody>
-
-            <tr th:if="${#lists.isEmpty(logs)}">
-                <td colspan="9" class="text-center py-5 text-muted">
-                    <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
-                    No audit entries found.
-                </td>
-            </tr>
-
-            <tr th:each="log, i : ${logs}">
-                <td class="text-muted small"
-                    th:text="${(currentPage * pageSize) + i.count}"></td>
-
-                <td>
-                    <span class="entity-badge" th:text="${log.entityType}"></span>
-                </td>
-
-                <td>
-                    <span class="badge-action"
-                          th:classappend="'action-' + ${log.action}"
-                          th:text="${log.action}">
-                    </span>
-                </td>
-
-                <td>
-                    <code class="small"
-                          th:title="${log.entityId}"
-                          th:text="${#strings.substring(log.entityId.toString(),0,8) + '…'}">
-                    </code>
-                </td>
-
-                <td class="small" th:text="${log.changedBy ?: '—'}"></td>
-
-                <td class="small text-muted">
-                    <span th:text="${#temporals.format(log.changedAt,'dd-MM-yyyy HH:mm')}"></span>
-                </td>
-
-                <td>
-                    <span th:if="${log.oldData != null}"
-                          class="data-cell old-data d-inline-block"
-                          th:title="${log.oldData}"
-                          th:text="${#strings.length(log.oldData) > 50
-                                     ? #strings.substring(log.oldData,0,50) + '…'
-                                     : log.oldData}">
-                    </span>
-                    <span th:if="${log.oldData == null}" class="text-muted small">—</span>
-                </td>
-
-                <td>
-                    <span th:if="${log.newData != null}"
-                          class="data-cell new-data d-inline-block"
-                          th:title="${log.newData}"
-                          th:text="${#strings.length(log.newData) > 50
-                                     ? #strings.substring(log.newData,0,50) + '…'
-                                     : log.newData}">
-                    </span>
-                    <span th:if="${log.newData == null}" class="text-muted small">—</span>
-                </td>
-
-                <td class="small" th:text="${log.notes ?: '—'}"></td>
-            </tr>
-
-            </tbody>
-        </table>
+            <span th:if="${filtered}" class="active-filter-chip ms-auto">
+                <i class="bi bi-funnel-fill"></i>
+                Filtering: <strong th:text="${filterLabel}"></strong>
+            </span>
+        </form>
     </div>
 
-    <!-- Pagination -->
-    <div class="d-flex justify-content-between align-items-center p-3 border-top"
-         th:if="${totalPages > 1}">
-        <small class="text-muted">
-            Page <span th:text="${currentPage + 1}"></span>
-            of <span th:text="${totalPages}"></span>
-            (<span th:text="${totalItems}"></span> total)
-        </small>
-        <nav>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item"
-                    th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{/audit-log/list(page=${currentPage - 1},
-                                                  size=${pageSize},
-                                                  entityType=${entityType})}">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
-                </li>
-                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                    class="page-item"
-                    th:classappend="${i == currentPage} ? 'active'">
-                    <a class="page-link"
-                       th:href="@{/audit-log/list(page=${i},
-                                                  size=${pageSize},
-                                                  entityType=${entityType})}"
-                       th:text="${i + 1}">
-                    </a>
-                </li>
-                <li class="page-item"
-                    th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="page-link"
-                       th:href="@{/audit-log/list(page=${currentPage + 1},
-                                                  size=${pageSize},
-                                                  entityType=${entityType})}">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-scroll">
+            <table id="logTable">
+                <thead>
+                <tr>
+                    <th style="width:28px;"></th>
+                    <th>#</th>
+                    <th>Module</th>
+                    <th>Action</th>
+                    <th>Record ID</th>
+                    <th>Changed By</th>
+                    <th>When</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
 
+                <tr th:if="${#lists.isEmpty(logs)}">
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-journal-x"></i>
+                            <p>No audit entries found for this filter.</p>
+                        </div>
+                    </td>
+                </tr>
+
+                <th:block th:each="log, i : ${logs}">
+                    <!-- Summary row -->
+                    <tr class="log-row" th:attr="data-action=${log.action}"
+                        onclick="toggleDetail(this)">
+                        <td><i class="bi bi-chevron-right expand-caret"></i></td>
+                        <td class="text-muted small" th:text="${(currentPage * pageSize) + i.count}"></td>
+
+                        <td>
+                            <span class="entity-pill">
+                                <i th:class="${entityIcons.get(log.entityType)} ?: 'bi bi-folder2'"></i>
+                                <span th:text="${entityLabels.get(log.entityType)} ?: ${log.entityType}"></span>
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="action-pill" th:classappend="'action-' + ${log.action}">
+                                <i th:class="${log.action == 'CREATE'} ? 'bi bi-plus-lg'
+                                              : (${log.action == 'UPDATE'} ? 'bi bi-pencil-fill'
+                                              : (${log.action == 'SOFT_DELETE'} ? 'bi bi-eye-slash-fill' : 'bi bi-trash-fill'))"></i>
+                                <span th:text="${log.action}"></span>
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="id-chip" th:title="${log.entityId}"
+                                  th:text="${#strings.substring(log.entityId.toString(),0,8)}"></span>
+                        </td>
+
+                        <td>
+                            <div class="user-chip">
+                                <div class="user-avatar"
+                                     th:text="${log.changedBy != null ? #strings.substring(log.changedBy,0,1).toUpperCase() : '?'}"></div>
+                                <span class="small" th:text="${log.changedBy ?: 'system'}"></span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="when-cell">
+                                <span class="when-date" th:text="${#temporals.format(log.changedAt,'dd MMM yyyy')}"></span>
+                                <span class="when-time" th:text="${#temporals.format(log.changedAt,'HH:mm')}"></span>
+                            </div>
+                        </td>
+
+                        <td class="small" th:text="${log.notes ?: '—'}" style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></td>
+                    </tr>
+
+                    <!-- Expandable detail row -->
+                    <tr class="detail-row">
+                        <td colspan="8">
+                            <div class="detail-panel">
+                                <div class="detail-grid">
+                                    <div class="detail-block before">
+                                        <div class="detail-block-header"><i class="bi bi-dash-circle me-1"></i>Before</div>
+                                        <pre th:text="${log.oldData != null ? log.oldData : 'No previous data (new record)'}"></pre>
+                                    </div>
+                                    <div class="detail-block after">
+                                        <div class="detail-block-header"><i class="bi bi-check-circle me-1"></i>After</div>
+                                        <pre th:text="${log.newData != null ? log.newData : 'No new data (record removed)'}"></pre>
+                                    </div>
+                                </div>
+                                <div class="detail-notes" th:if="${log.notes != null}">
+                                    <i class="bi bi-sticky-fill text-warning"></i>
+                                    <span th:text="${log.notes}"></span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </th:block>
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="table-footer" th:if="${totalPages > 1}">
+            <div class="pagination-info">
+                Page <strong th:text="${currentPage + 1}"></strong> of
+                <strong th:text="${totalPages}"></strong>
+                &middot; <strong th:text="${totalItems}"></strong> total entries
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/audit-log/list(page=${currentPage - 1}, size=${pageSize}, entityType=${entityType})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        class="page-item" th:classappend="${i == currentPage} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/audit-log/list(page=${i}, size=${pageSize}, entityType=${entityType})}"
+                           th:text="${i + 1}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/audit-log/list(page=${currentPage + 1}, size=${pageSize}, entityType=${entityType})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function toggleDetail(row) {
+        const detailRow = row.nextElementSibling;
+        const panel = detailRow.querySelector('.detail-panel');
+        const isOpen = panel.classList.contains('show');
+
+        document.querySelectorAll('.detail-panel.show').forEach(p => {
+            if (p !== panel) {
+                p.classList.remove('show');
+                p.closest('tr').previousElementSibling.classList.remove('expanded');
+            }
+        });
+
+        panel.classList.toggle('show', !isOpen);
+        row.classList.toggle('expanded', !isOpen);
+    }
+
+    document.getElementById('clientSearch').addEventListener('keyup', function () {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('#logTable tbody tr.log-row').forEach(row => {
+            const detail = row.nextElementSibling;
+            const text = (row.textContent + ' ' + detail.textContent).toLowerCase();
+            const match = text.includes(q);
+            row.style.display = match ? '' : 'none';
+            detail.style.display = match ? '' : 'none';
+        });
+    });
+
+    document.getElementById('actionFilter').addEventListener('change', function () {
+        const val = this.value;
+        document.querySelectorAll('#logTable tbody tr.log-row').forEach(row => {
+            const detail = row.nextElementSibling;
+            const match = !val || row.dataset.action === val;
+            row.style.display = match ? '' : 'none';
+            detail.style.display = match ? '' : 'none';
+        });
+    });
+</script>
 </body>
 </html>

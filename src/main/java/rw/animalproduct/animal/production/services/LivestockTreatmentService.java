@@ -1,5 +1,7 @@
 package rw.animalproduct.animal.production.services;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.repository.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -40,6 +44,41 @@ public class LivestockTreatmentService {
         this.auditLogService        = auditLogService;
     }
 
+    // ── Simple filter carrier passed in from the controller ─────────────────────
+    // Keeping this as a small static inner class (rather than a Map<String,Object>
+    // or five separate method parameters) makes the controller call site readable
+    // and makes it obvious at a glance which filters the list page supports.
+    public static class TreatmentFilter {
+        public LivestockTreatment.TreatmentStatus status;
+        public LivestockTreatment.TreatmentCategory type;
+        public UUID livestockId;
+        public LocalDate fromDate;
+        public LocalDate toDate;
+        public Boolean isPaid;
+        public String search;
+
+        public boolean isEmpty() {
+            return status == null && type == null && livestockId == null
+                    && fromDate == null && toDate == null && isPaid == null
+                    && (search == null || search.trim().isEmpty());
+        }
+    }
+
+    // ── Dashboard summary shown as cards above the table ────────────────────────
+    public static class TreatmentStats {
+        public long ongoingCount;
+        public long dueForFollowUpCount;
+        public long unpaidCount;
+        public BigDecimal costLast30Days;
+
+        public TreatmentStats(long ongoingCount, long dueForFollowUpCount, long unpaidCount, BigDecimal costLast30Days) {
+            this.ongoingCount = ongoingCount;
+            this.dueForFollowUpCount = dueForFollowUpCount;
+            this.unpaidCount = unpaidCount;
+            this.costLast30Days = costLast30Days;
+        }
+    }
+
     // ── READ ─────────────────────────────────────────────────────────────────
 
     public List<LivestockTreatment> getAll() {
@@ -48,6 +87,41 @@ public class LivestockTreatmentService {
 
     public Optional<LivestockTreatment> getById(UUID id) {
         return treatmentRepository.findById(id);
+    }
+
+    /**
+     * Paginated, filtered list for the treatments list page. This is the method
+     * the controller should call now instead of getAll() — getAll() still works
+     * (kept for anything else in the codebase that depends on it) but loads every
+     * row into memory, which stops scaling once the table has real FAO-scale
+     * volume behind it.
+     */
+    public Page<LivestockTreatment> getPage(TreatmentFilter filter, Pageable pageable) {
+        if (filter == null) {
+            filter = new TreatmentFilter();
+        }
+        String search = (filter.search != null && !filter.search.trim().isEmpty())
+                ? filter.search.trim() : null;
+
+        return treatmentRepository.findFiltered(
+                filter.status,
+                filter.type,
+                filter.livestockId,
+                filter.fromDate,
+                filter.toDate,
+                filter.isPaid,
+                search,
+                pageable
+        );
+    }
+
+    /** Lightweight counts for the summary cards — cheap, no full row loads. */
+    public TreatmentStats getStats() {
+        long ongoing   = treatmentRepository.countByStatus(LivestockTreatment.TreatmentStatus.ONGOING);
+        long dueSoon   = treatmentRepository.countDueForFollowUp(LocalDate.now().plusDays(7));
+        long unpaid    = treatmentRepository.countUnpaid();
+        BigDecimal cost30 = treatmentRepository.sumCostSince(LocalDate.now().minusDays(30));
+        return new TreatmentStats(ongoing, dueSoon, unpaid, cost30);
     }
 
     /**

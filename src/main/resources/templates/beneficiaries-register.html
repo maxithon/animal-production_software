@@ -3,19 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register Abaragizwa Amatungo - Enhanced</title>
+    <title>Register beneficiaires</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
+        html {
+            font-size: 16px;
+        }
         body { background: #f8f9fa; padding: 20px; }
-        .register-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .form-label { font-weight: 500; color: #333; }
+        .register-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .register-card h3 { font-size: 1.2rem; }
+        .register-card h5 { font-size: 0.9rem; }
+        .form-label { font-weight: 500; color: #333; font-size: 0.8rem; }
+        .form-control, .form-select, .form-text, textarea.form-control {
+            font-size: 0.8rem;
+        }
+        .form-control, .form-select { padding: 0.4rem 0.6rem; }
+        .btn { font-size: 0.82rem; }
+        .btn-sm { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
         .btn-register { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
         .btn-register:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); }
 
         .photo-preview {
-            width: 200px;
-            height: 200px;
+            width: 170px;
+            height: 170px;
             border: 2px dashed #ccc;
             border-radius: 8px;
             display: flex;
@@ -29,13 +40,13 @@
             max-height: 100%;
             object-fit: contain;
         }
-        .photo-preview .placeholder { text-align: center; color: #999; }
+        .photo-preview .placeholder { text-align: center; color: #999; font-size: 0.78rem; }
         .upload-btn { cursor: pointer; }
-        .pdf-preview { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; display: none; }
+        .pdf-preview { padding: 12px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; display: none; font-size: 0.8rem; }
         .pdf-preview.show { display: block; }
 
-        .location-section { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .location-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .location-section { background-color: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .location-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .location-row.full { grid-template-columns: 1fr; }
         @media (max-width: 768px) {
             .location-row { grid-template-columns: 1fr; }
@@ -48,7 +59,7 @@
         <div class="col-lg-10">
             <div class="register-card">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3><i class="bi bi-person-plus"></i> Register Abaragizwa Amatungo</h3>
+                    <h3><i class="bi bi-person-plus"></i> Register Beneficiaries</h3>
                     <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
@@ -71,7 +82,7 @@
                             </button>
                             <div class="photo-preview" id="photoPreview">
                                 <div class="placeholder">
-                                    <i class="bi bi-camera" style="font-size: 3rem;"></i>
+                                    <i class="bi bi-camera" style="font-size: 2.4rem;"></i>
                                     <p class="small mt-2">No photo selected</p>
                                 </div>
                             </div>
@@ -137,7 +148,7 @@
                         </div>
                     </div>
 
-                    <!-- Location Selection - FIXED: Cascading dropdowns -->
+                    <!-- Location Selection - Cascading dropdowns -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
                     <div class="location-section">
                         <div class="location-row">
@@ -189,14 +200,15 @@
                                 <option value="">Select representative...</option>
                                 <option th:each="rep : ${representativesList}"
                                         th:value="${rep.id}"
-                                        th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}">
+                                        th:text="${rep.firstName + ' ' + rep.lastName + ' - ' + rep.nid + ' (' + (rep.location != null ? rep.location.name : 'No Location') + ')'}"
+                                        th:selected="${rep.id.toString() == beneficiaries.representativeIdValue}">
                                 </option>
                             </select>
                             <div class="form-text">Select the representative who will supervise this beneficiary</div>
                         </div>
                     </div>
 
-                    <!-- Contract/Agreement PDF Upload - FIXED: Better error handling -->
+                    <!-- Contract/Agreement PDF Upload -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
@@ -206,7 +218,7 @@
                                 <i class="bi bi-file-pdf-fill"></i> Upload PDF Contract
                             </button>
                             <div class="pdf-preview" id="pdfPreview">
-                                <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                                <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
                                 <strong id="pdfName" class="ms-2"></strong>
                                 <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
                                     <i class="bi bi-x-circle"></i> Remove
@@ -214,7 +226,7 @@
                             </div>
                             <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                             <div class="form-text">Upload contract PDF (Max 10MB) - Required</div>
-                            <div id="pdfError" class="text-danger mt-2" style="display: none;"></div>
+                            <div id="pdfError" class="text-danger mt-2" style="display: none; font-size: 0.78rem;"></div>
                         </div>
                     </div>
 
@@ -235,7 +247,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Validation functions
     function validateName(input) {
         const value = input.value;
         const isValid = /^[A-Za-z\s]{2,50}$/.test(value);
@@ -259,7 +270,6 @@
         input.value = input.value.replace(/\D/g, '').slice(0, 10);
     }
 
-    // Form submission validation
     document.getElementById('registrationForm').addEventListener('submit', function(event) {
         const pdfUrl = document.getElementById('pdfUrl').value;
 
@@ -280,7 +290,6 @@
         form.classList.add('was-validated');
     });
 
-    // Load provinces on page load
     document.addEventListener('DOMContentLoaded', function() {
         loadProvincesAbaragizwa();
     });
@@ -396,7 +405,6 @@
         });
     }
 
-    // Photo upload
     function uploadPhoto() {
         const fileInput = document.getElementById('photoFile');
         const file = fileInput.files[0];
@@ -430,7 +438,7 @@
                 document.getElementById('photoUrl').value = data.url;
             } else {
                 alert('Upload failed: ' + data.message);
-                preview.innerHTML = '<div class="placeholder"><i class="bi bi-camera" style="font-size: 3rem;"></i><p class="small mt-2">Upload failed</p></div>';
+                preview.innerHTML = '<div class="placeholder"><i class="bi bi-camera" style="font-size: 2.4rem;"></i><p class="small mt-2">Upload failed</p></div>';
             }
         })
         .catch(error => {
@@ -439,23 +447,18 @@
         });
     }
 
-    // FIXED: PDF upload function - corrected to avoid DOM access errors
     function uploadPdf() {
         const fileInput = document.getElementById('pdfFile');
         const file = fileInput.files[0];
 
         if (!file) return;
 
-        console.log('PDF File selected:', file.name, file.type, file.size);
-
-        // Validate file name
         if (!file.name.toLowerCase().endsWith('.pdf')) {
             alert('Please select a valid PDF file');
             fileInput.value = '';
             return;
         }
 
-        // Validate file size
         if (file.size > 10 * 1024 * 1024) {
             alert('PDF file size must be less than 10MB');
             fileInput.value = '';
@@ -469,36 +472,29 @@
         const formData = new FormData();
         formData.append('file', file);
 
-        console.log('Uploading PDF to /api/upload/pdf');
-
         fetch('/api/upload/pdf', {
             method: 'POST',
             body: formData
         })
         .then(response => {
-            console.log('PDF upload response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('PDF upload success:', data);
             if (data.success) {
-                // FIXED: Set the URL first, then build the entire HTML at once
                 document.getElementById('pdfUrl').value = data.url;
                 document.getElementById('pdfError').style.display = 'none';
 
-                // Build the entire preview HTML with the file name included
                 preview.innerHTML = `
-                    <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                    <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
                     <strong class="ms-2">${data.originalName || file.name}</strong>
                     <span class="badge bg-success ms-2">✓ Uploaded</span>
                     <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
                         <i class="bi bi-x-circle"></i> Remove
                     </button>
                 `;
-                console.log('PDF uploaded successfully:', data.url);
             } else {
                 throw new Error(data.message || 'Upload failed');
             }

@@ -19,15 +19,21 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
              HttpServletResponse response,
              Authentication authentication) throws IOException,
             ServletException {
-       Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
+        Set<String> roles = AuthorityUtils.authorityListToSet(authentication.getAuthorities());
 
-       if(roles.contains("ROLE_ADMIN")){
-           response.sendRedirect("/admin/dashboard");
-       }else if(roles.contains("ROLE_REGULAR_USER")){
-           response.sendRedirect("/user/dashboard");
-       }else{
-           response.sendRedirect("/");
-       }
-           }
+        if (roles.contains("ROLE_ADMIN")) {
+            response.sendRedirect("/admin/dashboard");
+        } else if (roles.contains("ROLE_REGULAR_USER") || roles.contains("ROLE_VETERINARIAN")) {
+            // CHANGED: Veterinarian now lands on the same /user/dashboard
+            // template as Regular User. This is intentional, not a
+            // shortcut — the dynamic sidebar (fragments/sidebar.html)
+            // renders a different menu per user based on their own
+            // permissions, so one template correctly serves every
+            // non-admin user type without extra dashboard pages.
+            response.sendRedirect("/user/dashboard");
+        } else {
+            response.sendRedirect("/");
+        }
+    }
 
 }

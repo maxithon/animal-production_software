@@ -1,5 +1,7 @@
 package rw.animalproduct.animal.production.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,11 +21,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/livestock")
 public class LivestockController {
+
+    // NEW: logger so a failed registration email is never silent again.
+    private static final Logger log = LoggerFactory.getLogger(LivestockController.class);
 
     @Autowired
     private LivestockService livestockService;
@@ -49,8 +56,6 @@ public class LivestockController {
     @Autowired
     private LivestockValuationService valuationService; // FAO-standard valuation history
 
-    // NEW: needed to send "animal registered" / "animal updated" emails,
-    // the same way births already trigger notifications.
     @Autowired
     private LifecycleEmailService emailService;
 
@@ -61,7 +66,7 @@ public class LivestockController {
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "10") int size,
-                       @RequestParam(required = false) String filter, // VALUED | UNVALUED | ACTIVE | SOLD | ...
+                       @RequestParam(required = false) String filter,
                        Model model) {
         Page<Livestock> livestockPage = livestockService.getPaged(page, size);
         List<Livestock> livestockList = livestockPage.getContent();
@@ -152,15 +157,9 @@ public class LivestockController {
                 String tagNumber = before.getTagNumber();
                 livestockService.softDelete(id);
 
-                // NEW: audit trail for soft delete
                 auditLogService.log(
-                        "livestock",
-                        id,
-                        "SOFT_DELETE",
-                        "system",
-                        before,
-                        null,
-                        "Animal " + tagNumber + " was soft-deleted"
+                        "livestock", id, "SOFT_DELETE", "system",
+                        before, null, "Animal " + tagNumber + " was soft-deleted"
                 );
 
                 redirectAttributes.addFlashAttribute("success",
@@ -187,15 +186,9 @@ public class LivestockController {
                 String tagNumber = before.getTagNumber();
                 livestockService.hardDelete(id);
 
-                // NEW: audit trail for hard delete
                 auditLogService.log(
-                        "livestock",
-                        id,
-                        "DELETE",
-                        "system",
-                        before,
-                        null,
-                        "Animal " + tagNumber + " was permanently deleted"
+                        "livestock", id, "DELETE", "system",
+                        before, null, "Animal " + tagNumber + " was permanently deleted"
                 );
 
                 redirectAttributes.addFlashAttribute("success",
@@ -208,7 +201,7 @@ public class LivestockController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // RESTORE (Recover soft-deleted animal)
+    // RESTORE
     // ─────────────────────────────────────────────────────────────────────────
 
     @PostMapping("/restore/{id}")
@@ -216,15 +209,9 @@ public class LivestockController {
         try {
             livestockService.restore(id);
 
-            // NEW: audit trail for restore
             auditLogService.log(
-                    "livestock",
-                    id,
-                    "RESTORE",
-                    "system",
-                    null,
-                    null,
-                    "Animal was restored from soft-delete"
+                    "livestock", id, "RESTORE", "system",
+                    null, null, "Animal was restored from soft-delete"
             );
 
             redirectAttributes.addFlashAttribute("success", "Animal successfully restored.");
@@ -299,7 +286,7 @@ public class LivestockController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // VIEW (single-animal detail page)
+    // VIEW
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/view/{id}")
@@ -331,7 +318,6 @@ public class LivestockController {
         model.addAttribute("breedingCapable", breedingCapable);
 
         model.addAttribute("lifecycleStage", resolveLifecycleStage(livestock, today));
-
         model.addAttribute("children", livestockRepository.findByMotherId(id));
 
         birthService.getByLivestockId(id).stream()
@@ -347,16 +333,13 @@ public class LivestockController {
         model.addAttribute("valuationHistory", valuationService.getHistory(id));
         model.addAttribute("latestValuation", valuationService.getLatest(id).orElse(null));
         model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(id));
-
-        // NEW: this animal's own audit history, so the "Audit Log" link on
-        // this page can show only what happened to THIS animal.
         model.addAttribute("auditHistory", auditLogService.getLogsForEntity("livestock", id));
 
         return "livestock-view";
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // VALUATION HISTORY (FAO STANDARD) — dedicated page + record endpoint
+    // VALUATION HISTORY
     // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}/valuation-history")
@@ -371,15 +354,6 @@ public class LivestockController {
         return "livestock-valuation-history";
     }
 
-    /**
-     * The ONLY endpoint that changes an animal's value.
-     * Appends a new row to livestock_valuation_history and refreshes the
-     * cached current_value on the Livestock row — never overwrites in place.
-     * Audit logging AND email notification both happen inside
-     * LivestockValuationService.recordValuation(...) so every code path
-     * that changes a value (this endpoint, registration's initial valuation,
-     * anything added later) gets logged and emailed consistently.
-     */
     @PostMapping("/{id}/valuation")
     public String recordValuation(@PathVariable UUID id,
                                   @RequestParam BigDecimal value,
@@ -517,8 +491,6 @@ public class LivestockController {
                          @RequestParam(required = false) UUID locationId,
                          RedirectAttributes redirectAttributes) {
         try {
-            // NEW: snapshot the animal BEFORE the update so we can log a
-            // real before/after diff, not just "something changed".
             Optional<Livestock> beforeOpt = livestockService.getByIdIncludingDeleted(id);
 
             if (locationId != null) {
@@ -527,13 +499,8 @@ public class LivestockController {
             livestockService.update(id, livestock);
 
             beforeOpt.ifPresent(before -> auditLogService.log(
-                    "livestock",
-                    id,
-                    "UPDATE",
-                    "system",
-                    before,
-                    livestock,
-                    "Animal " + before.getTagNumber() + " was updated"
+                    "livestock", id, "UPDATE", "system",
+                    before, livestock, "Animal " + before.getTagNumber() + " was updated"
             ));
 
             redirectAttributes.addFlashAttribute("success", "Animal updated successfully");
@@ -543,11 +510,21 @@ public class LivestockController {
         return "redirect:/livestock/list";
     }
 
+    /**
+     * FIX #1: The register page (livestock-register.html) iterates over
+     * ${beneficiariesList}, but this method used to only populate
+     * "beneficiaries" — so the dropdown always rendered empty, and nothing
+     * could ever be selected. We now populate BOTH attribute names so this
+     * page (and any other template still expecting "beneficiaries") works.
+     */
     @GetMapping("/register")
     public String registerForm(Model model) {
+        List<Beneficiary> beneficiaries = beneficiaryRepository.findAll();
+
         model.addAttribute("livestock", new Livestock());
         model.addAttribute("categories", categoryRepository.findAll());
-        model.addAttribute("beneficiaries", beneficiaryRepository.findAll());
+        model.addAttribute("beneficiaries", beneficiaries);       // kept for compatibility
+        model.addAttribute("beneficiariesList", beneficiaries);   // what livestock-register.html actually reads
         model.addAttribute("locations", locationRepository.findAll());
         return "livestock-register";
     }
@@ -558,24 +535,23 @@ public class LivestockController {
         try {
             Livestock saved = livestockService.addNew(livestock);
 
-            // NEW: audit trail for every new animal registered
             auditLogService.log(
-                    "livestock",
-                    saved.getId(),
-                    "CREATE",
-                    "system",
-                    null,
-                    saved,
-                    "New animal registered: " + saved.getTagNumber()
+                    "livestock", saved.getId(), "CREATE", "system",
+                    null, saved, "New animal registered: " + saved.getTagNumber()
             );
 
-            // NEW: same idea as the newborn-notification email — notify on
-            // registration too. Wrapped so a mail failure never blocks
-            // registration itself.
+            // CHANGED: the empty catch block used to swallow email failures
+            // with zero trace anywhere. If Gmail SMTP auth fails, the app
+            // password rotates, or the network blocks port 587, you'd never
+            // know the email didn't go out. Now it's logged as a WARNING
+            // (not ERROR — registration itself still succeeded) with the
+            // tag number and root cause message, without ever blocking or
+            // failing the registration flow itself.
             try {
                 emailService.sendAnimalRegisteredNotification(saved);
             } catch (Exception emailEx) {
-                // swallow — registration must still succeed even if email fails
+                log.warn("Registration email failed to send for animal '{}' (id={}): {}",
+                        saved.getTagNumber(), saved.getId(), emailEx.getMessage(), emailEx);
             }
 
             redirectAttributes.addFlashAttribute("success",
@@ -585,6 +561,61 @@ public class LivestockController {
             redirectAttributes.addFlashAttribute("error", "Error registering animal: " + e.getMessage());
             return "redirect:/livestock/register";
         }
+    }
+
+    /**
+     * FIX #2: This endpoint did not exist before, which is why the "Last in
+     * this category" / suggested-tag UI on the register page always fell
+     * back to "No animals registered in this category yet" — the fetch() call
+     * in the page's JS was hitting a 404 every time.
+     *
+     * Logic: pull every non-deleted animal in the given category, match tag
+     * numbers against the pattern "{CATEGORY_CODE}-{number}" (e.g. GOA-021),
+     * find the highest existing number, and suggest the next one. If the
+     * category has no tags yet, we still suggest a sensible first tag
+     * ({CODE}-001) instead of just giving up — one less thing for the user
+     * to manually figure out.
+     */
+    @GetMapping("/api/suggest-tag")
+    @ResponseBody
+    public Map<String, String> suggestTag(@RequestParam UUID categoryId) {
+        Map<String, String> result = new HashMap<>();
+
+        Optional<LivestockCategory> categoryOpt = categoryRepository.findById(categoryId);
+        if (categoryOpt.isEmpty()) {
+            result.put("lastTag", null);
+            result.put("suggestedTag", null);
+            return result;
+        }
+
+        LivestockCategory category = categoryOpt.get();
+        String prefix = category.getCode() != null ? category.getCode().trim().toUpperCase() : "TAG";
+
+        List<Livestock> categoryAnimals =
+                livestockRepository.findByLivestockCategoryIdAndIsDeletedFalse(categoryId);
+
+        Pattern tagPattern = Pattern.compile("^" + Pattern.quote(prefix) + "-(\\d+)$");
+
+        int maxNumber = 0;
+        String lastTag = null;
+
+        for (Livestock animal : categoryAnimals) {
+            String tag = animal.getTagNumber();
+            if (tag == null) continue;
+            Matcher matcher = tagPattern.matcher(tag.trim().toUpperCase());
+            if (matcher.matches()) {
+                int number = Integer.parseInt(matcher.group(1));
+                if (number > maxNumber) {
+                    maxNumber = number;
+                    lastTag = tag;
+                }
+            }
+        }
+
+        result.put("lastTag", lastTag); // null if this category has no tags yet
+        result.put("suggestedTag", String.format("%s-%03d", prefix, maxNumber + 1));
+
+        return result;
     }
 
     // ─────────────────────────────────────────────────────────────────────────

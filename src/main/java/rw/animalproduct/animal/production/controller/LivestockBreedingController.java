@@ -37,7 +37,7 @@ public class LivestockBreedingController {
                                        VeterinarianRepository veterinarianRepository,
                                        MalesReadyToBreedService malesReadyToBreedService,
                                        FemalesReadyToBreedService femalesReadyToBreedService
-                                       ) {
+    ) {
         this.breedingService          = breedingService;
         this.veterinarianService      = veterinarianService;
         this.livestockRepository      = livestockRepository;
@@ -192,9 +192,29 @@ public class LivestockBreedingController {
 
     // ── REGISTER FORM ─────────────────────────────────────────────────────────
 
+    /**
+     * FIX: now accepts an optional ?livestockId= query param, so links like
+     * the "Ready to Breed" stat card and the row-level shortcut on the
+     * lifecycle overview page can deep-link straight into this form with
+     * the correct female animal already selected, instead of dropping the
+     * user into a blank form and making them search again.
+     *
+     * If the ID doesn't resolve to a real animal (bad/stale link, wrong
+     * UUID format, etc.) we just fall back silently to a blank form rather
+     * than erroring out — the user can still pick manually.
+     */
     @GetMapping("/breeding/register")
-    public String registerForm(Model model) {
-        model.addAttribute("breeding", new LivestockBreeding());
+    public String registerForm(@RequestParam(required = false) UUID livestockId, Model model) {
+        LivestockBreeding breeding = new LivestockBreeding();
+
+        if (livestockId != null) {
+            livestockRepository.findById(livestockId).ifPresent(animal -> {
+                breeding.setLivestockIdValue(animal.getId().toString());
+                breeding.setLivestock(animal); // lets the form pre-render category/context if needed
+            });
+        }
+
+        model.addAttribute("breeding", breeding);
         addLivestockAndVetsToModel(model);
         return "livestock-breeding-form";
     }
@@ -447,6 +467,14 @@ public class LivestockBreedingController {
         return null;
     }
 
+    /**
+     * FIX (UX/UI enhancement): Females are now sorted — category name first
+     * (A→Z), then tag number (A→Z) within each category — instead of being
+     * rendered in arbitrary DB/insertion order. They are also grouped into
+     * femalesByCategory so the Register/Edit forms can render proper
+     * <optgroup> blocks, matching the same UX pattern already used for the
+     * Male dropdown (which is grouped dynamically via JS).
+     */
     private void addLivestockAndVetsToModel(Model model) {
         List<Livestock> all = livestockRepository.findAll().stream()
                 .filter(ls -> !Livestock.STATUS_DEAD.equals(ls.getStatus())
@@ -455,11 +483,27 @@ public class LivestockBreedingController {
 
         List<Livestock> females = all.stream()
                 .filter(ls -> "FEMALE".equalsIgnoreCase(ls.getGender()))
+                .sorted(Comparator
+                        .comparing((Livestock ls) -> ls.getLivestockCategory() != null
+                                        ? ls.getLivestockCategory().getName() : "Uncategorized",
+                                String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(ls -> ls.getTagNumber() != null ? ls.getTagNumber() : "",
+                                String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
         if (females.isEmpty()) females = all;
 
+        Map<String, List<Livestock>> femalesByCategory = new LinkedHashMap<>();
+        for (Livestock f : females) {
+            String cat = f.getLivestockCategory() != null
+                    ? f.getLivestockCategory().getName() : "Uncategorized";
+            femalesByCategory.computeIfAbsent(cat, k -> new ArrayList<>()).add(f);
+        }
+
         List<Livestock> allMaleLivestock = all.stream()
                 .filter(ls -> "MALE".equalsIgnoreCase(ls.getGender()))
+                .sorted(Comparator.comparing(
+                        ls -> ls.getTagNumber() != null ? ls.getTagNumber() : "",
+                        String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
 
         List<MaleReadyToBreedDTO> eligibleMales = malesReadyToBreedService.getAllReadyToBreed();
@@ -479,6 +523,7 @@ public class LivestockBreedingController {
         }
 
         model.addAttribute("femaleLivestock",     females);
+        model.addAttribute("femalesByCategory",   femalesByCategory);
         model.addAttribute("allMaleLivestock",    allMaleLivestock);
         model.addAttribute("eligibleMales",       eligibleMales);
         model.addAttribute("malesByCategoryJson", toJson(malesByCategory));

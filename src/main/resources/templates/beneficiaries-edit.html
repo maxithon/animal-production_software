@@ -7,15 +7,31 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
+        html { font-size: 15px; }
         body { background: #f8f9fa; padding: 20px; }
-        .edit-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .form-label { font-weight: 500; color: #333; }
+        .edit-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .edit-card h3 { font-size: 1.2rem; }
+        .edit-card h5 { font-size: 0.9rem; }
+        .form-label { font-weight: 500; color: #333; font-size: 0.8rem; }
+        .form-control, .form-select, .form-text, textarea.form-control { font-size: 0.8rem; }
+        .form-control, .form-select { padding: 0.4rem 0.6rem; }
+        .btn { font-size: 0.82rem; }
+        .btn-sm { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
         .btn-update { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
         .btn-update:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); }
-        .photo-preview { width: 150px; height: 150px; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px; }
+        .photo-preview { width: 130px; height: 130px; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px; }
         .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-preview .placeholder { text-align: center; color: #999; }
-        .pdf-preview { padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; }
+        .photo-preview .placeholder { text-align: center; color: #999; font-size: 0.78rem; }
+        .pdf-preview { padding: 12px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; font-size: 0.8rem; }
+        .location-section { background-color: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+        .location-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .location-row.full { grid-template-columns: 1fr; }
+        .form-group label { font-weight: 600; margin-bottom: 6px; font-size: 0.8rem; }
+        .required::after { content: " *"; color: red; }
+        .unchanged-hint { font-size: 0.72rem; color: #888; margin-top: 4px; }
+        @media (max-width: 768px) {
+            .location-row { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -41,21 +57,22 @@
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
-                            <!-- FIXED: Display current photo if exists -->
                             <div th:if="${beneficiaries.photo != null and !beneficiaries.photo.isEmpty()}" class="mb-2">
-                                <p class="text-muted">Current Photo:</p>
-                                <img th:src="${beneficiaries.photo}" alt="Current Photo" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;">
+                                <p class="text-muted mb-1">Current Photo:</p>
+                                <img th:src="${beneficiaries.photo}" alt="Current Photo" style="width: 130px; height: 130px; object-fit: cover; border-radius: 8px;">
+                                <p class="unchanged-hint mb-0">Leave this as is if you don't want to change the photo.</p>
                             </div>
                             <input type="file" id="photoFile" accept="image/*" style="display: none;" onchange="uploadPhoto()">
-                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('photoFile').click()">
+                            <button type="button" class="btn btn-outline-primary mt-2" onclick="document.getElementById('photoFile').click()">
                                 <i class="bi bi-camera-fill"></i> Change Photo
                             </button>
                             <div class="photo-preview" id="photoPreview" style="display: none;">
                                 <div class="placeholder">
-                                    <i class="bi bi-camera" style="font-size: 3rem;"></i>
+                                    <i class="bi bi-camera" style="font-size: 2.2rem;"></i>
                                     <p class="small mt-2">No new photo</p>
                                 </div>
                             </div>
+                            <!-- Keeps existing photo URL unless uploadPhoto() overwrites it -->
                             <input type="hidden" th:field="*{photo}" id="photoUrl">
                         </div>
                     </div>
@@ -107,19 +124,62 @@
                         </div>
                     </div>
 
-                    <!-- Location Selection -->
+                    <!-- Location Section: cascading Province > District > Sector > Cell > Village -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label for="location" class="form-label">Location *</label>
-                            <select class="form-select" id="location" name="locationId" required>
-                                <option value="">Select location...</option>
-                                <option th:each="loc : ${locationList}"
-                                        th:value="${loc.id}"
-                                        th:text="${loc.name + ' (' + loc.locationType + ')'}"
-                                        th:selected="${loc.id == beneficiaries.location?.id}">
-                                </option>
-                            </select>
+                    <p class="unchanged-hint mb-2">The current location is pre-selected below. Only change a dropdown if you want to move this beneficiary to a different location.</p>
+                    <div class="location-section">
+                        <div class="location-row">
+                            <div class="form-group">
+                                <label for="province" class="required">Province</label>
+                                <select class="form-select" id="province" required onchange="onProvinceChange()">
+                                    <option value="">Select Province...</option>
+                                    <option th:each="province : ${provinces}" th:value="${province.id}"
+                                            th:text="${province.name}"
+                                            th:selected="${province.id == selectedProvince}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="district" class="required">District</label>
+                                <select class="form-select" id="district" required onchange="onDistrictChange()">
+                                    <option value="">Select District...</option>
+                                    <option th:each="district : ${districts}" th:value="${district.id}"
+                                            th:text="${district.name}"
+                                            th:selected="${district.id == selectedDistrict}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="location-row">
+                            <div class="form-group">
+                                <label for="sector" class="required">Sector</label>
+                                <select class="form-select" id="sector" required onchange="onSectorChange()">
+                                    <option value="">Select Sector...</option>
+                                    <option th:each="sector : ${sectors}" th:value="${sector.id}"
+                                            th:text="${sector.name}"
+                                            th:selected="${sector.id == selectedSector}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="cell" class="required">Cell</label>
+                                <select class="form-select" id="cell" required onchange="onCellChange()">
+                                    <option value="">Select Cell...</option>
+                                    <option th:each="cell : ${cells}" th:value="${cell.id}"
+                                            th:text="${cell.name}"
+                                            th:selected="${cell.id == selectedCell}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="location-row full">
+                            <div class="form-group">
+                                <label for="village" class="required">Village</label>
+                                <select class="form-select" id="village" name="locationId" required>
+                                    <option value="">Select Village...</option>
+                                    <option th:each="village : ${villages}" th:value="${village.id}"
+                                            th:text="${village.name}"
+                                            th:selected="${village.id == selectedVillage}"></option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -144,33 +204,38 @@
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <!-- FIXED: Display current PDF if exists -->
                             <div th:if="${beneficiaries.contractAgreement != null and !beneficiaries.contractAgreement.isEmpty()}" class="pdf-preview mb-2">
-                                <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                                <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
                                 <strong class="ms-2">Current Contract PDF</strong>
                                 <a th:href="${beneficiaries.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary ms-3">
                                     <i class="bi bi-eye"></i> View
                                 </a>
+                                <p class="unchanged-hint mb-0 mt-1">This stays attached unless you upload a new PDF below.</p>
                             </div>
                             <input type="file" id="pdfFile" accept=".pdf" style="display: none;" onchange="uploadPdf()">
                             <button type="button" class="btn btn-outline-danger" onclick="document.getElementById('pdfFile').click()">
                                 <i class="bi bi-file-pdf-fill"></i> Change PDF Contract
                             </button>
                             <div class="pdf-preview" id="pdfPreview" style="display: none;">
-                                <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                                <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
                                 <strong id="pdfName" class="ms-2"></strong>
                                 <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
                                     <i class="bi bi-x-circle"></i> Remove
                                 </button>
                             </div>
+                            <!-- Keeps existing contract URL unless uploadPdf() overwrites it -->
                             <input type="hidden" th:field="*{contractAgreement}" id="pdfUrl">
                         </div>
                     </div>
 
                     <!-- Hidden fields -->
+                    <!-- Only the identifier is submitted. createdDate and createdBy are
+                         intentionally NOT included: they're not editable, the service layer
+                         never reads them from the form, and posting a java.util.Date or a
+                         Users object through a hidden <input> has no safe string
+                         representation to convert back from — that's what was throwing
+                         the 400 error on every save. -->
                     <input type="hidden" th:field="*{id}">
-                    <input type="hidden" th:field="*{createdDate}">
-                    <input type="hidden" th:field="*{createdBy}">
 
                     <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
@@ -188,7 +253,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
     function uploadPhoto() {
         const fileInput = document.getElementById('photoFile');
         const file = fileInput.files[0];
@@ -270,7 +335,7 @@
             if (data.success) {
                 document.getElementById('pdfUrl').value = data.url;
                 preview.innerHTML = `
-                    <i class="bi bi-file-pdf text-danger" style="font-size: 2rem;"></i>
+                    <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
                     <strong id="pdfName" class="ms-2">${data.originalName || file.name}</strong>
                     <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
                         <i class="bi bi-x-circle"></i> Remove
@@ -293,6 +358,125 @@
         document.getElementById('pdfPreview').style.display = 'none';
         document.getElementById('pdfFile').value = '';
     }
+
+    // ── Location cascade with default-selection preservation ───────────────
+    // Server-rendered "currently selected" IDs, passed in once via Thymeleaf's
+    // JavaScript inlining. These are used to re-select the correct option after
+    // each AJAX fetch, since a fresh fetch always rebuilds a select's <option>
+    // list from scratch and would otherwise silently drop the selection.
+    const selectedDistrictId = /*[[${selectedDistrict}]]*/ null;
+    const selectedSectorId   = /*[[${selectedSector}]]*/ null;
+    const selectedCellId     = /*[[${selectedCell}]]*/ null;
+    const selectedVillageId  = /*[[${selectedVillage}]]*/ null;
+
+    function fetchAndPopulate(url, selectElement, placeholderText, preselectId) {
+        return fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                selectElement.innerHTML = `<option value="">${placeholderText}</option>`;
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.id;
+                    opt.textContent = item.name;
+                    selectElement.appendChild(opt);
+                });
+                // Re-apply the previously selected value (if any) now that the
+                // freshly-fetched option list includes it.
+                if (preselectId) {
+                    selectElement.value = preselectId;
+                }
+            })
+            .catch(error => console.error('Error loading options for', url, error));
+    }
+
+    // Manual onchange handlers: user explicitly changed a dropdown, so we
+    // deliberately do NOT re-apply the old preselect for downstream levels —
+    // starting fresh below the level the user touched is the expected behavior.
+    function onProvinceChange() {
+        const provinceId = document.getElementById('province').value;
+        const districtSelect = document.getElementById('district');
+        const sectorSelect = document.getElementById('sector');
+        const cellSelect = document.getElementById('cell');
+        const villageSelect = document.getElementById('village');
+
+        sectorSelect.innerHTML = '<option value="">Select Sector...</option>';
+        cellSelect.innerHTML = '<option value="">Select Cell...</option>';
+        villageSelect.innerHTML = '<option value="">Select Village...</option>';
+
+        if (!provinceId) {
+            districtSelect.innerHTML = '<option value="">Select District...</option>';
+            return;
+        }
+        fetchAndPopulate(`/api/locations/districts/${provinceId}`, districtSelect, 'Select District...', null);
+    }
+
+    function onDistrictChange() {
+        const districtId = document.getElementById('district').value;
+        const sectorSelect = document.getElementById('sector');
+        const cellSelect = document.getElementById('cell');
+        const villageSelect = document.getElementById('village');
+
+        cellSelect.innerHTML = '<option value="">Select Cell...</option>';
+        villageSelect.innerHTML = '<option value="">Select Village...</option>';
+
+        if (!districtId) {
+            sectorSelect.innerHTML = '<option value="">Select Sector...</option>';
+            return;
+        }
+        fetchAndPopulate(`/api/locations/sectors/${districtId}`, sectorSelect, 'Select Sector...', null);
+    }
+
+    function onSectorChange() {
+        const sectorId = document.getElementById('sector').value;
+        const cellSelect = document.getElementById('cell');
+        const villageSelect = document.getElementById('village');
+
+        villageSelect.innerHTML = '<option value="">Select Village...</option>';
+
+        if (!sectorId) {
+            cellSelect.innerHTML = '<option value="">Select Cell...</option>';
+            return;
+        }
+        fetchAndPopulate(`/api/locations/cells/${sectorId}`, cellSelect, 'Select Cell...', null);
+    }
+
+    function onCellChange() {
+        const cellId = document.getElementById('cell').value;
+        const villageSelect = document.getElementById('village');
+
+        if (!cellId) {
+            villageSelect.innerHTML = '<option value="">Select Village...</option>';
+            return;
+        }
+        fetchAndPopulate(`/api/locations/villages/${cellId}`, villageSelect, 'Select Village...', null);
+    }
+
+    // ── Initial load: rebuild each level's option list AND restore the
+    // beneficiary's current district/sector/cell/village, chained so each
+    // level waits for its parent to finish before fetching. This is what
+    // keeps the existing location visibly selected on page load, instead of
+    // resetting to "Select..." once the AJAX calls complete.
+    document.addEventListener('DOMContentLoaded', function () {
+        const provinceId = document.getElementById('province').value;
+        if (!provinceId) return;
+
+        fetchAndPopulate(`/api/locations/districts/${provinceId}`, document.getElementById('district'), 'Select District...', selectedDistrictId)
+            .then(() => {
+                const districtId = document.getElementById('district').value;
+                if (!districtId) return;
+                return fetchAndPopulate(`/api/locations/sectors/${districtId}`, document.getElementById('sector'), 'Select Sector...', selectedSectorId);
+            })
+            .then(() => {
+                const sectorId = document.getElementById('sector').value;
+                if (!sectorId) return;
+                return fetchAndPopulate(`/api/locations/cells/${sectorId}`, document.getElementById('cell'), 'Select Cell...', selectedCellId);
+            })
+            .then(() => {
+                const cellId = document.getElementById('cell').value;
+                if (!cellId) return;
+                return fetchAndPopulate(`/api/locations/villages/${cellId}`, document.getElementById('village'), 'Select Village...', selectedVillageId);
+            });
+    });
 </script>
 </body>
 </html>

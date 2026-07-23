@@ -42,4 +42,7 @@ public interface VeterinarianRepository extends JpaRepository<Veterinarian, UUID
         ORDER BY v.firstName, v.lastName
     """)
     List<Veterinarian> findAllActive();
+
+    // ── NEW: real, non-deleted count (vets are soft-deleted, so plain count() overcounts) ──
+    long countByIsDeletedFalse();
 }

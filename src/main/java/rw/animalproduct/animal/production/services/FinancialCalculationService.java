@@ -11,7 +11,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Financial calculations for the livestock operation.
@@ -33,7 +35,7 @@ import java.util.Map;
  * KEY RULES:
  * 1. Treatment costs are separated: PREVENTIVE treatments are "Treatment Costs",
  *    CURATIVE treatments are "Sick Care Costs" (and NOT counted in treatment costs).
- * 2. Current Herd Value ONLY counts ACTIVE and PREGNANT animals (not SOLD, not DEAD).
+ * 2. Current Herd Value ONLY counts ACTIVE and PREGNANT animals (not SOLD, not DEAD, not SICK).
  *    It is always a point-in-time snapshot and is never date-filtered.
  * 3. Born Animals Value is a separate metric showing value of BIRTH animals.
  * 4. Purchase Costs only count animals with acquisition_method = 'PURCHASE'.
@@ -74,20 +76,100 @@ public class FinancialCalculationService {
         return true;
     }
 
+    /**
+     * Get all active (non-deleted, non-draft) livestock records.
+     */
+    private List<Livestock> getActiveLivestock() {
+        return livestockRepository.findAll().stream()
+                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
+                .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
+                .collect(Collectors.toList());
+    }
+
     // ========================================================================
-    // INCOME
+    // HERD VALUE CALCULATIONS
     // ========================================================================
 
     /**
-     * Revenue from confirmed sales within the period.
-     * Pass (null, null) for all-time revenue.
+     * Present-day value of the live productive herd.
+     *
+     * IMPORTANT: This ONLY includes animals with status ACTIVE or PREGNANT.
+     * - ACTIVE animals are productive and generating value
+     * - PREGNANT animals represent future value (offspring)
+     *
+     * EXCLUDED:
+     * - SICK animals (not productive, represent a liability/business risk)
+     * - SOLD animals (no longer owned)
+     * - DEAD animals (no longer alive)
+     * - DRAFT records (not finalized)
+     * - DELETED records (soft-deleted)
+     *
+     * This is ALWAYS a point-in-time snapshot, never date-range filtered.
+     *
+     * @return Total value of active and pregnant animals
      */
-    public BigDecimal calculateSalesRevenue(LocalDate fromDate, LocalDate toDate) {
-        return saleService.getAll().stream()
-                .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
-                .filter(s -> inRange(s.getSaleDate(), fromDate, toDate))
-                .filter(s -> s.getSalePrice() != null)
-                .map(LivestockSale::getSalePrice)
+    public BigDecimal calculateCurrentHerdValue() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()) ||
+                        Livestock.STATUS_PREGNANT.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Value of SICK animals in the herd.
+     * These animals represent a business risk and potential loss.
+     *
+     * @return Total value of animals with SICK status
+     */
+    public BigDecimal calculateSickHerdValue() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_SICK.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Total value of ALL livestock regardless of status.
+     * This includes ACTIVE, PREGNANT, SICK, SOLD, and DEAD animals.
+     * Useful for total asset valuation.
+     *
+     * @return Total value of all non-deleted, non-draft livestock
+     */
+    public BigDecimal calculateTotalHerdValue() {
+        return getActiveLivestock().stream()
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Value of SOLD animals.
+     * These are historical records of animals that have been sold.
+     *
+     * @return Total value of animals with SOLD status
+     */
+    public BigDecimal calculateSoldHerdValue() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Value of DEAD animals.
+     * These are historical records of animals that have died.
+     *
+     * @return Total value of animals with DEAD status
+     */
+    public BigDecimal calculateDeadHerdValue() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus()))
+                .filter(l -> l.getCurrentValue() != null)
+                .map(Livestock::getCurrentValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -109,20 +191,86 @@ public class FinancialCalculationService {
     }
 
     /**
-     * Present-day value of the live herd.
-     * Only includes ACTIVE and PREGNANT animals (alive and on the farm).
-     * Excludes SOLD, DEAD, and draft records.
-     * This is ALWAYS a point-in-time snapshot, never date-range filtered,
-     * regardless of what the Dashboard or Financial Summary page requests.
+     * Value of animals acquired through donation in the period.
+     *
+     * @return Total value of animals with acquisition_method = 'DONATION'
      */
-    public BigDecimal calculateCurrentHerdValue() {
+    public BigDecimal calculateDonationValue(LocalDate fromDate, LocalDate toDate) {
         return livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()) ||
-                        Livestock.STATUS_PREGNANT.equals(l.getStatus()))
+                .filter(l -> "DONATION".equalsIgnoreCase(l.getAcquisitionMethod()))
+                .filter(l -> inRange(l.getDateReceived(), fromDate, toDate))
                 .filter(l -> l.getCurrentValue() != null)
                 .map(Livestock::getCurrentValue)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    // ========================================================================
+    // HERD COUNT METRICS
+    // ========================================================================
+
+    public long countActiveHerd() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()) ||
+                        Livestock.STATUS_PREGNANT.equals(l.getStatus()))
+                .count();
+    }
+
+    public long countSickHerd() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_SICK.equals(l.getStatus()))
+                .count();
+    }
+
+    public long countSoldHerd() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus()))
+                .count();
+    }
+
+    public long countDeadHerd() {
+        return getActiveLivestock().stream()
+                .filter(l -> Livestock.STATUS_DEAD.equals(l.getStatus()))
+                .count();
+    }
+
+    public long countTotalHerd() {
+        return getActiveLivestock().size();
+    }
+
+    /**
+     * Calculate the average value per animal in the active herd.
+     */
+    public BigDecimal calculateAverageHerdValue() {
+        long count = countActiveHerd();
+        if (count == 0) return BigDecimal.ZERO;
+        return calculateCurrentHerdValue().divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Calculate the average value per animal in the sick herd.
+     */
+    public BigDecimal calculateAverageSickValue() {
+        long count = countSickHerd();
+        if (count == 0) return BigDecimal.ZERO;
+        return calculateSickHerdValue().divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+    }
+
+    // ========================================================================
+    // INCOME
+    // ========================================================================
+
+    /**
+     * Revenue from confirmed sales within the period.
+     * Pass (null, null) for all-time revenue.
+     */
+    public BigDecimal calculateSalesRevenue(LocalDate fromDate, LocalDate toDate) {
+        return saleService.getAll().stream()
+                .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
+                .filter(s -> inRange(s.getSaleDate(), fromDate, toDate))
+                .filter(s -> s.getSalePrice() != null)
+                .map(LivestockSale::getSalePrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -246,6 +394,68 @@ public class FinancialCalculationService {
     }
 
     // ========================================================================
+    // HERD METRICS (FAO Standards)
+    // ========================================================================
+
+    /**
+     * Calculate the mortality rate as a percentage.
+     * Mortality Rate = (Deaths / (Active + Dead)) × 100
+     *
+     * @param fromDate Start date for death records
+     * @param toDate End date for death records
+     * @return Mortality rate percentage
+     */
+    public double calculateMortalityRate(LocalDate fromDate, LocalDate toDate) {
+        long deaths = deathService.getAll().stream()
+                .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
+                .filter(d -> inRange(d.getDeathDate(), fromDate, toDate))
+                .count();
+
+        long active = countActiveHerd();
+        long total = active + deaths;
+
+        if (total == 0) return 0.0;
+        return (deaths * 100.0) / total;
+    }
+
+    /**
+     * Calculate the offtake rate as a percentage.
+     * Offtake Rate = (Sales / Opening Herd) × 100
+     * Opening Herd = Active + Sold + Dead (animals that were in the herd at period start)
+     *
+     * @param fromDate Start date for sales records
+     * @param toDate End date for sales records
+     * @return Offtake rate percentage
+     */
+    public double calculateOfftakeRate(LocalDate fromDate, LocalDate toDate) {
+        long sales = saleService.getAll().stream()
+                .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
+                .filter(s -> inRange(s.getSaleDate(), fromDate, toDate))
+                .count();
+
+        long active = countActiveHerd();
+        long sold = countSoldHerd();
+        long dead = countDeadHerd();
+        long openingHerd = active + sold + dead;
+
+        if (openingHerd == 0) return 0.0;
+        return (sales * 100.0) / openingHerd;
+    }
+
+    /**
+     * Calculate the replacement rate as a percentage.
+     * Replacement Rate = (Births / Total Herd) × 100
+     *
+     * @param totalBirths Number of births in the period
+     * @param totalHerd Total herd size
+     * @return Replacement rate percentage
+     */
+    public double calculateReplacementRate(long totalBirths, long totalHerd) {
+        if (totalHerd == 0) return 0.0;
+        return (totalBirths * 100.0) / totalHerd;
+    }
+
+    // ========================================================================
     // BUNDLED SUMMARY
     // ========================================================================
 
@@ -283,21 +493,46 @@ public class FinancialCalculationService {
                 .setScale(1, RoundingMode.HALF_UP);
         String profitStatus = netProfit.compareTo(BigDecimal.ZERO) >= 0 ? "PROFIT" : "LOSS";
 
+        // HERD COUNTS
+        long activeCount = countActiveHerd();
+        long sickCount = countSickHerd();
+        long soldCount = countSoldHerd();
+        long deadCount = countDeadHerd();
+        long totalCount = countTotalHerd();
+
+        // HERD VALUES (for transparency)
+        BigDecimal sickHerdValue = calculateSickHerdValue();
+        BigDecimal soldHerdValue = calculateSoldHerdValue();
+        BigDecimal deadHerdValue = calculateDeadHerdValue();
+
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("fromDate", fromDate);
         summary.put("toDate", toDate);
 
+        // HERD COUNTS
+        summary.put("activeCount", activeCount);
+        summary.put("sickCount", sickCount);
+        summary.put("soldCount", soldCount);
+        summary.put("deadCount", deadCount);
+        summary.put("totalCount", totalCount);
+
+        // HERD VALUES
+        summary.put("currentHerdValue", currentLivestockValue);
+        summary.put("sickHerdValue", sickHerdValue);
+        summary.put("soldHerdValue", soldHerdValue);
+        summary.put("deadHerdValue", deadHerdValue);
+        summary.put("totalHerdValue", calculateTotalHerdValue());
+
         // INCOME SECTION
         summary.put("salesRevenue", salesRevenue);
-        summary.put("currentLivestockValue", currentLivestockValue);
         summary.put("bornAnimalsValue", bornAnimalsValue);
         summary.put("totalIncome", totalIncome);
 
         // EXPENSE SECTION
         summary.put("preventiveTreatmentCosts", preventiveTreatmentCosts);
         summary.put("curativeTreatmentCosts", curativeTreatmentCosts);
-        summary.put("sickCareCosts", curativeTreatmentCosts); // Alias for backward compatibility
-        summary.put("treatmentCosts", preventiveTreatmentCosts); // Alias for backward compatibility
+        summary.put("sickCareCosts", curativeTreatmentCosts);
+        summary.put("treatmentCosts", preventiveTreatmentCosts);
         summary.put("purchaseCosts", purchaseCosts);
         summary.put("deathLoss", deathLoss);
         summary.put("totalExpenses", totalExpenses);
@@ -306,6 +541,10 @@ public class FinancialCalculationService {
         summary.put("netProfit", netProfit);
         summary.put("profitMargin", profitMargin);
         summary.put("profitStatus", profitStatus);
+
+        // AVERAGE VALUES
+        summary.put("averageHerdValue", calculateAverageHerdValue());
+        summary.put("averageSickValue", calculateAverageSickValue());
 
         return summary;
     }

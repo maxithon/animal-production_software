@@ -2,6 +2,8 @@ package rw.animalproduct.animal.production.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Veterinarian;
 import rw.animalproduct.animal.production.repository.LocationRepository;
+import rw.animalproduct.animal.production.services.AuditLogService;
 import rw.animalproduct.animal.production.services.VeterinarianService;
 
 import java.util.*;
@@ -19,11 +22,14 @@ public class VeterinarianController {
 
     private final VeterinarianService veterinarianService;
     private final LocationRepository  locationRepository;
+    private final AuditLogService     auditLogService;
 
     public VeterinarianController(VeterinarianService veterinarianService,
-                                  LocationRepository locationRepository) {
+                                  LocationRepository locationRepository,
+                                  AuditLogService auditLogService) {
         this.veterinarianService = veterinarianService;
         this.locationRepository  = locationRepository;
+        this.auditLogService     = auditLogService;
     }
 
     // ── LIST ──────────────────────────────────────────────────────────────────
@@ -37,7 +43,7 @@ public class VeterinarianController {
         return "veterinarians-list";
     }
 
-    // ── CREATE ────────────────────────────────────────────────────────────────
+    // ── CREATE (now logged) ──────────────────────────────────────────────────
 
     @PostMapping("/new")
     public String save(@Valid @ModelAttribute("vet") Veterinarian vet,
@@ -50,7 +56,18 @@ public class VeterinarianController {
             return "veterinarians-list";
         }
         resolveLocation(vet);
-        veterinarianService.addNew(vet);
+        Veterinarian saved = veterinarianService.addNew(vet);
+
+        auditLogService.log(
+                "veterinarian",
+                saved.getId(),
+                "CREATE",
+                getCurrentUsername(),
+                null,
+                saved,
+                "Registered veterinarian: " + saved.getFullName()
+        );
+
         ra.addFlashAttribute("success", "Veterinarian registered successfully!");
         return "redirect:/veterinarians";
     }
@@ -72,7 +89,7 @@ public class VeterinarianController {
         return "veterinarian-edit";
     }
 
-    // ── UPDATE ────────────────────────────────────────────────────────────────
+    // ── UPDATE (now logged) ──────────────────────────────────────────────────
 
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
@@ -84,8 +101,27 @@ public class VeterinarianController {
             model.addAttribute("locations", locationRepository.findAll());
             return "veterinarian-edit";
         }
+
+        String beforeSnapshot = veterinarianService.getById(id)
+                .map(auditLogService::snapshot)
+                .orElse(null);
+
         resolveLocation(vet);
         veterinarianService.update(id, vet);
+
+        // VeterinarianService.update() returns void — re-fetch to get the persisted "after" state
+        Veterinarian after = veterinarianService.getById(id).orElse(null);
+
+        auditLogService.log(
+                "veterinarian",
+                id,
+                "UPDATE",
+                getCurrentUsername(),
+                beforeSnapshot,
+                after,
+                "Updated veterinarian: " + vet.getFirstName() + " " + vet.getLastName()
+        );
+
         ra.addFlashAttribute("success", "Veterinarian updated successfully!");
         return "redirect:/veterinarians";
     }
@@ -95,6 +131,21 @@ public class VeterinarianController {
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes ra) {
         try {
+            Optional<Veterinarian> vetOpt = veterinarianService.getById(id);
+
+            if (vetOpt.isPresent()) {
+                Veterinarian vet = vetOpt.get();
+                auditLogService.log(
+                        "veterinarian",
+                        id,
+                        "DELETE",
+                        getCurrentUsername(),
+                        vet,
+                        null,
+                        "Deleted veterinarian: " + vet.getFullName()
+                );
+            }
+
             veterinarianService.delete(id);
             ra.addFlashAttribute("success", "Veterinarian deleted.");
         } catch (Exception e) {
@@ -119,8 +170,6 @@ public class VeterinarianController {
     }
 
     // ── AJAX LIVE SEARCH ──────────────────────────────────────────────────────
-    // Used by the treatment form's live-search widget.
-    // Returns up to 20 active vets matching the query.
 
     @GetMapping("/search")
     @ResponseBody
@@ -129,7 +178,6 @@ public class VeterinarianController {
 
         List<Veterinarian> vets = veterinarianService.search(query);
 
-        // Cap at 20 results for dropdown performance
         if (vets.size() > 20) {
             vets = vets.subList(0, 20);
         }
@@ -152,8 +200,6 @@ public class VeterinarianController {
     }
 
     // ── AJAX QUICK-ADD ────────────────────────────────────────────────────────
-    // Called from the "+" button on the treatment form when no vet is found.
-    // Accepts { firstName, lastName, phone, licenseNumber } as JSON.
 
     @PostMapping("/quick-add")
     @ResponseBody
@@ -181,6 +227,16 @@ public class VeterinarianController {
 
             Veterinarian saved = veterinarianService.addNew(vet);
 
+            auditLogService.log(
+                    "veterinarian",
+                    saved.getId(),
+                    "CREATE",
+                    getCurrentUsername(),
+                    null,
+                    saved,
+                    "Quick-added veterinarian: " + saved.getFullName()
+            );
+
             Map<String, Object> vetMap = new LinkedHashMap<>();
             vetMap.put("id",            saved.getId());
             vetMap.put("fullName",      saved.getFullName());
@@ -198,7 +254,7 @@ public class VeterinarianController {
         }
     }
 
-    // ── HELPER ────────────────────────────────────────────────────────────────
+    // ── HELPERS ────────────────────────────────────────────────────────────────
 
     private void resolveLocation(Veterinarian vet) {
         String locId = vet.getLocationIdValue();
@@ -208,5 +264,13 @@ public class VeterinarianController {
         } else {
             vet.setLocation(null);
         }
+    }
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        return "system";
     }
 }

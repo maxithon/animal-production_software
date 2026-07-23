@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>New Animal Registered</title>
+</head>
+<body style="margin:0; padding:0; background:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8; padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+
+                <!-- Header -->
+                <tr>
+                    <td style="background:linear-gradient(135deg,#1a5f7a,#059669); padding:28px 32px;">
+                        <span style="font-size:28px;" th:text="${emoji}">🐄📋</span>
+                        <h1 style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:700;" th:text="${title}">
+                            New Animal Registered
+                        </h1>
+                        <p style="margin:4px 0 0; color:#d1fae5; font-size:13px;">
+                            standard livestock traceability record
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:28px 32px;">
+                        <p style="margin:0 0 20px; color:#334155; font-size:14px; line-height:1.6;">
+                            A new animal has been added to the herd register. Details below are recorded
+                            as the animal's initial identification record.
+                        </p>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:12px 16px; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em; width:40%;">Tag Number</td>
+                                <td style="padding:12px 16px; font-size:14px; font-weight:700; color:#0f172a;" th:text="${tagNumber}">GOA-021</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 16px; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em;">Category</td>
+                                <td style="padding:12px 16px; font-size:14px; color:#0f172a;" th:text="${category}">Goat</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:12px 16px; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em;">Gender</td>
+                                <td style="padding:12px 16px; font-size:14px; color:#0f172a;" th:text="${gender}">Female</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:12px 16px; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em;">Acquisition Method</td>
+                                <td style="padding:12px 16px; font-size:14px; color:#0f172a;" th:text="${acquisitionMethod}">Purchase</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:12px 16px; font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.04em;">Initial Value</td>
+                                <td style="padding:12px 16px; font-size:14px; font-weight:700; color:#059669;" th:text="${currentValue}">175,000 RWF</td>
+                            </tr>
+                        </table>
+
+                        <p style="margin:20px 0 0; font-size:12px; color:#94a3b8;">
+                            Registered on <strong th:text="${today}">2026-07-19</strong>.
+                            This record has also been written to the permanent audit log.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#f8fafc; padding:16px 32px; border-top:1px solid #e2e8f0;">
+                        <p style="margin:0; font-size:11px; color:#94a3b8;">
+                            Animal Production System | Version 0.1.0
+                            Developed by HABANABAKIZE & NDAYIZEYE
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

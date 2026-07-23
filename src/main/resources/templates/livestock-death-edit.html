@@ -13,6 +13,7 @@
             <a href="/livestock/deaths" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
         </div>
         <form th:action="@{/livestock/deaths/update/{id}(id=${death.id})}" th:object="${death}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
             <div class="mb-3">
                 <label class="form-label fw-semibold">Animal (Tag) *</label>
                 <select class="form-select" th:field="*{livestockIdValue}" required>

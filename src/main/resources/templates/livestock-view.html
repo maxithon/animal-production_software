@@ -55,6 +55,21 @@
         .lc-MATURE         { background: #d1fae5; color: #059669; }
         .lc-UNKNOWN        { background: #f3f4f6; color: #6b7280; }
 
+        /* NEW: the READY TO BREED badge is now a real link to the
+           Ready-to-Breed page, so it needs link-friendly affordances
+           (no underline by default, pointer cursor, a subtle hover state)
+           on top of the existing pill styling above. */
+        a.lifecycle-badge {
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        a.lifecycle-badge:hover {
+            text-decoration: none;
+            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
+            transform: translateY(-1px);
+        }
+
         /* ── Section cards ── */
         .section-card {
             background: #fff; border-radius: 12px; padding: 20px 22px;
@@ -159,9 +174,25 @@
             <div class="header-badges">
                 <span th:if="${livestock.status != null}" class="status-badge"
                       th:classappend="'status-' + ${livestock.status}" th:text="${livestock.status}">Status</span>
-                <span th:if="${lifecycleStage != null}" class="lifecycle-badge"
+
+                <!-- ══ CHANGED ══════════════════════════════════════════════
+                     The lifecycle badge is now a LINK when the animal's stage
+                     is READY_TO_BREED, taking the user straight to the Ready
+                     to Breed page (grouped by category) so a breeding record
+                     can be registered right after this animal was added.
+                     All other lifecycle stages keep the original plain badge
+                     (they have nowhere useful to link to).
+                ══════════════════════════════════════════════════════════ -->
+                <a th:if="${lifecycleStage == 'READY_TO_BREED'}"
+                   th:href="@{/livestock/lifecycle/ready-to-breed}"
+                   class="lifecycle-badge lc-READY_TO_BREED"
+                   title="Go to Ready to Breed page to register a breeding">
+                    <i class="bi bi-heart-arrow"></i> READY TO BREED
+                </a>
+                <span th:if="${lifecycleStage != null and lifecycleStage != 'READY_TO_BREED'}" class="lifecycle-badge"
                       th:classappend="'lc-' + ${lifecycleStage}"
                       th:text="${#strings.replace(lifecycleStage, '_', ' ')}">Stage</span>
+
                 <span th:if="${livestock.isDraft}" class="badge bg-warning text-dark">
                     <i class="bi bi-exclamation-triangle"></i> Draft — not fully registered
                 </span>

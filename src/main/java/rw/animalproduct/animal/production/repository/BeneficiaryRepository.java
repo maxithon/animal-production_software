@@ -17,6 +17,9 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
 
     List<Beneficiary> findByRepresentativeId(UUID representativesAbororaId);
 
+    // NEW: paginated version to support the representative-filtered list view
+    Page<Beneficiary> findByRepresentativeId(UUID representativesAbororaId, Pageable pageable);
+
     List<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
 
     // Find all beneficiaries by location
@@ -61,9 +64,6 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
     List<Object[]> countByEachSupervisor();
 
     // ---- Added to support /livestock/beneficiary-impact-report ----
-    // Optional DB-side aggregates if the in-memory grouping in
-    // BeneficiaryImpactReportController ever needs to move to the DB
-    // (e.g. once the beneficiaries table gets large).
 
     @Query("SELECT a.gender, COUNT(a) FROM Beneficiary a GROUP BY a.gender")
     List<Object[]> countByGenderGrouped();

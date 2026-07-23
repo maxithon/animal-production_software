@@ -9,6 +9,7 @@ import rw.animalproduct.animal.production.entity.LivestockAbortion;
 import rw.animalproduct.animal.production.repository.LivestockAbortionRepository;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,21 +18,21 @@ import java.util.UUID;
 public class LivestockAbortionService {
 
     private final LivestockAbortionRepository abortionRepository;
-    private final LivestockRepository         livestockRepository;
-    private final AuditLogService             auditLogService;
+    private final LivestockRepository livestockRepository;
+    private final AuditLogService auditLogService;
 
     public LivestockAbortionService(LivestockAbortionRepository abortionRepository,
                                     LivestockRepository livestockRepository,
                                     AuditLogService auditLogService) {
-        this.abortionRepository  = abortionRepository;
+        this.abortionRepository = abortionRepository;
         this.livestockRepository = livestockRepository;
-        this.auditLogService     = auditLogService;
+        this.auditLogService = auditLogService;
     }
 
     // ── READ ─────────────────────────────────────────────────────────────────
 
     public List<LivestockAbortion> getAll() {
-        return abortionRepository.findAll();
+        return abortionRepository.findByIsDeletedFalseOrderByAbortionDateDesc();
     }
 
     public Optional<LivestockAbortion> getById(UUID id) {
@@ -39,14 +40,22 @@ public class LivestockAbortionService {
     }
 
     public List<LivestockAbortion> getByLivestock(UUID livestockId) {
-        return abortionRepository.findByLivestockId(livestockId);
+        return abortionRepository.findByLivestockIdAndIsDeletedFalseOrderByAbortionDateDesc(livestockId);
     }
 
     // ── CREATE ───────────────────────────────────────────────────────────────
 
     @Transactional
     public LivestockAbortion addNew(LivestockAbortion abortion) {
+        // Set creation timestamp if not set
+        if (abortion.getCreatedAt() == null) {
+            abortion.setCreatedAt(LocalDateTime.now());
+        }
+
+        // Resolve and set livestock entity
         resolveAndSetLivestock(abortion);
+
+        // Save the entity
         LivestockAbortion saved = abortionRepository.save(abortion);
 
         // ── Audit: CREATE ────────────────────────────────────────────────────
@@ -79,6 +88,7 @@ public class LivestockAbortionService {
         existing.setPregnancyNumber(updated.getPregnancyNumber());
         existing.setAbortionReason(updated.getAbortionReason());
         existing.setStageOfPregnancy(updated.getStageOfPregnancy());
+        existing.setExpectedBirthDate(updated.getExpectedBirthDate());
         existing.setLivestockIdValue(updated.getLivestockIdValue());
         resolveAndSetLivestock(existing);
 
@@ -134,20 +144,24 @@ public class LivestockAbortionService {
      * Called BEFORE changes for old snapshot, and AFTER changes for new snapshot.
      */
     private String buildSnapshot(LivestockAbortion a) {
-        return "Animal: "           + (a.getLivestock() != null ? a.getLivestock().getTagNumber() : "unknown")
+        return "Animal: " + (a.getLivestock() != null ? a.getLivestock().getTagNumber() : "unknown")
                 + " | Abortion Date: " + a.getAbortionDate()
-                + " | Pregnancy #: "   + a.getPregnancyNumber()
-                + " | Reason: "        + a.getAbortionReason()
-                + " | Stage: "         + a.getStageOfPregnancy()
+                + " | Pregnancy #: " + a.getPregnancyNumber()
+                + " | Reason: " + a.getAbortionReason()
+                + " | Stage: " + a.getStageOfPregnancy()
                 + " | Expected Birth: " + a.getExpectedBirthDate();
     }
 
     private void resolveAndSetLivestock(LivestockAbortion abortion) {
         String idStr = abortion.getLivestockIdValue();
         if (idStr != null && !idStr.isEmpty()) {
-            Livestock ls = livestockRepository.findById(UUID.fromString(idStr))
-                    .orElseThrow(() -> new RuntimeException("Livestock not found"));
-            abortion.setLivestock(ls);
+            try {
+                Livestock ls = livestockRepository.findById(UUID.fromString(idStr))
+                        .orElseThrow(() -> new RuntimeException("Livestock not found with ID: " + idStr));
+                abortion.setLivestock(ls);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Invalid livestock ID format: " + idStr, e);
+            }
         }
     }
 

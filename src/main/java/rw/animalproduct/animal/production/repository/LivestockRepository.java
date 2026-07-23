@@ -38,12 +38,24 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
     Optional<Livestock> findByTagNumber(String tagNumber);
 
+    // ── ✅ ADDED: live-search for the Animal(Tag) picker ───────────────────────
+    // Written as an explicit @Query (not a derived findByTagNumber...IsDeletedFalse
+    // method name) to match this repository's existing convention: isDeleted can
+    // be NULL on older rows, so every other query here checks
+    // "(l.isDeleted = false OR l.isDeleted IS NULL)" instead of relying on a
+    // derived-name IsDeletedFalse clause, which would silently exclude those
+    // NULL rows. This is what LivestockSearchController.search() calls.
+    @Query("SELECT l FROM Livestock l " +
+            "WHERE (l.isDeleted = false OR l.isDeleted IS NULL) " +
+            "AND LOWER(l.tagNumber) LIKE LOWER(CONCAT('%', :tagQuery, '%')) " +
+            "ORDER BY l.tagNumber ASC")
+    List<Livestock> searchByTagNumber(@Param("tagQuery") String tagQuery, Pageable pageable);
+
     // ── Category and Beneficiary queries ──────────────────────────────────────
 
     @Query("SELECT l FROM Livestock l WHERE l.livestockCategory.id = :categoryId AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByLivestockCategoryId(@Param("categoryId") UUID categoryId);
 
-    // ── NEW: Category query with isDeleted flag ───────────────────────────────
     @Query("SELECT l FROM Livestock l WHERE l.livestockCategory.id = :categoryId AND l.isDeleted = false")
     List<Livestock> findByLivestockCategoryIdAndIsDeletedFalse(@Param("categoryId") UUID categoryId);
 
@@ -97,7 +109,6 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     @Query("SELECT l FROM Livestock l WHERE l.status = :status AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     List<Livestock> findByStatus(@Param("status") String status);
 
-    // ── NEW: Status query with isDeleted flag ─────────────────────────────────
     @Query("SELECT l FROM Livestock l WHERE l.status = :status AND l.isDeleted = false")
     List<Livestock> findByStatusAndIsDeletedFalse(@Param("status") String status);
 

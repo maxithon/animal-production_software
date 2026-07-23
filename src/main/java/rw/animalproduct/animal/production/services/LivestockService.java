@@ -28,19 +28,24 @@ public class LivestockService {
     private final AuditLogService auditLogService;
     private final LivestockValuationService valuationService; // FAO-standard valuation history
 
+    // NEW: needed so update() can notify on every change, not just registration.
+    private final LifecycleEmailService emailService;
+
     @Autowired
     public LivestockService(LivestockRepository livestockRepository,
                             LivestockCategoryRepository livestockCategoryRepository,
                             BeneficiaryRepository beneficiaryRepository,
                             LocationRepository locationRepository,
                             AuditLogService auditLogService,
-                            LivestockValuationService valuationService) {
+                            LivestockValuationService valuationService,
+                            LifecycleEmailService emailService) {
         this.livestockRepository = livestockRepository;
         this.livestockCategoryRepository = livestockCategoryRepository;
         this.beneficiaryRepository = beneficiaryRepository;
         this.locationRepository = locationRepository;
         this.auditLogService = auditLogService;
         this.valuationService = valuationService;
+        this.emailService = emailService;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -136,6 +141,12 @@ public class LivestockService {
                 "New animal registered"
         );
 
+        // NOTE: the "new animal registered" email is sent from
+        // LivestockController.register() via emailService.sendAnimalRegisteredNotification(saved).
+        // It stays there (not here) because that's the single entry point for
+        // manual registration and already wraps the call in a try/catch so a
+        // mail failure never blocks registration.
+
         return saved;
     }
 
@@ -143,6 +154,20 @@ public class LivestockService {
     // UPDATE
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * FAO STANDARD — TRACEABILITY:
+     * Every field change to an animal record must be traceable, not just
+     * logged silently to an audit table. This method now:
+     *   1. Snapshots every tracked, human-meaningful field BEFORE mutation.
+     *   2. Applies the update exactly as before (unchanged logic).
+     *   3. Snapshots the same fields AFTER save.
+     *   4. Diffs the two snapshots and, if anything actually changed,
+     *      sends a single "Animal Updated" email listing every changed
+     *      field as old → new. No-op saves (nothing actually different)
+     *      never trigger an email — avoids notification fatigue.
+     * The email is best-effort: a mail failure never blocks the update
+     * itself or bubbles up to the caller.
+     */
     @Transactional
     public Livestock update(UUID id, Livestock updated) {
         Livestock existing = livestockRepository.findById(id)
@@ -152,6 +177,10 @@ public class LivestockService {
                 + " | Status: " + existing.getStatus()
                 + " | Gender: " + existing.getGender()
                 + " | Value: " + existing.getCurrentValue();
+
+        // NEW: capture full field snapshot BEFORE any mutation, for the
+        // change-notification email (separate from the short audit string above).
+        Map<String, String> beforeFields = snapshotFields(existing);
 
         existing.setTagNumber(updated.getTagNumber());
         existing.setGender(updated.getGender());
@@ -209,6 +238,20 @@ public class LivestockService {
                 newSnapshot,
                 "Livestock record updated"
         );
+
+        // NEW: diff full field snapshots and email only if something
+        // meaningful actually changed.
+        Map<String, String> afterFields = snapshotFields(saved);
+        Map<String, String[]> changes = diffFields(beforeFields, afterFields);
+
+        if (!changes.isEmpty()) {
+            try {
+                emailService.sendAnimalUpdatedNotification(saved, changes, getCurrentUsername());
+            } catch (Exception emailEx) {
+                // Never let a mail failure fail the update itself.
+                // LifecycleEmailService already logs its own errors internally.
+            }
+        }
 
         return saved;
     }
@@ -435,6 +478,65 @@ public class LivestockService {
         } catch (Exception e) {
             return "system";
         }
+    }
+
+    /**
+     * NEW: takes a snapshot of every human-meaningful, trackable field on a
+     * Livestock record as display-ready strings. Used before AND after an
+     * update() call so the two snapshots can be diffed to build the
+     * "what actually changed" email. Intentionally excludes currentValue —
+     * that field has its own dedicated valuation-history email flow via
+     * LivestockValuationService, so including it here would double-notify.
+     */
+    private Map<String, String> snapshotFields(Livestock l) {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("Tag Number", l.getTagNumber());
+        m.put("Status", l.getStatus());
+        m.put("Gender", l.getGender());
+        m.put("Category", l.getLivestockCategory() != null ? l.getLivestockCategory().getName() : null);
+        m.put("Beneficiary", l.getBeneficiary() != null
+                ? (nullToEmpty(l.getBeneficiary().getFirstName()) + " " + nullToEmpty(l.getBeneficiary().getLastName())).trim()
+                : null);
+        m.put("Location", l.getLocation() != null ? l.getLocation().getName() : null);
+        m.put("Acquisition Method", l.getAcquisitionMethod());
+        m.put("Acquisition Source", l.getAcquisitionSource());
+        m.put("Date Received", l.getDateReceived() != null ? l.getDateReceived().toString() : null);
+        m.put("Birth Date", l.getBirthDate() != null ? l.getBirthDate().toString() : null);
+        m.put("Last Birth Date", l.getLastBirthDate() != null ? l.getLastBirthDate().toString() : null);
+        m.put("Offspring Count", l.getOffspringCount() != null ? l.getOffspringCount().toString() : null);
+        m.put("Is Pregnant", l.getIsPregnant() != null ? (l.getIsPregnant() ? "Yes" : "No") : null);
+        m.put("Pregnancy Status", l.getPregnancyStatus());
+        m.put("Conception Date", l.getConceptionDate() != null ? l.getConceptionDate().toString() : null);
+        m.put("First Breeding Date", l.getFirstBreedingDate() != null ? l.getFirstBreedingDate().toString() : null);
+        m.put("Last Breeding Date", l.getLastBreedingDate() != null ? l.getLastBreedingDate().toString() : null);
+        m.put("Expected Due Date", l.getExpectedDueDate() != null ? l.getExpectedDueDate().toString() : null);
+        m.put("Insemination Method", l.getInseminationMethod());
+        m.put("Sold Price", l.getSoldPrice() != null ? l.getSoldPrice().toPlainString() + " RWF" : null);
+        return m;
+    }
+
+    private String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
+
+    /**
+     * NEW: compares two field snapshots produced by snapshotFields() and
+     * returns only the fields that actually differ, as
+     * label -> {oldValue, newValue}. Fields that are blank/null on both
+     * sides are treated as unchanged (avoids "changed" noise from
+     * null → "" type mismatches).
+     */
+    private Map<String, String[]> diffFields(Map<String, String> before, Map<String, String> after) {
+        Map<String, String[]> changes = new LinkedHashMap<>();
+        for (String key : before.keySet()) {
+            String oldVal = before.get(key);
+            String newVal = after.get(key);
+            boolean bothBlank = (oldVal == null || oldVal.isBlank()) && (newVal == null || newVal.isBlank());
+            if (!bothBlank && !Objects.equals(oldVal, newVal)) {
+                changes.put(key, new String[]{oldVal, newVal});
+            }
+        }
+        return changes;
     }
 
     public static String buildAcquisitionSource(String acquisitionMethod,

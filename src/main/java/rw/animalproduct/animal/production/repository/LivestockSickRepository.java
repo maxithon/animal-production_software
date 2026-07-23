@@ -1,5 +1,7 @@
 package rw.animalproduct.animal.production.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -57,6 +59,49 @@ public interface LivestockSickRepository extends JpaRepository<LivestockSick, UU
      * Get all non-deleted sick records ordered by reported date
      */
     List<LivestockSick> findByIsDeletedFalseOrderByReportedDateDesc();
+
+    /**
+     * ✅ ADDED: Pageable version of the query above.
+     *
+     * WHY: findByIsDeletedFalseOrderByReportedDateDesc() (no arguments) pulls
+     * EVERY non-deleted sick record into memory in one shot — fine at a few
+     * hundred rows, but it's the thing that will eventually make the Sick
+     * Livestock page slow to load as your data grows, the same way the old
+     * Animal(Tag) <select> was slow. This overload lets the controller ask
+     * for one page at a time instead.
+     *
+     * Example controller usage:
+     *   Pageable pageable = PageRequest.of(page, size, Sort.by("reportedDate").descending());
+     *   Page<LivestockSick> result = sickRepository.findByIsDeletedFalse(pageable);
+     *   model.addAttribute("sickRecords", result.getContent());
+     *   model.addAttribute("totalPages", result.getTotalPages());
+     *   model.addAttribute("currentPage", page);
+     */
+    Page<LivestockSick> findByIsDeletedFalse(Pageable pageable);
+
+    /**
+     * ✅ ADDED: One query that covers the list page's three filters
+     * (status, severity, animal-tag search) AND pagination together, run in
+     * the database instead of in the browser. Pass null for any filter you
+     * don't want applied — e.g. searchActive(null, null, "GOA", pageable)
+     * searches only by tag.
+     *
+     * This is what you'd swap the controller over to if/when the client-side
+     * JS filtering + pagination on the list page starts to feel slow with a
+     * large herd — it currently still loads the full active list into the
+     * page and paginates in JS, which is fine for a few hundred rows but not
+     * indefinitely.
+     */
+    @Query("SELECT s FROM LivestockSick s " +
+            "WHERE s.isDeleted = false " +
+            "AND (:status IS NULL OR s.status = :status) " +
+            "AND (:severity IS NULL OR s.severityLevel = :severity) " +
+            "AND (:tagQuery IS NULL OR LOWER(s.livestock.tagNumber) LIKE LOWER(CONCAT('%', :tagQuery, '%'))) " +
+            "ORDER BY s.reportedDate DESC")
+    Page<LivestockSick> searchActive(@Param("status") LivestockSick.SickStatus status,
+                                     @Param("severity") LivestockSick.SeverityLevel severity,
+                                     @Param("tagQuery") String tagQuery,
+                                     Pageable pageable);
 
     /**
      * Count sick animals by status

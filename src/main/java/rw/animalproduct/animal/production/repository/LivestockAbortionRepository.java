@@ -3,28 +3,58 @@ package rw.animalproduct.animal.production.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.LivestockAbortion;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+@Repository
 public interface LivestockAbortionRepository extends JpaRepository<LivestockAbortion, UUID> {
 
-    List<LivestockAbortion> findByLivestockId(UUID livestockId);
+    // ── All non-deleted abortions ───────────────────────────────────────
+    @Query("SELECT a FROM LivestockAbortion a WHERE a.isDeleted = false OR a.isDeleted IS NULL ORDER BY a.abortionDate DESC")
+    List<LivestockAbortion> findByIsDeletedFalseOrderByAbortionDateDesc();
 
-    List<LivestockAbortion> findByAbortionDateBetween(LocalDate start, LocalDate end);
+    // ── By livestock ────────────────────────────────────────────────────
+    @Query("SELECT a FROM LivestockAbortion a WHERE a.livestock.id = :livestockId AND (a.isDeleted = false OR a.isDeleted IS NULL) ORDER BY a.abortionDate DESC")
+    List<LivestockAbortion> findByLivestockIdAndIsDeletedFalseOrderByAbortionDateDesc(@Param("livestockId") UUID livestockId);
 
-    List<LivestockAbortion> findByLivestockIdAndIsDeletedFalse(UUID livestockId);
+    // ── Count by livestock ──────────────────────────────────────────────
+    @Query("SELECT COUNT(a) FROM LivestockAbortion a WHERE a.livestock.id = :livestockId AND (a.isDeleted = false OR a.isDeleted IS NULL)")
+    long countByLivestockIdAndIsDeletedFalse(@Param("livestockId") UUID livestockId);
 
-    @Query("SELECT a FROM LivestockAbortion a WHERE a.isDeleted = false ORDER BY a.abortionDate DESC")
-    List<LivestockAbortion> findAllActive();
+    // ── Abortions in a date range ──────────────────────────────────────
+    @Query("""
+           SELECT a FROM LivestockAbortion a
+           WHERE (a.isDeleted = false OR a.isDeleted IS NULL)
+             AND a.abortionDate >= :from
+             AND a.abortionDate <= :to
+           ORDER BY a.abortionDate DESC
+           """)
+    List<LivestockAbortion> findByAbortionDateBetween(
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
 
-    long countByAbortionDateBetween(LocalDate start, LocalDate end);
+    // ── Count abortions this month ─────────────────────────────────────
+    @Query("""
+           SELECT COUNT(a) FROM LivestockAbortion a
+           WHERE (a.isDeleted = false OR a.isDeleted IS NULL)
+             AND YEAR(a.abortionDate) = YEAR(CURRENT_DATE)
+             AND MONTH(a.abortionDate) = MONTH(CURRENT_DATE)
+           """)
+    long countAbortionsThisMonth();
 
-    long countByLivestockIdAndIsDeletedFalse(UUID livestockId);
+    // ── Find by stage of pregnancy ──────────────────────────────────────
+    @Query("SELECT a FROM LivestockAbortion a WHERE a.stageOfPregnancy = :stage AND (a.isDeleted = false OR a.isDeleted IS NULL)")
+    List<LivestockAbortion> findByStageOfPregnancyAndIsDeletedFalse(@Param("stage") String stage);
 
-    // Fixed: Using abortionDate instead of expectedBirthDate
-    @Query("SELECT a FROM LivestockAbortion a WHERE a.abortionDate >= :date AND a.isDeleted = false ORDER BY a.abortionDate ASC")
-    List<LivestockAbortion> findUpcomingExpectedBirths(@Param("date") LocalDate date);
+    // ── Find by reason containing text ──────────────────────────────────
+    @Query("""
+           SELECT a FROM LivestockAbortion a
+           WHERE (a.isDeleted = false OR a.isDeleted IS NULL)
+             AND LOWER(a.abortionReason) LIKE LOWER(CONCAT('%', :keyword, '%'))
+           """)
+    List<LivestockAbortion> findByReasonContaining(@Param("keyword") String keyword);
 }

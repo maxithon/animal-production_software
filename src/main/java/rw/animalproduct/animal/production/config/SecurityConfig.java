@@ -21,18 +21,35 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/email-diagnostic/**").permitAll()  // ← ADDED
+                        .requestMatchers("/email-diagnostic/**").permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**").permitAll()
                         .requestMatchers("/", "/login").permitAll()
                         .requestMatchers("/api/upload/**").authenticated()
                         .requestMatchers("/api/locations/**").authenticated()
                         .requestMatchers("/register", "/register/new").hasRole("ADMIN")
                         .requestMatchers("/users/**").hasRole("ADMIN")
-                        .requestMatchers("/representatives/**").hasAnyRole("ADMIN", "REGULAR_USER")
-                        .requestMatchers("/beneficiaries/**").hasAnyRole("ADMIN", "REGULAR_USER")
-                        .requestMatchers("/livestock/**").hasAnyRole("ADMIN", "REGULAR_USER")
+
+                        // ── NEW: admin-only settings sub-areas. Must come
+                        // BEFORE the broader "/settings/**" rule below, same
+                        // ordering convention already used for /users/** vs
+                        // the general rules — Spring Security uses the FIRST
+                        // matching rule, so specific-before-general matters.
+                        .requestMatchers("/settings/module-assignment/**").hasRole("ADMIN")
+                        .requestMatchers("/settings/manage-users/**").hasRole("ADMIN")
+                        // profile / change-password stay open to any logged-in user
+                        .requestMatchers("/settings/**").authenticated()
+
+                        // ── CHANGED: added VETERINARIAN alongside your
+                        // existing roles so the new user type can actually
+                        // reach these areas. Without this, a Veterinarian
+                        // account authenticates fine but gets a 403 on
+                        // every page — the dynamic menu can show a link,
+                        // but Spring Security still has the final say.
+                        .requestMatchers("/representatives/**").hasAnyRole("ADMIN", "REGULAR_USER", "VETERINARIAN")
+                        .requestMatchers("/beneficiaries/**").hasAnyRole("ADMIN", "REGULAR_USER", "VETERINARIAN")
+                        .requestMatchers("/livestock/**").hasAnyRole("ADMIN", "REGULAR_USER", "VETERINARIAN")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/user/**").hasAnyRole("ADMIN", "REGULAR_USER")
+                        .requestMatchers("/user/**").hasAnyRole("ADMIN", "REGULAR_USER", "VETERINARIAN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -58,7 +75,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
                                 "/api/upload/**",
-                                "/email-diagnostic/**",               // ← ADDED
+                                "/email-diagnostic/**",
                                 "/livestock/lifecycle/test-newborn",
                                 "/livestock/lifecycle/test-ready-to-breed",
                                 "/livestock/lifecycle/test-due-soon",

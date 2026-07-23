@@ -63,6 +63,33 @@
         .pg-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-color: #667eea; }
         .pg-btn.disabled { opacity: 0.4; pointer-events: none; }
         .page-size-select { padding: 6px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.82rem; cursor: pointer; background: white; }
+
+        /*
+        ═══════════════════════════════════════════════════════════════════
+        NEW: clickable stat-card styling. Applied to the anchor wrapping
+        the "Ready to Breed" card so it reads as an actionable link rather
+        than a static counter — hover lift + a "Record →" affordance that
+        fades in, without disturbing the visual layout of the other cards.
+        ═══════════════════════════════════════════════════════════════════
+        */
+        .stat-card-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            position: relative;
+        }
+        .stat-card-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.18) !important;
+        }
+        .stat-card-link:hover .stat-card-cta { opacity: 1; }
+        .stat-card-cta {
+            font-size: 0.62rem; font-weight: 700; color: #7c3aed;
+            opacity: 0; transition: opacity 0.15s ease;
+            margin-top: 2px; display: flex; align-items: center; gap: 2px;
+        }
     </style>
 </head>
 <body>
@@ -102,14 +129,30 @@
             </div>
         </div>
 
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #a78bfa; display:flex; align-items:center; gap:12px; min-width:160px;">
+        <!--
+        ═══════════════════════════════════════════════════════════════════
+        FIX: "Ready to Breed" is now a real link. It points to
+        /livestock/lifecycle/breeding-management — the page that actually
+        lists ready females/males grouped by category and lets you act on
+        them — rather than a blank breeding form with nothing pre-selected.
+        Card markup/visuals are unchanged; only wrapped in <a> plus a small
+        "Record →" hint that appears on hover.
+        ═══════════════════════════════════════════════════════════════════
+        -->
+        <a th:href="@{/livestock/lifecycle/breeding-management}"
+           class="stat-card-link"
+           title="View animals ready to breed and record a breeding event"
+           style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #a78bfa; align-items:center; gap:12px; min-width:160px;">
             <div style="background:#ede9fe; color:#7c3aed; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-heart-arrow"></i></div>
             <div>
                 <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Ready to Breed</div>
                 <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['READY_TO_BREED'] != null ? lifecycleStats['READY_TO_BREED'] : 0}">0</div>
                 <div style="font-size:0.68rem; color:#94a3b8;">Female 12+ months</div>
+                <div class="stat-card-cta">
+                    <i class="bi bi-arrow-right-circle-fill"></i> Record breeding
+                </div>
             </div>
-        </div>
+        </a>
 
         <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #3b82f6; display:flex; align-items:center; gap:12px; min-width:160px;">
             <div style="background:#dbeafe; color:#1d4ed8; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-gender-male"></i></div>
@@ -375,6 +418,17 @@
                         <a th:href="@{/livestock/edit/{id}(id=${animal.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
+                        </a>
+                        <!--
+                        NEW: for a female that's currently READY_TO_BREED, add a
+                        direct one-click shortcut into the breeding form with her
+                        already selected via ?livestockId=, instead of forcing a
+                        second lookup on the registration page.
+                        -->
+                        <a th:if="${animal.lifecycleStage == 'READY_TO_BREED'}"
+                           th:href="@{/livestock/breeding/register(livestockId=${animal.id})}"
+                           class="btn btn-sm btn-outline-danger" title="Record Breeding">
+                            <i class="bi bi-heart-fill"></i>
                         </a>
                     </td>
                 </tr>

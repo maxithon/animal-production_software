@@ -480,6 +480,14 @@
             .main-content{margin-left:0!important;padding:0!important;}
             .view{display:block!important;}
         }
+        .submenu-group-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #9aa1ac;
+    padding: 10px 16px 4px;
+    font-weight: 700;
+}
     </style>
 </head>
 <body>
@@ -511,21 +519,56 @@
         </div>
 
         <div class="nav-section-label">People</div>
+<!--        <div class="nav-item">-->
+<!--            <button class="nav-btn" onclick="toggleSub('people',this)">-->
+<!--                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-people-fill"></i></div>People</div>-->
+<!--                <i class="bi bi-chevron-right arrow"></i>-->
+<!--            </button>-->
+<!--            <div class="submenu" id="submenu-people">-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/representatives/register')"><i class="bi bi-person-plus-fill"></i>Register Rep.</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/representatives/list')"><i class="bi bi-list-ul"></i>All Representatives</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/beneficiaries/register')"><i class="bi bi-person-plus"></i>Register Beneficiary</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/beneficiaries/list')"><i class="bi bi-list-ul"></i>All Beneficiaries</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/buyers')"><i class="bi bi-cart3"></i>Buyers</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/veterinarians')"><i class="bi bi-heart-pulse"></i>Veterinarians</a>-->
+<!--            </div>-->
+<!--        </div>-->
         <div class="nav-item">
-            <button class="nav-btn" onclick="toggleSub('people',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-people-fill"></i></div>People</div>
+            <button class="nav-btn" onclick="toggleSub('representatives',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
-            <div class="submenu" id="submenu-people">
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/representatives/register')"><i class="bi bi-person-plus-fill"></i>Register Rep.</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/representatives/list')"><i class="bi bi-list-ul"></i>All Representatives</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/beneficiaries/register')"><i class="bi bi-person-plus"></i>Register Beneficiary</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/beneficiaries/list')"><i class="bi bi-list-ul"></i>All Beneficiaries</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/buyers')"><i class="bi bi-cart3"></i>Buyers</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/veterinarians')"><i class="bi bi-heart-pulse"></i>Veterinarians</a>
+            <div class="submenu" id="submenu-representatives">
+                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
             </div>
         </div>
-
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('beneficiaries',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-beneficiaries">
+                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+            </div>
+        </div>
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('buyers',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-buyers">
+                <a th:href="@{/buyers}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View Buyers</a>
+            </div>
+        </div>
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('veterinarians',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-heart-pulse"></i></div>Veterinarians</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-veterinarians">
+                <a th:href="@{/veterinarians}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
+            </div>
+        </div>
         <div class="nav-section-label">Livestock</div>
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('livestock',this)">
@@ -545,9 +588,9 @@
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/lifecycle/notifications')"><i class="bi bi-bell-fill"></i>Notifications</a>
                 <div class="sub-divider"><span>Events</span></div>
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/births/list')"><i class="bi bi-stars"></i>Births</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/treatments')"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/medications')"><i class="bi bi-capsule-fill"></i>Medications</a>
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sick')"><i class="bi bi-bandaid-fill"></i>Sick Animals</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/treatments')"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/abortions')"><i class="bi bi-exclamation-triangle-fill"></i>Abortions</a>
                 <div class="sub-divider"><span>Exit</span></div>
                 <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sales')"><i class="bi bi-cash-stack"></i>Sales</a>
@@ -598,14 +641,53 @@
                 <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-journal-text"></i></div>Audit Log</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
+<!--            <div class="submenu" id="submenu-auditlog">-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list')"><i class="bi bi-list-ul"></i>All Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_birth')"><i class="bi bi-stars"></i>Birth Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock')"><i class="bi bi-box2-heart"></i>Livestock Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sick')"><i class="bi bi-bandaid-fill"></i>Sick Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_breeding')"><i class="bi bi-heart-fill"></i>Breeding Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sale')"><i class="bi bi-cash-stack"></i>Sales Logs</a>-->
+<!--                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_death')"><i class="bi bi-x-circle-fill"></i>Death Logs</a>-->
+<!--            </div>-->
             <div class="submenu" id="submenu-auditlog">
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list')"><i class="bi bi-list-ul"></i>All Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_birth')"><i class="bi bi-stars"></i>Birth Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock')"><i class="bi bi-box2-heart"></i>Livestock Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sick')"><i class="bi bi-bandaid-fill"></i>Sick Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_breeding')"><i class="bi bi-heart-fill"></i>Breeding Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sale')"><i class="bi bi-cash-stack"></i>Sales Logs</a>
-                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_death')"><i class="bi bi-x-circle-fill"></i>Death Logs</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list')">
+                    <i class="bi bi-list-ul"></i>All Logs
+                </a>
+
+                <div class="submenu-group-label">Master Data</div>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=representative')">
+                    <i class="bi bi-person-badge"></i>Representative Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=beneficiary')">
+                    <i class="bi bi-people"></i>Beneficiary Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=buyer')">
+                    <i class="bi bi-cart-check"></i>Buyer Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=veterinarian')">
+                    <i class="bi bi-person-vcard"></i>Veterinarian Logs
+                </a>
+
+                <div class="submenu-group-label">Livestock</div>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_birth')">
+                    <i class="bi bi-stars"></i>Birth Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock')">
+                    <i class="bi bi-box2-heart"></i>Livestock Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sick')">
+                    <i class="bi bi-bandaid-fill"></i>Sick Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_breeding')">
+                    <i class="bi bi-heart-fill"></i>Breeding Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_sale')">
+                    <i class="bi bi-cash-stack"></i>Sales Logs
+                </a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/audit-log/list?entityType=livestock_death')">
+                    <i class="bi bi-x-circle-fill"></i>Death Logs
+                </a>
             </div>
         </div>
 

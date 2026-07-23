@@ -4,19 +4,18 @@
     <meta charset="UTF-8">
     <title>Livestock Sales</title>
     <!-- CSRF meta tags - required for Spring Security -->
-    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ===== Base / compact typography ===== */
         body {
             background: #f8f9fa;
             padding: 20px;
             font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem; /* ~14px, was browser default 16px */
+            font-size: 0.875rem;
         }
         .page-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .page-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; }
@@ -28,7 +27,6 @@
         .btn-sm { font-size: 0.75rem; }
         small { font-size: 0.75rem; }
 
-        /* ===== Summary stats (new) ===== */
         .summary-stats { margin-bottom: 20px; }
         .stat-card {
             background: #fff;
@@ -56,7 +54,6 @@
             text-transform: uppercase; letter-spacing: 0.04em;
         }
 
-        /* ===== Add form ===== */
         .add-form-section {
             background: #fff8e1; border-left: 4px solid #ffc107;
             border-radius: 10px; padding: 18px; margin-bottom: 22px;
@@ -77,7 +74,6 @@
         .buyer-icon { font-size: 0.72rem; flex-shrink: 0; color: #64748b; }
         .buyer-none { color: #94a3b8; font-style: italic; font-size: 0.74rem; }
 
-        /* ===== Live search ===== */
         .buyer-search-container { position: relative; }
         .buyer-search-results {
             position: absolute; top: 100%; left: 0; right: 0;
@@ -121,7 +117,6 @@
         }
         .clear-buyer-btn:hover { background: #fee2e2; }
 
-        /* ===== Table ===== */
         .table { font-size: 0.82rem; }
         .table thead th {
             font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
@@ -129,6 +124,23 @@
         }
         .table td, .table th { padding: 0.55rem 0.65rem; vertical-align: middle; }
         .badge { font-size: 0.7rem; font-weight: 600; }
+
+        .pagination .page-link {
+            font-size: 0.8rem;
+            padding: 0.35rem 0.7rem;
+        }
+        .pagination .active .page-link {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .sort-link {
+            text-decoration: none;
+            color: #212529;
+        }
+        .sort-link:hover {
+            color: #0d6efd;
+        }
     </style>
 </head>
 <body>
@@ -155,11 +167,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- -- Quick Summary (new) ------------------------------------------ -->
-    <!-- Computed directly from the 'sales' list already passed to this view,
-         so no controller change is required. If you'd rather compute these
-         server-side (recommended once the list grows large), move this logic
-         into the controller and pass plain model attributes instead. -->
+    <!-- Quick Summary -->
     <div class="row g-2 summary-stats"
          th:with="totalCount=${sales.size()},
                    totalRevenue=${sales.isEmpty() ? 0 : #aggregates.sum(sales.![salePrice ?: 0])},
@@ -204,17 +212,14 @@
             </div>
         </div>
     </div>
-    <!-- -- End Quick Summary --------------------------------------------- -->
 
-    <!-- -- Add Sale Form ---------------------------------------------- -->
+    <!-- Add Sale Form -->
     <div class="add-form-section">
         <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Sale</h5>
         <form th:action="@{/livestock/sales/new}" th:object="${sale}" method="post" id="saleForm">
 
-            <!-- CSRF hidden field for the main form -->
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-            <!-- Row 1: Animal, Date, Price, Location, Reason -->
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">Animal (Tag) *</label>
@@ -266,14 +271,11 @@
                                    placeholder="Type buyer name, phone, or ID..."
                                    autocomplete="off">
 
-                            <!-- Hidden input for buyer ID -->
                             <input type="hidden" th:field="*{buyerIdValue}" id="buyerIdField">
 
-                            <!-- Search Results Dropdown -->
                             <div class="buyer-search-results" id="buyerSearchResults"></div>
                         </div>
 
-                        <!-- Selected Buyer Display -->
                         <div class="selected-buyer-display" id="selectedBuyerDisplay">
                             <div class="selected-buyer-info">
                                 <div class="selected-buyer-name" id="selectedBuyerName"></div>
@@ -286,7 +288,6 @@
                     </div>
                 </div>
 
-                <!-- Add New Buyer Fields (hidden initially) -->
                 <div id="newBuyerFields" class="mt-3">
                     <hr class="my-3">
                     <h6 class="text-success mb-3" style="font-size:0.85rem;"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
@@ -310,7 +311,6 @@
                         </div>
                     </div>
                     <div class="mt-3">
-                        <!-- type="button" is critical — prevents form submit -->
                         <button type="button" class="btn btn-success btn-sm" id="saveNewBuyerBtn">
                             <i class="bi bi-check-circle"></i> Save Buyer
                         </button>
@@ -321,7 +321,6 @@
                 </div>
             </div>
 
-            <!-- Submit -->
             <div class="mt-3 d-flex justify-content-end">
                 <button type="submit" class="btn btn-warning px-4">
                     <i class="bi bi-plus-circle me-1"></i> Record Sale
@@ -329,18 +328,60 @@
             </div>
         </form>
     </div>
-    <!-- -- End Add Sale Form ------------------------------------------ -->
 
-    <!-- -- Sales Table ------------------------------------------------ -->
+    <!-- Search Bar -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="get" action="/livestock/sales" class="d-flex gap-2">
+                <input type="hidden" name="size" th:value="${pageSize}"/>
+                <input type="hidden" name="sort" th:value="${sort}"/>
+                <input type="hidden" name="direction" th:value="${direction}"/>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Search by tag, location, reason..."
+                       th:value="${search}"/>
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <a th:if="${search != null and !search.isEmpty()}"
+                   th:href="@{/livestock/sales(page=0, size=${pageSize}, sort=${sort}, direction=${direction})}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sales Table -->
     <div class="table-responsive">
         <table class="table table-hover align-middle">
             <thead class="table-light">
             <tr>
                 <th>#</th>
-                <th>Animal Tag</th>
+                <th>
+                    <a th:href="@{/livestock/sales(page=${currentPage}, size=${pageSize}, search=${search}, sort='livestock.tagNumber', direction=${direction == 'asc' ? 'desc' : 'asc'})}"
+                       class="sort-link">
+                        Animal Tag
+                        <i th:if="${sort == 'livestock.tagNumber' and direction == 'asc'}" class="bi bi-arrow-up"></i>
+                        <i th:if="${sort == 'livestock.tagNumber' and direction == 'desc'}" class="bi bi-arrow-down"></i>
+                    </a>
+                </th>
                 <th>Category</th>
-                <th>Sale Date</th>
-                <th>Price (RWF)</th>
+                <th>
+                    <a th:href="@{/livestock/sales(page=${currentPage}, size=${pageSize}, search=${search}, sort='saleDate', direction=${direction == 'asc' ? 'desc' : 'asc'})}"
+                       class="sort-link">
+                        Sale Date
+                        <i th:if="${sort == 'saleDate' and direction == 'asc'}" class="bi bi-arrow-up"></i>
+                        <i th:if="${sort == 'saleDate' and direction == 'desc'}" class="bi bi-arrow-down"></i>
+                    </a>
+                </th>
+                <th>
+                    <a th:href="@{/livestock/sales(page=${currentPage}, size=${pageSize}, search=${search}, sort='salePrice', direction=${direction == 'asc' ? 'desc' : 'asc'})}"
+                       class="sort-link">
+                        Price (RWF)
+                        <i th:if="${sort == 'salePrice' and direction == 'asc'}" class="bi bi-arrow-up"></i>
+                        <i th:if="${sort == 'salePrice' and direction == 'desc'}" class="bi bi-arrow-down"></i>
+                    </a>
+                </th>
                 <th>Location</th>
                 <th>Reason</th>
                 <th>Buyer</th>
@@ -348,13 +389,20 @@
             </tr>
             </thead>
             <tbody>
+            <tr th:if="${sales.empty}">
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="bi bi-currency-dollar fs-2 d-block mb-2"></i>
+                    No sales recorded yet.
+                </td>
+            </tr>
             <tr th:each="s, i : ${sales}">
-                <td th:text="${i.count}"></td>
+                <td th:text="${salePage.number * salePage.size + i.index + 1}"></td>
                 <td><strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></strong></td>
                 <td>
                     <span th:if="${s.livestock?.livestockCategory != null}"
                           class="badge bg-info"
                           th:text="${s.livestock.livestockCategory.name}"></span>
+                    <span th:if="${s.livestock?.livestockCategory == null}" class="text-muted">—</span>
                 </td>
                 <td th:text="${#temporals.format(s.saleDate, 'dd-MM-yyyy')}"></td>
                 <td>
@@ -370,7 +418,6 @@
                           th:text="${s.saleReason}"></span>
                     <span th:if="${s.saleReason == null}" class="text-muted">—</span>
                 </td>
-                <!-- Buyer Column -->
                 <td class="buyer-cell">
                     <div th:if="${s.buyer != null}">
                         <div class="buyer-row">
@@ -381,14 +428,9 @@
                             <i class="bi bi-telephone buyer-icon"></i>
                             <span th:text="${s.buyer.buyerPhone}"></span>
                         </div>
-                        <div class="buyer-row" th:if="${s.buyer.buyerNationalId}">
-                            <i class="bi bi-card-text buyer-icon"></i>
-                            <small th:text="${s.buyer.buyerNationalId}"></small>
-                        </div>
                     </div>
                     <span th:if="${s.buyer == null}" class="buyer-none">No buyer recorded</span>
                 </td>
-                <!-- Actions -->
                 <td>
                     <a th:href="@{/livestock/sales/edit/{id}(id=${s.id})}"
                        class="btn btn-sm btn-warning" title="Edit">
@@ -423,16 +465,76 @@
                     </div>
                 </td>
             </tr>
-            <tr th:if="${sales.empty}">
-                <td colspan="9" class="text-center text-muted py-4">
-                    <i class="bi bi-currency-dollar fs-2 d-block mb-2"></i>
-                    No sales recorded yet.
-                </td>
-            </tr>
             </tbody>
         </table>
     </div>
-    <!-- -- End Sales Table -------------------------------------------- -->
+
+    <!-- Pagination -->
+    <div th:if="${salePage != null and salePage.totalPages > 0}" class="d-flex justify-content-between align-items-center mt-4">
+        <div class="text-muted small">
+            Showing
+            <span th:text="${salePage.number * salePage.size + 1}">1</span>
+            to
+            <span th:text="${salePage.number * salePage.size + salePage.numberOfElements}">10</span>
+            of
+            <span th:text="${salePage.totalElements}">0</span>
+            entries
+        </div>
+
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${!salePage.hasPrevious()} ? 'disabled' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/sales(page=${currentPage - 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
+                       th:if="${salePage.hasPrevious()}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                    <span class="page-link" th:unless="${salePage.hasPrevious()}">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+
+                <li th:each="pageNum : ${pageNumbers}"
+                    th:with="isActive=${pageNum - 1 == currentPage}"
+                    class="page-item" th:classappend="${isActive} ? 'active' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/sales(page=${pageNum - 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
+                       th:text="${pageNum}"></a>
+                </li>
+
+                <li class="page-item" th:classappend="${!salePage.hasNext()} ? 'disabled' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/sales(page=${currentPage + 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
+                       th:if="${salePage.hasNext()}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <span class="page-link" th:unless="${salePage.hasNext()}">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Page size selector -->
+    <div class="d-flex justify-content-between align-items-center mt-2">
+        <div>
+            <label class="text-muted small me-2">Rows per page:</label>
+            <select class="form-select form-select-sm d-inline-block w-auto"
+                    onchange="window.location.href=this.value">
+                <option value="/livestock/sales?page=0&size=5&search=&sort=saleDate&direction=desc" th:selected="${pageSize == 5}">5</option>
+                <option value="/livestock/sales?page=0&size=10&search=&sort=saleDate&direction=desc" th:selected="${pageSize == 10}">10</option>
+                <option value="/livestock/sales?page=0&size=20&search=&sort=saleDate&direction=desc" th:selected="${pageSize == 20}">20</option>
+                <option value="/livestock/sales?page=0&size=50&search=&sort=saleDate&direction=desc" th:selected="${pageSize == 50}">50</option>
+            </select>
+        </div>
+        <div th:if="${search != null and !search.isEmpty()}" class="text-muted small">
+            <i class="bi bi-search"></i> Search: "<span th:text="${search}"></span>"
+            <a th:href="@{/livestock/sales(page=0, size=${pageSize}, sort=${sort}, direction=${direction})}" class="text-decoration-none ms-2">
+                <i class="bi bi-x-circle"></i> Clear
+            </a>
+        </div>
+    </div>
 
 </div></div>
 
@@ -441,7 +543,6 @@
     (function () {
         'use strict';
 
-        // -- Read CSRF token from meta tags (set by Thymeleaf/Spring Security) --
         const csrfToken  = document.querySelector('meta[name="_csrf"]')         ? document.querySelector('meta[name="_csrf"]').getAttribute('content')         : null;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')  ? document.querySelector('meta[name="_csrf_header"]').getAttribute('content')  : null;
 
@@ -458,7 +559,6 @@
 
         let searchTimeout;
 
-        // -- Live search ----------------------------------------------------------
         buyerSearchInput.addEventListener('input', function () {
             const query = this.value.trim();
             clearTimeout(searchTimeout);
@@ -503,7 +603,6 @@
                 });
             }
 
-            // Always show "Add New Buyer" option at the bottom
             const addNew = document.createElement('div');
             addNew.className = 'buyer-search-item buyer-add-new';
             addNew.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Buyer';
@@ -544,7 +643,6 @@
                 .forEach(id => document.getElementById(id).value = '');
         });
 
-        // -- Save new buyer via AJAX (with CSRF token) ----------------------------
         saveNewBuyerBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -562,7 +660,6 @@
             saveNewBuyerBtn.disabled = true;
             saveNewBuyerBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Saving...';
 
-            // Build headers — include CSRF token so Spring Security allows the POST
             const headers = { 'Content-Type': 'application/json' };
             if (csrfToken && csrfHeader) {
                 headers[csrfHeader] = csrfToken;
@@ -599,7 +696,6 @@
             });
         });
 
-        // -- Close dropdown when clicking outside --------------------------------
         document.addEventListener('click', function (e) {
             if (!e.target.closest('.buyer-search-container')) {
                 buyerSearchResults.classList.remove('show');

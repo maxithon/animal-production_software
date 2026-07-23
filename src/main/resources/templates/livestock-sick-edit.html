@@ -11,7 +11,33 @@
         .edit-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .section-divider { font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.1em; color:#94a3b8; margin:20px 0 10px; padding-bottom:6px; border-bottom:1px solid #f0f2f5; }
 
-        /* ── Vet live-search widget ── */
+        /* ── generic entity live-search widget (Animal + Vet) ── */
+        .entity-search-wrapper { position: relative; }
+        .entity-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: #fff; border: 1.5px solid #4299e1; border-top: none;
+            border-radius: 0 0 8px 8px; z-index: 1055; max-height: 220px;
+            overflow-y: auto; display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .entity-dd-item {
+            padding: 9px 14px; cursor: pointer; font-size: .88rem;
+            border-bottom: 1px solid #f0f4f8; transition: background .12s;
+        }
+        .entity-dd-item:last-child { border-bottom: none; }
+        .entity-dd-item:hover { background: #ebf4ff; }
+        .entity-dd-item .en  { font-weight: 600; color: #2d3748; }
+        .entity-dd-item .em  { font-size: .77rem; color: #718096; }
+        .entity-dd-no-result { padding: 9px 14px; color: #a0aec0; font-size: .85rem; }
+        .entity-selected-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #ebf4ff; border: 1px solid #bee3f8;
+            border-radius: 20px; padding: 4px 10px 4px 12px;
+            font-size: .85rem; color: #2b6cb0; font-weight: 600; margin-top: 6px;
+        }
+        .entity-selected-chip .rmv { cursor: pointer; color: #63b3ed; font-size: 1rem; line-height: 1; }
+        .entity-selected-chip .rmv:hover { color: #c53030; }
+
         .vet-search-wrapper { position: relative; }
         .vet-dropdown {
             position: absolute; top: 100%; left: 0; right: 0;
@@ -53,16 +79,23 @@
             <!-- ── Animal & Status ── -->
             <div class="section-divider"><i class="bi bi-clipboard2-pulse me-1"></i> Animal &amp; Status</div>
             <div class="row g-3">
+                <!-- ✅ REPLACED plain <select th:each="ls : ${livestockList}"> with the
+                     same live-search widget used on the list page. Editing a record no
+                     longer has to load every animal in the herd into a dropdown just to
+                     let you (usually) keep the same one selected. -->
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Animal (Tag) *</label>
-                    <select class="form-select" th:field="*{livestockIdValue}" required>
-                        <option value="">Select animal...</option>
-                        <option th:each="ls : ${livestockList}"
-                                th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"
-                                th:selected="${ls.id.toString() == sickRecord.livestockIdValue}">
-                        </option>
-                    </select>
+
+                    <input type="hidden" name="livestockIdValue" id="editAnimalId"
+                           th:value="${sickRecord.livestockIdValue}">
+
+                    <div class="entity-search-wrapper">
+                        <input type="text" id="editAnimalSearch" class="form-control"
+                               placeholder="Search by tag number..." autocomplete="off">
+                        <div class="entity-dropdown" id="editAnimalDropdown"></div>
+                    </div>
+
+                    <div id="editAnimalChip"></div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Date Reported *</label>
@@ -141,7 +174,6 @@
                         </a>
                     </label>
 
-                    <!-- Hidden field submitted with the form -->
                     <input type="hidden" name="veterinarianIdValue" id="editVetId"
                            th:value="${sickRecord.veterinarianIdValue}">
 
@@ -151,7 +183,6 @@
                         <div class="vet-dropdown" id="editVetDropdown"></div>
                     </div>
 
-                    <!-- Chip shows existing vet -->
                     <div id="editVetChip"></div>
                     <div class="form-text text-muted small mt-1">
                         <i class="bi bi-info-circle me-1"></i>
@@ -171,9 +202,13 @@
     </div>
 </div></div></div>
 
-<!-- Pre-populate existing vet from server -->
+<!-- Pre-populate existing animal + vet from server -->
 <script th:inline="javascript">
     /*<![CDATA[*/
+    const EXISTING_ANIMAL_ID  = /*[[${sickRecord.livestock != null ? sickRecord.livestock.id : ''}]]*/ '';
+    const EXISTING_ANIMAL_TAG = /*[[${sickRecord.livestock != null ? sickRecord.livestock.tagNumber : ''}]]*/ '';
+    const EXISTING_ANIMAL_CAT = /*[[${sickRecord.livestock != null and sickRecord.livestock.livestockCategory != null ? sickRecord.livestock.livestockCategory.name : ''}]]*/ '';
+
     const EXISTING_VET_ID   = /*[[${sickRecord.veterinarian != null ? sickRecord.veterinarian.id : ''}]]*/ '';
     const EXISTING_VET_NAME = /*[[${sickRecord.veterinarian != null ? sickRecord.veterinarian.fullName : ''}]]*/ '';
     const EXISTING_VET_LIC  = /*[[${sickRecord.veterinarian != null ? (sickRecord.veterinarian.licenseNumber != null ? sickRecord.veterinarian.licenseNumber : '') : ''}]]*/ '';
@@ -182,6 +217,77 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // ── ✅ Animal live search ─────────────────────────────────────────
+    (function() {
+        var searchEl = document.getElementById('editAnimalSearch');
+        var dropdown = document.getElementById('editAnimalDropdown');
+        var hiddenEl = document.getElementById('editAnimalId');
+        var chipArea = document.getElementById('editAnimalChip');
+        var timer;
+
+        if (EXISTING_ANIMAL_ID && EXISTING_ANIMAL_TAG) {
+            renderChip({ id: EXISTING_ANIMAL_ID, tagNumber: EXISTING_ANIMAL_TAG, category: EXISTING_ANIMAL_CAT });
+        }
+
+        searchEl.addEventListener('input', function() {
+            clearTimeout(timer);
+            var q = this.value.trim();
+            if (!q) { hide(); return; }
+            timer = setTimeout(function(){ fetchAnimals(q); }, 250);
+        });
+        searchEl.addEventListener('focus', function() {
+            if (this.value.trim()) fetchAnimals(this.value.trim());
+        });
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.entity-search-wrapper')) hide();
+        });
+
+        function fetchAnimals(q) {
+            fetch('/livestock/search?q=' + encodeURIComponent(q))
+                .then(function(r){ return r.json(); })
+                .then(renderDropdown)
+                .catch(hide);
+        }
+
+        function renderDropdown(animals) {
+            dropdown.innerHTML = '';
+            if (!animals || animals.length === 0) {
+                dropdown.innerHTML = '<div class="entity-dd-no-result">No matching animals found</div>';
+            } else {
+                animals.forEach(function(a) {
+                    var item = document.createElement('div');
+                    item.className = 'entity-dd-item';
+                    item.innerHTML = '<div class="en">' + a.tagNumber + '</div>'
+                        + '<div class="em">' + (a.category ? a.category : '') + (a.gender ? ' · ' + a.gender : '') + '</div>';
+                    item.addEventListener('click', function(){ selectAnimal(a); });
+                    dropdown.appendChild(item);
+                });
+            }
+            dropdown.style.display = 'block';
+        }
+
+        function selectAnimal(a) {
+            hiddenEl.value = a.id;
+            searchEl.value = '';
+            hide();
+            renderChip(a);
+        }
+
+        function renderChip(a) {
+            chipArea.innerHTML = '<div class="entity-selected-chip">'
+                + '<i class="bi bi-tag-fill"></i> ' + a.tagNumber
+                + (a.category ? ' <span style="color:#63b3ed;font-weight:400;">(' + a.category + ')</span>' : '')
+                + ' <span class="rmv" onclick="clearEditAnimal()" title="Remove">×</span></div>';
+        }
+
+        window.clearEditAnimal = function() {
+            hiddenEl.value = ''; chipArea.innerHTML = ''; searchEl.value = '';
+        };
+
+        function hide() { dropdown.style.display = 'none'; dropdown.innerHTML = ''; }
+    })();
+
+    // ── Vet live search (unchanged) ─────────────────────────────────
     (function() {
         var searchEl = document.getElementById('editVetSearch');
         var dropdown = document.getElementById('editVetDropdown');
@@ -189,7 +295,6 @@
         var chipArea = document.getElementById('editVetChip');
         var timer;
 
-        /* Pre-populate existing vet chip on page load */
         if (EXISTING_VET_ID && EXISTING_VET_NAME) {
             renderChip({ id: EXISTING_VET_ID, fullName: EXISTING_VET_NAME, licenseNumber: EXISTING_VET_LIC });
         }

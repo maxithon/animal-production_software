@@ -16,7 +16,9 @@ import rw.animalproduct.animal.production.entity.LivestockBreeding;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * LifecycleEmailService — sends HTML emails using Thymeleaf templates.
@@ -39,6 +41,16 @@ import java.util.List;
  *   app.notification.email.to=recipient@gmail.com
  *   app.notification.email.from=your@gmail.com
  *   app.notification.email.enabled=true
+ *
+ * FAO TRACEABILITY NOTE:
+ * International livestock traceability standards (FAO) call for a complete,
+ * auditable record of every event affecting an animal — not just its
+ * registration. This service covers both ends of that requirement:
+ *   - sendAnimalRegisteredNotification(): fired once, at creation.
+ *   - sendAnimalUpdatedNotification():   fired on every subsequent edit
+ *     that actually changes a tracked field, with a full old → new diff.
+ * Combined with AuditLogService (which persists the same events to the
+ * database), this gives both a durable record AND a real-time notification.
  */
 @Service
 public class LifecycleEmailService {
@@ -217,74 +229,6 @@ public class LifecycleEmailService {
         log.info("✅ Offspring birth notification sent for: {}", offspring.getTagNumber());
     }
 
-    // =========================================================================
-    // PRIVATE HELPERS
-    // =========================================================================
-
-    /**
-     * Build Thymeleaf context for the generic lifecycle-stage email template.
-     */
-    private Context buildStageContext(Livestock animal, String stageName,
-                                      String emoji, String title,
-                                      String message, String nextStage) {
-        long ageDays   = getAgeInDays(animal);
-        long ageMonths = ageDays / 30;
-
-        Context ctx = new Context();
-        ctx.setVariable("emoji",      emoji);
-        ctx.setVariable("title",      title);
-        ctx.setVariable("stageName",  stageName);
-        ctx.setVariable("message",    message);
-        ctx.setVariable("tagNumber",  animal.getTagNumber());
-        ctx.setVariable("category",   animal.getLivestockCategory() != null ? animal.getLivestockCategory().getName() : "Unknown");
-        ctx.setVariable("gender",     animal.getGender() != null ? animal.getGender() : "Unknown");
-        ctx.setVariable("ageDays",    ageDays);
-        ctx.setVariable("ageMonths",  ageMonths);
-        ctx.setVariable("nextStage",  nextStage);
-        ctx.setVariable("today",      LocalDate.now().format(FMT));
-        return ctx;
-    }
-
-    /**
-     * Process a Thymeleaf template and send as HTML email.
-     */
-    private void sendHtmlEmail(String subject, String templateName, Context ctx) {
-        try {
-            String htmlBody = templateEngine.process(templateName, ctx);
-
-            MimeMessage message = mailSender.createMimeMessage();
-            // true = multipart, "UTF-8" = encoding
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(emailFrom);
-            helper.setTo(emailTo);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true); // true = HTML
-
-            mailSender.send(message);
-            log.info("✅ Email sent  → subject: '{}', to: {}", subject, emailTo);
-
-        } catch (MessagingException e) {
-            log.error("❌ Failed to send email '{}': {}", subject, e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("❌ Unexpected error sending email '{}': {}", subject, e.getMessage(), e);
-        }
-    }
-
-    private long getAgeInDays(Livestock animal) {
-        if (animal == null) return 0;
-        LocalDate ref = animal.getDateReceived() != null ? animal.getDateReceived() : animal.getBirthDate();
-        if (ref == null) return 0;
-        return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(ref, LocalDate.now()));
-    }
-
-    private int getDaysUntil(LocalDate dueDate) {
-        return (int) java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
-    }
-
-    private int getDaysOverdue(LocalDate dueDate) {
-        return Math.abs((int) java.time.temporal.ChronoUnit.DAYS.between(dueDate, LocalDate.now()));
-    }
-
     /**
      * Sent whenever LivestockValuationService.recordValuation(...) appends a
      * new valuation entry — i.e. any time an animal's value changes, whether
@@ -369,5 +313,154 @@ public class LifecycleEmailService {
             log.error("❌ Failed to send registration email for {}: {}",
                     animal.getTagNumber(), e.getMessage(), e);
         }
+    }
+
+    /**
+     * NEW — FAO STANDARD CHANGE NOTIFICATION.
+     * Sent from LivestockService.update() whenever an edit actually changes
+     * at least one tracked field. `changes` is keyed by human-readable field
+     * label, with value = {oldValueDisplay, newValueDisplay}. Converts that
+     * into a List<FieldChange> for clean template iteration (avoids relying
+     * on Thymeleaf's #maps.entrySet, which has caused issues elsewhere in
+     * this codebase).
+     */
+    public void sendAnimalUpdatedNotification(Livestock animal,
+                                              Map<String, String[]> changes,
+                                              String changedBy) {
+        if (!emailEnabled) {
+            log.debug("⏩ Email disabled — skipping update email for {}", animal.getTagNumber());
+            return;
+        }
+        if (changes == null || changes.isEmpty()) {
+            log.debug("⏩ No tracked field changes — skipping update email for {}", animal.getTagNumber());
+            return;
+        }
+        try {
+            List<FieldChange> fieldChanges = new ArrayList<>();
+            for (Map.Entry<String, String[]> entry : changes.entrySet()) {
+                String[] values = entry.getValue();
+                String oldVal = values.length > 0 ? values[0] : null;
+                String newVal = values.length > 1 ? values[1] : null;
+                fieldChanges.add(new FieldChange(entry.getKey(), oldVal, newVal));
+            }
+
+            Context ctx = new Context();
+            ctx.setVariable("emoji", "✏️📝");
+            ctx.setVariable("title", "Animal Record Updated");
+            ctx.setVariable("tagNumber", animal.getTagNumber());
+            ctx.setVariable("category", animal.getLivestockCategory() != null
+                    ? animal.getLivestockCategory().getName() : "N/A");
+            ctx.setVariable("status", animal.getStatus() != null ? animal.getStatus() : "N/A");
+            ctx.setVariable("changedBy", (changedBy != null && !changedBy.isBlank()) ? changedBy : "system");
+            ctx.setVariable("changeCount", fieldChanges.size());
+            ctx.setVariable("changes", fieldChanges);
+            ctx.setVariable("today", LocalDate.now().format(FMT));
+
+            String html = templateEngine.process("emails/email-animal-updated", ctx);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(emailFrom);
+            helper.setTo(emailTo);
+            helper.setSubject("✏️ Animal Updated — " + animal.getTagNumber()
+                    + " (" + fieldChanges.size() + " field" + (fieldChanges.size() == 1 ? "" : "s") + " changed)");
+            helper.setText(html, true);
+            mailSender.send(message);
+
+            log.info("✅ Update-notification email sent for {} ({} field(s) changed)",
+                    animal.getTagNumber(), fieldChanges.size());
+        } catch (Exception e) {
+            log.error("❌ Failed to send update-notification email for {}: {}",
+                    animal.getTagNumber(), e.getMessage(), e);
+        }
+    }
+
+    // =========================================================================
+    // PRIVATE HELPERS
+    // =========================================================================
+
+    /**
+     * Build Thymeleaf context for the generic lifecycle-stage email template.
+     */
+    private Context buildStageContext(Livestock animal, String stageName,
+                                      String emoji, String title,
+                                      String message, String nextStage) {
+        long ageDays   = getAgeInDays(animal);
+        long ageMonths = ageDays / 30;
+
+        Context ctx = new Context();
+        ctx.setVariable("emoji",      emoji);
+        ctx.setVariable("title",      title);
+        ctx.setVariable("stageName",  stageName);
+        ctx.setVariable("message",    message);
+        ctx.setVariable("tagNumber",  animal.getTagNumber());
+        ctx.setVariable("category",   animal.getLivestockCategory() != null ? animal.getLivestockCategory().getName() : "Unknown");
+        ctx.setVariable("gender",     animal.getGender() != null ? animal.getGender() : "Unknown");
+        ctx.setVariable("ageDays",    ageDays);
+        ctx.setVariable("ageMonths",  ageMonths);
+        ctx.setVariable("nextStage",  nextStage);
+        ctx.setVariable("today",      LocalDate.now().format(FMT));
+        return ctx;
+    }
+
+    /**
+     * Process a Thymeleaf template and send as HTML email.
+     */
+    private void sendHtmlEmail(String subject, String templateName, Context ctx) {
+        try {
+            String htmlBody = templateEngine.process(templateName, ctx);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            // true = multipart, "UTF-8" = encoding
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom(emailFrom);
+            helper.setTo(emailTo);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true); // true = HTML
+
+            mailSender.send(message);
+            log.info("✅ Email sent  → subject: '{}', to: {}", subject, emailTo);
+
+        } catch (MessagingException e) {
+            log.error("❌ Failed to send email '{}': {}", subject, e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("❌ Unexpected error sending email '{}': {}", subject, e.getMessage(), e);
+        }
+    }
+
+    private long getAgeInDays(Livestock animal) {
+        if (animal == null) return 0;
+        LocalDate ref = animal.getDateReceived() != null ? animal.getDateReceived() : animal.getBirthDate();
+        if (ref == null) return 0;
+        return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(ref, LocalDate.now()));
+    }
+
+    private int getDaysUntil(LocalDate dueDate) {
+        return (int) java.time.temporal.ChronoUnit.DAYS.between(LocalDate.now(), dueDate);
+    }
+
+    private int getDaysOverdue(LocalDate dueDate) {
+        return Math.abs((int) java.time.temporal.ChronoUnit.DAYS.between(dueDate, LocalDate.now()));
+    }
+
+    /**
+     * NEW — small display-only DTO for the "Animal Updated" email template.
+     * Keeps template iteration simple (th:each over a List) instead of
+     * relying on Thymeleaf map-entry iteration.
+     */
+    public static class FieldChange {
+        private final String label;
+        private final String oldValue;
+        private final String newValue;
+
+        public FieldChange(String label, String oldValue, String newValue) {
+            this.label = label;
+            this.oldValue = (oldValue == null || oldValue.isBlank()) ? "—" : oldValue;
+            this.newValue = (newValue == null || newValue.isBlank()) ? "—" : newValue;
+        }
+
+        public String getLabel()    { return label; }
+        public String getOldValue() { return oldValue; }
+        public String getNewValue() { return newValue; }
     }
 }
