@@ -43,42 +43,58 @@
             <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add New Category</h5>
             <form th:action="@{/livestock/categories/new}" th:object="${category}" method="post">
                 <div class="row g-3">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <label class="form-label">Category Name *</label>
                         <input type="text" class="form-control" th:field="*{name}"
                                placeholder="e.g. Cattle, Goats…" required>
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-md-2">
                         <label class="form-label">Code *</label>
                         <input type="text" class="form-control" th:field="*{code}"
                                placeholder="e.g. CTL"
                                oninput="this.value = this.value.toUpperCase()" required>
                         <div class="form-text">Auto-uppercased</div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">Gestation (months)</label>
                         <input type="number" class="form-control" th:field="*{gestationPeriodMonths}"
                                placeholder="e.g. 5" min="1" max="24">
                         <div class="form-text">Pregnancy duration</div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <label class="form-label">Min Breeding Age (months)</label>
                         <input type="number" class="form-control" th:field="*{minBreedingAgeMonths}"
                                placeholder="e.g. 8" min="1" max="36">
                         <div class="form-text">Age before first breeding</div>
                     </div>
-                    <div class="col-md-2">
+
+                    <!-- FIX: description is a TEXT column (multi-sentence FAO notes,
+                         breed characteristics, husbandry notes, etc.), so it must be
+                         a textarea like the Edit page already has — not a single-line
+                         input that silently truncates the user's intent visually. -->
+                    <div class="col-md-12">
                         <label class="form-label">Description</label>
-                        <input type="text" class="form-control" th:field="*{description}"
-                               placeholder="Optional description">
+                        <textarea class="form-control" th:field="*{description}" rows="2"
+                                  placeholder="Optional description — breed notes, husbandry standards, FAO classification notes, etc."></textarea>
                     </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-add w-100">
-                            <i class="bi bi-plus-circle"></i> Add
+
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-add">
+                            <i class="bi bi-plus-circle"></i> Add Category
                         </button>
                     </div>
                 </div>
             </form>
+        </div>
+
+        <!-- Reports quick links -->
+        <div class="d-flex gap-2 mb-3">
+            <a th:href="@{/livestock/categories/report}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-bar-chart-fill"></i> All Categories Report
+            </a>
+            <a th:href="@{/livestock/categories/filter-report}" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-funnel-fill"></i> Animals by Category
+            </a>
         </div>
 
         <!-- Search -->

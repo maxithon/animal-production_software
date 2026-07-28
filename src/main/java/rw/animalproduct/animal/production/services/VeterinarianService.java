@@ -3,6 +3,7 @@ package rw.animalproduct.animal.production.services;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.Users;
 import rw.animalproduct.animal.production.entity.Veterinarian;
 import rw.animalproduct.animal.production.repository.UsersRepository;
@@ -13,15 +14,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Transactional
 public class VeterinarianService {
 
     private final VeterinarianRepository veterinarianRepository;
-    private final UsersRepository        usersRepository;
+    private final UsersRepository usersRepository;
 
     public VeterinarianService(VeterinarianRepository veterinarianRepository,
                                UsersRepository usersRepository) {
         this.veterinarianRepository = veterinarianRepository;
-        this.usersRepository        = usersRepository;
+        this.usersRepository = usersRepository;
     }
 
     public List<Veterinarian> getAll() {
@@ -36,10 +38,6 @@ public class VeterinarianService {
         return veterinarianRepository.findById(id);
     }
 
-    /**
-     * Live-search used by the AJAX endpoint.
-     * If query is blank/null, returns all active vets (capped to 20 by the controller).
-     */
     public List<Veterinarian> search(String query) {
         if (query == null || query.trim().isEmpty()) {
             return veterinarianRepository.findAllActive();
@@ -75,8 +73,6 @@ public class VeterinarianService {
             veterinarianRepository.save(vet);
         });
     }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
 
     private void setAuditFields(Veterinarian vet) {
         try {

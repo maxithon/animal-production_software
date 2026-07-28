@@ -202,10 +202,14 @@ public class LivestockBreedingController {
      * If the ID doesn't resolve to a real animal (bad/stale link, wrong
      * UUID format, etc.) we just fall back silently to a blank form rather
      * than erroring out — the user can still pick manually.
+     *
+     * AUTOMATION: status now defaults to PENDING so the "Status" radio group
+     * on the form is pre-selected for the user instead of appearing blank.
      */
     @GetMapping("/breeding/register")
     public String registerForm(@RequestParam(required = false) UUID livestockId, Model model) {
         LivestockBreeding breeding = new LivestockBreeding();
+        breeding.setStatus(LivestockBreeding.STATUS_PENDING);
 
         if (livestockId != null) {
             livestockRepository.findById(livestockId).ifPresent(animal -> {
@@ -227,6 +231,17 @@ public class LivestockBreedingController {
         if (breeding.getLivestockIdValue() == null || breeding.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "required", "Female livestock is required");
         }
+
+        // 1b. Breeding date can't be in the future (defense in depth — the form
+        // already caps the date picker at today, but this guards direct posts).
+        if (breeding.getBreedingDate() != null && breeding.getBreedingDate().isAfter(LocalDate.now())) {
+            result.rejectValue("breedingDate", "date.future", "Breeding date cannot be in the future");
+        }
+
+        // 1c. Expected Pregnancy Check Date / Expected Due Date order validation
+        // (backs up the client-side checks on the form — both dates are optional,
+        // so these only fire when the relevant fields are actually filled in).
+        validateExpectedDates(breeding, result);
 
         if (result.hasErrors()) {
             long realErrors = result.getAllErrors().stream()
@@ -293,21 +308,36 @@ public class LivestockBreedingController {
 
     // ── AJAX: Males by Category ────────────────────────────────────────────────
 
+    /**
+     * FIX: previously returned every active male with an `eligible` boolean
+     * flag and let the page decide what to show. That meant an ineligible
+     * male (too young, sick, wrong breeding status, etc.) could still be
+     * selected and submitted. This endpoint now filters server-side so only
+     * males the system considers ready-to-breed are ever returned — the
+     * eligibility rule is enforced here, not just displayed on the client.
+     */
     @GetMapping("/breeding/males-by-category")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getMalesByCategory(
             @RequestParam(value = "categoryId", required = false) UUID categoryId,
             @RequestParam(value = "femaleId",   required = false) UUID femaleId) {
 
-        List<Livestock> activeMales = livestockRepository.findAll().stream()
+        Set<UUID> eligibleIds = malesReadyToBreedService.getAllReadyToBreed()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(MaleReadyToBreedDTO::getId)
+                .collect(Collectors.toSet());
+
+        List<Livestock> eligibleMales = livestockRepository.findAll().stream()
                 .filter(ls -> !Livestock.STATUS_DEAD.equals(ls.getStatus())
                         && !Livestock.STATUS_SOLD.equals(ls.getStatus()))
                 .filter(ls -> "MALE".equalsIgnoreCase(ls.getGender()))
+                .filter(ls -> eligibleIds.contains(ls.getId()))
                 .collect(Collectors.toList());
 
         if (categoryId != null) {
             final UUID catId = categoryId;
-            activeMales = activeMales.stream()
+            eligibleMales = eligibleMales.stream()
                     .filter(ls -> ls.getLivestockCategory() != null
                             && catId.equals(ls.getLivestockCategory().getId()))
                     .collect(Collectors.toList());
@@ -315,24 +345,19 @@ public class LivestockBreedingController {
 
         if (femaleId != null) {
             final UUID fId = femaleId;
-            activeMales = activeMales.stream()
+            eligibleMales = eligibleMales.stream()
                     .filter(ls -> !ls.getId().equals(fId))
                     .collect(Collectors.toList());
         }
 
-        Set<UUID> eligibleIds = malesReadyToBreedService.getAllReadyToBreed()
-                .stream()
-                .map(MaleReadyToBreedDTO::getId)
-                .collect(Collectors.toSet());
-
         List<Map<String, Object>> result = new ArrayList<>();
-        for (Livestock male : activeMales) {
+        for (Livestock male : eligibleMales) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id",        male.getId().toString());
             m.put("tagNumber", male.getTagNumber());
             m.put("category",  male.getLivestockCategory() != null
                     ? male.getLivestockCategory().getName() : "");
-            m.put("eligible",  eligibleIds.contains(male.getId()));
+            m.put("eligible",  true);
             result.add(m);
         }
 
@@ -362,6 +387,12 @@ public class LivestockBreedingController {
         if (breeding.getLivestockIdValue() == null || breeding.getLivestockIdValue().trim().isEmpty()) {
             result.rejectValue("livestockIdValue", "required", "Female livestock is required");
         }
+
+        if (breeding.getBreedingDate() != null && breeding.getBreedingDate().isAfter(LocalDate.now())) {
+            result.rejectValue("breedingDate", "date.future", "Breeding date cannot be in the future");
+        }
+
+        validateExpectedDates(breeding, result);
 
         long realErrors = result.getAllErrors().stream()
                 .filter(e -> !(e instanceof org.springframework.validation.FieldError fe
@@ -430,6 +461,35 @@ public class LivestockBreedingController {
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
 
     /**
+     * Validates the relationship between the three breeding-related dates:
+     * Breeding Date, Expected Pregnancy Check Date, and Expected Due Date.
+     * Both check date and due date are optional, so each rule only applies
+     * once the relevant field(s) are actually populated. Mirrors the
+     * client-side checks in livestock-breeding-form.html / -edit.html so the
+     * rule is enforced even if the form is bypassed (e.g. a direct POST).
+     */
+    private void validateExpectedDates(LivestockBreeding breeding, BindingResult result) {
+        LocalDate bDate    = breeding.getBreedingDate();
+        LocalDate checkDate = breeding.getExpectedPregnancyCheckDate();
+        LocalDate dueDate   = breeding.getExpectedDueDate();
+
+        if (bDate != null && checkDate != null && checkDate.isBefore(bDate)) {
+            result.rejectValue("expectedPregnancyCheckDate", "date.beforeBreeding",
+                    "Pregnancy check date cannot be before the breeding date");
+        }
+
+        if (bDate != null && dueDate != null && dueDate.isBefore(bDate)) {
+            result.rejectValue("expectedDueDate", "date.beforeBreeding",
+                    "Expected due date cannot be before the breeding date");
+        }
+
+        if (checkDate != null && dueDate != null && checkDate.isAfter(dueDate)) {
+            result.rejectValue("expectedPregnancyCheckDate", "date.afterDue",
+                    "Pregnancy check date must be on or before the expected due date");
+        }
+    }
+
+    /**
      * Checks if enough time has passed since the animal's last birth to allow
      * a new breeding event. Uses the category's gestation_period_months as the
      * minimum required interval.
@@ -474,6 +534,14 @@ public class LivestockBreedingController {
      * femalesByCategory so the Register/Edit forms can render proper
      * <optgroup> blocks, matching the same UX pattern already used for the
      * Male dropdown (which is grouped dynamically via JS).
+     *
+     * FIX (bug): the female list previously included every non-dead,
+     * non-sold female regardless of breeding eligibility — age, pregnancy,
+     * and health status were never actually checked here, even though the
+     * form's helper text implied they were. The dropdown is now intersected
+     * with FemalesReadyToBreedService's eligible ID set, the same source of
+     * truth already used on the breeding-management dashboard, so "eligible
+     * only" is enforced, not just described.
      */
     private void addLivestockAndVetsToModel(Model model) {
         List<Livestock> all = livestockRepository.findAll().stream()
@@ -481,8 +549,15 @@ public class LivestockBreedingController {
                         && !Livestock.STATUS_SOLD.equals(ls.getStatus()))
                 .collect(Collectors.toList());
 
+        Set<UUID> eligibleFemaleIds = femalesReadyToBreedService.getAllReadyToBreed()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(FemaleReadyToBreedDTO::getId)
+                .collect(Collectors.toSet());
+
         List<Livestock> females = all.stream()
                 .filter(ls -> "FEMALE".equalsIgnoreCase(ls.getGender()))
+                .filter(ls -> eligibleFemaleIds.contains(ls.getId()))
                 .sorted(Comparator
                         .comparing((Livestock ls) -> ls.getLivestockCategory() != null
                                         ? ls.getLivestockCategory().getName() : "Uncategorized",
@@ -490,7 +565,6 @@ public class LivestockBreedingController {
                         .thenComparing(ls -> ls.getTagNumber() != null ? ls.getTagNumber() : "",
                                 String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
-        if (females.isEmpty()) females = all;
 
         Map<String, List<Livestock>> femalesByCategory = new LinkedHashMap<>();
         for (Livestock f : females) {
@@ -524,6 +598,7 @@ public class LivestockBreedingController {
 
         model.addAttribute("femaleLivestock",     females);
         model.addAttribute("femalesByCategory",   femalesByCategory);
+        model.addAttribute("hasEligibleFemales",  !females.isEmpty());
         model.addAttribute("allMaleLivestock",    allMaleLivestock);
         model.addAttribute("eligibleMales",       eligibleMales);
         model.addAttribute("malesByCategoryJson", toJson(malesByCategory));

@@ -49,12 +49,15 @@ public class RepresentativeController {
     }
 
     @GetMapping("/list")
-    public String listAll(Model model) {
-        List<Representative> list = representativesAbororaService.getAll();
+    public String listAll(@RequestParam(value = "status", required = false) String status, Model model) {
+        List<Representative> list = (status != null && !status.isEmpty())
+                ? representativesAbororaService.getByStatus(status)
+                : representativesAbororaService.getAll();
         Map<UUID, Long> beneficiaryCounts = beneficiaryService.getBeneficiaryCountsByRepresentative();
 
         model.addAttribute("representativesList", list);
         model.addAttribute("beneficiaryCounts", beneficiaryCounts);
+        model.addAttribute("selectedStatus", status);
         return "representatives-list";
     }
 
@@ -262,6 +265,37 @@ public class RepresentativeController {
 
         representativesAbororaService.delete(id);
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora deleted successfully!");
+        return "redirect:/representatives/list";
+    }
+
+    // ── TOGGLE STATUS (NEW) ──────────────────────────────────────────────────
+    @PostMapping("/toggle-status/{id}")
+    public String toggleStatus(@PathVariable("id") UUID id,
+                               RedirectAttributes redirectAttributes) {
+
+        Optional<Representative> beforeOpt = representativesAbororaService.getById(id);
+        if (beforeOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Representative not found");
+            return "redirect:/representatives/list";
+        }
+
+        String beforeSnapshot = auditLogService.snapshot(beforeOpt.get());
+        Representative updated = representativesAbororaService.toggleStatus(id);
+
+        if (updated != null) {
+            auditLogService.log(
+                    "representative",
+                    id,
+                    "STATUS_CHANGE",
+                    getCurrentUsername(),
+                    beforeSnapshot,
+                    updated,
+                    "Changed status to " + updated.getStatus() + " for: " + updated.getFirstName() + " " + updated.getLastName()
+            );
+            redirectAttributes.addFlashAttribute("success",
+                    "Status changed to " + updated.getStatus() + " successfully!");
+        }
+
         return "redirect:/representatives/list";
     }
 

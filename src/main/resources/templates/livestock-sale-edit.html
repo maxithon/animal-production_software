@@ -17,7 +17,14 @@
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label fw-semibold">Animal (Tag) *</label>
-                    <select class="form-select" th:field="*{livestockIdValue}" required>
+                    <!--
+                        FIXED: was th:field="*{livestockIdValue}", which renders
+                        name="livestockIdValue". LivestockSaleController#updateSale requires
+                        @RequestParam("livestockId"), causing the same
+                        "Required parameter 'livestockId' is not present" 400 error seen on
+                        the Record New Sale form. name="livestockId" here matches the controller.
+                    -->
+                    <select class="form-select" name="livestockId" required>
                         <option value="">Select animal...</option>
                         <option th:each="ls : ${livestockList}" th:value="${ls.id}"
                                 th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"

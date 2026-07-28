@@ -99,6 +99,12 @@
         .no-results { padding: 14px; text-align: center; color: #94a3b8; font-style: italic; font-size: 0.8rem; }
 
         #newBuyerFields { display: none; }
+        #newBuyerFields .field-hint { font-size: 0.7rem; color: #64748b; margin-top: 3px; }
+        #newBuyerFields .field-error {
+            font-size: 0.72rem; color: #dc2626; margin-top: 3px; display: none;
+        }
+        #newBuyerFields .is-invalid ~ .field-error,
+        #newBuyerFields .field-error.show { display: block; }
 
         .selected-buyer-display {
             display: none; background: #f0fdf4;
@@ -223,7 +229,14 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">Animal (Tag) *</label>
-                    <select class="form-select" th:field="*{livestockIdValue}" required>
+                    <!--
+                        FIXED: th:field="*{livestockIdValue}" rendered name="livestockIdValue",
+                        but LivestockSaleController#createSale requires @RequestParam("livestockId").
+                        That mismatch is what caused "Required parameter 'livestockId' is not
+                        present" (400 Bad Request) on submit. Using a plain name="livestockId"
+                        here matches the controller exactly.
+                    -->
+                    <select class="form-select" name="livestockId" required>
                         <option value="">Select animal...</option>
                         <option th:each="ls : ${livestockList}"
                                 th:value="${ls.id}"
@@ -271,7 +284,14 @@
                                    placeholder="Type buyer name, phone, or ID..."
                                    autocomplete="off">
 
-                            <input type="hidden" th:field="*{buyerIdValue}" id="buyerIdField">
+                            <!--
+                                Same fix as the animal select above: name must be "buyerId" to
+                                match @RequestParam(value = "buyerId", ...) in the controller.
+                                This one didn't throw a visible error because that param is
+                                optional, but it meant the buyer was silently never attached
+                                to a sale even after selecting/adding one.
+                            -->
+                            <input type="hidden" name="buyerId" id="buyerIdField">
 
                             <div class="buyer-search-results" id="buyerSearchResults"></div>
                         </div>
@@ -288,26 +308,66 @@
                     </div>
                 </div>
 
+                <!--
+                    FIXED: this form used to only collect Name / Phone / Address /
+                    National ID, and "Name" was later split on the last space to
+                    guess a first/last name — which doesn't match the real
+                    "Add Buyer" form on the Buyers dashboard (First Name, Last
+                    Name, Phone, Address, National ID, Email, Type, Notes).
+                    Fields below now mirror that form exactly so a buyer created
+                    from this page is indistinguishable from one created there.
+                -->
                 <div id="newBuyerFields" class="mt-3">
                     <hr class="my-3">
                     <h6 class="text-success mb-3" style="font-size:0.85rem;"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
                     <div class="row g-3">
                         <div class="col-md-3">
-                            <label class="form-label">Name *</label>
-                            <input type="text" class="form-control" id="newBuyerName" placeholder="Buyer name">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="newBuyerFirstName"
+                                   placeholder="First name" maxlength="60">
+                            <div class="field-error" id="err-newBuyerFirstName">At least 2 characters required.</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="newBuyerLastName"
+                                   placeholder="Last name" maxlength="60">
+                            <div class="field-error" id="err-newBuyerLastName">At least 2 characters required.</div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Phone *</label>
-                            <input type="tel" class="form-control" id="newBuyerPhone" placeholder="Phone number">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Address</label>
-                            <input type="text" class="form-control" id="newBuyerAddress" placeholder="Address">
+                            <input type="tel" class="form-control" id="newBuyerPhone"
+                                   placeholder="07XXXXXXXX" maxlength="10">
+                            <div class="field-hint">10 digits, starts with 07</div>
+                            <div class="field-error" id="err-newBuyerPhone">Enter a valid Rwandan number (07XXXXXXXX).</div>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">National ID</label>
                             <input type="text" class="form-control" id="newBuyerNationalId"
                                    placeholder="16 digits" maxlength="16">
+                            <div class="field-hint">Optional, exactly 16 digits</div>
+                            <div class="field-error" id="err-newBuyerNationalId">Must be exactly 16 digits.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" id="newBuyerAddress" placeholder="Address">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="newBuyerEmail" placeholder="email@example.com">
+                            <div class="field-error" id="err-newBuyerEmail">Enter a valid email address.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="newBuyerType">
+                                <option value="">Select type...</option>
+                                <option value="INDIVIDUAL">Individual</option>
+                                <option value="COMPANY">Company</option>
+                                <option value="COOPERATIVE">Cooperative</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" id="newBuyerNotes" rows="2" placeholder="Optional notes..."></textarea>
                         </div>
                     </div>
                     <div class="mt-3">
@@ -422,11 +482,11 @@
                     <div th:if="${s.buyer != null}">
                         <div class="buyer-row">
                             <i class="bi bi-person-fill buyer-icon"></i>
-                            <strong th:text="${s.buyer.buyerName}"></strong>
+                            <strong th:text="${s.buyer.fullName}"></strong>
                         </div>
-                        <div class="buyer-row" th:if="${s.buyer.buyerPhone}">
+                        <div class="buyer-row" th:if="${s.buyer.phone}">
                             <i class="bi bi-telephone buyer-icon"></i>
-                            <span th:text="${s.buyer.buyerPhone}"></span>
+                            <span th:text="${s.buyer.phone}"></span>
                         </div>
                     </div>
                     <span th:if="${s.buyer == null}" class="buyer-none">No buyer recorded</span>
@@ -557,6 +617,13 @@
         const saveNewBuyerBtn      = document.getElementById('saveNewBuyerBtn');
         const cancelNewBuyerBtn    = document.getElementById('cancelNewBuyerBtn');
 
+        // New-buyer form fields (mirrors the real Add Buyer form)
+        const newBuyerFieldIds = [
+            'newBuyerFirstName', 'newBuyerLastName', 'newBuyerPhone',
+            'newBuyerNationalId', 'newBuyerAddress', 'newBuyerEmail',
+            'newBuyerType', 'newBuyerNotes'
+        ];
+
         let searchTimeout;
 
         buyerSearchInput.addEventListener('input', function () {
@@ -634,26 +701,81 @@
         function showNewBuyerForm() {
             buyerSearchResults.classList.remove('show');
             newBuyerFields.style.display = 'block';
-            document.getElementById('newBuyerName').focus();
+            document.getElementById('newBuyerFirstName').focus();
         }
 
         cancelNewBuyerBtn.addEventListener('click', function () {
             newBuyerFields.style.display = 'none';
-            ['newBuyerName', 'newBuyerPhone', 'newBuyerAddress', 'newBuyerNationalId']
-                .forEach(id => document.getElementById(id).value = '');
+            clearNewBuyerErrors();
+            newBuyerFieldIds.forEach(id => { document.getElementById(id).value = ''; });
         });
+
+        function clearNewBuyerErrors() {
+            newBuyerFieldIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('is-invalid');
+                const err = document.getElementById('err-' + id);
+                if (err) err.classList.remove('show');
+            });
+        }
+
+        function showFieldError(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('is-invalid');
+            const err = document.getElementById('err-' + id);
+            if (err) err.classList.add('show');
+        }
+
+        /**
+         * Mirrors the same validation rules as the Buyer entity
+         * (firstName/lastName >= 2 chars, phone 07XXXXXXXX, nationalId 16
+         * digits when provided) so a bad submission is caught here instead
+         * of round-tripping to the server first.
+         */
+        function validateNewBuyerForm(payload) {
+            clearNewBuyerErrors();
+            let valid = true;
+
+            if (!payload.firstName || payload.firstName.length < 2) {
+                showFieldError('newBuyerFirstName');
+                valid = false;
+            }
+            if (!payload.lastName || payload.lastName.length < 2) {
+                showFieldError('newBuyerLastName');
+                valid = false;
+            }
+            if (!/^07[0-9]{8}$/.test(payload.phone || '')) {
+                showFieldError('newBuyerPhone');
+                valid = false;
+            }
+            if (payload.nationalId && !/^[0-9]{16}$/.test(payload.nationalId)) {
+                showFieldError('newBuyerNationalId');
+                valid = false;
+            }
+            if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+                showFieldError('newBuyerEmail');
+                valid = false;
+            }
+
+            return valid;
+        }
 
         saveNewBuyerBtn.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
 
-            const name       = document.getElementById('newBuyerName').value.trim();
-            const phone      = document.getElementById('newBuyerPhone').value.trim();
-            const address    = document.getElementById('newBuyerAddress').value.trim();
-            const nationalId = document.getElementById('newBuyerNationalId').value.trim();
+            const payload = {
+                firstName:  document.getElementById('newBuyerFirstName').value.trim(),
+                lastName:   document.getElementById('newBuyerLastName').value.trim(),
+                phone:      document.getElementById('newBuyerPhone').value.trim(),
+                address:    document.getElementById('newBuyerAddress').value.trim(),
+                nationalId: document.getElementById('newBuyerNationalId').value.trim(),
+                email:      document.getElementById('newBuyerEmail').value.trim(),
+                buyerType:  document.getElementById('newBuyerType').value,
+                notes:      document.getElementById('newBuyerNotes').value.trim()
+            };
 
-            if (!name || !phone) {
-                alert('Buyer name and phone are required!');
+            if (!validateNewBuyerForm(payload)) {
                 return;
             }
 
@@ -668,7 +790,7 @@
             fetch('/livestock/buyers/quick-add', {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify({ name, phone, address, nationalId })
+                body: JSON.stringify(payload)
             })
             .then(r => {
                 if (!r.ok) {
@@ -679,8 +801,8 @@
             .then(data => {
                 if (data.success) {
                     selectBuyer(data.buyer);
-                    ['newBuyerName', 'newBuyerPhone', 'newBuyerAddress', 'newBuyerNationalId']
-                        .forEach(id => document.getElementById(id).value = '');
+                    clearNewBuyerErrors();
+                    newBuyerFieldIds.forEach(id => { document.getElementById(id).value = ''; });
                     newBuyerFields.style.display = 'none';
                 } else {
                     alert('Error: ' + data.error);
@@ -693,6 +815,14 @@
             .finally(() => {
                 saveNewBuyerBtn.disabled = false;
                 saveNewBuyerBtn.innerHTML = '<i class="bi bi-check-circle"></i> Save Buyer';
+            });
+        });
+
+        // Digits-only enforcement on phone / National ID while typing
+        ['newBuyerPhone', 'newBuyerNationalId'].forEach(function (id) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9]/g, '');
             });
         });
 

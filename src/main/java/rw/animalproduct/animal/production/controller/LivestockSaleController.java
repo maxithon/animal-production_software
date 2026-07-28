@@ -8,11 +8,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import rw.animalproduct.animal.production.dto.BuyerSummary;
 import rw.animalproduct.animal.production.entity.Buyer;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockSale;
+import rw.animalproduct.animal.production.exception.DuplicateBuyerException;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.repository.LivestockSaleRepository;
 import rw.animalproduct.animal.production.services.BuyerService;
@@ -35,6 +38,12 @@ public class LivestockSaleController {
     private final BuyerService buyerService;
 
     private static final int DEFAULT_PAGE_SIZE = 10;
+
+    // Kept identical to the Buyer entity's own validation rules so the
+    // quick-add form on this page can never create a buyer that would have
+    // failed validation on the real Buyer form.
+    private static final String PHONE_REGEX = "^07[0-9]{8}$";
+    private static final String NATIONAL_ID_REGEX = "^[0-9]{16}$";
 
     @Autowired
     public LivestockSaleController(LivestockSaleService saleService,
@@ -211,33 +220,74 @@ public class LivestockSaleController {
     @GetMapping("/buyers/search")
     @ResponseBody
     public List<BuyerSearchResult> searchBuyers(@RequestParam("q") String query) {
-        List<Buyer> buyers = buyerService.search(query);
-        return buyers.stream()
+        List<BuyerSummary> buyerSummaries = buyerService.search(query);
+        return buyerSummaries.stream()
                 .map(b -> new BuyerSearchResult(
                         b.getId().toString(),
-                        b.getBuyerName(),
-                        b.getBuyerPhone(),
-                        b.getBuyerNationalId()
+                        b.getFullName(),
+                        b.getPhone(),
+                        b.getNationalId()
                 ))
                 .collect(Collectors.toList());
     }
 
     /**
      * POST /livestock/buyers/quick-add - Quick add a new buyer via AJAX
+     *
+     * FIXED: this used to take a single free-text "name" field and split it
+     * on the last space to guess firstName/lastName — which broke for
+     * single-word names, middle names, etc. It also silently dropped email,
+     * buyer type and notes, so a buyer created here never matched what the
+     * real "Add Buyer" form (buyers-list.html) produces.
+     *
+     * The request DTO now mirrors the real Buyer form field-for-field, and
+     * server-side validation mirrors the same Rwandan phone / National ID
+     * rules enforced by the Buyer entity, so a buyer created from either
+     * screen is guaranteed to look the same.
      */
     @PostMapping("/buyers/quick-add")
     @ResponseBody
     public BuyerAddResult quickAddBuyer(@RequestBody BuyerQuickAddRequest request) {
         try {
+            if (!StringUtils.hasText(request.firstName) || request.firstName.trim().length() < 2) {
+                return new BuyerAddResult(false, "First name must be at least 2 characters.");
+            }
+            if (!StringUtils.hasText(request.lastName) || request.lastName.trim().length() < 2) {
+                return new BuyerAddResult(false, "Last name must be at least 2 characters.");
+            }
+            if (!StringUtils.hasText(request.phone) || !request.phone.trim().matches(PHONE_REGEX)) {
+                return new BuyerAddResult(false, "Enter a valid Rwandan phone number (10 digits starting with 07).");
+            }
+            if (StringUtils.hasText(request.nationalId) && !request.nationalId.trim().matches(NATIONAL_ID_REGEX)) {
+                return new BuyerAddResult(false, "National ID must be exactly 16 digits.");
+            }
+
             Buyer buyer = buyerService.findOrCreate(
-                    request.phone,
-                    request.name,
+                    request.phone.trim(),
+                    request.firstName.trim(),
+                    request.lastName.trim(),
                     request.address,
-                    request.nationalId
+                    request.nationalId,
+                    request.email,
+                    request.buyerType,
+                    request.notes
             );
-            return new BuyerAddResult(true, buyer);
+
+            // Return the same shape as /buyers/search results so the existing
+            // selectBuyer() JS on the sales page can handle both without
+            // branching on where the buyer came from.
+            BuyerSearchResult result = new BuyerSearchResult(
+                    buyer.getId().toString(),
+                    buyer.getFullName(),
+                    buyer.getPhone(),
+                    buyer.getNationalId()
+            );
+            return new BuyerAddResult(true, result);
+
+        } catch (DuplicateBuyerException dup) {
+            return new BuyerAddResult(false, dup.getMessage());
         } catch (Exception e) {
-            return new BuyerAddResult(false, e.getMessage());
+            return new BuyerAddResult(false, "Could not save buyer: " + e.getMessage());
         }
     }
 
@@ -260,10 +310,10 @@ public class LivestockSaleController {
 
     public static class BuyerAddResult {
         public boolean success;
-        public Buyer buyer;
+        public BuyerSearchResult buyer;
         public String error;
 
-        public BuyerAddResult(boolean success, Buyer buyer) {
+        public BuyerAddResult(boolean success, BuyerSearchResult buyer) {
             this.success = success;
             this.buyer = buyer;
         }
@@ -274,10 +324,18 @@ public class LivestockSaleController {
         }
     }
 
+    /**
+     * Mirrors the fields collected by the real "Add Buyer" form
+     * (buyers-list.html) instead of a single free-text "name".
+     */
     public static class BuyerQuickAddRequest {
-        public String name;
+        public String firstName;
+        public String lastName;
         public String phone;
         public String address;
         public String nationalId;
+        public String email;
+        public String buyerType;
+        public String notes;
     }
 }

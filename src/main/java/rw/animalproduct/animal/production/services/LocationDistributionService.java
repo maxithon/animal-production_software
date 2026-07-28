@@ -282,6 +282,7 @@ public class LocationDistributionService {
             return Collections.emptyMap();
         }
 
+        // This method now exists in RepresentativeRepository
         List<Representative> representatives = representativeRepository.findByLocationIdInAndIsDeletedFalse(locationIds);
 
         return representatives.stream()

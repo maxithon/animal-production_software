@@ -29,6 +29,36 @@
         .form-group label { font-weight: 600; margin-bottom: 6px; font-size: 0.8rem; }
         .required::after { content: " *"; color: red; }
         .unchanged-hint { font-size: 0.72rem; color: #888; margin-top: 4px; }
+
+        /* ── Placeholder styling: muted + italic, never mistaken for real data ── */
+        .form-control::placeholder {
+            color: #adb5bd;
+            font-style: italic;
+            letter-spacing: 0.02em;
+        }
+        .field-hint {
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .field-hint i { font-size: 0.75rem; }
+
+        .status-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            margin-bottom: 18px;
+        }
+        .status-banner.active { background: #e6f7ee; color: #146c43; }
+        .status-banner.inactive { background: #f4f4f5; color: #6c757d; }
+
         @media (max-width: 768px) {
             .location-row { grid-template-columns: 1fr; }
         }
@@ -43,6 +73,22 @@
                     <h3><i class="bi bi-pencil-square"></i> Edit Abaragizwa Amatungo</h3>
                     <a th:href="@{/beneficiaries/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+
+                <!-- Status is shown here for context only. It is deliberately NOT an
+                     editable field in this form — it's changed via the explicit
+                     Activate/Deactivate action on the view or list page, so status
+                     never flips as a side effect of an unrelated edit. -->
+                <div class="status-banner"
+                     th:classappend="${beneficiaries.status == 'INACTIVE'} ? 'inactive' : 'active'">
+                    <span>
+                        <i class="bi" th:classappend="${beneficiaries.status == 'INACTIVE'} ? 'bi-pause-circle' : 'bi-check-circle'"></i>
+                        Current status:
+                        <strong th:text="${beneficiaries.status == 'INACTIVE'} ? 'Inactive' : 'Active'">Active</strong>
+                    </span>
+                    <a th:href="@{/beneficiaries/view/{id}(id=${beneficiaries.id})}" class="text-decoration-none">
+                        Change status from the profile page &rarr;
                     </a>
                 </div>
 
@@ -111,7 +157,9 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="nid" class="form-label">National ID *</label>
-                            <input type="text" class="form-control" id="nid" th:field="*{nid}" required maxlength="16">
+                            <input type="text" class="form-control" id="nid" th:field="*{nid}" required maxlength="16"
+                                   placeholder="XXXX XXXX XXXX XXXX" autocomplete="off">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Format: exactly 16 digits, numbers only</div>
                         </div>
                     </div>
 
@@ -120,7 +168,9 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="phone" th:field="*{phone}" placeholder="07XXXXXXXX">
+                            <input type="tel" class="form-control" id="phone" th:field="*{phone}"
+                                   placeholder="07XX XXX XXX" autocomplete="off">
+                            <div class="field-hint"><i class="bi bi-info-circle"></i> Must start with 078, 079, 072, or 073 &middot; 10 digits total</div>
                         </div>
                     </div>
 
@@ -234,7 +284,8 @@
                          never reads them from the form, and posting a java.util.Date or a
                          Users object through a hidden <input> has no safe string
                          representation to convert back from — that's what was throwing
-                         the 400 error on every save. -->
+                         the 400 error on every save. status is likewise excluded — see
+                         the status banner above for why. -->
                     <input type="hidden" th:field="*{id}">
 
                     <!-- Buttons -->
@@ -360,10 +411,6 @@
     }
 
     // ── Location cascade with default-selection preservation ───────────────
-    // Server-rendered "currently selected" IDs, passed in once via Thymeleaf's
-    // JavaScript inlining. These are used to re-select the correct option after
-    // each AJAX fetch, since a fresh fetch always rebuilds a select's <option>
-    // list from scratch and would otherwise silently drop the selection.
     const selectedDistrictId = /*[[${selectedDistrict}]]*/ null;
     const selectedSectorId   = /*[[${selectedSector}]]*/ null;
     const selectedCellId     = /*[[${selectedCell}]]*/ null;
@@ -380,8 +427,6 @@
                     opt.textContent = item.name;
                     selectElement.appendChild(opt);
                 });
-                // Re-apply the previously selected value (if any) now that the
-                // freshly-fetched option list includes it.
                 if (preselectId) {
                     selectElement.value = preselectId;
                 }
@@ -389,9 +434,6 @@
             .catch(error => console.error('Error loading options for', url, error));
     }
 
-    // Manual onchange handlers: user explicitly changed a dropdown, so we
-    // deliberately do NOT re-apply the old preselect for downstream levels —
-    // starting fresh below the level the user touched is the expected behavior.
     function onProvinceChange() {
         const provinceId = document.getElementById('province').value;
         const districtSelect = document.getElementById('district');
@@ -451,11 +493,6 @@
         fetchAndPopulate(`/api/locations/villages/${cellId}`, villageSelect, 'Select Village...', null);
     }
 
-    // ── Initial load: rebuild each level's option list AND restore the
-    // beneficiary's current district/sector/cell/village, chained so each
-    // level waits for its parent to finish before fetching. This is what
-    // keeps the existing location visibly selected on page load, instead of
-    // resetting to "Select..." once the AJAX calls complete.
     document.addEventListener('DOMContentLoaded', function () {
         const provinceId = document.getElementById('province').value;
         if (!provinceId) return;

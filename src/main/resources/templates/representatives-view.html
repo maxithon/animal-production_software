@@ -94,6 +94,35 @@
             font-size: 0.78rem;
             padding: 0.35rem 0.5rem;
         }
+
+        /* NEW: print button + print-only stylesheet */
+        .no-print {
+            /* marker class, actual hiding happens in @media print below */
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .no-print,
+            .btn,
+            .modal,
+            nav {
+                display: none !important;
+            }
+            .view-card {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 0;
+            }
+            .table-responsive {
+                overflow: visible !important;
+            }
+            a[href]::after {
+                content: none !important; /* no ugly printed URLs from browser default styles */
+            }
+        }
     </style>
 </head>
 <body>
@@ -104,7 +133,12 @@
                 <!-- Header -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-badge"></i> Representative Details</h3>
-                    <div>
+                    <div class="no-print">
+                        <!-- NEW: Print button. Uses window.print() + the @media print rules
+                             above so only the profile content is printed, no buttons/chrome. -->
+                        <button type="button" class="btn btn-outline-dark me-2" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
                         <a th:href="@{/representatives/edit/{id}(id=${representatives.id})}"
                            class="btn btn-warning me-2">
                             <i class="bi bi-pencil"></i> Edit
@@ -128,6 +162,15 @@
                         </div>
                         <h4 th:text="${representatives.firstName + ' ' + representatives.lastName}">Full Name</h4>
                         <p class="text-muted" th:text="${representatives.nid}">NID</p>
+                        <!-- NEW: status badge shown here too, useful context on the printed sheet -->
+                        <span th:if="${representatives.status == null or representatives.status == 'ACTIVE'}"
+                              class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Active
+                        </span>
+                        <span th:if="${representatives.status == 'INACTIVE'}"
+                              class="badge bg-secondary">
+                            <i class="bi bi-slash-circle"></i> Inactive
+                        </span>
                     </div>
 
                     <!-- Right Column: Detailed Information -->
@@ -251,8 +294,7 @@
                         </div>
 
                         <!-- Beneficiaries Managed -->
-                        <!-- Beneficiaries Managed -->
-                        <div class="info-section">
+                        <div class="info-section no-print">
                             <h5 class="section-title d-flex justify-content-between align-items-center">
                                 <span><i class="bi bi-people"></i> Beneficiaries Managed
                                     <span class="badge bg-primary ms-2" th:text="${beneficiariesCount}">0</span>
@@ -313,7 +355,7 @@
                                     </tbody>
                                 </table>
 
-                                <!-- NEW: pagination for the beneficiaries table -->
+                                <!-- pagination for the beneficiaries table -->
                                 <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-2">
                                     <small class="text-muted">
                                         Page <strong th:text="${currentPage + 1}"></strong> of <strong th:text="${totalPages}"></strong>
@@ -358,7 +400,7 @@
                                 <div th:if="${representatives.contractAgreement != null and !representatives.contractAgreement.isEmpty()}">
                                     <i class="bi bi-file-pdf text-danger" style="font-size: 1.5rem;"></i>
                                     <strong class="ms-2">Amasezerano (Contract)</strong>
-                                    <div class="mt-2">
+                                    <div class="mt-2 no-print">
                                         <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-danger">
                                             <i class="bi bi-file-pdf"></i> Download PDF
                                         </a>
@@ -397,7 +439,7 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top no-print">
                     <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>

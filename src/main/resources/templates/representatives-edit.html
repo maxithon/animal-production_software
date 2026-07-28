@@ -103,7 +103,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="gender" class="form-label">Gender *</label>
                             <select class="form-select" id="gender" th:field="*{gender}" required>
                                 <option value="">Select gender...</option>
@@ -111,7 +111,7 @@
                                 <option value="FEMALE">Female</option>
                             </select>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="maritialStatus" class="form-label">Marital Status *</label>
                             <select class="form-select" id="maritialStatus" th:field="*{maritialStatus}" required>
                                 <option value="">Select status...</option>
@@ -121,9 +121,17 @@
                                 <option value="WIDOWED">Widowed</option>
                             </select>
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="nid" class="form-label">National ID * (16 digits)</label>
                             <input type="text" class="form-control" id="nid" th:field="*{nid}" required maxlength="16" oninput="validateNID(this)" placeholder="1234567890123456">
+                        </div>
+                        <!-- NEW: status field -->
+                        <div class="col-md-3 mb-3">
+                            <label for="status" class="form-label">Status *</label>
+                            <select class="form-select" id="status" th:field="*{status}" required>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                            </select>
                         </div>
                     </div>
 
@@ -269,7 +277,7 @@
         }
     }
 
-    // FIXED: real upload via fetch, same pattern as beneficiaries-edit.html and
+    // Real upload via fetch, same pattern as beneficiaries-edit.html and
     // representatives-register.html — no more FileReader/base64 into the hidden field.
     function uploadPhoto() {
         const fileInput = document.getElementById('photoFileInput');

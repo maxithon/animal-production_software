@@ -93,6 +93,11 @@ public class BeneficiaryService {
 
         beneficiaries.setCreatedDate(new Date());
 
+        // Every new beneficiary starts ACTIVE regardless of what (if anything)
+        // was posted from the form — status is only ever changed afterwards via
+        // the explicit activate/deactivate action, never through the create form.
+        beneficiaries.setStatus(Beneficiary.STATUS_ACTIVE);
+
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             String email = authentication.getName();
@@ -117,6 +122,8 @@ public class BeneficiaryService {
             existing.setPhone(updatedData.getPhone());
             existing.setContractAgreement(updatedData.getContractAgreement());
             existing.setPhoto(updatedData.getPhoto());
+            // Note: status is intentionally NOT touched here. It's changed only
+            // through toggleStatus(), never as a side effect of an edit-form save.
 
             String representativesIdString = updatedData.getRepresentativeIdValue();
             if (representativesIdString != null && !representativesIdString.isEmpty()) {
@@ -134,6 +141,19 @@ public class BeneficiaryService {
         }
 
         return null;
+    }
+
+    // NEW: flips ACTIVE <-> INACTIVE. Returns the updated entity, or null if
+    // the beneficiary doesn't exist (controller handles audit logging around this).
+    public Beneficiary toggleStatus(UUID id) {
+        Optional<Beneficiary> existingOpt = beneficiaryRepository.findById(id);
+        if (existingOpt.isEmpty()) {
+            return null;
+        }
+        Beneficiary existing = existingOpt.get();
+        boolean currentlyActive = existing.isActive();
+        existing.setStatus(currentlyActive ? Beneficiary.STATUS_INACTIVE : Beneficiary.STATUS_ACTIVE);
+        return beneficiaryRepository.save(existing);
     }
 
     public void delete(UUID id) {

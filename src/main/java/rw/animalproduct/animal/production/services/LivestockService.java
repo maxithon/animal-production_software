@@ -1,6 +1,7 @@
 package rw.animalproduct.animal.production.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -8,11 +9,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.*;
+import rw.animalproduct.animal.production.patches.AsyncConfig;
 import rw.animalproduct.animal.production.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,6 +34,15 @@ public class LivestockService {
     // NEW: needed so update() can notify on every change, not just registration.
     private final LifecycleEmailService emailService;
 
+    // PERFORMANCE FIX (same root cause as the register() flow — see AsyncConfig):
+    // the "Animal Updated" email used to be sent synchronously on the same
+    // thread that just handled the user's edit-save. That's the same SMTP
+    // round-trip cost, just triggered on every edit instead of only on
+    // registration. Routing it through this executor means editing an
+    // animal returns to the user as soon as the DB write finishes, and the
+    // notification email goes out a moment later in the background.
+    private final Executor notificationExecutor;
+
     @Autowired
     public LivestockService(LivestockRepository livestockRepository,
                             LivestockCategoryRepository livestockCategoryRepository,
@@ -38,7 +50,8 @@ public class LivestockService {
                             LocationRepository locationRepository,
                             AuditLogService auditLogService,
                             LivestockValuationService valuationService,
-                            LifecycleEmailService emailService) {
+                            LifecycleEmailService emailService,
+                            @Qualifier(AsyncConfig.NOTIFICATION_EXECUTOR) Executor notificationExecutor) {
         this.livestockRepository = livestockRepository;
         this.livestockCategoryRepository = livestockCategoryRepository;
         this.beneficiaryRepository = beneficiaryRepository;
@@ -46,6 +59,7 @@ public class LivestockService {
         this.auditLogService = auditLogService;
         this.valuationService = valuationService;
         this.emailService = emailService;
+        this.notificationExecutor = notificationExecutor;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -142,10 +156,9 @@ public class LivestockService {
         );
 
         // NOTE: the "new animal registered" email is sent from
-        // LivestockController.register() via emailService.sendAnimalRegisteredNotification(saved).
-        // It stays there (not here) because that's the single entry point for
-        // manual registration and already wraps the call in a try/catch so a
-        // mail failure never blocks registration.
+        // LivestockController.register() via emailService.sendAnimalRegisteredNotification(saved),
+        // now dispatched through notificationExecutor there so it never
+        // blocks the registration request (see AsyncConfig for details).
 
         return saved;
     }
@@ -165,8 +178,10 @@ public class LivestockService {
      *      sends a single "Animal Updated" email listing every changed
      *      field as old → new. No-op saves (nothing actually different)
      *      never trigger an email — avoids notification fatigue.
-     * The email is best-effort: a mail failure never blocks the update
-     * itself or bubbles up to the caller.
+     * The email is dispatched on notificationExecutor (background thread)
+     * so a slow or unreachable mail server can never add latency to an
+     * edit-save, and it's still best-effort: a mail failure never blocks
+     * the update itself or bubbles up to the caller.
      */
     @Transactional
     public Livestock update(UUID id, Livestock updated) {
@@ -245,12 +260,18 @@ public class LivestockService {
         Map<String, String[]> changes = diffFields(beforeFields, afterFields);
 
         if (!changes.isEmpty()) {
-            try {
-                emailService.sendAnimalUpdatedNotification(saved, changes, getCurrentUsername());
-            } catch (Exception emailEx) {
-                // Never let a mail failure fail the update itself.
-                // LifecycleEmailService already logs its own errors internally.
-            }
+            String currentUser = getCurrentUsername();
+            // CHANGED: dispatched on notificationExecutor instead of being
+            // called inline — this used to block every single edit-save on
+            // an SMTP round trip. See AsyncConfig for the full explanation.
+            notificationExecutor.execute(() -> {
+                try {
+                    emailService.sendAnimalUpdatedNotification(saved, changes, currentUser);
+                } catch (Exception emailEx) {
+                    // Never let a mail failure fail the update itself.
+                    // LifecycleEmailService already logs its own errors internally.
+                }
+            });
         }
 
         return saved;

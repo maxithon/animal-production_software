@@ -6,8 +6,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import rw.animalproduct.animal.production.dto.BuyerSummary;
 import rw.animalproduct.animal.production.entity.Buyer;
 import rw.animalproduct.animal.production.services.AuditLogService;
 import rw.animalproduct.animal.production.services.BuyerService;
@@ -28,9 +31,10 @@ public class BuyerController {
         this.auditLogService = auditLogService;
     }
 
+    // ── LIST (now backed by a single, fast projection query — see BuyerSummary) ──
     @GetMapping
     public String listBuyers(Model model) {
-        model.addAttribute("buyers", buyerService.getAll());
+        model.addAttribute("buyers", buyerService.getAllSummaries());
         model.addAttribute("buyer", new Buyer());
         model.addAttribute("activeCount", buyerService.countActive());
         model.addAttribute("inactiveCount", buyerService.countInactive());
@@ -38,17 +42,24 @@ public class BuyerController {
         return "buyers-list";
     }
 
-    // ── CREATE (now logged) ─────────────────────────────────────────────────
+    // ── CREATE ─────────────────────────────────────────────────────────
     @PostMapping("/new")
     public String saveBuyer(@Valid @ModelAttribute("buyer") Buyer buyer,
-                            BindingResult result, Model model,
+                            BindingResult result,
+                            @RequestParam(value = "photoFile", required = false) MultipartFile photoFile,
+                            Model model,
                             RedirectAttributes ra) {
         if (result.hasErrors()) {
-            model.addAttribute("buyers", buyerService.getAll());
-            return "buyers-list";
+            return reRenderListWithErrors(model);
         }
         try {
-            Buyer saved = buyerService.addNew(buyer);
+            Buyer saved = buyerService.addNew(buyer, photoFile);
+
+            // Sanity check: never tell the user "saved" unless it truly has an id
+            // from the database. This closes the "says saved but isn't in the DB" gap.
+            if (saved == null || saved.getId() == null) {
+                throw new IllegalStateException("Save did not return a persisted record.");
+            }
 
             auditLogService.log(
                     "buyer",
@@ -57,14 +68,18 @@ public class BuyerController {
                     getCurrentUsername(),
                     null,
                     saved,
-                    "Registered buyer: " + saved.getBuyerName()
+                    "Registered buyer: " + saved.getFullName()
             );
 
-            ra.addFlashAttribute("success", "Buyer saved successfully!");
+            ra.addFlashAttribute("success", "Buyer \"" + saved.getFullName() + "\" saved successfully!");
+            return "redirect:/buyers";
+        } catch (rw.animalproduct.animal.production.exception.DuplicateBuyerException dup) {
+            result.addError(new FieldError("buyer", dup.getField(), dup.getMessage()));
+            return reRenderListWithErrors(model);
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Error: " + e.getMessage());
+            ra.addFlashAttribute("error", "Could not save buyer: " + e.getMessage());
+            return "redirect:/buyers";
         }
-        return "redirect:/buyers";
     }
 
     @GetMapping("/edit/{id}")
@@ -75,11 +90,13 @@ public class BuyerController {
         return "buyer-edit";
     }
 
-    // ── UPDATE (now logged) ─────────────────────────────────────────────────
+    // ── UPDATE ─────────────────────────────────────────────────────────
     @PostMapping("/update/{id}")
     public String updateBuyer(@PathVariable UUID id,
                               @Valid @ModelAttribute("buyer") Buyer buyer,
-                              BindingResult result, Model model,
+                              BindingResult result,
+                              @RequestParam(value = "photoFile", required = false) MultipartFile photoFile,
+                              Model model,
                               RedirectAttributes ra) {
         if (result.hasErrors()) {
             return "buyer-edit";
@@ -89,7 +106,7 @@ public class BuyerController {
                     .map(auditLogService::snapshot)
                     .orElse(null);
 
-            Buyer updated = buyerService.update(id, buyer);
+            Buyer updated = buyerService.update(id, buyer, photoFile);
 
             auditLogService.log(
                     "buyer",
@@ -98,17 +115,22 @@ public class BuyerController {
                     getCurrentUsername(),
                     beforeSnapshot,
                     updated,
-                    "Updated buyer: " + buyer.getBuyerName()
+                    "Updated buyer: " + updated.getFullName()
             );
 
             ra.addFlashAttribute("success", "Buyer updated successfully!");
+            return "redirect:/buyers";
+        } catch (rw.animalproduct.animal.production.exception.DuplicateBuyerException dup) {
+            result.addError(new FieldError("buyer", dup.getField(), dup.getMessage()));
+            model.addAttribute("buyer", buyer);
+            return "buyer-edit";
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Error: " + e.getMessage());
+            ra.addFlashAttribute("error", "Could not update buyer: " + e.getMessage());
+            return "redirect:/buyers";
         }
-        return "redirect:/buyers";
     }
 
-    // ── DELETE ────────────────────────────────────────────────────────────
+    // ── DELETE (soft-delete when the buyer has sales history) ────────────
     @PostMapping("/delete/{id}")
     public String deleteBuyer(@PathVariable UUID id, RedirectAttributes ra) {
         try {
@@ -127,7 +149,7 @@ public class BuyerController {
                         null,
                         (hadSales
                                 ? "Deactivated buyer (has sales history): "
-                                : "Deleted buyer: ") + buyer.getBuyerName()
+                                : "Deleted buyer: ") + buyer.getFullName()
                 );
             }
 
@@ -141,8 +163,24 @@ public class BuyerController {
 
     @GetMapping("/search")
     @ResponseBody
-    public List<Buyer> searchBuyers(@RequestParam String query) {
+    public List<BuyerSummary> searchBuyers(@RequestParam String query) {
         return buyerService.search(query);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────
+
+    /**
+     * When the "Add Buyer" form fails validation, re-render the list page
+     * with every attribute the template needs (this was missing before,
+     * which is likely why validation failures looked broken/blank).
+     */
+    private String reRenderListWithErrors(Model model) {
+        model.addAttribute("buyers", buyerService.getAllSummaries());
+        model.addAttribute("activeCount", buyerService.countActive());
+        model.addAttribute("inactiveCount", buyerService.countInactive());
+        model.addAttribute("topBuyers", buyerService.getTopBuyersByLimit(5));
+        model.addAttribute("openAddModal", true);
+        return "buyers-list";
     }
 
     private String getCurrentUsername() {

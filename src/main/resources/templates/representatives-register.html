@@ -8,11 +8,12 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
         html {
-            font-size: 16px;
+            font-size: 17px;
         }
         body { background: #f8f9fa; padding: 20px; }
         .register-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .register-card h3 { font-size: 1.2rem; }
+        /* CHANGED: bumped title from 1.2rem to 1.6rem and added weight, per request */
+        .register-card h3 { font-size: 1.6rem; font-weight: 700; }
         .register-card h5 { font-size: 0.9rem; }
         .form-label { font-weight: 500; color: #333; font-size: 0.8rem; }
         .form-control, .form-select, .form-text, textarea.form-control {
@@ -68,6 +69,36 @@
         .upload-btn { cursor: pointer; }
         .pdf-preview { padding: 12px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; display: none; font-size: 0.8rem; }
         .pdf-preview.show { display: block; }
+
+        /* NEW: progress bar + draft status bar */
+        .progress-wrap {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            padding-top: 6px;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        .progress-wrap .progress {
+            height: 10px;
+            border-radius: 6px;
+        }
+        .progress-wrap .progress-bar {
+            background: linear-gradient(135deg, #002244 0%, #0066cc 100%);
+            transition: width 0.3s ease;
+        }
+        .draft-status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            color: #888;
+        }
+        .draft-status-row #draftSavedText {
+            transition: opacity 0.4s ease;
+        }
     </style>
 </head>
 <body>
@@ -75,11 +106,24 @@
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="register-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
                     <h3><i class="bi bi-person-plus-fill"></i> Register Representatives</h3>
                     <a th:href="@{/representatives/list}" class="btn btn-secondary">
                         <i class="bi bi-arrow-left"></i> Back to List
                     </a>
+                </div>
+
+                <!-- NEW: progress bar + draft status -->
+                <div class="progress-wrap">
+                    <div class="progress" role="progressbar" aria-label="Form completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar" id="progressBar" style="width: 0%">0%</div>
+                    </div>
+                    <div class="draft-status-row">
+                        <span id="draftSavedText">&nbsp;</span>
+                        <button type="button" class="btn btn-link btn-sm p-0" id="clearDraftBtn" onclick="clearDraft()">
+                            <i class="bi bi-x-circle"></i> Clear saved draft
+                        </button>
+                    </div>
                 </div>
 
                 <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
@@ -115,13 +159,13 @@
                             <label for="firstName" class="form-label">First Name *</label>
                             <input type="text" class="form-control" id="firstName" th:field="*{firstName}" required
                                    minlength="2" maxlength="50" pattern="[A-Za-z\s]+"
-                                   oninput="validateName(this)">
+                                   oninput="validateName(this); onFieldChange();">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="lastName" class="form-label">Last Name *</label>
                             <input type="text" class="form-control" id="lastName" th:field="*{lastName}" required
                                    minlength="2" maxlength="50" pattern="[A-Za-z\s]+"
-                                   oninput="validateName(this)">
+                                   oninput="validateName(this); onFieldChange();">
                         </div>
                     </div>
 
@@ -129,7 +173,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="gender" class="form-label">Gender *</label>
                             <select class="form-select" id="gender" th:field="*{gender}" required
-                                    onchange="validateSelect(this)">
+                                    onchange="validateSelect(this); onFieldChange();">
                                 <option value="">Select gender...</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
@@ -138,7 +182,7 @@
                         <div class="col-md-4 mb-3">
                             <label for="maritialStatus" class="form-label">Marital Status *</label>
                             <select class="form-select" id="maritialStatus" th:field="*{maritialStatus}" required
-                                    onchange="validateSelect(this)">
+                                    onchange="validateSelect(this); onFieldChange();">
                                 <option value="">Select status...</option>
                                 <option value="SINGLE">Single</option>
                                 <option value="MARRIED">Married</option>
@@ -150,7 +194,7 @@
                             <label for="nid" class="form-label">National ID * (16 digits)</label>
                             <input type="text" class="form-control" id="nid" th:field="*{nid}" required
                                    maxlength="16" pattern="[0-9]{16}"
-                                   oninput="validateNID(this)"
+                                   oninput="validateNID(this); onFieldChange();"
                                    placeholder="1234567890123456">
                         </div>
                     </div>
@@ -162,13 +206,13 @@
                             <label for="phone" class="form-label">Phone Number * (10 digits)</label>
                             <input type="tel" class="form-control" id="phone" th:field="*{phone}" required
                                    pattern="(078|079|072|073)[0-9]{7}" maxlength="10"
-                                   oninput="validatePhone(this)"
+                                   oninput="validatePhone(this); onFieldChange();"
                                    placeholder="0781234567">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">Email *</label>
                             <input type="email" class="form-control" id="email" th:field="*{email}" required
-                                   oninput="validateEmail(this)"
+                                   oninput="validateEmail(this); onFieldChange();"
                                    placeholder="example@email.com">
                         </div>
                     </div>
@@ -180,7 +224,7 @@
                             <label for="occupation" class="form-label">Occupation (What they do) *</label>
                             <textarea class="form-control" id="occupation" th:field="*{occupation}" rows="2" required
                                       minlength="10" maxlength="500"
-                                      oninput="validateTextarea(this)"></textarea>
+                                      oninput="validateTextarea(this); onFieldChange();"></textarea>
                             <div class="form-text">Describe their activities (10-500 characters)</div>
                         </div>
                     </div>
@@ -211,19 +255,19 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="province" class="form-label">Province *</label>
-                            <select class="form-select" id="province" required onchange="loadDistricts()">
+                            <select class="form-select" id="province" required onchange="loadDistricts(); onFieldChange();">
                                 <option value="">Select province...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="district" class="form-label">District *</label>
-                            <select class="form-select" id="district" required onchange="loadSectors()" disabled>
+                            <select class="form-select" id="district" required onchange="loadSectors(); onFieldChange();" disabled>
                                 <option value="">Select district...</option>
                             </select>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="sector" class="form-label">Sector *</label>
-                            <select class="form-select" id="sector" required onchange="loadCells()" disabled>
+                            <select class="form-select" id="sector" required onchange="loadCells(); onFieldChange();" disabled>
                                 <option value="">Select sector...</option>
                             </select>
                         </div>
@@ -232,14 +276,14 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="cell" class="form-label">Cell *</label>
-                            <select class="form-select" id="cell" required onchange="loadVillages()" disabled>
+                            <select class="form-select" id="cell" required onchange="loadVillages(); onFieldChange();" disabled>
                                 <option value="">Select cell...</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="village" class="form-label">Village *</label>
                             <select class="form-select" id="village" required disabled th:field="*{locationIdValue}"
-                                    onchange="validateSelect(this)">
+                                    onchange="validateSelect(this); onFieldChange();">
                                 <option value="">Select village...</option>
                             </select>
                         </div>
@@ -430,15 +474,16 @@
             return false;
         }
 
+        clearDraft(true); // wipe the saved draft silently on successful submit
         form.submit();
     });
 
     document.addEventListener('DOMContentLoaded', function() {
-        loadProvinces();
+        loadProvinces().then(restoreDraft);
     });
 
     function loadProvinces() {
-        fetch('/api/locations/provinces')
+        return fetch('/api/locations/provinces')
             .then(response => response.json())
             .then(data => {
                 const select = document.getElementById('province');
@@ -457,10 +502,10 @@
         if (!provinceId) {
             districtSelect.disabled = true;
             resetSelects(['district', 'sector', 'cell', 'village']);
-            return;
+            return Promise.resolve();
         }
 
-        fetch(`/api/locations/districts/${provinceId}`)
+        return fetch(`/api/locations/districts/${provinceId}`)
             .then(response => response.json())
             .then(data => {
                 districtSelect.innerHTML = '<option value="">Select district...</option>';
@@ -480,10 +525,10 @@
         if (!districtId) {
             sectorSelect.disabled = true;
             resetSelects(['sector', 'cell', 'village']);
-            return;
+            return Promise.resolve();
         }
 
-        fetch(`/api/locations/sectors/${districtId}`)
+        return fetch(`/api/locations/sectors/${districtId}`)
             .then(response => response.json())
             .then(data => {
                 sectorSelect.innerHTML = '<option value="">Select sector...</option>';
@@ -503,10 +548,10 @@
         if (!sectorId) {
             cellSelect.disabled = true;
             resetSelects(['cell', 'village']);
-            return;
+            return Promise.resolve();
         }
 
-        fetch(`/api/locations/cells/${sectorId}`)
+        return fetch(`/api/locations/cells/${sectorId}`)
             .then(response => response.json())
             .then(data => {
                 cellSelect.innerHTML = '<option value="">Select cell...</option>';
@@ -525,10 +570,10 @@
 
         if (!cellId) {
             villageSelect.disabled = true;
-            return;
+            return Promise.resolve();
         }
 
-        fetch(`/api/locations/villages/${cellId}`)
+        return fetch(`/api/locations/villages/${cellId}`)
             .then(response => response.json())
             .then(data => {
                 villageSelect.innerHTML = '<option value="">Select village...</option>';
@@ -579,6 +624,7 @@
             if (data.success) {
                 preview.innerHTML = `<img src="${data.url}" alt="Photo">`;
                 document.getElementById('photoUrl').value = data.url;
+                onFieldChange();
             } else {
                 alert('Upload failed: ' + data.message);
                 preview.innerHTML = '<div class="placeholder"><i class="bi bi-camera" style="font-size: 2.4rem;"></i><p class="small mt-2">Upload failed</p></div>';
@@ -634,6 +680,7 @@
                         <i class="bi bi-x-circle"></i> Remove
                     </button>
                 `;
+                onFieldChange();
             } else {
                 throw new Error(data.message || 'Upload failed');
             }
@@ -652,6 +699,158 @@
         document.getElementById('pdfPreview').classList.remove('show');
         document.getElementById('pdfPreview').innerHTML = '';
         document.getElementById('pdfFile').value = '';
+        onFieldChange();
+    }
+
+    // ── Progress bar + draft autosave ───────────────────────────────────────
+    const DRAFT_KEY = 'representative_registration_draft_v1';
+    const REQUIRED_FIELD_IDS = ['firstName', 'lastName', 'gender', 'maritialStatus', 'nid',
+                                 'phone', 'email', 'occupation', 'village'];
+    let draftSaveTimer = null;
+
+    function updateProgress() {
+        let filled = 0;
+        const totalTracked = REQUIRED_FIELD_IDS.length + 1; // +1 for the PDF
+
+        REQUIRED_FIELD_IDS.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && el.value && el.value.trim() !== '') filled++;
+        });
+
+        const pdfUrl = document.getElementById('pdfUrl').value;
+        if (pdfUrl) filled++;
+
+        const percent = Math.round((filled / totalTracked) * 100);
+        const bar = document.getElementById('progressBar');
+        bar.style.width = percent + '%';
+        bar.textContent = percent + '%';
+        bar.parentElement.setAttribute('aria-valuenow', percent);
+
+        if (percent >= 100) {
+            bar.classList.remove('bg-primary');
+        }
+    }
+
+    function collectDraft() {
+        const draft = { savedAt: new Date().toISOString() };
+        ['firstName', 'lastName', 'gender', 'maritialStatus', 'nid', 'phone', 'email',
+         'occupation', 'province', 'district', 'sector', 'cell', 'village'].forEach(id => {
+            const el = document.getElementById(id);
+            draft[id] = el ? el.value : '';
+        });
+        draft.photoUrl = document.getElementById('photoUrl').value;
+        draft.pdfUrl = document.getElementById('pdfUrl').value;
+        return draft;
+    }
+
+    function saveDraft() {
+        try {
+            const draft = collectDraft();
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            showDraftSavedIndicator(draft.savedAt);
+        } catch (e) {
+            console.warn('Could not save draft:', e);
+        }
+    }
+
+    function showDraftSavedIndicator(isoTime) {
+        const el = document.getElementById('draftSavedText');
+        const time = new Date(isoTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        el.innerHTML = `<i class="bi bi-cloud-check"></i> Draft saved at ${time}`;
+    }
+
+    function onFieldChange() {
+        updateProgress();
+        clearTimeout(draftSaveTimer);
+        draftSaveTimer = setTimeout(saveDraft, 700);
+    }
+
+    function restoreDraft() {
+        let raw;
+        try {
+            raw = localStorage.getItem(DRAFT_KEY);
+        } catch (e) {
+            return;
+        }
+        if (!raw) return;
+
+        let draft;
+        try {
+            draft = JSON.parse(raw);
+        } catch (e) {
+            return;
+        }
+
+        if (!confirm('We found a saved draft from a previous session. Restore it?')) {
+            return;
+        }
+
+        ['firstName', 'lastName', 'gender', 'maritialStatus', 'nid', 'phone', 'email', 'occupation'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && draft[id]) {
+                el.value = draft[id];
+                if (el.tagName === 'SELECT') validateSelect(el);
+            }
+        });
+
+        if (draft.photoUrl) {
+            document.getElementById('photoUrl').value = draft.photoUrl;
+            document.getElementById('photoPreview').innerHTML = `<img src="${draft.photoUrl}" alt="Photo">`;
+        }
+        if (draft.pdfUrl) {
+            document.getElementById('pdfUrl').value = draft.pdfUrl;
+            const preview = document.getElementById('pdfPreview');
+            preview.classList.add('show');
+            preview.innerHTML = `
+                <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
+                <strong class="ms-2">Restored contract</strong>
+                <span class="badge bg-success ms-2">✓ Uploaded</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
+                    <i class="bi bi-x-circle"></i> Remove
+                </button>`;
+        }
+
+        // Chain-restore the location cascade
+        if (draft.province) {
+            document.getElementById('province').value = draft.province;
+            loadDistricts().then(() => {
+                if (draft.district) {
+                    document.getElementById('district').value = draft.district;
+                    return loadSectors();
+                }
+            }).then(() => {
+                if (draft.sector) {
+                    document.getElementById('sector').value = draft.sector;
+                    return loadCells();
+                }
+            }).then(() => {
+                if (draft.cell) {
+                    document.getElementById('cell').value = draft.cell;
+                    return loadVillages();
+                }
+            }).then(() => {
+                if (draft.village) {
+                    document.getElementById('village').value = draft.village;
+                }
+                updateProgress();
+            });
+        }
+
+        if (draft.savedAt) {
+            showDraftSavedIndicator(draft.savedAt);
+        }
+        updateProgress();
+    }
+
+    function clearDraft(silent) {
+        try {
+            localStorage.removeItem(DRAFT_KEY);
+        } catch (e) {
+            // ignore
+        }
+        if (!silent) {
+            document.getElementById('draftSavedText').innerHTML = '&nbsp;';
+        }
     }
 </script>
 </body>

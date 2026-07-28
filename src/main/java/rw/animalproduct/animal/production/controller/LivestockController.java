@@ -3,6 +3,7 @@ package rw.animalproduct.animal.production.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
@@ -10,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.*;
+import rw.animalproduct.animal.production.patches.AsyncConfig;
 import rw.animalproduct.animal.production.repository.*;
 import rw.animalproduct.animal.production.services.AuditLogService;
 import rw.animalproduct.animal.production.services.LifecycleEmailService;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,6 +61,17 @@ public class LivestockController {
 
     @Autowired
     private LifecycleEmailService emailService;
+
+    /**
+     * PERFORMANCE FIX (Question 1 — "register livestock is slow to save"):
+     * See AsyncConfig for the full explanation. In short: this executor lets
+     * us fire the confirmation email off the request thread instead of
+     * making the user's browser wait on an SMTP round trip before it can
+     * redirect to the new animal's page.
+     */
+    @Autowired
+    @Qualifier(AsyncConfig.NOTIFICATION_EXECUTOR)
+    private Executor notificationExecutor;
 
     // ─────────────────────────────────────────────────────────────────────────
     // LIST PAGE
@@ -335,6 +349,17 @@ public class LivestockController {
         model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(id));
         model.addAttribute("auditHistory", auditLogService.getLogsForEntity("livestock", id));
 
+        // ── QUESTION 2: "Weeks Pregnant must be calculated automatically" ──
+        // It already is: Livestock.getWeeksPregnant() derives it live from
+        // conceptionDate vs. today's date every time it's read — nothing is
+        // stored, so it can never go stale. It's exposed to the view template
+        // simply as ${livestock.weeksPregnant} (Thymeleaf calls the getter
+        // automatically), so no extra model attribute is technically required.
+        // We add it explicitly here anyway, under a clearer name, purely so
+        // the detail page's Thymeleaf markup reads self-documenting rather
+        // than implicit:
+        model.addAttribute("weeksPregnant", livestock.getWeeksPregnant());
+
         return "livestock-view";
     }
 
@@ -529,6 +554,28 @@ public class LivestockController {
         return "livestock-register";
     }
 
+    /**
+     * PERFORMANCE FIX (Question 1 — "register livestock slows down to save"):
+     *
+     * Root cause: after livestockService.addNew(saved) commits to the
+     * database (fast — a couple of indexed inserts), this method used to
+     * call emailService.sendAnimalRegisteredNotification(saved) directly,
+     * IN-LINE, on the same thread handling the HTTP request. Sending mail
+     * means Java has to open a socket to the SMTP server, do the SMTP/TLS
+     * handshake, authenticate, and wait for a "250 OK" — that's a real
+     * network operation that can easily take 1-5+ seconds, and far longer
+     * (or a timeout) if the mail server is briefly slow/unreachable, an app
+     * password rotated, or the network throttles port 587. The browser
+     * can't redirect to the new animal's page until that finishes, so the
+     * whole registration *looked* slow even though the actual save was fast.
+     *
+     * Fix: submit the email call to notificationExecutor (see AsyncConfig)
+     * instead of calling it directly. The controller method returns —
+     * and the browser redirects — the instant the DB save + audit log are
+     * done; the email goes out a moment later in the background. A slow or
+     * failing mail server can no longer add so much as a millisecond to the
+     * user-visible save time.
+     */
     @PostMapping("/register")
     public String register(@ModelAttribute Livestock livestock,
                            RedirectAttributes redirectAttributes) {
@@ -540,19 +587,19 @@ public class LivestockController {
                     null, saved, "New animal registered: " + saved.getTagNumber()
             );
 
-            // CHANGED: the empty catch block used to swallow email failures
-            // with zero trace anywhere. If Gmail SMTP auth fails, the app
-            // password rotates, or the network blocks port 587, you'd never
-            // know the email didn't go out. Now it's logged as a WARNING
+            // CHANGED: now runs on a background thread (notificationExecutor)
+            // instead of blocking this request. Still logged as a WARNING
             // (not ERROR — registration itself still succeeded) with the
-            // tag number and root cause message, without ever blocking or
-            // failing the registration flow itself.
-            try {
-                emailService.sendAnimalRegisteredNotification(saved);
-            } catch (Exception emailEx) {
-                log.warn("Registration email failed to send for animal '{}' (id={}): {}",
-                        saved.getTagNumber(), saved.getId(), emailEx.getMessage(), emailEx);
-            }
+            // tag number and root cause message if it fails, and it still
+            // can never fail or delay the registration flow itself.
+            notificationExecutor.execute(() -> {
+                try {
+                    emailService.sendAnimalRegisteredNotification(saved);
+                } catch (Exception emailEx) {
+                    log.warn("Registration email failed to send for animal '{}' (id={}): {}",
+                            saved.getTagNumber(), saved.getId(), emailEx.getMessage(), emailEx);
+                }
+            });
 
             redirectAttributes.addFlashAttribute("success",
                     "Animal registered successfully with tag: " + saved.getTagNumber());

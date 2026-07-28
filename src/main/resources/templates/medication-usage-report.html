@@ -5,8 +5,7 @@
     <title>Medication Usage Report</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <!-- Inter font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body {
@@ -17,19 +16,24 @@
         }
         .report-banner {
             background:linear-gradient(135deg,#701a75 0%,#a21caf 60%,#e879f9 100%);
-            padding:24px 40px 20px;
+            padding:22px 40px 18px;
             color:white;
         }
         .report-banner h2 {
-            font-family:'Syne',sans-serif;
-            font-size:1.3rem;
-            font-weight:800;
+            font-family:'Inter',sans-serif;
+            font-size:1.05rem;
+            font-weight:700;
+            letter-spacing:.01em;
             margin:0 0 4px;
+            display:flex;
+            align-items:center;
         }
+        .report-banner h2 i { font-size:.95rem; }
         .report-banner .sub {
             font-family:'Inter', sans-serif;
             font-weight:400;
-            font-size:0.8rem;
+            font-size:.78rem;
+            opacity:.85;
         }
         .print-btn {
             background:rgba(255,255,255,.15);
@@ -85,9 +89,10 @@
             border-top:4px solid #a21caf;
         }
         .kpi .kpi-num {
-            font-family:'Syne',sans-serif;
-            font-size:1.6rem;
+            font-family:'Inter',sans-serif;
+            font-size:1.5rem;
             font-weight:800;
+            letter-spacing:-.01em;
             color:#a21caf;
         }
         .kpi .kpi-lbl {
@@ -170,8 +175,8 @@
 <div class="report-banner">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3" style="max-width:1300px;margin:0 auto;">
         <div>
-            <h2><i class="bi bi-capsule-pill me-2" style="font-size:1.1rem;"></i>Medication Usage Report</h2>
-            <div class="sub" style="opacity:.85;font-size:.78rem;">
+            <h2><i class="bi bi-capsule-pill me-2"></i>Medication Usage Report</h2>
+            <div class="sub">
                 Drug usage &amp; spend · Period:
                 <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong> to
                 <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
@@ -262,7 +267,6 @@
 </div>
 
 <script th:inline="javascript">
-    // Set Inter as the default font for Chart.js
     Chart.defaults.font.family = "'Inter', sans-serif";
     Chart.defaults.color = '#64748b';
 

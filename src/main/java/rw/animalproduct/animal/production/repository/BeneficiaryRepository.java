@@ -80,4 +80,16 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
             "WHERE a.location.id IN :locationIds " +
             "AND (a.isDeleted = false OR a.isDeleted IS NULL)")
     List<Beneficiary> findByLocationIdInAndIsDeletedFalse(@Param("locationIds") List<UUID> locationIds);
+
+    // ---- NEW: active/inactive status support ----
+
+    Page<Beneficiary> findByStatus(String status, Pageable pageable);
+
+    Page<Beneficiary> findByRepresentativeIdAndStatus(UUID representativesAbororaId, String status, Pageable pageable);
+
+    long countByStatus(String status);
+
+    @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.status = :status")
+    long countByUhagarariyeAndStatus(@Param("representativesId") UUID representativesId,
+                                     @Param("status") String status);
 }

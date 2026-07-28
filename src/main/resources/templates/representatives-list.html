@@ -27,8 +27,14 @@
         .badge-gender {
             font-size: 0.7rem;
         }
+        .badge-status {
+            font-size: 0.7rem;
+        }
+        .pagination {
+            margin-top: 20px;
+            font-size: 0.8rem;
+        }
 
-        /* NEW: shrink table content and padding */
         #dataTable {
             font-size: 0.8rem;
         }
@@ -47,6 +53,99 @@
             font-size: 0.7rem;
             padding: 0.2rem 0.45rem;
         }
+
+        /* Status filter chips */
+        .status-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            text-decoration: none;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+        .status-chip:hover {
+            background: #f1f3f5;
+            color: #495057;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .status-chip.active-chip {
+            background: #1a5f7a;
+            border-color: #1a5f7a;
+            color: #fff;
+        }
+        .status-chip.active-chip:hover {
+            background: #154a60;
+            border-color: #154a60;
+            color: #fff;
+        }
+        .status-chip .chip-count {
+            font-weight: 600;
+            background: rgba(0,0,0,0.08);
+            padding: 0 6px;
+            border-radius: 999px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .status-chip.active-chip .chip-count {
+            background: rgba(255,255,255,0.2);
+        }
+        tr.row-inactive {
+            opacity: 0.65;
+            background-color: #f8f9fa;
+        }
+        tr.row-inactive:hover {
+            opacity: 0.85;
+        }
+
+        /* Animation for status changes */
+        .status-badge {
+            transition: all 0.3s ease;
+        }
+
+        /* Tooltip improvements */
+        .btn-sm {
+            position: relative;
+        }
+        .btn-sm:hover {
+            transform: scale(1.05);
+        }
+
+        /* Stats summary */
+        .stats-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+        .stat-item .stat-number {
+            font-weight: 600;
+            color: #1a5f7a;
+        }
+
+        /* Responsive table */
+        @media (max-width: 768px) {
+            .table-actions .btn-sm {
+                padding: 0.15rem 0.35rem;
+                font-size: 0.65rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -63,23 +162,76 @@
             </a>
         </div>
 
-        <!-- Success Message -->
+        <!-- Success / Error Message -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
             <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Statistics Summary -->
+        <div class="stats-summary" th:if="${statistics != null}">
+            <span class="stat-item">
+                <i class="bi bi-people"></i> Total: <span class="stat-number" th:text="${statistics.total}">0</span>
+            </span>
+            <span class="stat-item">
+                <i class="bi bi-check-circle text-success"></i> Active: <span class="stat-number" th:text="${statistics.active}">0</span>
+                <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(statistics.activePercentage, 0, 1)} + '%)'">0%</span>
+            </span>
+            <span class="stat-item">
+                <i class="bi bi-pause-circle text-secondary"></i> Inactive: <span class="stat-number" th:text="${statistics.inactive}">0</span>
+                <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(statistics.inactivePercentage, 0, 1)} + '%)'">0%</span>
+            </span>
+            <span class="stat-item">
+                <i class="bi bi-gender-male text-primary"></i> Male: <span class="stat-number" th:text="${statistics.male}">0</span>
+            </span>
+            <span class="stat-item">
+                <i class="bi bi-gender-female text-danger"></i> Female: <span class="stat-number" th:text="${statistics.female}">0</span>
+            </span>
+        </div>
+
+        <!-- Status filter chips -->
+        <div class="status-chips mb-3">
+            <a class="status-chip" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active-chip' : ''"
+               th:href="@{/representatives/list(keyword=${keyword})}">
+                <i class="bi bi-people"></i> All
+                <span class="chip-count" th:text="${totalCount != null ? totalCount : 0}">0</span>
+            </a>
+            <a class="status-chip" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active-chip' : ''"
+               th:href="@{/representatives/list(status='ACTIVE', keyword=${keyword})}">
+                <i class="bi bi-check-circle"></i> Active
+                <span class="chip-count" th:text="${activeCount != null ? activeCount : 0}">0</span>
+            </a>
+            <a class="status-chip" th:classappend="${selectedStatus == 'INACTIVE'} ? 'active-chip' : ''"
+               th:href="@{/representatives/list(status='INACTIVE', keyword=${keyword})}">
+                <i class="bi bi-pause-circle"></i> Inactive
+                <span class="chip-count" th:text="${inactiveCount != null ? inactiveCount : 0}">0</span>
+            </a>
         </div>
 
         <!-- Search Bar -->
         <div class="row mb-3">
             <div class="col-md-6">
-                <div class="input-group">
+                <form th:action="@{/representatives/list}" method="get" class="input-group">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="searchInput"
-                           placeholder="Search by name, NID, or phone...">
-                </div>
+                    <input type="text" class="form-control" id="searchInput" name="keyword"
+                           placeholder="Search by name, NID, or phone..."
+                           th:value="${keyword}">
+                    <input type="hidden" name="status" th:value="${selectedStatus}">
+                    <button class="btn btn-outline-secondary" type="submit">Search</button>
+                    <a th:href="@{/representatives/list(status=${selectedStatus})}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </form>
             </div>
             <div class="col-md-6 text-end">
-                <span class="text-muted">Total Records: <strong th:text="${representativesList != null ? representativesList.size() : 0}">0</strong></span>
+                <span class="text-muted">
+                    Showing <strong th:text="${representativesList != null ? representativesList.size() : 0}">0</strong>
+                    of <strong th:text="${totalCount != null ? totalCount : 0}">0</strong> records
+                </span>
             </div>
         </div>
 
@@ -96,21 +248,26 @@
                     <th>Email</th>
                     <th>Location</th>
                     <th>Occupation</th>
+                    <th>Status</th>
                     <th>Beneficiaries</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${representativesList == null or representativesList.empty}">
-                    <td colspan="10" class="text-center text-muted py-4">
+                    <td colspan="11" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No representatives registered yet</p>
+                        <p th:if="${keyword}" class="small">No results found for "<strong th:text="${keyword}"></strong>"</p>
                     </td>
                 </tr>
-                <tr th:each="item, iterStat : ${representativesList}">
+                <tr th:each="item, iterStat : ${representativesList}"
+                    th:classappend="${item.status == 'INACTIVE'} ? 'row-inactive' : ''">
                     <td th:text="${iterStat.count}">1</td>
                     <td>
                         <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
+                        <br>
+                        <small class="text-muted" th:text="'ID: ' + ${item.id.toString().substring(0,8)}">ID</small>
                     </td>
                     <td>
                         <span th:if="${item.gender == 'MALE'}" class="badge bg-primary badge-gender">
@@ -131,6 +288,14 @@
                         <small th:text="${item.occupation != null ? item.occupation : 'N/A'}">Activity</small>
                     </td>
                     <td>
+                        <span th:if="${item.status == 'INACTIVE'}" class="badge bg-secondary badge-status status-badge">
+                            <i class="bi bi-pause-circle"></i> Inactive
+                        </span>
+                        <span th:unless="${item.status == 'INACTIVE'}" class="badge bg-success badge-status status-badge">
+                            <i class="bi bi-check-circle"></i> Active
+                        </span>
+                    </td>
+                    <td>
                         <a th:href="@{/beneficiaries/list(representativeId=${item.id})}"
                            class="btn btn-sm btn-outline-secondary" title="View Beneficiaries">
                             <i class="bi bi-people"></i>
@@ -146,12 +311,53 @@
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        <button type="button"
+                                th:class="${item.status == 'INACTIVE'} ? 'btn btn-sm btn-outline-success' : 'btn btn-sm btn-outline-secondary'"
+                                data-bs-toggle="modal"
+                                th:data-bs-target="'#statusModal' + ${item.id}"
+                                th:title="${item.status == 'INACTIVE'} ? 'Activate' : 'Deactivate'">
+                            <i class="bi" th:classappend="${item.status == 'INACTIVE'} ? 'bi-play-circle' : 'bi-pause-circle'"></i>
+                        </button>
                         <button type="button" class="btn btn-sm btn-danger"
                                 data-bs-toggle="modal"
                                 th:data-bs-target="'#deleteModal' + ${item.id}"
                                 title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
+
+                        <!-- Activate/Deactivate Confirmation Modal -->
+                        <div class="modal fade" th:id="'statusModal' + ${item.id}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" th:text="${item.status == 'INACTIVE'} ? 'Activate Representative' : 'Deactivate Representative'">Change Status</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <span th:if="${item.status == 'INACTIVE'}">
+                                            <i class="bi bi-play-circle text-success fs-4"></i>
+                                            <p class="mt-2">Reactivate <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong>?</p>
+                                            <p class="text-muted small">They'll appear as active again across the system and can be assigned to new beneficiaries.</p>
+                                        </span>
+                                        <span th:unless="${item.status == 'INACTIVE'}">
+                                            <i class="bi bi-pause-circle text-warning fs-4"></i>
+                                            <p class="mt-2">Mark <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong> as inactive?</p>
+                                            <p class="text-muted small">Their record and beneficiaries stay in the system — this can be reversed anytime.</p>
+                                        </span>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <form th:action="@{/representatives/toggle-status/{id}(id=${item.id})}" method="post" class="d-inline">
+                                            <button type="submit"
+                                                    th:class="${item.status == 'INACTIVE'} ? 'btn btn-success' : 'btn btn-secondary'">
+                                                <i class="bi" th:classappend="${item.status == 'INACTIVE'} ? 'bi-play-circle' : 'bi-pause-circle'"></i>
+                                                <span th:text="${item.status == 'INACTIVE'} ? 'Activate' : 'Deactivate'"></span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Delete Confirmation Modal -->
                         <div class="modal fade" th:id="'deleteModal' + ${item.id}" tabindex="-1">
@@ -162,9 +368,14 @@
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
-                                        Are you sure you want to delete
-                                        <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong>?
-                                        <br><small class="text-danger">This action cannot be undone.</small>
+                                        <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                                        <p class="mt-2">Are you sure you want to delete <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong>?</p>
+                                        <div class="alert alert-danger">
+                                            <small><i class="bi bi-info-circle"></i> This action cannot be undone. If you just want to pause this representative temporarily, use Deactivate instead.</small>
+                                        </div>
+                                        <div class="alert alert-warning">
+                                            <small><i class="bi bi-people"></i> This will also remove all associated beneficiaries (<strong th:text="${beneficiaryCounts.get(item.id) != null ? beneficiaryCounts.get(item.id) : 0}">0</strong> beneficiaries).</small>
+                                        </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -182,19 +393,61 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- No pagination needed message -->
+        <div class="text-center text-muted mt-4">
+            <small>All records shown on this page</small>
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Simple search functionality
-    document.getElementById('searchInput').addEventListener('keyup', function() {
-        const searchValue = this.value.toLowerCase();
-        const tableRows = document.querySelectorAll('#dataTable tbody tr');
+    // Enhanced search functionality with debounce for client-side filtering
+    let searchTimeout;
+    document.getElementById('searchInput')?.addEventListener('keyup', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchValue = this.value.toLowerCase().trim();
+            const tableRows = document.querySelectorAll('#dataTable tbody tr');
+            let visibleCount = 0;
 
-        tableRows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(searchValue) ? '' : 'none';
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const shouldShow = text.includes(searchValue);
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visibleCount++;
+            });
+
+            // Update visible count
+            const showingElement = document.querySelector('.text-muted strong:first-child');
+            const totalElement = document.querySelector('.text-muted strong:last-child');
+            if (showingElement && totalElement) {
+                const total = document.querySelectorAll('#dataTable tbody tr:not([style*="display: none"])').length;
+                showingElement.textContent = visibleCount;
+                totalElement.textContent = total;
+            }
+        }, 300);
+    });
+
+    // Auto-dismiss alerts after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                const closeButton = alert.querySelector('.btn-close');
+                if (closeButton) {
+                    closeButton.click();
+                }
+            }, 5000);
+        });
+    });
+
+    // Tooltip initialization
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function(tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
         });
     });
 </script>

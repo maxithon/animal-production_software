@@ -46,6 +46,11 @@ public class RepresentativeService {
         return representativeRepository.findByLocationId(locationId);
     }
 
+    // NEW: used if you want to filter the list page by status
+    public List<Representative> getByStatus(String status) {
+        return representativeRepository.findByStatus(status);
+    }
+
     public Representative addNew(Representative representatives) {
         // Set location
         String locationIdString = representatives.getLocationIdValue();
@@ -58,6 +63,10 @@ public class RepresentativeService {
 
         // Set created date and user
         representatives.setCreatedDate(new Date());
+
+        if (representatives.getStatus() == null || representatives.getStatus().isEmpty()) {
+            representatives.setStatus("ACTIVE");
+        }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
@@ -82,8 +91,15 @@ public class RepresentativeService {
             existing.setNid(updatedData.getNid());
             existing.setPhone(updatedData.getPhone());
             existing.setEmail(updatedData.getEmail());
-            existing.setOccupation(updatedData.getOccupation());              // ✅ Fixed (was icyoAkora)
-            existing.setContractAgreement(updatedData.getContractAgreement()); // ✅ Fixed (was amasezerano)
+            existing.setOccupation(updatedData.getOccupation());
+            existing.setContractAgreement(updatedData.getContractAgreement());
+            existing.setPhoto(updatedData.getPhoto());
+
+            // Status is only changed here if the edit form actually sent one;
+            // otherwise leave whatever is currently stored untouched.
+            if (updatedData.getStatus() != null && !updatedData.getStatus().isEmpty()) {
+                existing.setStatus(updatedData.getStatus());
+            }
 
             // Update location
             String locationIdString = updatedData.getLocationIdValue();
@@ -97,6 +113,18 @@ public class RepresentativeService {
             return representativeRepository.save(existing);
         }
 
+        return null;
+    }
+
+    // NEW: flips ACTIVE <-> INACTIVE, used by the toggle button on the list page
+    public Representative toggleStatus(UUID id) {
+        Optional<Representative> existingOpt = representativeRepository.findById(id);
+        if (existingOpt.isPresent()) {
+            Representative existing = existingOpt.get();
+            String current = existing.getStatus();
+            existing.setStatus("ACTIVE".equalsIgnoreCase(current) ? "INACTIVE" : "ACTIVE");
+            return representativeRepository.save(existing);
+        }
         return null;
     }
 

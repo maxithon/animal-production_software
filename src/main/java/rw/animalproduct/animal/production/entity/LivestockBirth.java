@@ -151,4 +151,168 @@ public class LivestockBirth {
     public void setBreedingId(UUID breedingId) {
         this.breedingId = breedingId;
     }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getLivestockId() {
+        return livestockId;
+    }
+
+    public void setLivestockId(UUID livestockId) {
+        this.livestockId = livestockId;
+    }
+
+    public Livestock getLivestock() {
+        return livestock;
+    }
+
+    public void setLivestock(Livestock livestock) {
+        this.livestock = livestock;
+    }
+
+    public void setBreeding(LivestockBreeding breeding) {
+        this.breeding = breeding;
+    }
+
+    public UUID getVeterinarianId() {
+        return veterinarianId;
+    }
+
+    public void setVeterinarianId(UUID veterinarianId) {
+        this.veterinarianId = veterinarianId;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public String getBirthDateNote() {
+        return birthDateNote;
+    }
+
+    public void setBirthDateNote(String birthDateNote) {
+        this.birthDateNote = birthDateNote;
+    }
+
+    public LocalDate getWeaningDate() {
+        return weaningDate;
+    }
+
+    public void setWeaningDate(LocalDate weaningDate) {
+        this.weaningDate = weaningDate;
+    }
+
+    public LocalDate getNextBreedingDate() {
+        return nextBreedingDate;
+    }
+
+    public void setNextBreedingDate(LocalDate nextBreedingDate) {
+        this.nextBreedingDate = nextBreedingDate;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public Integer getOffspringCount() {
+        return offspringCount;
+    }
+
+    public void setOffspringCount(Integer offspringCount) {
+        this.offspringCount = offspringCount;
+    }
+
+    public String getOffspringGender() {
+        return offspringGender;
+    }
+
+    public void setOffspringGender(String offspringGender) {
+        this.offspringGender = offspringGender;
+    }
+
+    public String getSourceLocation() {
+        return sourceLocation;
+    }
+
+    public void setSourceLocation(String sourceLocation) {
+        this.sourceLocation = sourceLocation;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Boolean getExternalBirth() {
+        return isExternalBirth;
+    }
+
+    public void setExternalBirth(Boolean externalBirth) {
+        isExternalBirth = externalBirth;
+    }
+
+    public Boolean getDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        isDeleted = deleted;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public List<LivestockOffspring> getChildren() {
+        return children;
+    }
+
+    public void setChildren(List<LivestockOffspring> children) {
+        this.children = children;
+    }
+
+    public String getLivestockIdValue() {
+        return livestockIdValue;
+    }
+
+    public void setLivestockIdValue(String livestockIdValue) {
+        this.livestockIdValue = livestockIdValue;
+    }
 }

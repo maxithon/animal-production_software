@@ -32,8 +32,6 @@ public class VeterinarianController {
         this.auditLogService     = auditLogService;
     }
 
-    // ── LIST ──────────────────────────────────────────────────────────────────
-
     @GetMapping
     public String list(Model model) {
         model.addAttribute("vets",        veterinarianService.getAll());
@@ -43,13 +41,12 @@ public class VeterinarianController {
         return "veterinarians-list";
     }
 
-    // ── CREATE (now logged) ──────────────────────────────────────────────────
-
     @PostMapping("/new")
     public String save(@Valid @ModelAttribute("vet") Veterinarian vet,
                        BindingResult result,
                        Model model,
                        RedirectAttributes ra) {
+
         if (result.hasErrors()) {
             model.addAttribute("vets",      veterinarianService.getAll());
             model.addAttribute("locations", locationRepository.findAll());
@@ -72,8 +69,6 @@ public class VeterinarianController {
         return "redirect:/veterinarians";
     }
 
-    // ── EDIT FORM ─────────────────────────────────────────────────────────────
-
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model) {
         Optional<Veterinarian> opt = veterinarianService.getById(id);
@@ -88,8 +83,6 @@ public class VeterinarianController {
         model.addAttribute("locations", locationRepository.findAll());
         return "veterinarian-edit";
     }
-
-    // ── UPDATE (now logged) ──────────────────────────────────────────────────
 
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
@@ -109,7 +102,6 @@ public class VeterinarianController {
         resolveLocation(vet);
         veterinarianService.update(id, vet);
 
-        // VeterinarianService.update() returns void — re-fetch to get the persisted "after" state
         Veterinarian after = veterinarianService.getById(id).orElse(null);
 
         auditLogService.log(
@@ -125,8 +117,6 @@ public class VeterinarianController {
         ra.addFlashAttribute("success", "Veterinarian updated successfully!");
         return "redirect:/veterinarians";
     }
-
-    // ── DELETE ────────────────────────────────────────────────────────────────
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes ra) {
@@ -154,8 +144,6 @@ public class VeterinarianController {
         return "redirect:/veterinarians";
     }
 
-    // ── TOGGLE ACTIVE ─────────────────────────────────────────────────────────
-
     @PostMapping("/toggle-active/{id}")
     public String toggleActive(@PathVariable UUID id, RedirectAttributes ra) {
         Optional<Veterinarian> opt = veterinarianService.getById(id);
@@ -168,8 +156,6 @@ public class VeterinarianController {
         }
         return "redirect:/veterinarians";
     }
-
-    // ── AJAX LIVE SEARCH ──────────────────────────────────────────────────────
 
     @GetMapping("/search")
     @ResponseBody
@@ -198,8 +184,6 @@ public class VeterinarianController {
         }
         return ResponseEntity.ok(result);
     }
-
-    // ── AJAX QUICK-ADD ────────────────────────────────────────────────────────
 
     @PostMapping("/quick-add")
     @ResponseBody
@@ -253,8 +237,6 @@ public class VeterinarianController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-
-    // ── HELPERS ────────────────────────────────────────────────────────────────
 
     private void resolveLocation(Veterinarian vet) {
         String locId = vet.getLocationIdValue();

@@ -221,9 +221,9 @@
                         <input type="date" class="form-control" th:field="*{deathDate}" required>
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label">Cause of Death</label>
-                        <select class="form-select" th:field="*{causeOfDeath}">
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Cause of Death</label>
+                        <select class="form-select" id="causeSelectEdit" th:field="*{causeOfDeath}" onchange="toggleOtherCauseEdit(this)">
                             <option value="">Select or type below...</option>
                             <option value="Disease">Disease</option>
                             <option value="Injury">Injury</option>
@@ -235,7 +235,22 @@
                             <option value="Unknown">Unknown</option>
                             <option value="Other">Other</option>
                         </select>
+                        <input type="text" name="otherCauseDetail" id="otherCauseInputEdit"
+                               class="form-control mt-2 d-none"
+                               placeholder="Please describe the cause...">
                     </div>
+                    <script>
+                        function toggleOtherCauseEdit(select) {
+                            const otherInput = document.getElementById('otherCauseInputEdit');
+                            if (select.value === 'Other') {
+                                otherInput.classList.remove('d-none');
+                                otherInput.required = true;
+                            } else {
+                                otherInput.classList.add('d-none');
+                                otherInput.required = false;
+                            }
+                        }
+                    </script>
 
                     <div class="col-md-1">
                         <button type="submit" class="btn btn-danger w-100">
@@ -476,5 +491,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

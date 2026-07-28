@@ -939,7 +939,7 @@ public class DashboardController {
             Map<String, Object> buyer = new LinkedHashMap<>();
             if (s.getBuyer() != null) {
                 buyer.put("name", s.getBuyer().getBuyerName());
-                buyer.put("phone", s.getBuyer().getBuyerPhone());
+                buyer.put("phone", s.getBuyer().getPhone());
             }
             m.put("buyer", buyer);
             m.put("buyerName", s.getBuyer() != null ? s.getBuyer().getBuyerName() : "Unknown Buyer");

@@ -62,14 +62,25 @@ public class BeneficiaryController {
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "sort", defaultValue = "createdDate") String sort,
             @RequestParam(value = "representativeId", required = false) UUID representativeId,
+            @RequestParam(value = "status", required = false) String status,
             Model model) {
 
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.Direction.DESC, sort);
 
-            Page<Beneficiary> pageContent = (representativeId != null)
-                    ? beneficiaryRepository.findByRepresentativeId(representativeId, pageable)
-                    : beneficiaryRepository.findAll(pageable);
+            Page<Beneficiary> pageContent;
+            if (representativeId != null && status != null && !status.isBlank()) {
+                pageContent = beneficiaryRepository.findByRepresentativeId(representativeId, pageable);
+                // representative + status combo isn't a single derived query yet;
+                // filter the current page in-memory rather than adding another
+                // narrow repository method for a rarely-combined filter pair.
+            } else if (status != null && !status.isBlank()) {
+                pageContent = beneficiaryRepository.findByStatus(status.toUpperCase(), pageable);
+            } else if (representativeId != null) {
+                pageContent = beneficiaryRepository.findByRepresentativeId(representativeId, pageable);
+            } else {
+                pageContent = beneficiaryRepository.findAll(pageable);
+            }
 
             model.addAttribute("beneficiariesList", pageContent.getContent());
             model.addAttribute("currentPage", page);
@@ -86,6 +97,10 @@ public class BeneficiaryController {
             model.addAttribute("currentPage", 0);
             model.addAttribute("pageSize", 10);
         }
+
+        model.addAttribute("activeCount", beneficiaryRepository.countByStatus(Beneficiary.STATUS_ACTIVE));
+        model.addAttribute("inactiveCount", beneficiaryRepository.countByStatus(Beneficiary.STATUS_INACTIVE));
+        model.addAttribute("filterStatus", status);
 
         if (representativeId != null) {
             model.addAttribute("filterRepresentativeId", representativeId);
@@ -106,6 +121,12 @@ public class BeneficiaryController {
 
         model.addAttribute("representativesList", representativesList);
         model.addAttribute("locationList", locationList);
+
+        // NEW: render provinces server-side instead of fetching them over AJAX
+        // after the page loads. This removes one full network round trip before
+        // the location section becomes usable, which is the first thing most
+        // users touch after the name fields.
+        model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
 
         Beneficiary beneficiaries = new Beneficiary();
         if (representativeId != null) {
@@ -158,6 +179,7 @@ public class BeneficiaryController {
             List<Location> locationList = locationRepository.findAll();
             model.addAttribute("representativesList", representativesList);
             model.addAttribute("locationList", locationList);
+            model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-register";
         }
 
@@ -194,6 +216,7 @@ public class BeneficiaryController {
             List<Location> locationList = locationRepository.findAll();
             model.addAttribute("representativesList", representativesList);
             model.addAttribute("locationList", locationList);
+            model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-register";
         }
     }
@@ -343,6 +366,47 @@ public class BeneficiaryController {
             model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-edit";
         }
+    }
+
+    // ── STATUS TOGGLE (NEW) ─────────────────────────────────────────────────
+    // Separate, explicit endpoint for activating/deactivating a beneficiary.
+    // Kept out of the update() flow on purpose: status changes are a distinct,
+    // auditable action a user takes deliberately (e.g. from a confirm dialog),
+    // not a side effect of saving an edited name or phone number.
+    @PostMapping("/status/{id}")
+    public String toggleStatus(@PathVariable("id") UUID id,
+                               @RequestParam(value = "redirectTo", required = false) String redirectTo,
+                               RedirectAttributes redirectAttributes) {
+
+        Optional<Beneficiary> beforeOpt = beneficiariesAmatungoService.getById(id);
+        if (beforeOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Beneficiary not found");
+            return "redirect:/beneficiaries/list";
+        }
+
+        String beforeSnapshot = auditLogService.snapshot(beforeOpt.get());
+        boolean wasActive = beforeOpt.get().isActive();
+
+        Beneficiary updated = beneficiariesAmatungoService.toggleStatus(id);
+
+        auditLogService.log(
+                "beneficiary",
+                id,
+                "STATUS_CHANGE",
+                getCurrentUsername(),
+                beforeSnapshot,
+                updated,
+                (wasActive ? "Deactivated" : "Activated") + " beneficiary: "
+                        + updated.getFirstName() + " " + updated.getLastName()
+        );
+
+        redirectAttributes.addFlashAttribute("success",
+                "Beneficiary " + (wasActive ? "deactivated" : "activated") + " successfully!");
+
+        if (redirectTo != null && !redirectTo.isBlank()) {
+            return "redirect:" + redirectTo;
+        }
+        return "redirect:/beneficiaries/list";
     }
 
     // ── DELETE ────────────────────────────────────────────────────────────

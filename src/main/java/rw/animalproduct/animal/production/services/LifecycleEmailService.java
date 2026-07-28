@@ -12,6 +12,7 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
+import rw.animalproduct.animal.production.entity.LivestockDeath;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -49,6 +50,8 @@ import java.util.Map;
  *   - sendAnimalRegisteredNotification(): fired once, at creation.
  *   - sendAnimalUpdatedNotification():   fired on every subsequent edit
  *     that actually changes a tracked field, with a full old → new diff.
+ *   - sendDeathNotification():           fired once, when a death record
+ *     is created — the terminal lifecycle event for an animal.
  * Combined with AuditLogService (which persists the same events to the
  * database), this gives both a durable record AND a real-time notification.
  */
@@ -371,6 +374,56 @@ public class LifecycleEmailService {
                     animal.getTagNumber(), fieldChanges.size());
         } catch (Exception e) {
             log.error("❌ Failed to send update-notification email for {}: {}",
+                    animal.getTagNumber(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * NEW — DEATH NOTIFICATION.
+     * Sent once, right after LivestockDeathService.addNew(...) records a
+     * death and marks the animal DEAD. This is the terminal lifecycle
+     * event for an animal — mirrors sendAnimalRegisteredNotification in
+     * structure (single event, key-value table, no diff needed).
+     */
+    public void sendDeathNotification(LivestockDeath death) {
+        if (!emailEnabled) {
+            log.debug("⏩ Email disabled — skipping death email");
+            return;
+        }
+        if (death == null || death.getLivestock() == null) {
+            log.warn("sendDeathNotification called with null death or livestock — skipped");
+            return;
+        }
+        Livestock animal = death.getLivestock();
+        try {
+            Context ctx = new Context();
+            ctx.setVariable("emoji", "🐄⚰️");
+            ctx.setVariable("title", "Livestock Death Recorded");
+            ctx.setVariable("tagNumber", animal.getTagNumber());
+            ctx.setVariable("category", animal.getLivestockCategory() != null
+                    ? animal.getLivestockCategory().getName() : "N/A");
+            ctx.setVariable("gender", animal.getGender() != null ? animal.getGender() : "Unknown");
+            ctx.setVariable("deathDate", death.getDeathDate() != null
+                    ? death.getDeathDate().format(FMT) : "Not set");
+            ctx.setVariable("causeOfDeath", (death.getCauseOfDeath() != null && !death.getCauseOfDeath().isBlank())
+                    ? death.getCauseOfDeath() : "Not specified");
+            ctx.setVariable("vetName", death.getVeterinarian() != null
+                    ? death.getVeterinarian().getFullName() : "Not assigned");
+            ctx.setVariable("today", LocalDate.now().format(FMT));
+
+            String html = templateEngine.process("emails/email-death-recorded", ctx);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
+            helper.setFrom(emailFrom);
+            helper.setTo(emailTo);
+            helper.setSubject("🐄⚰️ Death Recorded — " + animal.getTagNumber());
+            helper.setText(html, true);
+            mailSender.send(message);
+
+            log.info("✅ Death notification email sent for {}", animal.getTagNumber());
+        } catch (Exception e) {
+            log.error("❌ Failed to send death notification email for {}: {}",
                     animal.getTagNumber(), e.getMessage(), e);
         }
     }

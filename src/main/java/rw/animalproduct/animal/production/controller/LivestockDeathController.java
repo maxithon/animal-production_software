@@ -54,7 +54,6 @@ public class LivestockDeathController {
             @RequestParam(value = "direction", defaultValue = "desc") String direction,
             Model model) {
 
-        // Validate page size
         if (size > 50) size = 50;
         if (size < 1) size = DEFAULT_PAGE_SIZE;
 
@@ -62,22 +61,18 @@ public class LivestockDeathController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
 
         Page<LivestockDeath> deathPage;
-
         if (search != null && !search.trim().isEmpty()) {
             deathPage = deathRepository.searchDeaths(search.trim(), pageable);
         } else {
             deathPage = deathRepository.findAllActive(pageable);
         }
 
-        // Get only active livestock for the dropdown (not dead, not sold)
         List<String> excludedStatuses = Arrays.asList("DEAD", "SOLD");
         List<Livestock> livestockList = livestockRepository.findByStatusNotIn(excludedStatuses);
 
-        // Create a new death object for the form
         LivestockDeath death = new LivestockDeath();
         death.setDeathDate(LocalDate.now());
 
-        // Calculate pagination range for display
         int totalPages = deathPage.getTotalPages();
         List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList());
 
@@ -98,19 +93,32 @@ public class LivestockDeathController {
 
     /**
      * POST /livestock/deaths/new - Create a new death record
+     *
+     * FIX: @RequestParam names now match the actual field names Thymeleaf
+     * generates from th:field="*{livestockIdValue}" / *{causeOfDeath} —
+     * this was the cause of the "Required parameter 'livestockId' is not
+     * present" 400 error (the form was sending "livestockIdValue", the
+     * controller was demanding "livestockId").
+     *
+     * NEW: "otherCauseDetail" — free-text box shown only when "Other" is
+     * picked in the dropdown. If present, it REPLACES "Other" as the
+     * stored cause of death (no schema change needed).
      */
     @PostMapping("/deaths/new")
     public String createDeath(
-            @RequestParam("livestockId") String livestockIdStr,
+            @RequestParam("livestockIdValue") String livestockIdStr,
             @RequestParam("deathDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate deathDate,
             @RequestParam(value = "causeOfDeath", required = false) String causeOfDeath,
+            @RequestParam(value = "otherCauseDetail", required = false) String otherCauseDetail,
             RedirectAttributes redirectAttributes) {
 
         try {
+            String resolvedCause = resolveCause(causeOfDeath, otherCauseDetail);
+
             LivestockDeath death = new LivestockDeath();
             death.setLivestockIdValue(livestockIdStr);
             death.setDeathDate(deathDate);
-            death.setCauseOfDeath(causeOfDeath);
+            death.setCauseOfDeath(resolvedCause);
             death.setIsDeleted(false);
 
             LivestockDeath saved = deathService.addNew(death);
@@ -118,7 +126,7 @@ public class LivestockDeathController {
             String animalTag = saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : livestockIdStr;
             redirectAttributes.addFlashAttribute("success",
                     "Death recorded successfully for animal: " + animalTag +
-                            (causeOfDeath != null && !causeOfDeath.isEmpty() ? " | Cause: " + causeOfDeath : ""));
+                            (resolvedCause != null && !resolvedCause.isEmpty() ? " | Cause: " + resolvedCause : ""));
 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
@@ -136,7 +144,6 @@ public class LivestockDeathController {
         LivestockDeath death = deathService.getById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid death ID: " + id));
 
-        // Get all livestock for the dropdown (including dead ones for editing)
         List<Livestock> livestockList = livestockRepository.findAll();
 
         model.addAttribute("death", death);
@@ -151,18 +158,21 @@ public class LivestockDeathController {
     @PostMapping("/deaths/update/{id}")
     public String updateDeath(
             @PathVariable UUID id,
-            @RequestParam("livestockId") String livestockIdStr,
+            @RequestParam("livestockIdValue") String livestockIdStr,
             @RequestParam("deathDate") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate deathDate,
             @RequestParam(value = "causeOfDeath", required = false) String causeOfDeath,
+            @RequestParam(value = "otherCauseDetail", required = false) String otherCauseDetail,
             RedirectAttributes redirectAttributes) {
 
         try {
+            String resolvedCause = resolveCause(causeOfDeath, otherCauseDetail);
+
             LivestockDeath existing = deathService.getById(id)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid death ID: " + id));
 
             existing.setLivestockIdValue(livestockIdStr);
             existing.setDeathDate(deathDate);
-            existing.setCauseOfDeath(causeOfDeath);
+            existing.setCauseOfDeath(resolvedCause);
 
             deathService.update(id, existing);
             redirectAttributes.addFlashAttribute("success",
@@ -190,5 +200,13 @@ public class LivestockDeathController {
                     "Failed to delete death: " + e.getMessage());
         }
         return "redirect:/livestock/deaths";
+    }
+
+    // ── helper ───────────────────────────────────────────────────────
+    private String resolveCause(String causeOfDeath, String otherCauseDetail) {
+        if ("Other".equals(causeOfDeath) && otherCauseDetail != null && !otherCauseDetail.trim().isEmpty()) {
+            return otherCauseDetail.trim();
+        }
+        return causeOfDeath;
     }
 }

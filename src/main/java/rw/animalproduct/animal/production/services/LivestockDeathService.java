@@ -16,11 +16,19 @@ public class LivestockDeathService {
 
     private final LivestockDeathRepository deathRepository;
     private final LivestockRepository      livestockRepository;
+    private final AuditLogService          auditLogService;
+    private final LifecycleEmailService    emailService;
+
+    private static final String ENTITY_TYPE = "livestock_death";
 
     public LivestockDeathService(LivestockDeathRepository deathRepository,
-                                 LivestockRepository livestockRepository) {
+                                 LivestockRepository livestockRepository,
+                                 AuditLogService auditLogService,
+                                 LifecycleEmailService emailService) {
         this.deathRepository     = deathRepository;
         this.livestockRepository = livestockRepository;
+        this.auditLogService     = auditLogService;
+        this.emailService        = emailService;
     }
 
     // ── Read ─────────────────────────────────────────────────────────
@@ -35,24 +43,13 @@ public class LivestockDeathService {
 
     // ── Create ───────────────────────────────────────────────────────
 
-    /**
-     * Record a death AND automatically mark the animal as DEAD.
-     *
-     * Flow:
-     *  1. Resolve the livestock from the form's livestockIdValue.
-     *  2. Save the death record.
-     *  3. Set livestock.status = "DEAD" so the animal is clearly
-     *     marked as deceased everywhere in the system.
-     */
     @Transactional
     public LivestockDeath addNew(LivestockDeath death) {
         resolveAndSetLivestock(death);
 
-        // ── Mark the animal as DEAD ───────────────────────────────────
         if (death.getLivestock() != null) {
             Livestock animal = death.getLivestock();
 
-            // Guard: warn if already dead
             if (Livestock.STATUS_DEAD.equals(animal.getStatus())) {
                 throw new RuntimeException(
                         "Animal " + animal.getTagNumber() +
@@ -64,18 +61,34 @@ public class LivestockDeathService {
             animal.setStatus(Livestock.STATUS_DEAD);
             livestockRepository.save(animal);
         }
-        // ─────────────────────────────────────────────────────────────
 
-        return deathRepository.save(death);
+        LivestockDeath saved = deathRepository.save(death);
+
+        // ── Audit log ──────────────────────────────────────────────
+        auditLogService.log(
+                ENTITY_TYPE,
+                saved.getId(),
+                "CREATE",
+                null, // TODO: pass current username from SecurityContext if available
+                null,
+                auditLogService.snapshot(saved),
+                "Death recorded for animal " +
+                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
+        );
+
+        // ── Email notification ────────────────────────────────────
+        try {
+            emailService.sendDeathNotification(saved);
+        } catch (Exception e) {
+            // Never let an email failure roll back the death record
+            System.err.println("⚠️ Failed to send death notification email: " + e.getMessage());
+        }
+
+        return saved;
     }
 
     // ── Update ───────────────────────────────────────────────────────
 
-    /**
-     * Update a death record (dates / cause).
-     * If the livestock changes, old animal is restored to ACTIVE
-     * and new animal is marked DEAD.
-     */
     @Transactional
     public LivestockDeath update(UUID id, LivestockDeath updated) {
         Optional<LivestockDeath> existingOpt = deathRepository.findById(id);
@@ -84,6 +97,9 @@ public class LivestockDeathService {
         LivestockDeath existing   = existingOpt.get();
         Livestock      oldAnimal  = existing.getLivestock();
 
+        // Snapshot BEFORE mutating (see AuditLogService.snapshot javadoc)
+        String beforeSnapshot = auditLogService.snapshot(existing);
+
         existing.setDeathDate(updated.getDeathDate());
         existing.setCauseOfDeath(updated.getCauseOfDeath());
         existing.setLivestockIdValue(updated.getLivestockIdValue());
@@ -91,39 +107,46 @@ public class LivestockDeathService {
 
         Livestock newAnimal = existing.getLivestock();
 
-        // If the animal on the record changed, update both statuses
         if (oldAnimal != null && newAnimal != null &&
                 !oldAnimal.getId().equals(newAnimal.getId())) {
 
-            // Restore old animal to ACTIVE
             oldAnimal.setStatus(Livestock.STATUS_ACTIVE);
             livestockRepository.save(oldAnimal);
 
-            // Mark new animal as DEAD
             newAnimal.setStatus(Livestock.STATUS_DEAD);
             livestockRepository.save(newAnimal);
 
         } else if (newAnimal != null && !Livestock.STATUS_DEAD.equals(newAnimal.getStatus())) {
-            // Same animal but status drifted — re-apply DEAD
             newAnimal.setStatus(Livestock.STATUS_DEAD);
             livestockRepository.save(newAnimal);
         }
 
-        return deathRepository.save(existing);
+        LivestockDeath saved = deathRepository.save(existing);
+
+        auditLogService.log(
+                ENTITY_TYPE,
+                saved.getId(),
+                "UPDATE",
+                null, // TODO: current username
+                beforeSnapshot,
+                auditLogService.snapshot(saved),
+                "Death record updated for animal " +
+                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
+        );
+
+        return saved;
     }
 
     // ── Delete ───────────────────────────────────────────────────────
 
-    /**
-     * Delete a death record AND restore the animal's status to ACTIVE.
-     * This handles the case where a death was recorded by mistake.
-     */
     @Transactional
     public void delete(UUID id) {
         Optional<LivestockDeath> deathOpt = deathRepository.findById(id);
 
         deathOpt.ifPresent(death -> {
-            // ── Restore animal status to ACTIVE ──────────────────────
+            String beforeSnapshot = auditLogService.snapshot(death);
+            String tag = death.getLivestock() != null ? death.getLivestock().getTagNumber() : "unknown";
+
             if (death.getLivestock() != null) {
                 Livestock animal = death.getLivestock();
                 if (Livestock.STATUS_DEAD.equals(animal.getStatus())) {
@@ -131,8 +154,18 @@ public class LivestockDeathService {
                     livestockRepository.save(animal);
                 }
             }
-            // ─────────────────────────────────────────────────────────
+
             deathRepository.delete(death);
+
+            auditLogService.log(
+                    ENTITY_TYPE,
+                    id,
+                    "DELETE",
+                    null, // TODO: current username
+                    beforeSnapshot,
+                    null,
+                    "Death record deleted for animal " + tag + " — status restored to ACTIVE"
+            );
         });
 
         if (deathOpt.isEmpty()) {
