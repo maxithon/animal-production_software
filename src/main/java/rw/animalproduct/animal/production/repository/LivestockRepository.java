@@ -38,13 +38,6 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
     Optional<Livestock> findByTagNumber(String tagNumber);
 
-    // ── ✅ ADDED: live-search for the Animal(Tag) picker ───────────────────────
-    // Written as an explicit @Query (not a derived findByTagNumber...IsDeletedFalse
-    // method name) to match this repository's existing convention: isDeleted can
-    // be NULL on older rows, so every other query here checks
-    // "(l.isDeleted = false OR l.isDeleted IS NULL)" instead of relying on a
-    // derived-name IsDeletedFalse clause, which would silently exclude those
-    // NULL rows. This is what LivestockSearchController.search() calls.
     @Query("SELECT l FROM Livestock l " +
             "WHERE (l.isDeleted = false OR l.isDeleted IS NULL) " +
             "AND LOWER(l.tagNumber) LIKE LOWER(CONCAT('%', :tagQuery, '%')) " +
@@ -67,6 +60,14 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
     @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = :status AND (l.isDeleted = false OR l.isDeleted IS NULL)")
     long countByStatus(@Param("status") String status);
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE (l.isDeleted = false OR l.isDeleted IS NULL) AND l.currentValue IS NOT NULL")
+    long countValued();
+
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE (l.isDeleted = false OR l.isDeleted IS NULL) AND l.currentValue IS NULL")
+    long countUnvalued();
+
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.isDeleted = true")
+    long countSoftDeleted();
 
     // ── Gender-based queries ──────────────────────────────────────────────────
 
@@ -183,12 +184,6 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
             ") " +
             "ORDER BY l.tagNumber")
     List<Livestock> findPregnantWithoutBreedingRecord();
-
-    // ── Location distribution report ──────────────────────────────────────────
-    // NOTE: both methods below assume the field linking Livestock -> Location
-    // is named "location". If your entity uses a different field name
-    // (e.g. currentLocation), update "l.location" / "location.id" accordingly.
-
     @Query("SELECT DISTINCT l.location.id FROM Livestock l " +
             "WHERE l.location IS NOT NULL " +
             "AND (l.isDeleted = false OR l.isDeleted IS NULL)")

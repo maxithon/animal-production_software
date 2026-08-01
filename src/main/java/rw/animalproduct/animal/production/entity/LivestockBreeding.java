@@ -43,23 +43,6 @@ public class LivestockBreeding {
     public static final String METHOD_NATURAL    = "NATURAL";
     public static final String METHOD_ARTIFICIAL = "ARTIFICIAL_INSEMINATION";
     public static final String METHOD_EMBRYO     = "EMBRYO_TRANSFER";
-
-    /**
-     * Special marker for animals purchased/received while already pregnant.
-     * No on-farm breeding event — conception happened before arrival.
-     *
-     * NOTE: The database CHECK constraint on livestock_breeding.breeding_method
-     * MUST include this value. Run the migration SQL:
-     *
-     *   ALTER TABLE livestock_breeding
-     *   DROP CONSTRAINT livestock_breeding_breeding_method_check;
-     *
-     *   ALTER TABLE livestock_breeding
-     *   ADD CONSTRAINT livestock_breeding_breeding_method_check
-     *   CHECK (breeding_method IN (
-     *       'NATURAL','ARTIFICIAL_INSEMINATION','EMBRYO_TRANSFER','PURCHASE_PREGNANT'
-     *   ));
-     */
     public static final String METHOD_PURCHASE_PREGNANT = "PURCHASE_PREGNANT";
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -102,7 +85,6 @@ public class LivestockBreeding {
 
     @Column(name = "breeding_date", nullable = false)
     private LocalDate breedingDate;
-
     /**
      * NATURAL | ARTIFICIAL_INSEMINATION | EMBRYO_TRANSFER | PURCHASE_PREGNANT
      *
@@ -110,7 +92,6 @@ public class LivestockBreeding {
      */
     @Column(name = "breeding_method", length = 50)
     private String breedingMethod;
-
     /**
      * PENDING | CONFIRMED_PREGNANT | FAILED | COMPLETED
      */
@@ -185,7 +166,6 @@ public class LivestockBreeding {
     public boolean isActivePregnancy() {
         return STATUS_CONFIRMED_PREGNANT.equals(status) && !Boolean.TRUE.equals(isDeleted);
     }
-
     public boolean isCompleted() {
         return STATUS_COMPLETED.equals(status) && !Boolean.TRUE.equals(isDeleted);
     }
@@ -193,7 +173,6 @@ public class LivestockBreeding {
     public boolean isFailed() {
         return STATUS_FAILED.equals(status) && !Boolean.TRUE.equals(isDeleted);
     }
-
     /**
      * True when this record was auto-generated because the animal
      * was purchased/received while already pregnant.
@@ -208,10 +187,8 @@ public class LivestockBreeding {
 
     public UUID getId()          { return id; }
     public void setId(UUID id)   { this.id = id; }
-
     public Livestock getLivestock()               { return livestock; }
     public void      setLivestock(Livestock ls)   { this.livestock = ls; }
-
     public Livestock getMaleLivestock()                  { return maleLivestock; }
     public void      setMaleLivestock(Livestock male)    { this.maleLivestock = male; }
 

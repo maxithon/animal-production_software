@@ -28,6 +28,18 @@ public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, 
     // ── Legacy — kept for backward compat ────────────────────────────────────
     List<LivestockBirth> findByLivestockId(UUID livestockId);
 
+    // ── ✅ ADDED — PERFORMANCE FIX: batched lookup for the livestock list page ──
+    // LivestockController.list() used to build its birthMap by calling
+    // findByLivestockIdAndIsDeletedFalse() once PER ROW on the current page
+    // (an N+1 query problem — a 25-row page cost 25 extra round trips to the
+    // database). This single query fetches every matching birth record for a
+    // whole page of animal IDs in one round trip; LivestockBirthService then
+    // groups the results into a Map in memory. Filters isDeleted = false to
+    // match the exact behavior of findByLivestockIdAndIsDeletedFalse, since
+    // that's the method the old per-row loop relied on.
+    @Query("SELECT b FROM LivestockBirth b WHERE b.livestockId IN :livestockIds AND b.isDeleted = false")
+    List<LivestockBirth> findByLivestockIdInAndIsDeletedFalse(@Param("livestockIds") List<UUID> livestockIds);
+
     // ── Find birth event for a child animal ──────────────────────────────────
     @Query("""
            SELECT b FROM LivestockBirth b

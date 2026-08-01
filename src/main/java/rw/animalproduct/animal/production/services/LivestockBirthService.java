@@ -164,6 +164,45 @@ public class LivestockBirthService {
     }
 
     /**
+     * ✅ ADDED — PERFORMANCE FIX (list page N+1):
+     *
+     * Batched version of {@link #getByLivestockId(UUID)} for pages that need
+     * a birth lookup for many animals at once (e.g. the livestock list page).
+     * Fetches all matching, non-deleted birth records for the given IDs in a
+     * SINGLE query via {@link LivestockBirthRepository#findByLivestockIdInAndIsDeletedFalse},
+     * then groups them into a Map keyed by livestockId.
+     *
+     * This replaces the old pattern of calling getByLivestockId() /
+     * getBirthsByMother() once per animal in a loop — for a 25-row page that
+     * was 25 extra round trips to the database just to build this map; now
+     * it's exactly one.
+     *
+     * If an animal has more than one birth record on file, the first one
+     * encountered is kept — matching the .stream().findFirst() behavior the
+     * old per-row loop used in the controller.
+     *
+     * @param livestockIds IDs of the mother animals to look up (e.g. the IDs
+     *                      on the current page of the livestock list)
+     * @return map of livestockId -> its (first) birth record; animals with
+     *         no birth record on file are simply absent from the map
+     */
+    public Map<UUID, LivestockBirth> getBirthMapForIds(List<UUID> livestockIds) {
+        log.debug("Getting batched birth map for {} livestock id(s)",
+                livestockIds != null ? livestockIds.size() : 0);
+
+        if (livestockIds == null || livestockIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        return birthRepository.findByLivestockIdInAndIsDeletedFalse(livestockIds).stream()
+                .collect(Collectors.toMap(
+                        LivestockBirth::getLivestockId,
+                        b -> b,
+                        (existing, duplicate) -> existing // keep first, like .findFirst() did
+                ));
+    }
+
+    /**
      * Get a birth by ID
      */
     public Optional<LivestockBirth> getBirthById(UUID birthId) {

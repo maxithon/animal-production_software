@@ -213,7 +213,6 @@ public class Livestock {
             this.expectedDueDate = conceptionDate.plusDays(gestationDays());
         }
     }
-
     public String resolvedAcquisitionSource() {
         if (acquisitionSource != null && !acquisitionSource.isBlank()) {
             return acquisitionSource;

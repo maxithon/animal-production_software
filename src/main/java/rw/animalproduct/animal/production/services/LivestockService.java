@@ -125,8 +125,36 @@ public class LivestockService {
     // CREATE
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * ⏱ TEMPORARY TIMING INSTRUMENTATION — DIAGNOSTIC ONLY.
+     *
+     * We already fixed the two known synchronous costs on the registration
+     * path (SMTP email send, duplicate audit-log write in the controller),
+     * but the "Registering…" button is still hanging, which means a
+     * synchronous cost remains somewhere in THIS method. Rather than guess
+     * a third time, this prints how many milliseconds each stage takes:
+     *   resolve   = resolving category/beneficiary transient ID values
+     *   save      = the actual livestockRepository.save() DB insert
+     *   valuation = seeding the initial valuation history record (only if
+     *               currentValue was set on the form)
+     *   audit     = the CREATE audit log write (this is the #1 suspect —
+     *               if AuditLogService.log() does anything more than a
+     *               plain insert, e.g. entity diffing/serialization, it
+     *               will show up clearly here)
+     *
+     * Submit the register form once, then check your application console
+     * for a line like:
+     *   [TIMING] resolve=3ms save=42ms valuation=0ms audit=1840ms
+     * Whichever number is large tells us exactly where to look next.
+     *
+     * REMOVE this System.out.println block (and the four timestamps) once
+     * the slow stage is identified and fixed — this is not meant to stay
+     * in production code.
+     */
     @Transactional
     public Livestock addNew(Livestock livestock) {
+        long t0 = System.currentTimeMillis();
+
         resolveCategory(livestock, livestock.getLivestockCategoryIdValue());
         resolveBeneficiary(livestock, livestock.getBeneficiaryIdValue());
 
@@ -137,13 +165,19 @@ public class LivestockService {
 
         applyPregnancyState(livestock);
 
+        long t1 = System.currentTimeMillis();
+
         Livestock saved = livestockRepository.save(livestock);
+
+        long t2 = System.currentTimeMillis();
 
         // FAO STANDARD: seed the valuation history with an INITIAL record
         // instead of leaving current_value as a bare, directly-editable field.
         if (saved.getCurrentValue() != null) {
             valuationService.recordInitialValuation(saved, saved.getCurrentValue(), getCurrentUsername());
         }
+
+        long t3 = System.currentTimeMillis();
 
         auditLogService.log(
                 "livestock",
@@ -154,6 +188,14 @@ public class LivestockService {
                 "Created livestock: " + saved.getTagNumber(),
                 "New animal registered"
         );
+
+        long t4 = System.currentTimeMillis();
+
+        System.out.println("[TIMING] addNew(): resolve=" + (t1 - t0)
+                + "ms save=" + (t2 - t1)
+                + "ms valuation=" + (t3 - t2)
+                + "ms audit=" + (t4 - t3)
+                + "ms TOTAL=" + (t4 - t0) + "ms");
 
         // NOTE: the "new animal registered" email is sent from
         // LivestockController.register() via emailService.sendAnimalRegisteredNotification(saved),

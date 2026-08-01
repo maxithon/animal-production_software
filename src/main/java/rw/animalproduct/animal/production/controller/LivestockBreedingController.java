@@ -45,10 +45,6 @@ public class LivestockBreedingController {
         this.malesReadyToBreedService = malesReadyToBreedService;
         this.femalesReadyToBreedService = femalesReadyToBreedService;
     }
-
-
-
-
     // ── BREEDING MANAGEMENT PAGE ───────────────────────────────────────────────
 
     @GetMapping("/lifecycle/breeding-management")
@@ -173,9 +169,7 @@ public class LivestockBreedingController {
         model.addAttribute("recentBreedings",    breedingService.getRecentBreedings());
         return "livestock-breeding-dashboard";
     }
-
     // ── LIST ──────────────────────────────────────────────────────────────────
-
     @GetMapping("/breeding/list")
     public String list(@RequestParam(defaultValue = "0") int page,
                        @RequestParam(defaultValue = "10") int size,
@@ -191,21 +185,6 @@ public class LivestockBreedingController {
     }
 
     // ── REGISTER FORM ─────────────────────────────────────────────────────────
-
-    /**
-     * FIX: now accepts an optional ?livestockId= query param, so links like
-     * the "Ready to Breed" stat card and the row-level shortcut on the
-     * lifecycle overview page can deep-link straight into this form with
-     * the correct female animal already selected, instead of dropping the
-     * user into a blank form and making them search again.
-     *
-     * If the ID doesn't resolve to a real animal (bad/stale link, wrong
-     * UUID format, etc.) we just fall back silently to a blank form rather
-     * than erroring out — the user can still pick manually.
-     *
-     * AUTOMATION: status now defaults to PENDING so the "Status" radio group
-     * on the form is pre-selected for the user instead of appearing blank.
-     */
     @GetMapping("/breeding/register")
     public String registerForm(@RequestParam(required = false) UUID livestockId, Model model) {
         LivestockBreeding breeding = new LivestockBreeding();
@@ -307,15 +286,6 @@ public class LivestockBreedingController {
     }
 
     // ── AJAX: Males by Category ────────────────────────────────────────────────
-
-    /**
-     * FIX: previously returned every active male with an `eligible` boolean
-     * flag and let the page decide what to show. That meant an ineligible
-     * male (too young, sick, wrong breeding status, etc.) could still be
-     * selected and submitted. This endpoint now filters server-side so only
-     * males the system considers ready-to-breed are ever returned — the
-     * eligibility rule is enforced here, not just displayed on the client.
-     */
     @GetMapping("/breeding/males-by-category")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> getMalesByCategory(
@@ -459,15 +429,6 @@ public class LivestockBreedingController {
     }
 
     // ── PRIVATE HELPERS ───────────────────────────────────────────────────────
-
-    /**
-     * Validates the relationship between the three breeding-related dates:
-     * Breeding Date, Expected Pregnancy Check Date, and Expected Due Date.
-     * Both check date and due date are optional, so each rule only applies
-     * once the relevant field(s) are actually populated. Mirrors the
-     * client-side checks in livestock-breeding-form.html / -edit.html so the
-     * rule is enforced even if the form is bypassed (e.g. a direct POST).
-     */
     private void validateExpectedDates(LivestockBreeding breeding, BindingResult result) {
         LocalDate bDate    = breeding.getBreedingDate();
         LocalDate checkDate = breeding.getExpectedPregnancyCheckDate();
@@ -488,14 +449,6 @@ public class LivestockBreedingController {
                     "Pregnancy check date must be on or before the expected due date");
         }
     }
-
-    /**
-     * Checks if enough time has passed since the animal's last birth to allow
-     * a new breeding event. Uses the category's gestation_period_months as the
-     * minimum required interval.
-     *
-     * Returns an error message string if not eligible, or null if eligible.
-     */
     private String checkBreedingEligibility(Livestock female, LocalDate breedingDate) {
         // Never given birth before — always eligible
         if (female.getLastBirthDate() == null) return null;
@@ -526,23 +479,6 @@ public class LivestockBreedingController {
 
         return null;
     }
-
-    /**
-     * FIX (UX/UI enhancement): Females are now sorted — category name first
-     * (A→Z), then tag number (A→Z) within each category — instead of being
-     * rendered in arbitrary DB/insertion order. They are also grouped into
-     * femalesByCategory so the Register/Edit forms can render proper
-     * <optgroup> blocks, matching the same UX pattern already used for the
-     * Male dropdown (which is grouped dynamically via JS).
-     *
-     * FIX (bug): the female list previously included every non-dead,
-     * non-sold female regardless of breeding eligibility — age, pregnancy,
-     * and health status were never actually checked here, even though the
-     * form's helper text implied they were. The dropdown is now intersected
-     * with FemalesReadyToBreedService's eligible ID set, the same source of
-     * truth already used on the breeding-management dashboard, so "eligible
-     * only" is enforced, not just described.
-     */
     private void addLivestockAndVetsToModel(Model model) {
         List<Livestock> all = livestockRepository.findAll().stream()
                 .filter(ls -> !Livestock.STATUS_DEAD.equals(ls.getStatus())

@@ -62,20 +62,9 @@ public class LivestockController {
     @Autowired
     private LifecycleEmailService emailService;
 
-    /**
-     * PERFORMANCE FIX (Question 1 — "register livestock is slow to save"):
-     * See AsyncConfig for the full explanation. In short: this executor lets
-     * us fire the confirmation email off the request thread instead of
-     * making the user's browser wait on an SMTP round trip before it can
-     * redirect to the new animal's page.
-     */
     @Autowired
     @Qualifier(AsyncConfig.NOTIFICATION_EXECUTOR)
     private Executor notificationExecutor;
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // LIST PAGE
-    // ─────────────────────────────────────────────────────────────────────────
 
     @GetMapping("/list")
     public String list(@RequestParam(defaultValue = "0") int page,
@@ -85,7 +74,12 @@ public class LivestockController {
         Page<Livestock> livestockPage = livestockService.getPaged(page, size);
         List<Livestock> livestockList = livestockPage.getContent();
 
-        Map<UUID, LivestockBirth> birthMap = new HashMap<>();
+        List<UUID> pageIds = livestockList.stream().map(Livestock::getId).collect(Collectors.toList());
+
+        // CHANGED: was a per-row loop calling birthService.getByLivestockId()
+        // for every animal on the page (N+1). Now a single batched query.
+        Map<UUID, LivestockBirth> birthMap = birthService.getBirthMapForIds(pageIds);
+
         Map<UUID, Object> treatmentMap = new HashMap<>();
         Map<UUID, Object> abortionMap = new HashMap<>();
         Map<UUID, Object> saleMap = new HashMap<>();
@@ -93,11 +87,10 @@ public class LivestockController {
 
         LocalDate today = LocalDate.now();
 
+        // NOTE: breeding-capable check stays as an in-memory loop deliberately —
+        // it only touches fields already loaded on the Livestock entity/its
+        // already-fetched LivestockCategory, so it costs no extra queries.
         for (Livestock animal : livestockList) {
-            birthService.getByLivestockId(animal.getId()).stream()
-                    .findFirst()
-                    .ifPresent(birth -> birthMap.put(animal.getId(), birth));
-
             if (animal.getBirthDate() != null && animal.getLivestockCategory() != null
                     && animal.getLivestockCategory().getMinBreedingAgeMonths() != null) {
                 long ageMonths = ChronoUnit.MONTHS.between(animal.getBirthDate(), today);
@@ -108,7 +101,6 @@ public class LivestockController {
             }
         }
 
-        List<UUID> pageIds = livestockList.stream().map(Livestock::getId).collect(Collectors.toList());
         Map<UUID, LivestockValuation> latestValuationMap = livestockService.getLatestValuationsForIds(pageIds);
 
         long totalItems      = livestockPage.getTotalElements();
@@ -122,11 +114,13 @@ public class LivestockController {
         long totalTreatments = 0;
         long totalAbortions  = 0;
 
-        List<Livestock> allActiveAnimals = livestockService.getAllIncludingDrafts();
-        long totalValued   = allActiveAnimals.stream().filter(a -> a.getCurrentValue() != null).count();
-        long totalUnvalued = allActiveAnimals.size() - totalValued;
+        // CHANGED: was livestockService.getAllIncludingDrafts() (full table load)
+        // followed by an in-memory filter/count. Now a direct COUNT(*) query.
+        long totalValued   = livestockRepository.countValued();
+        long totalUnvalued = livestockRepository.countUnvalued();
 
-        long totalDeleted = livestockService.getAllSoftDeleted().size();
+        // CHANGED: was livestockService.getAllSoftDeleted().size() (full table load).
+        long totalDeleted = livestockRepository.countSoftDeleted();
 
         model.addAttribute("livestockList", livestockList);
         model.addAttribute("currentPage", page);
@@ -348,16 +342,6 @@ public class LivestockController {
         model.addAttribute("latestValuation", valuationService.getLatest(id).orElse(null));
         model.addAttribute("valuationChangeSincePrevious", valuationService.changeSincePrevious(id));
         model.addAttribute("auditHistory", auditLogService.getLogsForEntity("livestock", id));
-
-        // ── QUESTION 2: "Weeks Pregnant must be calculated automatically" ──
-        // It already is: Livestock.getWeeksPregnant() derives it live from
-        // conceptionDate vs. today's date every time it's read — nothing is
-        // stored, so it can never go stale. It's exposed to the view template
-        // simply as ${livestock.weeksPregnant} (Thymeleaf calls the getter
-        // automatically), so no extra model attribute is technically required.
-        // We add it explicitly here anyway, under a clearer name, purely so
-        // the detail page's Thymeleaf markup reads self-documenting rather
-        // than implicit:
         model.addAttribute("weeksPregnant", livestock.getWeeksPregnant());
 
         return "livestock-view";
@@ -534,14 +518,6 @@ public class LivestockController {
         }
         return "redirect:/livestock/list";
     }
-
-    /**
-     * FIX #1: The register page (livestock-register.html) iterates over
-     * ${beneficiariesList}, but this method used to only populate
-     * "beneficiaries" — so the dropdown always rendered empty, and nothing
-     * could ever be selected. We now populate BOTH attribute names so this
-     * page (and any other template still expecting "beneficiaries") works.
-     */
     @GetMapping("/register")
     public String registerForm(Model model) {
         List<Beneficiary> beneficiaries = beneficiaryRepository.findAll();
@@ -550,48 +526,18 @@ public class LivestockController {
         model.addAttribute("categories", categoryRepository.findAll());
         model.addAttribute("beneficiaries", beneficiaries);       // kept for compatibility
         model.addAttribute("beneficiariesList", beneficiaries);   // what livestock-register.html actually reads
-        model.addAttribute("locations", locationRepository.findAll());
+        // REMOVED: model.addAttribute("locations", locationRepository.findAll());
+        //   — unused by the template; location dropdowns are AJAX-driven.
+        //   If some other template still needs it, re-add it there specifically
+        //   rather than paying the cost on every register-page load.
         return "livestock-register";
     }
 
-    /**
-     * PERFORMANCE FIX (Question 1 — "register livestock slows down to save"):
-     *
-     * Root cause: after livestockService.addNew(saved) commits to the
-     * database (fast — a couple of indexed inserts), this method used to
-     * call emailService.sendAnimalRegisteredNotification(saved) directly,
-     * IN-LINE, on the same thread handling the HTTP request. Sending mail
-     * means Java has to open a socket to the SMTP server, do the SMTP/TLS
-     * handshake, authenticate, and wait for a "250 OK" — that's a real
-     * network operation that can easily take 1-5+ seconds, and far longer
-     * (or a timeout) if the mail server is briefly slow/unreachable, an app
-     * password rotated, or the network throttles port 587. The browser
-     * can't redirect to the new animal's page until that finishes, so the
-     * whole registration *looked* slow even though the actual save was fast.
-     *
-     * Fix: submit the email call to notificationExecutor (see AsyncConfig)
-     * instead of calling it directly. The controller method returns —
-     * and the browser redirects — the instant the DB save + audit log are
-     * done; the email goes out a moment later in the background. A slow or
-     * failing mail server can no longer add so much as a millisecond to the
-     * user-visible save time.
-     */
     @PostMapping("/register")
     public String register(@ModelAttribute Livestock livestock,
                            RedirectAttributes redirectAttributes) {
         try {
             Livestock saved = livestockService.addNew(livestock);
-
-            auditLogService.log(
-                    "livestock", saved.getId(), "CREATE", "system",
-                    null, saved, "New animal registered: " + saved.getTagNumber()
-            );
-
-            // CHANGED: now runs on a background thread (notificationExecutor)
-            // instead of blocking this request. Still logged as a WARNING
-            // (not ERROR — registration itself still succeeded) with the
-            // tag number and root cause message if it fails, and it still
-            // can never fail or delay the registration flow itself.
             notificationExecutor.execute(() -> {
                 try {
                     emailService.sendAnimalRegisteredNotification(saved);
@@ -610,19 +556,6 @@ public class LivestockController {
         }
     }
 
-    /**
-     * FIX #2: This endpoint did not exist before, which is why the "Last in
-     * this category" / suggested-tag UI on the register page always fell
-     * back to "No animals registered in this category yet" — the fetch() call
-     * in the page's JS was hitting a 404 every time.
-     *
-     * Logic: pull every non-deleted animal in the given category, match tag
-     * numbers against the pattern "{CATEGORY_CODE}-{number}" (e.g. GOA-021),
-     * find the highest existing number, and suggest the next one. If the
-     * category has no tags yet, we still suggest a sensible first tag
-     * ({CODE}-001) instead of just giving up — one less thing for the user
-     * to manually figure out.
-     */
     @GetMapping("/api/suggest-tag")
     @ResponseBody
     public Map<String, String> suggestTag(@RequestParam UUID categoryId) {
@@ -677,4 +610,4 @@ public class LivestockController {
         }
         return chain;
     }
-}
+};
