@@ -33,9 +33,20 @@ public class LocationDistributionRow {
     private int soldCount;
     private int deadCount;
 
+    // Gender distribution
+    private int maleCount;
+    private int femaleCount;
+
+    // Reproductive metrics
+    private int pregnantCount;
+    private int readyToBreedCount;
+    private int birthCount;
+    private int offspringCount;
+
     // FAO standard metrics
     private double healthRate;
     private double mortalityRate;
+    private double sickRate;
     private double productivityIndex;
     private double locationContributionPercentage;
 

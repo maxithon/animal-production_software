@@ -9,26 +9,12 @@ import java.util.UUID;
 /**
  * Row DTO for the Pregnancy Tracking dashboard — purchased / external animals.
  *
- * Wraps a {@link Livestock} row where {@code is_pregnant = true} but no
+ * Wraps a {@link Livestock} row where reproductive_status = 'PREGNANT' but no
  * CONFIRMED_PREGNANT breeding record exists yet (animal arrived already
  * pregnant, flagged at intake via the Register Livestock form).
  *
  * All date arithmetic happens here so Thymeleaf 3.1+ templates never need
  * {@code T(...)} or {@code new} expressions.
- *
- * Fields exposed:
- *   livestockId          – animal UUID (for links)
- *   tagNumber            – display tag
- *   categoryName         – species / breed
- *   acquisitionMethod    – PURCHASE / DONATION / TRANSFER / OTHER
- *   conceptionDate       – from livestock.conception_date
- *   expectedDueDate      – from livestock.expected_due_date
- *   daysPregnant         – days since conception (null if unknown)
- *   daysUntilDue         – days remaining (negative = overdue)
- *   dueSoon              – true when 0 ≤ daysUntilDue ≤ 14
- *   critical             – true when overdue
- *   inseminationMethod   – HOW the animal was made pregnant
- *   inseminationMethodLabel – human-readable label
  */
 public class PurchasedPregnancyRowDTO {
 
@@ -42,8 +28,12 @@ public class PurchasedPregnancyRowDTO {
     private final long      daysUntilDue;
     private final boolean   dueSoon;
     private final boolean   critical;
-    private final String    inseminationMethod;
-    private final String    inseminationMethodLabel;
+    private final String    reproductiveStatus;
+    private final String    reproductiveStatusLabel;
+
+    // ✅ NEW: IDs used by the controller to look up beneficiary + location
+    private final UUID      beneficiaryId;
+    private final UUID      locationId;
 
     public PurchasedPregnancyRowDTO(Livestock ls, LocalDate today) {
 
@@ -55,7 +45,11 @@ public class PurchasedPregnancyRowDTO {
                 ? ls.getLivestockCategory().getName()
                 : null;
 
-        this.conceptionDate  = ls.getConceptionDate();
+        // FIXED: Livestock no longer has a conceptionDate field/column (it
+        // now lives only on LivestockBreeding). This DTO wraps animals with
+        // no breeding record by definition, so there's no source to pull a
+        // conception date from here — always null.
+        this.conceptionDate  = null;
         this.expectedDueDate = ls.getExpectedDueDate();
 
         this.daysPregnant = (conceptionDate != null)
@@ -69,19 +63,27 @@ public class PurchasedPregnancyRowDTO {
         this.dueSoon  = expectedDueDate != null && daysUntilDue >= 0 && daysUntilDue <= 14;
         this.critical = expectedDueDate != null && daysUntilDue < 0;
 
-        // ── Insemination method ───────────────────────────────────────────────
-        this.inseminationMethod      = ls.getInseminationMethod();
-        this.inseminationMethodLabel = resolveLabel(ls.getInseminationMethod());
+        // ── Reproductive Status (from Livestock entity) ──────────────────────
+        this.reproductiveStatus = ls.getReproductiveStatus();
+        this.reproductiveStatusLabel = resolveReproLabel(ls.getReproductiveStatus());
+
+        // ✅ NEW: capture the linked entity IDs for the controller's lookup maps
+        this.beneficiaryId = (ls.getBeneficiary() != null) ? ls.getBeneficiary().getId() : null;
+        this.locationId    = (ls.getLocation()    != null) ? ls.getLocation().getId()    : null;
     }
 
-    private static String resolveLabel(String method) {
-        if (method == null || method.isBlank()) return "Not recorded";
-        return switch (method) {
-            case "NATURAL_MATING"           -> "Natural Mating";
-            case "ARTIFICIAL_INSEMINATION"  -> "Artificial Insemination (AI)";
-            case "EMBRYO_TRANSFER"          -> "Embryo Transfer (ET)";
-            case "UNKNOWN"                  -> "Unknown";
-            default                         -> method;
+    /**
+     * Resolve reproductive status to a human-readable label
+     */
+    private static String resolveReproLabel(String status) {
+        if (status == null || status.isBlank()) return "Unknown";
+        return switch (status) {
+            case "READY_TO_BREED" -> "Ready to Breed";
+            case "BRED" -> "Bred";
+            case "PREGNANT" -> "Pregnant";
+            case "OPEN" -> "Open";
+            case "NOT_APPLICABLE" -> "Not Applicable";
+            default -> status;
         };
     }
 
@@ -98,6 +100,10 @@ public class PurchasedPregnancyRowDTO {
     public boolean   isDueSoon()                  { return dueSoon; }
     public boolean   isCritical()                 { return critical; }
     public boolean   isOverdue()                  { return critical; }
-    public String    getInseminationMethod()      { return inseminationMethod; }
-    public String    getInseminationMethodLabel() { return inseminationMethodLabel; }
+    public String    getReproductiveStatus()      { return reproductiveStatus; }
+    public String    getReproductiveStatusLabel() { return reproductiveStatusLabel; }
+
+    // ✅ NEW
+    public UUID getBeneficiaryId() { return beneficiaryId; }
+    public UUID getLocationId()    { return locationId; }
 }

@@ -1,15 +1,21 @@
 package rw.animalproduct.animal.production.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
  * Links a birth event to one specific child animal.
- * Matches database schema: id, birth_id, child_livestock_id, generation, is_deleted
+ * Matches database schema: id, birth_id, child_livestock_id, generation,
+ * is_deleted, is_alive, outcome, birth_weight_kg
  */
 @Entity
 @Table(name = "livestock_offspring")
 public class LivestockOffspring {
+
+    public static final String OUTCOME_ALIVE               = "ALIVE";
+    public static final String OUTCOME_STILLBORN            = "STILLBORN";
+    public static final String OUTCOME_DIED_SHORTLY_AFTER    = "DIED_SHORTLY_AFTER";
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -32,6 +38,18 @@ public class LivestockOffspring {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
+    // ✅ NEW — per-offspring birth outcome (improvement #4). Richer than the
+    // legacy is_alive boolean: distinguishes a stillbirth from a live birth
+    // that died shortly after. is_alive is kept for backward compatibility
+    // and derived automatically whenever outcome is set — nothing that
+    // already reads getIsAlive()/isAlive() needs to change.
+    @Column(name = "outcome", length = 30)
+    private String outcome = OUTCOME_ALIVE;
+
+    // ✅ NEW — improvement #5, optional
+    @Column(name = "birth_weight_kg", precision = 6, scale = 2)
+    private BigDecimal birthWeightKg;
+
     public LivestockOffspring() {}
 
     public LivestockOffspring(LivestockBirth birthEvent, Livestock childLivestock, Integer generation) {
@@ -39,6 +57,7 @@ public class LivestockOffspring {
         this.childLivestock = childLivestock;
         this.generation = generation;
         this.isAlive = true;
+        this.outcome = OUTCOME_ALIVE;
     }
 
     // ── Getters and Setters ──────────────────────────────────────────────────
@@ -89,6 +108,36 @@ public class LivestockOffspring {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    // ✅ NEW — setOutcome() keeps isAlive in sync automatically, so anything
+    // already relying on isAlive()/getIsAlive() (e.g.
+    // countLiveOffspringByBirthEventId) keeps working exactly as before.
+    public String getOutcome() {
+        return outcome;
+    }
+
+    public void setOutcome(String outcome) {
+        this.outcome = (outcome != null && !outcome.isBlank()) ? outcome : OUTCOME_ALIVE;
+        this.isAlive = !OUTCOME_STILLBORN.equals(this.outcome)
+                && !OUTCOME_DIED_SHORTLY_AFTER.equals(this.outcome);
+    }
+
+    public String getOutcomeLabel() {
+        if (outcome == null) return "Alive";
+        return switch (outcome) {
+            case OUTCOME_STILLBORN -> "Stillborn";
+            case OUTCOME_DIED_SHORTLY_AFTER -> "Died Shortly After";
+            default -> "Alive";
+        };
+    }
+
+    public BigDecimal getBirthWeightKg() {
+        return birthWeightKg;
+    }
+
+    public void setBirthWeightKg(BigDecimal birthWeightKg) {
+        this.birthWeightKg = birthWeightKg;
     }
 
     // ── Helper Methods ──────────────────────────────────────────────────────
@@ -160,6 +209,7 @@ public class LivestockOffspring {
                 ", childLivestock=" + (childLivestock != null ? childLivestock.getTagNumber() : "null") +
                 ", generation=" + generation +
                 ", isAlive=" + isAlive +
+                ", outcome=" + outcome +
                 '}';
     }
 }

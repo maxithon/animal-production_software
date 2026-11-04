@@ -18,68 +18,66 @@ public class MaleReadyToBreedDTO {
     private String gender;
     private Double currentValue;
     private String acquisitionMethod;
+    // NEW: natural-mating-specific counts, sourced from the view's
+    // natural_breedings / natural_successful columns (breeding_method =
+    // 'NATURAL'). Lets the UI show a success rate specific to natural
+    // mating, distinct from the overall (all-methods) success rate.
+    private Long naturalBreedings;
+    private Long naturalSuccessful;
 
-    // Constructor that matches your view's column order
     public MaleReadyToBreedDTO(Object[] row) {
         if (row == null) return;
 
         int idx = 0;
-        // 0: id
         if (row[idx] instanceof UUID) this.id = (UUID) row[idx];
         else if (row[idx] != null) this.id = UUID.fromString(row[idx].toString());
         idx++;
 
-        // 1: tag_number
         this.tagNumber = row[idx] != null ? row[idx].toString() : null;
         idx++;
 
-        // 2: category_id
         if (row[idx] instanceof UUID) this.categoryId = (UUID) row[idx];
         else if (row[idx] != null) this.categoryId = UUID.fromString(row[idx].toString());
         idx++;
 
-        // 3: category_name
         this.categoryName = row[idx] != null ? row[idx].toString() : null;
         idx++;
 
-        // 4: category_code
         this.categoryCode = row[idx] != null ? row[idx].toString() : null;
         idx++;
 
-        // 5: age_months
         if (row[idx] instanceof Number) this.ageMonths = ((Number) row[idx]).intValue();
         idx++;
 
-        // 6: total_breedings
         if (row[idx] instanceof Number) this.totalBreedings = ((Number) row[idx]).longValue();
         idx++;
 
-        // 7: successful_breedings
         if (row[idx] instanceof Number) this.successfulBreedings = ((Number) row[idx]).longValue();
         idx++;
 
-        // 8: date_received
         this.dateReceived = toLocalDate(row[idx]);
         idx++;
 
-        // 9: birth_date
         this.birthDate = toLocalDate(row[idx]);
         idx++;
 
-        // 10: status
         this.status = row[idx] != null ? row[idx].toString() : null;
         idx++;
 
-        // 11: gender
         this.gender = row[idx] != null ? row[idx].toString() : null;
         idx++;
 
-        // 12: current_value
         if (row[idx] instanceof Number) this.currentValue = ((Number) row[idx]).doubleValue();
         idx++;
 
-        // 13: acquisition_method
         this.acquisitionMethod = row[idx] != null ? row[idx].toString() : null;
+        idx++;
+
+        // NEW: indices 14 and 15
+        if (row.length > idx && row[idx] instanceof Number) this.naturalBreedings = ((Number) row[idx]).longValue();
+        idx++;
+
+        if (row.length > idx && row[idx] instanceof Number) this.naturalSuccessful = ((Number) row[idx]).longValue();
     }
 
     private LocalDate toLocalDate(Object val) {
@@ -98,11 +96,21 @@ public class MaleReadyToBreedDTO {
         return (successfulBreedings != null ? successfulBreedings : 0) * 100.0 / totalBreedings;
     }
 
+    // NEW: success rate scoped to natural-mating attempts only.
+    public double getNaturalSuccessRate() {
+        if (naturalBreedings == null || naturalBreedings == 0) return 0.0;
+        return (naturalSuccessful != null ? naturalSuccessful : 0) * 100.0 / naturalBreedings;
+    }
+
     public boolean isNeverBred() {
         return totalBreedings == null || totalBreedings == 0;
     }
 
-    // Getters and Setters
+    // NEW
+    public boolean isNeverNaturallyBred() {
+        return naturalBreedings == null || naturalBreedings == 0;
+    }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -144,4 +152,10 @@ public class MaleReadyToBreedDTO {
 
     public String getAcquisitionMethod() { return acquisitionMethod; }
     public void setAcquisitionMethod(String acquisitionMethod) { this.acquisitionMethod = acquisitionMethod; }
+
+    public Long getNaturalBreedings() { return naturalBreedings; }
+    public void setNaturalBreedings(Long naturalBreedings) { this.naturalBreedings = naturalBreedings; }
+
+    public Long getNaturalSuccessful() { return naturalSuccessful; }
+    public void setNaturalSuccessful(Long naturalSuccessful) { this.naturalSuccessful = naturalSuccessful; }
 }

@@ -6,49 +6,43 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        body { background:#f0f2f5; font-family:'Inter',sans-serif; padding:0; margin:0; }
-
+        body { background:#f0f2f5; font-family:'Inter',sans-serif; margin:0; }
         .report-banner { background:linear-gradient(135deg,#0f172a 0%,#0e7490 60%,#06b6d4 100%); padding:22px 40px 18px; color:white; }
-        .report-banner h2 {
-            font-family:'Inter',sans-serif;
-            font-size:1.05rem;
-            font-weight:700;
-            letter-spacing:.01em;
-            margin:0 0 4px;
-            display:flex;
-            align-items:center;
-        }
+        .report-banner h2 { font-size:1.05rem; font-weight:700; margin:0 0 4px; display:flex; align-items:center; }
         .report-banner h2 i { font-size:.95rem; }
-        .report-banner .sub { font-family:'Inter',sans-serif; font-weight:400; font-size:.78rem; opacity:.85; }
-
-        .print-btn {
-            background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.35); color:white;
-            border-radius:8px; padding:6px 16px; font-size:.78rem; font-weight:600; cursor:pointer;
-            text-decoration:none; font-family:'Inter',sans-serif;
-        }
+        .report-banner .sub { font-size:.78rem; opacity:.85; }
+        .print-btn { background:rgba(255,255,255,.15); border:1.5px solid rgba(255,255,255,.35); color:white; border-radius:8px; padding:6px 16px; font-size:.78rem; font-weight:600; cursor:pointer; text-decoration:none; }
         .print-btn:hover { background:rgba(255,255,255,.25); color:white; }
-
         .report-body { padding:24px 32px; max-width:1300px; margin:0 auto; }
-
-        .filter-card { background:white; border-radius:12px; padding:16px 24px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:20px; }
-        .filter-card label { font-family:'Inter',sans-serif; font-weight:600; font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; }
-        .filter-card .btn { font-family:'Inter',sans-serif; font-weight:700; font-size:.8rem; }
-
-        .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:22px; }
+        .filter-card, .section-card { background:white; border-radius:12px; padding:16px 24px; box-shadow:0 2px 8px rgba(0,0,0,.06); margin-bottom:20px; }
+        .section-card h5 { font-size:.92rem; font-weight:700; color:#0f172a; margin-bottom:14px; }
+        .filter-card label { font-weight:600; font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; }
+        .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:22px; }
         .kpi { background:white; border-radius:12px; padding:16px 18px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-top:4px solid #0e7490; }
-        .kpi .kpi-num { font-family:'Inter',sans-serif; font-size:1.55rem; font-weight:800; letter-spacing:-.01em; color:#0e7490; }
-        .kpi .kpi-lbl { font-family:'Inter',sans-serif; font-size:.68rem; font-weight:600; color:#64748b; margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
-
-        .vet-card { background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); padding:16px 20px; margin-bottom:14px; }
-        .vet-name { font-family:'Inter',sans-serif; font-weight:700; font-size:.92rem; }
-        .vet-badge-active { background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; font-family:'Inter',sans-serif; }
-        .vet-badge-inactive { background:#f1f5f9; color:#64748b; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; font-family:'Inter',sans-serif; }
-        .stat-pill { text-align:center; padding:8px 4px; }
-        .stat-pill .n { font-family:'Inter',sans-serif; font-weight:800; font-size:1.1rem; letter-spacing:-.01em; }
-        .stat-pill .l { font-family:'Inter',sans-serif; font-size:.65rem; color:#64748b; text-transform:uppercase; letter-spacing:.04em; }
-
-        @media print { .no-print{display:none!important;} body{background:white;} }
+        .kpi .kpi-num { font-size:1.55rem; font-weight:800; color:#0e7490; letter-spacing:-.01em; }
+        .kpi .kpi-lbl { font-size:.68rem; font-weight:600; color:#64748b; margin-top:5px; text-transform:uppercase; letter-spacing:.05em; }
+        .kpi-delta { font-size:.72rem; font-weight:700; margin-top:6px; }
+        .kpi-delta.up { color:#059669; }
+        .kpi-delta.down { color:#dc2626; }
+        .kpi-delta small { color:#94a3b8; font-weight:500; }
+        .headline-card { background:#fffbeb; border-left:5px solid #f59e0b; border-radius:12px; padding:18px 22px; margin-bottom:22px; }
+        .headline-title { font-weight:800; color:#92400e; margin-bottom:8px; }
+        .headline-card .action { background:#fef3c7; border-radius:8px; padding:10px 14px; margin-top:10px; font-size:.85rem; }
+        .vet-badge-active { background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; }
+        .vet-badge-inactive { background:#f1f5f9; color:#64748b; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; }
+        table.rank-table { font-size:.82rem; }
+        table.rank-table th { font-size:.68rem; text-transform:uppercase; color:#64748b; letter-spacing:.03em; font-weight:700; }
+        table.rank-table td { vertical-align:middle; }
+        .outcome-bar { display:flex; height:22px; border-radius:6px; overflow:hidden; }
+        .outcome-bar div { display:flex; align-items:center; justify-content:center; color:white; font-size:.68rem; font-weight:700; }
+        .outcome-legend { font-size:.75rem; color:#475569; margin-top:10px; }
+        .outcome-legend .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; }
+        .row-critical { background:#fef2f2; }
+        .row-overdue  { background:#fff7ed; }
+        .row-due      { background:#fefce8; }
+        @media print { .no-print { display:none!important; } body { background:white; } }
     </style>
 </head>
 <body>
@@ -58,20 +52,22 @@
         <div>
             <h2><i class="bi bi-person-badge-fill me-2"></i>Veterinarian Activity Report</h2>
             <div class="sub">
-                Caseload &amp; effectiveness · Period:
+                Caseload, effectiveness &amp; outcomes · Period:
                 <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong> to
                 <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
             </div>
         </div>
-        <div class="d-flex gap-2">
-            <a href="/livestock" class="print-btn no-print"><i class="bi bi-arrow-left me-1"></i> Back</a>
-            <button class="print-btn no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
+        <div class="d-flex gap-2 no-print">
+            <a href="/livestock" class="print-btn"><i class="bi bi-arrow-left me-1"></i>Back</a>
+            <a th:href="@{'/livestock/veterinarian-activity-report/csv' + '?from=' + ${#temporals.format(fromDate,'yyyy-MM-dd')} + '&to=' + ${#temporals.format(toDate,'yyyy-MM-dd')}}" class="print-btn"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+            <button class="print-btn" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
         </div>
     </div>
 </div>
 
 <div class="report-body">
 
+    <!-- FILTERS -->
     <div class="filter-card no-print">
         <form method="get" action="/livestock/veterinarian-activity-report" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -88,60 +84,339 @@
                 </button>
             </div>
         </form>
+        <div th:if="${error}" class="text-danger small mt-2" th:text="${error}"></div>
     </div>
 
+    <!-- HEADLINE -->
+    <div class="headline-card" th:if="${report.mostImportantChange != null}">
+        <div class="headline-title"><i class="bi bi-lightning-charge-fill me-1"></i>Most Important Change</div>
+        <p class="mb-1">
+            <strong th:text="${report.mostImportantChange.metricName}">Recovery Rate</strong> moved from
+            <span th:text="${report.mostImportantChange.fromValue}"></span> to
+            <span th:text="${report.mostImportantChange.toValue}"></span>.
+        </p>
+        <p class="mb-1"><strong>Why it matters:</strong> <span th:text="${report.mostImportantChange.whyItMatters}"></span></p>
+        <div class="action">
+            <strong><i class="bi bi-arrow-right-circle me-1"></i>Recommended:</strong>
+            <span th:text="${report.mostImportantChange.recommendedAction}"></span>
+        </div>
+    </div>
+
+    <!-- KPIs -->
     <div class="kpi-strip">
-        <div class="kpi"><div class="kpi-num" th:text="${report.activeVets}">0</div><div class="kpi-lbl">Active Veterinarians</div></div>
-        <div class="kpi"><div class="kpi-num" th:text="${report.totalTreatmentsInPeriod}">0</div><div class="kpi-lbl">Treatments (Period)</div></div>
-        <div class="kpi"><div class="kpi-num" th:text="${report.totalSickCasesInPeriod}">0</div><div class="kpi-lbl">Sick Cases (Period)</div></div>
-    </div>
-
-    <div th:each="v : ${report.rows}" class="vet-card">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-            <div>
-                <div class="vet-name" th:text="${v.fullName}">Dr. Name</div>
-                <small class="text-muted">
-                    <span th:if="${v.licenseNumber}" th:text="${v.licenseNumber}">LIC</span>
-                    <span th:if="${v.clinicName}"> · <span th:text="${v.clinicName}">Clinic</span></span>
-                </small>
-            </div>
-            <span th:if="${v.active}" class="vet-badge-active">Active</span>
-            <span th:unless="${v.active}" class="vet-badge-inactive">Inactive</span>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${report.activeVets}">0</div>
+            <div class="kpi-lbl">Active Veterinarians</div>
         </div>
-        <div class="row g-2">
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#0e7490;" th:text="${v.treatmentsHandled}">0</div>
-                <div class="l">Treatments</div>
-            </div>
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#7c3aed;"
-                     th:text="${#numbers.formatDecimal(v.treatmentRevenueHandled,1,'COMMA',0,'POINT')}">0</div>
-                <div class="l">RWF Handled</div>
-            </div>
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#f59e0b;" th:text="${v.sickCasesAttended}">0</div>
-                <div class="l">Sick Cases</div>
-            </div>
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#059669;"
-                     th:text="${#numbers.formatDecimal(v.recoveryRatePercent,1,'POINT',1,'POINT')} + '%'">0%</div>
-                <div class="l">Recovery Rate</div>
-            </div>
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#db2777;" th:text="${v.breedingsAssisted}">0</div>
-                <div class="l">Breedings</div>
-            </div>
-            <div class="col-6 col-md-2 stat-pill">
-                <div class="n" style="color:#dc2626;" th:text="${v.abortionsAttended}">0</div>
-                <div class="l">Abortions</div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${report.totalTreatmentsInPeriod}">0</div>
+            <div class="kpi-lbl">Treatment Records</div>
+            <div class="kpi-delta" th:if="${report.treatmentsDeltaPercent != null}" th:classappend="${report.treatmentsDeltaPercent >= 0 ? 'up' : 'down'}">
+                <i th:class="${report.treatmentsDeltaPercent >= 0 ? 'bi bi-arrow-up-short' : 'bi bi-arrow-down-short'}"></i>
+                <span th:text="${#numbers.formatDecimal(report.treatmentsDeltaPercent,1,'POINT',1,'POINT')} + '%'"></span>
+                <small>vs prev.</small>
             </div>
         </div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${report.distinctAnimalsTreated}">0</div>
+            <div class="kpi-lbl">Animals Treated</div>
+            <div class="kpi-delta" th:if="${report.distinctAnimalsDeltaPercent != null}" th:classappend="${report.distinctAnimalsDeltaPercent >= 0 ? 'up' : 'down'}">
+                <i th:class="${report.distinctAnimalsDeltaPercent >= 0 ? 'bi bi-arrow-up-short' : 'bi bi-arrow-down-short'}"></i>
+                <span th:text="${#numbers.formatDecimal(report.distinctAnimalsDeltaPercent,1,'POINT',1,'POINT')} + '%'"></span>
+                <small>vs prev.</small>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${report.totalSickCasesInPeriod}">0</div>
+            <div class="kpi-lbl">Sick Cases</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${#numbers.formatDecimal(report.totalTreatmentCost,1,'COMMA',0,'POINT')}">0</div>
+            <div class="kpi-lbl">Total Cost (RWF)</div>
+            <div class="kpi-delta" th:if="${report.costDeltaPercent != null}" th:classappend="${report.costDeltaPercent >= 0 ? 'down' : 'up'}">
+                <i th:class="${report.costDeltaPercent >= 0 ? 'bi bi-arrow-up-short' : 'bi bi-arrow-down-short'}"></i>
+                <span th:text="${#numbers.formatDecimal(report.costDeltaPercent,1,'POINT',1,'POINT')} + '%'"></span>
+                <small>vs prev.</small>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${report.avgCostPerAnimal != null ? #numbers.formatDecimal(report.avgCostPerAnimal,1,'COMMA',0,'POINT') : '—'}">—</div>
+            <div class="kpi-lbl">Avg Cost / Animal</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-num" th:text="${#numbers.formatDecimal(report.recoveryRatePercent,1,'POINT',1,'POINT')} + '%'">0%</div>
+            <div class="kpi-lbl">Recovery Rate</div>
+            <div class="kpi-delta" th:if="${report.recoveryRateDeltaPp != null}" th:classappend="${report.recoveryRateDeltaPp >= 0 ? 'up' : 'down'}">
+                <i th:class="${report.recoveryRateDeltaPp >= 0 ? 'bi bi-arrow-up-short' : 'bi bi-arrow-down-short'}"></i>
+                <span th:text="${#numbers.formatDecimal(report.recoveryRateDeltaPp,1,'POINT',1,'POINT')} + ' pp'"></span>
+                <small>vs prev.</small>
+            </div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-num" style="color:#dc2626;" th:text="${report.followUpsOverdue}">0</div>
+            <div class="kpi-lbl">Follow-ups Overdue</div>
+        </div>
     </div>
 
-    <div th:if="${report.rows.isEmpty()}" class="text-center text-muted py-5">
-        No veterinarians registered.
+    <!-- OUTCOMES -->
+    <div class="section-card" th:if="${report.outcomes != null and report.outcomes.total > 0}">
+        <h5><i class="bi bi-clipboard2-pulse me-1"></i>Treatment Outcomes</h5>
+        <div class="outcome-bar">
+            <div th:style="'width:' + ${report.outcomes.recoveredPct} + '%;background:#059669;'" th:text="${report.outcomes.recoveredPct >= 8 ? report.outcomes.recoveredPct + '%' : ''}"></div>
+            <div th:style="'width:' + ${report.outcomes.recoveringPct} + '%;background:#0891b2;'" th:text="${report.outcomes.recoveringPct >= 8 ? report.outcomes.recoveringPct + '%' : ''}"></div>
+            <div th:style="'width:' + ${report.outcomes.sickPct} + '%;background:#f59e0b;'" th:text="${report.outcomes.sickPct >= 8 ? report.outcomes.sickPct + '%' : ''}"></div>
+            <div th:style="'width:' + ${report.outcomes.criticalPct} + '%;background:#dc2626;'" th:text="${report.outcomes.criticalPct >= 8 ? report.outcomes.criticalPct + '%' : ''}"></div>
+            <div th:style="'width:' + ${report.outcomes.deadPct} + '%;background:#7f1d1d;'" th:text="${report.outcomes.deadPct >= 8 ? report.outcomes.deadPct + '%' : ''}"></div>
+        </div>
+        <div class="outcome-legend">
+            <span class="dot" style="background:#059669;"></span>Recovered: <strong th:text="${report.outcomes.recovered}">0</strong> ·
+            <span class="dot" style="background:#0891b2;"></span>Recovering: <strong th:text="${report.outcomes.recovering}">0</strong> ·
+            <span class="dot" style="background:#f59e0b;"></span>Sick: <strong th:text="${report.outcomes.sick}">0</strong> ·
+            <span class="dot" style="background:#dc2626;"></span>Critical: <strong th:text="${report.outcomes.critical}">0</strong> ·
+            <span class="dot" style="background:#7f1d1d;"></span>Dead: <strong th:text="${report.outcomes.dead}">0</strong>
+        </div>
+        <div class="mt-3 small text-muted">
+            Recovery Rate (completed): <strong th:text="${#numbers.formatDecimal(report.recoveryRatePercent,1,'POINT',1,'POINT')} + '%'"></strong>
+            · Success Rate: <strong th:text="${#numbers.formatDecimal(report.successRatePercent,1,'POINT',1,'POINT')} + '%'"></strong>
+            · Case Closure Rate: <strong th:text="${#numbers.formatDecimal(report.caseClosureRatePercent,1,'POINT',1,'POINT')} + '%'"></strong>
+            <span th:if="${report.outcomes.avgDaysToRecovery != null}">
+                · Avg days to recovery: <strong th:text="${#numbers.formatDecimal(report.outcomes.avgDaysToRecovery,1,'POINT',1,'POINT')}"></strong>
+            </span>
+        </div>
+    </div>
+
+    <!-- VET TABLE -->
+    <div class="section-card">
+        <h5><i class="bi bi-trophy me-1"></i>Veterinarian Workload &amp; Performance</h5>
+        <div class="table-responsive">
+            <table class="table rank-table align-middle">
+                <thead>
+                <tr>
+                    <th>#</th><th>Veterinarian</th><th>License</th><th>Status</th>
+                    <th class="text-end">Treatments</th><th class="text-end">Animals</th>
+                    <th class="text-end">Total Cost</th><th class="text-end">Avg / Animal</th>
+                    <th class="text-end">Sick</th><th class="text-end">Recovered</th>
+                    <th class="text-end">Recovery %</th><th class="text-end">Due</th>
+                    <th class="text-end">Overdue</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${report.rows}">
+                    <td th:text="${v.rankByTreatments}">1</td>
+                    <td>
+                        <strong th:text="${v.fullName}">Dr. Name</strong>
+                        <div class="text-muted small" th:if="${v.clinicName != null and !v.clinicName.isEmpty()}" th:text="${v.clinicName}"></div>
+                    </td>
+                    <td th:text="${v.licenseNumber != null and !v.licenseNumber.isEmpty() ? v.licenseNumber : '—'}">—</td>
+                    <td>
+                        <span th:if="${v.active}" class="vet-badge-active">Active</span>
+                        <span th:unless="${v.active}" class="vet-badge-inactive">Inactive</span>
+                    </td>
+                    <td class="text-end fw-bold" th:text="${v.treatmentRecords}">0</td>
+                    <td class="text-end" th:text="${v.distinctAnimalsTreated}">0</td>
+                    <td class="text-end" th:text="${#numbers.formatDecimal(v.totalTreatmentCost,1,'COMMA',0,'POINT')}">0</td>
+                    <td class="text-end" th:text="${v.avgCostPerAnimal != null ? #numbers.formatDecimal(v.avgCostPerAnimal,1,'COMMA',0,'POINT') : '—'}">—</td>
+                    <td class="text-end" th:text="${v.sickCasesAttended}">0</td>
+                    <td class="text-end" th:text="${v.sickCasesRecovered}">0</td>
+                    <td class="text-end fw-bold"
+                        th:style="${v.recoveryRatePercent >= 80 ? 'color:#059669;' : (v.recoveryRatePercent >= 60 ? 'color:#f59e0b;' : 'color:#dc2626;')}"
+                        th:text="${#numbers.formatDecimal(v.recoveryRatePercent,1,'POINT',1,'POINT')} + '%'">0%</td>
+                    <td class="text-end" th:text="${v.followUpsDue}">0</td>
+                    <td class="text-end fw-bold"
+                        th:style="${v.followUpsOverdue > 0 ? 'color:#dc2626;' : 'color:#64748b;'}"
+                        th:text="${v.followUpsOverdue}">0</td>
+                </tr>
+                <tr th:if="${report.rows.isEmpty()}">
+                    <td colspan="13" class="text-center text-muted py-4">No veterinarians registered.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ANALYSIS -->
+    <div class="section-card" th:if="${report.analysis != null}">
+        <h5><i class="bi bi-diagram-3 me-1"></i>Treatment Analysis</h5>
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-cat" type="button">By Livestock</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-dis" type="button">By Disease</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-loc" type="button">By Location</button></li>
+        </ul>
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="tab-cat">
+                <table class="table rank-table">
+                    <thead><tr><th>Category</th><th class="text-end">Records</th><th class="text-end">Animals</th><th class="text-end">Total Cost</th><th class="text-end">Avg / Animal</th></tr></thead>
+                    <tbody>
+                    <tr th:each="d : ${report.analysis.byLivestockCategory}">
+                        <td th:text="${d.label}">Goat</td>
+                        <td class="text-end" th:text="${d.count}">0</td>
+                        <td class="text-end" th:text="${d.distinctAnimals}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(d.totalCost,1,'COMMA',0,'POINT')}">0</td>
+                        <td class="text-end" th:text="${d.avgCost != null ? #numbers.formatDecimal(d.avgCost,1,'COMMA',0,'POINT') : '—'}">—</td>
+                    </tr>
+                    <tr th:if="${report.analysis.byLivestockCategory.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-3">No data for this period.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tab-pane fade" id="tab-dis">
+                <table class="table rank-table">
+                    <thead><tr><th>Disease / Condition</th><th class="text-end">Records</th><th class="text-end">Animals</th><th class="text-end">Total Cost</th><th class="text-end">Avg / Animal</th></tr></thead>
+                    <tbody>
+                    <tr th:each="d : ${report.analysis.byDisease}">
+                        <td th:text="${d.label}">Mastitis</td>
+                        <td class="text-end" th:text="${d.count}">0</td>
+                        <td class="text-end" th:text="${d.distinctAnimals}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(d.totalCost,1,'COMMA',0,'POINT')}">0</td>
+                        <td class="text-end" th:text="${d.avgCost != null ? #numbers.formatDecimal(d.avgCost,1,'COMMA',0,'POINT') : '—'}">—</td>
+                    </tr>
+                    <tr th:if="${report.analysis.byDisease.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-3">No data for this period.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tab-pane fade" id="tab-loc">
+                <table class="table rank-table">
+                    <thead><tr><th>Location</th><th class="text-end">Records</th><th class="text-end">Animals</th><th class="text-end">Total Cost</th><th class="text-end">Avg / Animal</th></tr></thead>
+                    <tbody>
+                    <tr th:each="d : ${report.analysis.byLocation}">
+                        <td th:text="${d.label}">Kigali</td>
+                        <td class="text-end" th:text="${d.count}">0</td>
+                        <td class="text-end" th:text="${d.distinctAnimals}">0</td>
+                        <td class="text-end" th:text="${#numbers.formatDecimal(d.totalCost,1,'COMMA',0,'POINT')}">0</td>
+                        <td class="text-end" th:text="${d.avgCost != null ? #numbers.formatDecimal(d.avgCost,1,'COMMA',0,'POINT') : '—'}">—</td>
+                    </tr>
+                    <tr th:if="${report.analysis.byLocation.isEmpty()}">
+                        <td colspan="5" class="text-center text-muted py-3">No data for this period.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="row mt-3" th:if="${!report.analysis.topCostDrivers.isEmpty() or !report.analysis.topDiseaseBurdens.isEmpty()}">
+            <div class="col-md-6" th:if="${!report.analysis.topCostDrivers.isEmpty()}">
+                <div class="small fw-bold text-muted mb-2">Top Cost Drivers</div>
+                <ul class="small mb-0">
+                    <li th:each="d : ${report.analysis.topCostDrivers}">
+                        <strong th:text="${d.label}">Mastitis</strong> —
+                        <span th:text="${#numbers.formatDecimal(d.totalCost,1,'COMMA',0,'POINT')}">0</span> RWF
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-6" th:if="${!report.analysis.topDiseaseBurdens.isEmpty()}">
+                <div class="small fw-bold text-muted mb-2">Top Disease Burdens</div>
+                <ul class="small mb-0">
+                    <li th:each="d : ${report.analysis.topDiseaseBurdens}">
+                        <strong th:text="${d.label}">Mastitis</strong> —
+                        <span th:text="${d.count}">0</span> records
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- CASES REQUIRING ATTENTION -->
+    <div class="section-card" th:if="${!report.casesRequiringAttention.isEmpty()}">
+        <h5><i class="bi bi-exclamation-triangle me-1"></i>Cases Requiring Attention</h5>
+        <div class="table-responsive">
+            <table class="table rank-table">
+                <thead><tr><th>Priority</th><th>Animal</th><th>Vet</th><th>Issue</th><th>Reported</th><th>Days Since</th><th>Status</th></tr></thead>
+                <tbody>
+                <tr th:each="f : ${report.casesRequiringAttention}"
+                    th:classappend="${f.priority == 'CRITICAL' ? 'row-critical' : (f.priority == 'OVERDUE' ? 'row-overdue' : 'row-due')}">
+                    <td>
+                        <span th:if="${f.priority == 'CRITICAL'}" class="badge bg-danger">🔴 Critical</span>
+                        <span th:if="${f.priority == 'OVERDUE'}" class="badge bg-warning text-dark">🟠 Overdue</span>
+                        <span th:if="${f.priority == 'DUE_SOON'}" class="badge bg-secondary">🟡 Watch</span>
+                    </td>
+                    <td th:text="${f.animalTag}">—</td>
+                    <td th:text="${f.veterinarianName}">Unassigned</td>
+                    <td th:text="${f.issue}">—</td>
+                    <td th:text="${f.dueDate != null ? #temporals.format(f.dueDate,'dd MMM yyyy') : '—'}">—</td>
+                    <td th:text="${f.daysOverdue > 0 ? f.daysOverdue + ' d' : '—'}">—</td>
+                    <td th:text="${f.status}">SICK</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- FOLLOW-UPS DUE -->
+    <div class="section-card" th:if="${!report.followUpsDueList.isEmpty()}">
+        <h5><i class="bi bi-bell me-1"></i>Follow-ups Due</h5>
+        <div class="table-responsive">
+            <table class="table rank-table">
+                <thead><tr><th>Priority</th><th>Animal</th><th>Vet</th><th>Follow-up For</th><th>Due</th><th>Days Overdue</th></tr></thead>
+                <tbody>
+                <tr th:each="f : ${report.followUpsDueList}"
+                    th:classappend="${f.priority == 'CRITICAL' ? 'row-critical' : (f.priority == 'OVERDUE' ? 'row-overdue' : 'row-due')}">
+                    <td>
+                        <span th:if="${f.priority == 'CRITICAL'}" class="badge bg-danger">🔴 Critical</span>
+                        <span th:if="${f.priority == 'OVERDUE'}" class="badge bg-warning text-dark">🟠 Overdue</span>
+                        <span th:if="${f.priority == 'DUE_SOON'}" class="badge bg-secondary">🟡 Due Soon</span>
+                    </td>
+                    <td th:text="${f.animalTag}">—</td>
+                    <td th:text="${f.veterinarianName}">Unassigned</td>
+                    <td th:text="${f.issue}">—</td>
+                    <td th:text="${f.dueDate != null ? #temporals.format(f.dueDate,'dd MMM yyyy') : '—'}">—</td>
+                    <td th:text="${f.daysOverdue > 0 ? f.daysOverdue + ' d' : '—'}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TRENDS -->
+    <div class="section-card" th:if="${report.trends != null}">
+        <h5><i class="bi bi-graph-up-arrow me-1"></i>Trends Over Selected Period</h5>
+        <div class="row g-3">
+            <div class="col-md-6"><canvas id="chartTreatments" height="160"></canvas></div>
+            <div class="col-md-6"><canvas id="chartSick" height="160"></canvas></div>
+            <div class="col-md-6"><canvas id="chartCosts" height="160"></canvas></div>
+            <div class="col-md-6"><canvas id="chartRecovery" height="160"></canvas></div>
+        </div>
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const trends = /*[[${report.trends}]]*/ null;
+    /*]]>*/
+    if (trends) {
+        const mkLine = (canvasId, points, label, color, isPercent) => {
+            const el = document.getElementById(canvasId);
+            if (!el) return;
+            new Chart(el, {
+                type: 'line',
+                data: {
+                    labels: (points || []).map(p => p.bucket),
+                    datasets: [{
+                        label: label,
+                        data: (points || []).map(p => p.value),
+                        borderColor: color, backgroundColor: color + '22',
+                        fill: true, tension: 0.3, pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true, position: 'top' } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: v => isPercent ? v + '%' : v } },
+                        x: { ticks: { maxTicksLimit: 8 } }
+                    }
+                }
+            });
+        };
+        mkLine('chartTreatments', trends.treatments, 'Treatments', '#0e7490', false);
+        mkLine('chartSick',       trends.sickCases,  'Sick Cases', '#f59e0b', false);
+        mkLine('chartCosts',      trends.costs,      'Cost (RWF)', '#7c3aed', false);
+        mkLine('chartRecovery',   trends.recovery,   'Recovery %', '#059669', true);
+    }
+</script>
+
 </body>
 </html>

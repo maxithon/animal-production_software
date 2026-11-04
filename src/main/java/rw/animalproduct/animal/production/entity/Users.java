@@ -36,14 +36,12 @@ public class Users {
 
     private String photoUrl;
 
-    // NEW: Link user to a beneficiary
     @Column(name = "beneficiary_id")
     private UUID beneficiaryId;
 
     @Transient
     private String userTypeIdValue;
 
-    // Constructors
     public Users() {}
 
     public Users(UUID userId, String email, String password, boolean isActive, Date registrationDate, UsersType userTypeId) {
@@ -55,7 +53,6 @@ public class Users {
         this.userTypeId = userTypeId;
     }
 
-    // Getters and Setters
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
@@ -80,7 +77,6 @@ public class Users {
     public String getUserTypeIdValue() { return userTypeIdValue; }
     public void setUserTypeIdValue(String userTypeIdValue) { this.userTypeIdValue = userTypeIdValue; }
 
-    // NEW: Getter and Setter for beneficiaryId
     public UUID getBeneficiaryId() { return beneficiaryId; }
     public void setBeneficiaryId(UUID beneficiaryId) { this.beneficiaryId = beneficiaryId; }
 

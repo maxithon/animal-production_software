@@ -13,6 +13,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,7 +25,6 @@ public class BuyerService {
 
     private final BuyerRepository buyerRepository;
 
-    /** Where buyer photos are stored on disk. Point this at a persistent, writable folder in production. */
     private final Path uploadDir = Path.of("uploads", "buyers");
 
     public BuyerService(BuyerRepository buyerRepository) {
@@ -30,34 +32,90 @@ public class BuyerService {
     }
 
     // ── Reads ──────────────────────────────────────────────────────────
-    public List<Buyer> getAll() { return buyerRepository.findAll(); }
-    public List<Buyer> getActive() { return buyerRepository.findByIsActiveTrue(); }
-    public Optional<Buyer> getById(UUID id) { return buyerRepository.findById(id); }
-    public Optional<Buyer> getByNationalId(String nationalId) { return buyerRepository.findByNationalId(nationalId); }
-    public Optional<Buyer> getByPhone(String phone) { return buyerRepository.findByPhone(phone); }
+    public List<Buyer> getAll() {
+        return buyerRepository.findAll();
+    }
 
-    /** Fast, N+1-free list for the Buyers dashboard table. */
-    public List<BuyerSummary> getAllSummaries() { return buyerRepository.findAllSummaries(); }
+    public List<Buyer> getActive() {
+        return buyerRepository.findByIsActiveTrue();
+    }
 
-    /**
-     * Search across all buyers (active AND inactive) for the dashboard.
-     * This is more useful for the admin view.
-     */
+    public Optional<Buyer> getById(UUID id) {
+        return buyerRepository.findById(id);
+    }
+
+    public Optional<Buyer> getByNationalId(String nationalId) {
+        return buyerRepository.findByNationalId(nationalId);
+    }
+
+    public Optional<Buyer> getByPhone(String phone) {
+        return buyerRepository.findByPhone(phone);
+    }
+
+    public List<BuyerSummary> getAllSummaries() {
+        List<Object[]> results = buyerRepository.findAllSummariesRaw();
+        return mapToBuyerSummaries(results);
+    }
+
     public List<BuyerSummary> search(String query) {
         if (!StringUtils.hasText(query)) {
-            return buyerRepository.findAllSummaries();
+            return getAllSummaries();
         }
-        // Search across ALL buyers, not just active ones
-        return buyerRepository.searchAllSummaries(query.trim());
+        List<Object[]> results = buyerRepository.searchAllSummariesRaw(query.trim());
+        return mapToBuyerSummaries(results);
     }
 
     public List<BuyerSummary> getTopBuyersByLimit(int limit) {
-        return buyerRepository.findTopBuyerSummaries().stream().limit(limit).toList();
+        List<Object[]> results = buyerRepository.findTopBuyerSummariesRaw();
+        List<BuyerSummary> summaries = mapToBuyerSummaries(results);
+        return summaries.stream().limit(limit).toList();
+    }
+
+    // ── Manual Mapping Helper ────────────────────────────────────────
+    // Row layout matches the repository queries:
+    // 0=id, 1=firstName, 2=lastName, 3=phone, 4=address, 5=nationalId,
+    // 6=email, 7=buyerType, 8=notes, 9=isActive, 10=photo, 11=createdAt,
+    // 12=totalPurchases, 13=totalSpent
+
+    private List<BuyerSummary> mapToBuyerSummaries(List<Object[]> results) {
+        List<BuyerSummary> summaries = new ArrayList<>();
+        if (results == null) {
+            return summaries;
+        }
+        for (Object[] row : results) {
+            try {
+                BuyerSummary summary = new BuyerSummary(
+                        (UUID) row[0],                          // id
+                        (String) row[1],                        // firstName
+                        (String) row[2],                        // lastName
+                        (String) row[3],                        // phone
+                        (String) row[4],                        // address
+                        (String) row[5],                        // nationalId
+                        (String) row[6],                        // email
+                        (String) row[7],                        // buyerType
+                        (String) row[8],                        // notes
+                        (Boolean) row[9],                       // isActive
+                        (String) row[10],                       // photo
+                        (LocalDateTime) row[11],                // createdAt
+                        ((Number) row[12]).intValue(),          // totalPurchases
+                        (BigDecimal) row[13]                    // totalSpent
+                );
+                summaries.add(summary);
+            } catch (Exception e) {
+                // Skip invalid rows
+            }
+        }
+        return summaries;
     }
 
     // ── KPI counts ─────────────────────────────────────────────────────
-    public long countActive() { return buyerRepository.countActiveBuyers(); }
-    public long countInactive() { return buyerRepository.countInactiveBuyers(); }
+    public long countActive() {
+        return buyerRepository.countActiveBuyers();
+    }
+
+    public long countInactive() {
+        return buyerRepository.countInactiveBuyers();
+    }
 
     // ── Create ─────────────────────────────────────────────────────────
     @Transactional
@@ -67,9 +125,6 @@ public class BuyerService {
             buyer.setPhoto(storePhoto(photoFile));
         }
         Buyer saved = buyerRepository.save(buyer);
-        // Force the insert to hit the DB now, inside this transaction, so
-        // any constraint violation (e.g. a race-condition duplicate) surfaces
-        // immediately instead of silently failing later.
         buyerRepository.flush();
         return saved;
     }
@@ -114,18 +169,6 @@ public class BuyerService {
         buyerRepository.flush();
     }
 
-    /**
-     * ENHANCED: previously only accepted phone/firstName/lastName/address/
-     * nationalId, so any buyer created from the Livestock Sales "quick add"
-     * form silently lost email, buyer type and notes even though the field
-     * existed on the Buyer entity and on the real "Add Buyer" form. This
-     * now carries every field the real form collects, so a buyer created
-     * from either screen ends up identical in the database.
-     *
-     * If a buyer with the same phone or National ID already exists, that
-     * existing buyer is reused as-is (we don't silently overwrite someone's
-     * existing record from a quick-add form on a different page).
-     */
     @Transactional
     public Buyer findOrCreate(String phone, String firstName, String lastName, String address,
                               String nationalId, String email, String buyerType, String notes) {
@@ -149,8 +192,6 @@ public class BuyerService {
         newBuyer.setNotes(notes);
         newBuyer.setIsActive(true);
 
-        // Catches the email-uniqueness case (phone/nationalId are already
-        // covered by the lookups above, but email could still collide).
         validateNoDuplicates(newBuyer, null);
 
         Buyer saved = buyerRepository.save(newBuyer);
@@ -158,10 +199,6 @@ public class BuyerService {
         return saved;
     }
 
-    /**
-     * @deprecated kept only in case older callers still use the short form.
-     * Prefer the 8-argument overload so email/buyerType/notes aren't lost.
-     */
     @Deprecated
     @Transactional
     public Buyer findOrCreate(String phone, String firstName, String lastName, String address, String nationalId) {
@@ -170,15 +207,6 @@ public class BuyerService {
 
     // ── Duplicate validation ───────────────────────────────────────────
 
-    /**
-     * Checks phone, National ID and email for duplicates and throws a
-     * DuplicateBuyerException carrying the specific field name that
-     * collided, so the controller can attach the error to that exact
-     * form field instead of a generic flash message.
-     *
-     * excludeId: pass the buyer's own id on UPDATE so it doesn't flag
-     * itself as a duplicate of itself; pass null on CREATE.
-     */
     private void validateNoDuplicates(Buyer buyer, UUID excludeId) {
         if (StringUtils.hasText(buyer.getPhone())) {
             boolean duplicate = excludeId == null

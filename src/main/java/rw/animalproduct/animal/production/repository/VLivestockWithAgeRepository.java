@@ -12,35 +12,29 @@ import java.util.UUID;
 
 public interface VLivestockWithAgeRepository extends JpaRepository<VLivestockWithAge, UUID> {
 
-    // Find by lifecycle stage
+    // ---- Existing finders (kept) ----
     List<VLivestockWithAge> findByLifecycleStage(String lifecycleStage);
     Page<VLivestockWithAge> findByLifecycleStage(String lifecycleStage, Pageable pageable);
 
-    // Find by status
     List<VLivestockWithAge> findByStatus(String status);
     Page<VLivestockWithAge> findByStatus(String status, Pageable pageable);
 
-    // Find by category
     List<VLivestockWithAge> findByCategoryName(String categoryName);
     Page<VLivestockWithAge> findByCategoryName(String categoryName, Pageable pageable);
 
-    // Find by gender
     List<VLivestockWithAge> findByGender(String gender);
     Page<VLivestockWithAge> findByGender(String gender, Pageable pageable);
 
-    // Combined filters
     Page<VLivestockWithAge> findByLifecycleStageAndGender(String lifecycleStage, String gender, Pageable pageable);
     Page<VLivestockWithAge> findByLifecycleStageAndCategoryName(String lifecycleStage, String categoryName, Pageable pageable);
 
-    // Count by lifecycle stage
+    // ---- Existing counts ----
     @Query("SELECT COUNT(v) FROM VLivestockWithAge v WHERE v.lifecycleStage = :stage")
     long countByLifecycleStage(@Param("stage") String stage);
 
-    // Count by status
     @Query("SELECT COUNT(v) FROM VLivestockWithAge v WHERE v.status = :status")
     long countByStatus(@Param("status") String status);
 
-    // Summary statistics
     @Query("SELECT v.lifecycleStage, COUNT(v) FROM VLivestockWithAge v GROUP BY v.lifecycleStage")
     List<Object[]> getLifecycleStageCounts();
 
@@ -50,14 +44,38 @@ public interface VLivestockWithAgeRepository extends JpaRepository<VLivestockWit
     @Query("SELECT v.status, COUNT(v) FROM VLivestockWithAge v GROUP BY v.status")
     List<Object[]> getStatusCounts();
 
-    // Age range queries
+    // ---- Age range ----
     @Query("SELECT v FROM VLivestockWithAge v WHERE v.ageInMonths BETWEEN :minMonths AND :maxMonths")
-    List<VLivestockWithAge> findByAgeRange(@Param("minMonths") Integer minMonths, @Param("maxMonths") Integer maxMonths);
+    List<VLivestockWithAge> findByAgeRange(@Param("minMonths") Integer minMonths,
+                                           @Param("maxMonths") Integer maxMonths);
 
-    // Search by tag number
+    // ---- Search ----
     List<VLivestockWithAge> findByTagNumberContaining(String tagNumber);
     Page<VLivestockWithAge> findByTagNumberContaining(String tagNumber, Pageable pageable);
 
-    // All active livestock with pagination
+    // ---- All ----
     Page<VLivestockWithAge> findAll(Pageable pageable);
+
+    // ═══════════════════════════════════════════════════════════════
+    // NEW: combined dynamic filtering (all filters optional)
+    // Only non-deleted rows are returned.
+    // Pass NULL (or 'ALL') for any filter you don't want applied.
+    // ═══════════════════════════════════════════════════════════════
+    @Query("""
+        SELECT v FROM VLivestockWithAge v
+        WHERE (v.isDeleted IS NULL OR v.isDeleted = false)
+          AND (:stage IS NULL OR :stage = 'ALL' OR v.lifecycleStage = :stage)
+          AND (:status IS NULL OR :status = 'ALL' OR v.status = :status)
+          AND (:category IS NULL OR :category = 'ALL' OR v.categoryName = :category)
+          AND (:gender IS NULL OR :gender = '' OR v.gender = :gender)
+          AND (:search IS NULL OR :search = ''
+               OR LOWER(v.tagNumber) LIKE LOWER(CONCAT('%', :search, '%')))
+        """)
+    Page<VLivestockWithAge> findFiltered(
+            @Param("stage")    String stage,
+            @Param("status")   String status,
+            @Param("category") String category,
+            @Param("gender")   String gender,
+            @Param("search")   String search,
+            Pageable pageable);
 }

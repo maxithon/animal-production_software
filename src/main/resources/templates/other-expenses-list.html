@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Other Expenses</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #f0f2f8;
+            --border: #e2e6f0;
+            --accent: #4f7dff;
+            --accent-glow: rgba(79, 125, 255, 0.12);
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+        .dashboard-wrapper { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+        .page-title { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+        .page-title span { color: var(--accent); }
+        .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; transition: border-color 0.2s; }
+        .kpi-card:hover { border-color: var(--accent); }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+        .kpi-card.accent-blue::before  { background: var(--accent); }
+        .kpi-card.accent-green::before { background: var(--success); }
+        .kpi-card.accent-red::before   { background: var(--danger); }
+        .kpi-card.accent-amber::before { background: var(--warning); }
+        .kpi-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+        .kpi-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; color: var(--text-primary); font-family: 'DM Mono', monospace; word-break: break-word; }
+        .kpi-card.accent-blue  .kpi-value { color: var(--accent); }
+        .kpi-card.accent-green .kpi-value { color: var(--success); }
+        .kpi-card.accent-red   .kpi-value { color: var(--danger); }
+        .kpi-card.accent-amber .kpi-value { color: var(--warning); }
+
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
+        .chart-card-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; }
+
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+        .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .search-wrap { position: relative; }
+        .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+        .search-input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.85rem; padding: 8px 12px 8px 34px; width: 240px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .search-input::placeholder { color: var(--text-muted); }
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+        .rows-select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 0.82rem; padding: 7px 10px; outline: none; cursor: pointer; }
+        .rows-select:focus { border-color: var(--accent); }
+
+        .btn-add { background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 18px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
+        .btn-add:hover { opacity: 0.88; }
+        .btn-add:active { transform: scale(0.97); }
+
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        thead tr { background: var(--surface-2); }
+        thead th { padding: 10px 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+        thead th:hover { color: var(--text-secondary); }
+        thead th .sort-icon { margin-left: 4px; opacity: 0.4; font-style: normal; }
+        thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+
+        /* Fixed column widths so the table fits its card instead of stretching wide.
+           Sums to 100%; narrow columns (date, amount, receipt) stay tight, the
+           description/notes columns get the most room and truncate with ellipsis. */
+        col.col-date        { width: 8%; }
+        col.col-category     { width: 10%; }
+        col.col-description  { width: 18%; }
+        col.col-amount        { width: 10%; }
+        col.col-payment       { width: 8%; }
+        col.col-paidto        { width: 10%; }
+        col.col-receipt       { width: 7%; }
+        col.col-notes          { width: 10%; }
+        col.col-user             { width: 9%; }
+        col.col-actions           { width: 10%; }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(79,125,255,0.04); }
+
+        td { padding: 9px 12px; font-size: 0.82rem; color: var(--text-secondary); vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        td.mono { font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+        td.desc-cell { white-space: normal; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+        td.amount-cell { font-weight: 700; font-family: 'DM Mono', monospace; color: var(--danger); white-space: nowrap; }
+
+        .badge-category { background: rgba(79,125,255,0.1); color: var(--accent); font-size: 0.73rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; white-space: nowrap; }
+        .badge-payment { background: var(--surface-2); color: var(--text-secondary); font-size: 0.72rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; display: inline-block; }
+
+        .action-group { display: flex; gap: 6px; align-items: center; }
+        .btn-action { padding: 4px 10px; font-size: 0.74rem; font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
+        .btn-action:hover { opacity: 0.8; }
+        .btn-edit { background: rgba(79,125,255,0.15); color: var(--accent); }
+        .btn-delete { background: rgba(239,68,68,0.12); color: var(--danger); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
+        .empty-state p { font-size: 0.875rem; }
+
+        .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+        .pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+        .pagination-info strong { color: var(--text-secondary); }
+        .pagination-controls { display: flex; align-items: center; gap: 4px; }
+        .page-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 0.82rem; font-family: inherit; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; user-select: none; }
+        .page-btn:hover:not(:disabled):not(.active) { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+        .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-ellipsis { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.82rem; }
+
+        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); }
+        .modal-header { border-bottom: 1px solid var(--border); padding: 18px 22px; }
+        .modal-title { font-size: 1rem; font-weight: 700; }
+        .btn-close { filter: none; opacity: 0.5; }
+        .modal-body { padding: 22px; }
+        .modal-footer { border-top: 1px solid var(--border); padding: 14px 22px; }
+        .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+        .form-control, .form-select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.875rem; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-control:focus, .form-select:focus { background: var(--surface-2); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); color: var(--text-primary); outline: none; }
+        .form-control::placeholder { color: var(--text-muted); }
+        textarea.form-control { resize: vertical; min-height: 70px; }
+        .btn-secondary-modal { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 18px; cursor: pointer; transition: background 0.2s; }
+        .btn-secondary-modal:hover { background: var(--border); }
+        .field-error { font-size: 0.75rem; color: var(--danger); margin-top: 4px; }
+
+        canvas { max-height: 220px; }
+        .alert-floating { max-width: 1400px; margin: 0 auto 16px; }
+        .notes-cell { white-space: normal; }
+    </style>
+</head>
+<body>
+<div class="dashboard-wrapper">
+
+    <div class="alert-floating" th:if="${success}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+    <div class="alert-floating" th:if="${error}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <div class="page-title">Other <span>Expenses</span></div>
+            <div class="page-subtitle">Track miscellaneous money spent on the operation</div>
+        </div>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card accent-red">
+            <div class="kpi-label">This Month</div>
+            <div class="kpi-value" th:text="${#numbers.formatDecimal(totalThisMonth, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</div>
+        </div>
+        <div class="kpi-card accent-amber">
+            <div class="kpi-label">This Year</div>
+            <div class="kpi-value" th:text="${#numbers.formatDecimal(totalThisYear, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</div>
+        </div>
+        <div class="kpi-card accent-blue">
+            <div class="kpi-label">All Time</div>
+            <div class="kpi-value" th:text="${#numbers.formatDecimal(totalAllTime, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</div>
+        </div>
+        <div class="kpi-card accent-green">
+            <div class="kpi-label">Total Records</div>
+            <div class="kpi-value" th:text="${recordCount}">0</div>
+        </div>
+    </div>
+
+    <div class="chart-card">
+        <div class="chart-card-title">Spending by Category</div>
+        <canvas id="categoryChart"></canvas>
+    </div>
+
+    <div class="table-card">
+        <div class="table-toolbar">
+            <div class="toolbar-left">
+                <div class="search-wrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search expenses…">
+                </div>
+                <select class="rows-select" id="rowsPerPage">
+                    <option value="5">5 rows</option>
+                    <option value="10" selected>10 rows</option>
+                    <option value="25">25 rows</option>
+                    <option value="50">50 rows</option>
+                </select>
+            </div>
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add Expense
+            </button>
+        </div>
+
+        <div class="table-scroll">
+            <table>
+                <colgroup>
+                    <col class="col-date">
+                    <col class="col-category">
+                    <col class="col-description">
+                    <col class="col-amount">
+                    <col class="col-payment">
+                    <col class="col-paidto">
+                    <col class="col-receipt">
+                    <col class="col-notes">
+                    <col class="col-user">
+                    <col class="col-actions">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th onclick="sortTable('expenseDate')" id="th-expenseDate">Date <i class="sort-icon">↕</i></th>
+                    <th onclick="sortTable('category')" id="th-category">Category <i class="sort-icon">↕</i></th>
+                    <th>Description</th>
+                    <th onclick="sortTable('amount')" id="th-amount">Amount (RWF) <i class="sort-icon">↕</i></th>
+                    <th>Payment</th>
+                    <th>Paid To</th>
+                    <th>Receipt Ref</th>
+                    <th>Notes</th>
+                    <th>Recorded By</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="expensesTableBody">
+                <tr th:each="e : ${expenses}" th:attr="data-id=${e.id}"
+                    th:data-date="${e.expenseDate}"
+                    th:data-category="${e.category}"
+                    th:data-description="${e.description}"
+                    th:data-amount="${e.amount}"
+                    th:data-payment="${e.paymentMethod != null ? e.paymentMethod : ''}"
+                    th:data-paidto="${e.paidTo != null ? e.paidTo : ''}"
+                    th:data-receipt="${e.receiptReference != null ? e.receiptReference : ''}"
+                    th:data-notes="${e.notes != null ? e.notes : ''}"
+                    th:data-created="${e.createdAt != null ? e.createdAt : ''}"
+                    th:data-user="${e.createdByUsername != null ? e.createdByUsername : ''}">
+                    <td class="mono" th:text="${e.expenseDate}">Date</td>
+                    <td><span class="badge-category" th:text="${#strings.replace(#strings.toLowerCase(e.category),'_',' ')}">Category</span></td>
+                    <td class="desc-cell" th:text="${e.description}" th:title="${e.description}">Description</td>
+                    <td class="amount-cell" th:text="${#numbers.formatDecimal(e.amount, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</td>
+                    <td><span class="badge-payment" th:if="${e.paymentMethod}" th:text="${e.paymentMethod}">Payment</span></td>
+                    <td th:text="${e.paidTo != null ? e.paidTo : '—'}">Paid To</td>
+                    <td class="mono" th:text="${e.receiptReference != null ? e.receiptReference : '—'}">Ref</td>
+                    <td class="notes-cell" th:text="${e.notes != null ? e.notes : '—'}" th:title="${e.notes != null ? e.notes : ''}">Notes</td>
+                    <td th:text="${e.createdByUsername != null ? e.createdByUsername : '—'}">User</td>
+                    <td>
+                        <div class="action-group">
+                            <a th:href="@{/other-expenses/edit/{id}(id=${e.id})}" class="btn-action btn-edit">Edit</a>
+                            <form th:action="@{/other-expenses/delete/{id}(id=${e.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-action btn-delete"
+                                        onclick="return confirm('Delete this expense record?');">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" id="emptyState" style="display:none;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                </svg>
+                <p>No expenses match your search.</p>
+            </div>
+        </div>
+
+        <div class="table-footer">
+            <div class="pagination-info" id="paginationInfo">Showing — of — expenses</div>
+            <div class="pagination-controls" id="paginationControls"></div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1" aria-labelledby="addExpenseModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/other-expenses/new}" method="post" th:object="${expense}" novalidate>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addExpenseModalLabel">Record Other Expense</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Expense Date</label>
+                            <input type="date" class="form-control" th:field="*{expenseDate}" required>
+                            <div class="field-error" th:if="${#fields.hasErrors('expenseDate')}" th:errors="*{expenseDate}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" th:field="*{category}" required>
+                                <option value="">Select category…</option>
+                                <option value="FEED">Feed</option>
+                                <option value="LABOR">Labor</option>
+                                <option value="TRANSPORT">Transport</option>
+                                <option value="FUEL">Fuel</option>
+                                <option value="UTILITIES">Utilities</option>
+                                <option value="EQUIPMENT">Equipment</option>
+                                <option value="MAINTENANCE">Maintenance</option>
+                                <option value="VETERINARY_SUPPLIES">Veterinary Supplies</option>
+                                <option value="RENT">Rent</option>
+                                <option value="INSURANCE">Insurance</option>
+                                <option value="PERMITS_LICENSES">Permits / Licenses</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                            <div class="field-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <input type="text" class="form-control" th:field="*{description}" placeholder="What was this expense for?" required minlength="3" maxlength="255">
+                            <div class="field-error" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Amount (RWF)</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" th:field="*{amount}" placeholder="0.00" required>
+                            <div class="field-error" th:if="${#fields.hasErrors('amount')}" th:errors="*{amount}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payment Method</label>
+                            <select class="form-select" th:field="*{paymentMethod}">
+                                <option value="">Select method…</option>
+                                <option value="CASH">Cash</option>
+                                <option value="MOBILE_MONEY">Mobile Money</option>
+                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                <option value="CHEQUE">Cheque</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Paid To</label>
+                            <input type="text" class="form-control" th:field="*{paidTo}" placeholder="Vendor / recipient name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Receipt Reference</label>
+                            <input type="text" class="form-control" th:field="*{receiptReference}" placeholder="Receipt / invoice no.">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" th:field="*{notes}" placeholder="Optional notes…"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary-modal" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn-add">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const openAddModal = /*[[${openAddModal}]]*/ false;
+    const categoryTotals = /*[[${categoryTotals}]]*/ [];
+    /*]]>*/
+    if (openAddModal) {
+        window.addEventListener('DOMContentLoaded', () => {
+            new bootstrap.Modal(document.getElementById('addExpenseModal')).show();
+        });
+    }
+
+    /* ── Category Chart ── */
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: categoryTotals.map(c => (c.category || '').replace(/_/g, ' ')),
+            datasets: [{
+                label: 'Total Spent',
+                data: categoryTotals.map(c => c.total),
+                backgroundColor: 'rgba(220,38,38,0.55)',
+                borderColor: 'rgba(220,38,38,1)',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `${Number(ctx.parsed.y).toLocaleString('en-US')} RWF`
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } },
+                y: { beginAtZero: true, ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } }
+            }
+        }
+    });
+
+    /* ── Pagination, Search & Sort (same pattern as buyers-list.html) ── */
+    let allExpenses = [];
+    let filtered = [];
+    let currentPage = 1;
+    let rowsPerPage = 10;
+    let sortKey = 'expenseDate';
+    let sortAsc = false;
+
+    function collectRows() {
+        const rows = document.querySelectorAll('#expensesTableBody tr[data-id]');
+        allExpenses = Array.from(rows).map(r => ({
+            id: r.dataset.id,
+            expenseDate: r.dataset.date || '',
+            category: r.dataset.category || '',
+            description: r.dataset.description || '',
+            amount: Number(r.dataset.amount) || 0,
+            paymentMethod: r.dataset.payment || '',
+            paidTo: r.dataset.paidto || '',
+            receiptReference: r.dataset.receipt || '',
+            notes: r.dataset.notes || '',
+            createdAt: r.dataset.created || '',
+            createdByUsername: r.dataset.user || ''
+        }));
+    }
+
+    function normalizeFromSearch(data) {
+        return data.map(e => ({
+            id: e.id,
+            expenseDate: e.expenseDate || '',
+            category: e.category || '',
+            description: e.description || '',
+            amount: e.amount || 0,
+            paymentMethod: e.paymentMethod || '',
+            paidTo: e.paidTo || '',
+            receiptReference: e.receiptReference || '',
+            notes: e.notes || '',
+            createdAt: e.createdAt || '',
+            createdByUsername: e.createdByUsername || ''
+        }));
+    }
+
+    function applyFilter(query) {
+        const q = query.toLowerCase();
+        filtered = allExpenses.filter(e =>
+            e.description.toLowerCase().includes(q) ||
+            e.category.toLowerCase().includes(q) ||
+            (e.paidTo || '').toLowerCase().includes(q) ||
+            (e.receiptReference || '').toLowerCase().includes(q) ||
+            (e.notes || '').toLowerCase().includes(q)
+        );
+    }
+
+    function applySort() {
+        if (!sortKey) return;
+        filtered.sort((a, b) => {
+            let va = a[sortKey], vb = b[sortKey];
+            if (typeof va === 'string') va = va.toLowerCase();
+            if (typeof vb === 'string') vb = vb.toLowerCase();
+            if (va < vb) return sortAsc ? -1 : 1;
+            if (va > vb) return sortAsc ? 1 : -1;
+            return 0;
+        });
+    }
+
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function fmtMoney(n) {
+        return Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+    }
+
+    function renderTable() {
+        const start = (currentPage - 1) * rowsPerPage;
+        const page = filtered.slice(start, start + rowsPerPage);
+        const tbody = document.getElementById('expensesTableBody');
+        const empty = document.getElementById('emptyState');
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '';
+            empty.style.display = '';
+        } else {
+            empty.style.display = 'none';
+            tbody.innerHTML = page.map(e => `
+                <tr>
+                    <td class="mono">${esc(e.expenseDate)}</td>
+                    <td><span class="badge-category">${esc((e.category || '').replace(/_/g,' '))}</span></td>
+                    <td class="desc-cell" title="${esc(e.description)}">${esc(e.description)}</td>
+                    <td class="amount-cell">${fmtMoney(e.amount)} RWF</td>
+                    <td>${e.paymentMethod ? `<span class="badge-payment">${esc(e.paymentMethod)}</span>` : '—'}</td>
+                    <td>${esc(e.paidTo) || '—'}</td>
+                    <td class="mono">${esc(e.receiptReference) || '—'}</td>
+                    <td class="notes-cell" title="${esc(e.notes || '')}">${esc(e.notes) || '—'}</td>
+                    <td>${esc(e.createdByUsername) || '—'}</td>
+                    <td>
+                        <div class="action-group">
+                            <a href="/other-expenses/edit/${e.id}" class="btn-action btn-edit">Edit</a>
+                            <form action="/other-expenses/delete/${e.id}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-action btn-delete"
+                                    onclick="return confirm('Delete this expense record?');">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        renderPagination();
+    }
+
+    function renderPagination() {
+        const total = filtered.length;
+        const pages = Math.ceil(total / rowsPerPage);
+        const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, total);
+
+        document.getElementById('paginationInfo').innerHTML =
+            `Showing <strong>${start}–${end}</strong> of <strong>${total}</strong> expenses`;
+
+        const ctrl = document.getElementById('paginationControls');
+        ctrl.innerHTML = '';
+        if (pages <= 1) return;
+
+        const prev = btn('‹', currentPage === 1);
+        prev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); }});
+        ctrl.appendChild(prev);
+
+        pageNumbers(currentPage, pages).forEach(n => {
+            if (n === '…') {
+                const el = document.createElement('span');
+                el.className = 'page-ellipsis';
+                el.textContent = '…';
+                ctrl.appendChild(el);
+            } else {
+                const el = btn(n, false, n === currentPage);
+                el.addEventListener('click', () => { currentPage = n; renderTable(); });
+                ctrl.appendChild(el);
+            }
+        });
+
+        const next = btn('›', currentPage === pages);
+        next.addEventListener('click', () => { if (currentPage < pages) { currentPage++; renderTable(); }});
+        ctrl.appendChild(next);
+    }
+
+    function pageNumbers(cur, total) {
+        if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
+        if (cur <= 4) return [1,2,3,4,5,'…',total];
+        if (cur >= total - 3) return [1,'…',total-4,total-3,total-2,total-1,total];
+        return [1,'…',cur-1,cur,cur+1,'…',total];
+    }
+
+    function btn(label, disabled = false, active = false) {
+        const el = document.createElement('button');
+        el.className = 'page-btn' + (active ? ' active' : '');
+        el.textContent = label;
+        el.disabled = disabled;
+        return el;
+    }
+
+    /* ── Sort ── */
+    window.sortTable = function(key) {
+        if (sortKey === key) sortAsc = !sortAsc;
+        else { sortKey = key; sortAsc = true; }
+
+        document.querySelectorAll('thead th').forEach(th => th.classList.remove('sorted'));
+        const th = document.getElementById('th-' + key);
+        if (th) {
+            th.classList.add('sorted');
+            th.querySelector('.sort-icon').textContent = sortAsc ? '↑' : '↓';
+        }
+        currentPage = 1;
+        applySort();
+        renderTable();
+    };
+
+    /* ── Search (debounced, server-backed with client-side fallback) ── */
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        const q = this.value;
+        searchTimeout = setTimeout(() => {
+            if (q.length > 0) {
+                fetch(`/other-expenses/search?query=${encodeURIComponent(q)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        allExpenses = normalizeFromSearch(data);
+                        filtered = [...allExpenses];
+                        currentPage = 1;
+                        renderTable();
+                    })
+                    .catch(() => {
+                        applyFilter(q);
+                        currentPage = 1;
+                        renderTable();
+                    });
+            } else {
+                collectRows();
+                filtered = [...allExpenses];
+                currentPage = 1;
+                renderTable();
+            }
+        }, 300);
+    });
+
+    document.getElementById('rowsPerPage').addEventListener('change', function () {
+        rowsPerPage = Number(this.value);
+        currentPage = 1;
+        renderTable();
+    });
+
+    /* ── Init ── */
+    collectRows();
+    filtered = [...allExpenses];
+    applySort();
+    renderTable();
+</script>
+</body>
+</html>

@@ -94,7 +94,7 @@ public class BreedingPerformanceReportController {
             stats[0]++; // total attempts
 
             if (LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(status)
-                    || LivestockBreeding.STATUS_CONFIRMED.equals(status)) {
+                    || LivestockBreeding.STATUS_PREGNANT.equals(status)) {
                 confirmedPregnant++;
                 stats[1]++;
             } else if (LivestockBreeding.STATUS_COMPLETED.equals(status)) {

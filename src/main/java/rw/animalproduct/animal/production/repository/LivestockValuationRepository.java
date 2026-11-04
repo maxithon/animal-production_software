@@ -3,52 +3,74 @@ package rw.animalproduct.animal.production.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.LivestockValuation;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public interface LivestockValuationRepository extends JpaRepository<LivestockValuation, UUID> {
 
-    // ── Full history, newest first ────────────────────────────────────────────
-    @Query("SELECT v FROM LivestockValuation v WHERE v.livestock.id = :livestockId " +
-            "ORDER BY v.valuationDate DESC, v.createdAt DESC")
-    List<LivestockValuation> findHistoryForLivestock(@Param("livestockId") UUID livestockId);
+    // ═══════════════════════════════════════════════════════════════
+    // SINGLE-ANIMAL QUERIES
+    // ═══════════════════════════════════════════════════════════════
 
-    // ── Most recent valuation only ────────────────────────────────────────────
-    @Query("SELECT v FROM LivestockValuation v WHERE v.livestock.id = :livestockId " +
-            "ORDER BY v.valuationDate DESC, v.createdAt DESC LIMIT 1")
-    Optional<LivestockValuation> findLatestForLivestock(@Param("livestockId") UUID livestockId);
+    Optional<LivestockValuation> findFirstByLivestockIdOrderByValuationDateDesc(UUID livestockId);
 
-    long countByLivestockId(UUID livestockId);
+    List<LivestockValuation> findByLivestockIdOrderByValuationDateDesc(UUID livestockId);
 
-    // ── Useful for herd-level reporting: sum of latest valuation per animal ──
+    /** Initial valuation for one animal — used for purchase-cost calculation. */
     @Query("SELECT v FROM LivestockValuation v " +
-            "WHERE v.id IN (" +
-            "  SELECT MAX(v2.id) FROM LivestockValuation v2 " +
-            "  WHERE v2.valuationDate = (" +
-            "    SELECT MAX(v3.valuationDate) FROM LivestockValuation v3 " +
-            "    WHERE v3.livestock.id = v2.livestock.id" +
-            "  ) GROUP BY v2.livestock.id" +
-            ")")
+            "WHERE v.livestock.id = :livestockId " +
+            "AND v.valuationMethod = 'INITIAL' " +
+            "ORDER BY v.valuationDate ASC")
+    List<LivestockValuation> findInitialValuations(@Param("livestockId") UUID livestockId);
+
+    // ═══════════════════════════════════════════════════════════════
+    // BULK QUERIES (dashboard)
+    // ═══════════════════════════════════════════════════════════════
+
+    /** Latest valuations for a specific set of animals. */
+    @Query("SELECT v FROM LivestockValuation v " +
+            "WHERE v.livestock.id IN :livestockIds " +
+            "AND v.valuationDate = (SELECT MAX(v2.valuationDate) " +
+            "                      FROM LivestockValuation v2 " +
+            "                      WHERE v2.livestock.id = v.livestock.id)")
+    List<LivestockValuation> findLatestValuationsForLivestockIds(@Param("livestockIds") List<UUID> livestockIds);
+
+    /** Bulk latest valuation per livestock — used by the dashboard for the whole herd. */
+    @Query("SELECT v FROM LivestockValuation v " +
+            "WHERE v.valuationDate = (SELECT MAX(v2.valuationDate) " +
+            "                         FROM LivestockValuation v2 " +
+            "                         WHERE v2.livestock.id = v.livestock.id)")
     List<LivestockValuation> findAllLatestValuations();
 
-    // ── NEW: same "latest per animal" pattern as findAllLatestValuations(),
-    // but scoped to a specific set of livestock ids. Used by the list page
-    // to fetch valuation badges for exactly the animals on the current page,
-    // without pulling the entire herd's latest valuations every time.
-    // The MAX(id) tie-break avoids the double-row problem you'd get from a
-    // plain "valuationDate = MAX(valuationDate)" match when two valuations
-    // for the same animal share a date.
+    // ═══════════════════════════════════════════════════════════════
+    // ✅ NEW — bulk INITIAL valuations for the whole herd (kills N+1)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Returns the earliest INITIAL valuation per livestock.
+     * Replaces the per-animal findInitialValuations() call inside the
+     * purchase-cost loop in DashboardController — one query instead of N.
+     */
     @Query("SELECT v FROM LivestockValuation v " +
-            "WHERE v.id IN (" +
-            "  SELECT MAX(v2.id) FROM LivestockValuation v2 " +
-            "  WHERE v2.livestock.id IN :livestockIds " +
-            "  AND v2.valuationDate = (" +
-            "    SELECT MAX(v3.valuationDate) FROM LivestockValuation v3 " +
-            "    WHERE v3.livestock.id = v2.livestock.id" +
-            "  ) GROUP BY v2.livestock.id" +
-            ")")
-    List<LivestockValuation> findLatestValuationsForLivestockIds(@Param("livestockIds") List<UUID> livestockIds);
+            "WHERE v.valuationMethod = 'INITIAL' " +
+            "AND v.valuationDate = (SELECT MIN(v2.valuationDate) " +
+            "                      FROM LivestockValuation v2 " +
+            "                      WHERE v2.livestock.id = v.livestock.id " +
+            "                      AND v2.valuationMethod = 'INITIAL')")
+    List<LivestockValuation> findAllInitialValuations();
+
+    // ═══════════════════════════════════════════════════════════════
+    // AGGREGATES
+    // ═══════════════════════════════════════════════════════════════
+
+    @Query("SELECT SUM(v.estimatedValue) FROM LivestockValuation v " +
+            "WHERE v.valuationDate = (SELECT MAX(v2.valuationDate) " +
+            "                      FROM LivestockValuation v2 " +
+            "                      WHERE v2.livestock.id = v.livestock.id)")
+    Double getTotalLivestockValue();
 }

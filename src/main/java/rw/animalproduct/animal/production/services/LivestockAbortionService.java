@@ -20,13 +20,16 @@ public class LivestockAbortionService {
     private final LivestockAbortionRepository abortionRepository;
     private final LivestockRepository livestockRepository;
     private final AuditLogService auditLogService;
+    private final AbortionEmailService abortionEmailService;
 
     public LivestockAbortionService(LivestockAbortionRepository abortionRepository,
                                     LivestockRepository livestockRepository,
-                                    AuditLogService auditLogService) {
+                                    AuditLogService auditLogService,
+                                    AbortionEmailService abortionEmailService) {
         this.abortionRepository = abortionRepository;
         this.livestockRepository = livestockRepository;
         this.auditLogService = auditLogService;
+        this.abortionEmailService = abortionEmailService;
     }
 
     // ── READ ─────────────────────────────────────────────────────────────────
@@ -47,18 +50,14 @@ public class LivestockAbortionService {
 
     @Transactional
     public LivestockAbortion addNew(LivestockAbortion abortion) {
-        // Set creation timestamp if not set
         if (abortion.getCreatedAt() == null) {
             abortion.setCreatedAt(LocalDateTime.now());
         }
 
-        // Resolve and set livestock entity
         resolveAndSetLivestock(abortion);
 
-        // Save the entity
         LivestockAbortion saved = abortionRepository.save(abortion);
 
-        // ── Audit: CREATE ────────────────────────────────────────────────────
         auditLogService.log(
                 "livestock_abortion",
                 saved.getId(),
@@ -68,6 +67,15 @@ public class LivestockAbortionService {
                 buildSnapshot(saved),
                 "New abortion record created"
         );
+
+        // ✅ Fire notification email (async — won't block the response)
+        try {
+            abortionEmailService.sendAbortionRecordedNotification(saved);
+        } catch (Exception e) {
+            // Never let email failure roll back the transaction
+            System.err.println("⚠️ Abortion email failed: " + e.getMessage());
+        }
+
         return saved;
     }
 
@@ -79,11 +87,8 @@ public class LivestockAbortionService {
         if (existingOpt.isEmpty()) return null;
 
         LivestockAbortion existing = existingOpt.get();
-
-        // ── Step 1: Capture OLD snapshot BEFORE any changes ──────────────────
         String oldSnapshot = buildSnapshot(existing);
 
-        // ── Step 2: Apply all changes ─────────────────────────────────────────
         existing.setAbortionDate(updated.getAbortionDate());
         existing.setPregnancyNumber(updated.getPregnancyNumber());
         existing.setAbortionReason(updated.getAbortionReason());
@@ -93,11 +98,8 @@ public class LivestockAbortionService {
         resolveAndSetLivestock(existing);
 
         LivestockAbortion saved = abortionRepository.save(existing);
-
-        // ── Step 3: Capture NEW snapshot AFTER changes ────────────────────────
         String newSnapshot = buildSnapshot(saved);
 
-        // ── Step 4: Write audit log ───────────────────────────────────────────
         auditLogService.log(
                 "livestock_abortion",
                 id,
@@ -111,20 +113,15 @@ public class LivestockAbortionService {
         return saved;
     }
 
-    // ── DELETE (soft delete) ──────────────────────────────────────────────────
+    // ── DELETE ───────────────────────────────────────────────────────────────
 
     @Transactional
     public void delete(UUID id) {
         abortionRepository.findById(id).ifPresent(existing -> {
-
-            // ── Capture snapshot before deletion ─────────────────────────────
             String oldSnapshot = buildSnapshot(existing);
-
-            // ── Soft delete ───────────────────────────────────────────────────
             existing.setIsDeleted(true);
             abortionRepository.save(existing);
 
-            // ── Write audit log ───────────────────────────────────────────────
             auditLogService.log(
                     "livestock_abortion",
                     id,
@@ -132,17 +129,13 @@ public class LivestockAbortionService {
                     getCurrentUsername(),
                     oldSnapshot,
                     null,
-                    "Abortion record soft-deleted. Still in DB with is_deleted=true."
+                    "Abortion record soft-deleted."
             );
         });
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── HELPERS ─────────────────────────────────────────────────────────────
 
-    /**
-     * Builds a readable text snapshot of an abortion record.
-     * Called BEFORE changes for old snapshot, and AFTER changes for new snapshot.
-     */
     private String buildSnapshot(LivestockAbortion a) {
         return "Animal: " + (a.getLivestock() != null ? a.getLivestock().getTagNumber() : "unknown")
                 + " | Abortion Date: " + a.getAbortionDate()

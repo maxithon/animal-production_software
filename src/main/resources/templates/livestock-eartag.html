@@ -26,7 +26,6 @@
             gap: 10px;
         }
 
-        /* ── Preview card ─────────────────────────────── */
         .preview-card {
             background: white;
             border-radius: 16px;
@@ -44,7 +43,6 @@
             margin-bottom: 20px;
         }
 
-        /* ── The ear tag itself ───────────────────────── */
         .ear-tag-preview {
             width: 320px;
             margin: 0 auto;
@@ -64,8 +62,7 @@
         }
         .tag-header.status-sold     { background: linear-gradient(135deg, #dc2626, #b91c1c); }
         .tag-header.status-dead     { background: linear-gradient(135deg, #475569, #334155); }
-        .tag-header.status-sick     { background: linear-gradient(135deg, #d97706, #b45309); }
-        .tag-header.status-pregnant { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+        .tag-header.status-transferred { background: linear-gradient(135deg, #4338ca, #3730a3); }
 
         .tag-number {
             font-family: 'DM Mono', monospace;
@@ -113,6 +110,17 @@
         }
         .info-value.big { font-size: 1rem; font-weight: 800; }
 
+        .health-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        .health-HEALTHY         { background: #d1fae5; color: #065f46; }
+        .health-SICK             { background: #fee2e2; color: #991b1b; }
+        .health-UNDER_TREATMENT  { background: #fef9c3; color: #854d0e; }
+
         .tag-qr {
             display: flex;
             flex-direction: column;
@@ -154,7 +162,6 @@
             color: #94a3b8;
         }
 
-        /* Punch hole */
         .punch-hole {
             position: absolute;
             top: 50%;
@@ -167,7 +174,6 @@
             border: 2px dashed #1a5f7a;
         }
 
-        /* ── Info section ─────────────────────────────── */
         .info-section {
             background: white;
             border-radius: 16px;
@@ -198,7 +204,6 @@
         .detail-item .dl { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 4px; }
         .detail-item .dv { font-size: 0.9rem; font-weight: 700; color: #0f172a; }
 
-        /* ── QR data section ──────────────────────────── */
         .qr-data-section {
             background: white;
             border-radius: 16px;
@@ -219,7 +224,6 @@
             line-height: 1.7;
         }
 
-        /* ── Action buttons ───────────────────────────── */
         .actions-section {
             max-width: 600px;
             margin: 0 auto;
@@ -277,26 +281,22 @@
     </div>
 </div>
 
-<!-- ── Tag Preview ── -->
+<!-- Tag Preview -->
 <div class="preview-card">
     <div class="preview-title">🔍 Tag Preview</div>
 
     <div class="ear-tag-preview">
 
-        <!-- Punch hole -->
         <div class="punch-hole"></div>
 
-        <!-- Header -->
         <div class="tag-header"
              th:classappend="${animal.status == 'SOLD'}     ? ' status-sold'     :
                              (${animal.status == 'DEAD'}     ? ' status-dead'     :
-                             (${animal.status == 'SICK'}     ? ' status-sick'     :
-                             (${animal.status == 'PREGNANT'} ? ' status-pregnant' : '')))">
+                             (${animal.status == 'TRANSFERRED'} ? ' status-transferred' : ''))">
             <span class="tag-number" th:text="${animal.tagNumber}">TAG-001</span>
             <span class="status-pill" th:text="${animal.status}">ACTIVE</span>
         </div>
 
-        <!-- Body -->
         <div class="tag-body">
             <div class="tag-info">
                 <div class="info-row">
@@ -307,6 +307,11 @@
                 <div class="info-row">
                     <span class="info-label">Gender</span>
                     <span class="info-value" th:text="${animal.gender != null ? animal.gender : 'Unknown'}">FEMALE</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Health</span>
+                    <span class="health-badge" th:classappend="'health-' + ${animal.healthStatus}"
+                          th:text="${animal.healthStatusLabel()}">Healthy</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Owner</span>
@@ -320,11 +325,6 @@
                     <span class="info-value"
                           th:text="${animal.location != null ? animal.location.name : 'N/A'}">Sector A</span>
                 </div>
-                <div class="info-row" th:if="${animal.dateReceived != null}">
-                    <span class="info-label">Received</span>
-                    <span class="info-value"
-                          th:text="${#temporals.format(animal.dateReceived, 'dd/MM/yyyy')}">01/01/2024</span>
-                </div>
             </div>
 
             <div class="tag-qr">
@@ -334,7 +334,6 @@
             </div>
         </div>
 
-        <!-- Footer -->
         <div class="tag-footer">
             <span class="footer-brand">🐄 Animal Production System</span>
             <span class="footer-id"
@@ -344,7 +343,7 @@
     </div>
 </div>
 
-<!-- ── Animal Details ── -->
+<!-- Animal Details -->
 <div class="info-section">
     <h5><i class="bi bi-info-circle-fill"></i> Animal Information</h5>
     <div class="detail-grid">
@@ -365,6 +364,14 @@
             <div class="dv" th:text="${animal.status}">Active</div>
         </div>
         <div class="detail-item">
+            <div class="dl">Health</div>
+            <div class="dv" th:text="${animal.healthStatusLabel()}">Healthy</div>
+        </div>
+        <div class="detail-item">
+            <div class="dl">Reproductive</div>
+            <div class="dv" th:text="${animal.reproductiveStatusLabel()}">Open</div>
+        </div>
+        <div class="detail-item">
             <div class="dl">Beneficiary</div>
             <div class="dv" th:text="${animal.beneficiary != null ?
                 animal.beneficiary.firstName + ' ' + animal.beneficiary.lastName :
@@ -374,24 +381,16 @@
             <div class="dl">Location</div>
             <div class="dv" th:text="${animal.location != null ? animal.location.name : 'N/A'}">Sector A</div>
         </div>
-        <div class="detail-item">
-            <div class="dl">Date Received</div>
-            <div class="dv" th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived, 'dd MMM yyyy') : '—'}">01 Jan 2024</div>
-        </div>
-        <div class="detail-item">
-            <div class="dl">Current Value</div>
-            <div class="dv" th:text="${animal.currentValue != null ? #numbers.formatDecimal(animal.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF' : 'Not set'}">50,000 RWF</div>
-        </div>
     </div>
 </div>
 
-<!-- ── QR Content ── -->
+<!-- QR Content -->
 <div class="qr-data-section">
     <h5><i class="bi bi-qr-code"></i> QR Code Data Encoded</h5>
     <pre class="qr-raw" th:text="${qrContent}">QR data...</pre>
 </div>
 
-<!-- ── Actions ── -->
+<!-- Actions -->
 <div class="actions-section">
     <a th:href="@{/livestock/qr/eartags/print?ids={id}(id=${animal.id})}"
        class="btn-action primary">

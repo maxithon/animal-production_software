@@ -3,104 +3,175 @@ package rw.animalproduct.animal.production.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import rw.animalproduct.animal.production.entity.LivestockSale;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
-public interface LivestockSaleRepository extends JpaRepository<LivestockSale, UUID> {
+public interface LivestockSaleRepository extends JpaRepository<LivestockSale, UUID>,
+        JpaSpecificationExecutor<LivestockSale> {
+
+    // ─── Basic Queries ────────────────────────────────────────────
 
     List<LivestockSale> findByLivestockId(UUID livestockId);
 
-    // ========== PAGINATION SUPPORT ==========
-
-    /**
-     * Get paginated sales (excludes soft-deleted)
-     */
     @Query("SELECT s FROM LivestockSale s WHERE s.isDeleted = false OR s.isDeleted IS NULL")
     Page<LivestockSale> findAllActive(Pageable pageable);
 
-    /**
-     * Get paginated sales with search
-     */
+    // FIXED: Use CONCAT(s.buyer.firstName, ' ', s.buyer.lastName) instead of s.buyer.fullName
+    // because fullName is @Transient and not available in JPQL
     @Query("SELECT s FROM LivestockSale s " +
             "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
             "AND (LOWER(s.livestock.tagNumber) LIKE LOWER(CONCAT('%', :search, '%')) " +
             "OR LOWER(s.saleLocation) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            "OR LOWER(s.saleReason) LIKE LOWER(CONCAT('%', :search, '%')))")
+            "OR LOWER(s.saleReason) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(s.saleReference) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(CONCAT(s.buyer.firstName, ' ', s.buyer.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) " +
+            "OR LOWER(s.buyer.phone) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<LivestockSale> searchSales(@Param("search") String search, Pageable pageable);
 
-    // ========== EXISTING METHODS ==========
+    @Query("SELECT s FROM LivestockSale s WHERE s.isDeleted = false OR s.isDeleted IS NULL")
+    List<LivestockSale> findAllActive();
 
-    /**
-     * Get total revenue from all sales
-     */
-    @Query("SELECT COALESCE(SUM(s.salePrice), 0) FROM LivestockSale s WHERE s.isDeleted = false OR s.isDeleted IS NULL")
+    // ─── Sale Status Counts ──────────────────────────────────────
+
+    @Query("SELECT COUNT(s) FROM LivestockSale s " +
+            "WHERE s.saleStatus = :status AND (s.isDeleted = false OR s.isDeleted IS NULL)")
+    long countBySaleStatus(@Param("status") String status);
+
+    @Query("SELECT s FROM LivestockSale s " +
+            "WHERE s.saleStatus = :status AND (s.isDeleted = false OR s.isDeleted IS NULL)")
+    Page<LivestockSale> findBySaleStatusPaged(@Param("status") String status, Pageable pageable);
+
+    // ─── Payment Status Counts ───────────────────────────────────
+
+    @Query("SELECT COUNT(s) FROM LivestockSale s " +
+            "WHERE s.paymentStatus = :status AND (s.isDeleted = false OR s.isDeleted IS NULL)")
+    long countByPaymentStatus(@Param("status") String status);
+
+    @Query("SELECT s FROM LivestockSale s " +
+            "WHERE s.paymentStatus = :status AND (s.isDeleted = false OR s.isDeleted IS NULL)")
+    Page<LivestockSale> findByPaymentStatusPaged(@Param("status") String status, Pageable pageable);
+
+    @Query("SELECT s FROM LivestockSale s " +
+            "WHERE s.paymentStatus = :status AND (s.isDeleted = false OR s.isDeleted IS NULL)")
+    List<LivestockSale> findByPaymentStatus(@Param("status") String status);
+
+    // ─── Financial Summary ────────────────────────────────────────
+
+    @Query("SELECT COALESCE(SUM(s.salePrice), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
     BigDecimal getTotalRevenue();
 
-    /**
-     * Get total number of sales (active only)
-     */
+    @Query("SELECT COALESCE(SUM(s.amountPaid), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getTotalAmountPaid();
+
+    @Query("SELECT COALESCE(SUM(s.salePrice - s.amountPaid), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getTotalOutstanding();
+
+    @Query("SELECT COALESCE(SUM(s.salePrice - s.acquisitionCost), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getTotalGrossProfit();
+
+    @Query("SELECT COALESCE(SUM(s.acquisitionCost), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getTotalCost();
+
+    @Query("SELECT COALESCE(SUM(s.salePrice), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus IN ('CONFIRMED', 'CANCELLED', 'REFUNDED')")
+    BigDecimal getGrossSales();
+
+    @Query("SELECT COALESCE(SUM(s.amountPaid), 0) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED' " +
+            "AND s.paymentStatus = 'PAID'")
+    BigDecimal getCollectedAmount();
+
+    @Query("SELECT MAX(s.salePrice) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getHighestSalePrice();
+
+    @Query("SELECT MIN(s.salePrice) FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED'")
+    BigDecimal getLowestSalePrice();
+
     @Query("SELECT COUNT(s) FROM LivestockSale s WHERE s.isDeleted = false OR s.isDeleted IS NULL")
     long countActive();
 
-    /**
-     * Get sales in date range
-     */
-    @Query("SELECT s FROM LivestockSale s WHERE s.saleDate BETWEEN :start AND :end AND (s.isDeleted = false OR s.isDeleted IS NULL)")
-    List<LivestockSale> findBySaleDateBetween(@Param("start") LocalDate start, @Param("end") LocalDate end);
+    // ─── Reference ─────────────────────────────────────────────────
 
-    /**
-     * Count sales by month/year
-     */
-    @Query("SELECT COUNT(s) FROM LivestockSale s " +
-            "WHERE YEAR(s.saleDate) = :year AND MONTH(s.saleDate) = :month " +
-            "AND (s.isDeleted = false OR s.isDeleted IS NULL)")
-    long countByYearAndMonth(@Param("year") int year, @Param("month") int month);
+    @Query("SELECT s FROM LivestockSale s WHERE s.saleReference = :reference")
+    LivestockSale findBySaleReference(@Param("reference") String reference);
 
-    /**
-     * Get revenue by month/year
-     */
-    @Query("SELECT COALESCE(SUM(s.salePrice), 0) FROM LivestockSale s " +
-            "WHERE YEAR(s.saleDate) = :year AND MONTH(s.saleDate) = :month " +
-            "AND (s.isDeleted = false OR s.isDeleted IS NULL)")
-    BigDecimal getRevenueByYearAndMonth(@Param("year") int year, @Param("month") int month);
+    @Query("SELECT COUNT(s) FROM LivestockSale s WHERE s.saleReference LIKE CONCAT(:prefix, '%')")
+    long countBySaleReferencePrefix(@Param("prefix") String prefix);
 
-    /**
-     * Find most sold animal
-     */
-    @Query("SELECT s.livestock.tagNumber, COUNT(s), COALESCE(SUM(s.salePrice), 0) " +
-            "FROM LivestockSale s " +
-            "WHERE s.livestock IS NOT NULL " +
-            "AND (s.isDeleted = false OR s.isDeleted IS NULL) " +
-            "GROUP BY s.livestock.tagNumber ORDER BY COUNT(s) DESC")
-    List<Object[]> findMostSoldAnimal();
+    // ─── Analytics - Raw Queries ─────────────────────────────────
 
-    /**
-     * Get sales grouped by reason
-     */
-    @Query("SELECT s.saleReason, COUNT(s), COALESCE(SUM(s.salePrice), 0) " +
+    @Query("SELECT " +
+            "l.livestockCategory.name, " +
+            "COUNT(s), " +
+            "COALESCE(SUM(s.salePrice), 0), " +
+            "COALESCE(AVG(s.salePrice), 0), " +
+            "COALESCE(SUM(s.salePrice - s.acquisitionCost), 0) " +
+            "FROM LivestockSale s JOIN s.livestock l " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED' " +
+            "AND (l.isDeleted = false OR l.isDeleted IS NULL) " +
+            "GROUP BY l.livestockCategory.name")
+    List<Object[]> getSalesSummaryByCategoryRaw();
+
+    @Query("SELECT s.buyer, COUNT(s), COALESCE(SUM(s.salePrice), 0), COALESCE(AVG(s.salePrice), 0) " +
             "FROM LivestockSale s " +
             "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
-            "GROUP BY s.saleReason")
-    List<Object[]> getSalesByReason();
+            "AND s.saleStatus = 'CONFIRMED' " +
+            "AND s.buyer IS NOT NULL " +
+            "GROUP BY s.buyer ORDER BY SUM(s.salePrice) DESC")
+    List<Object[]> getBuyerPurchaseSummary();
 
-    /**
-     * Get recent sales for dashboard
-     */
-    @Query("SELECT s FROM LivestockSale s WHERE (s.isDeleted = false OR s.isDeleted IS NULL) ORDER BY s.saleDate DESC")
-    List<LivestockSale> findTop50ByOrderBySaleDateDesc(Pageable pageable);
-
-    /**
-     * Get monthly sales trend for current year
-     */
     @Query("SELECT MONTH(s.saleDate), COUNT(s), COALESCE(SUM(s.salePrice), 0) " +
             "FROM LivestockSale s " +
-            "WHERE YEAR(s.saleDate) = :year " +
-            "AND (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND s.saleStatus = 'CONFIRMED' " +
+            "AND YEAR(s.saleDate) = :year " +
             "GROUP BY MONTH(s.saleDate) ORDER BY MONTH(s.saleDate)")
     List<Object[]> getMonthlySalesTrend(@Param("year") int year);
+
+    // ─── Advanced Search / Filter ─────────────────────────────────
+
+    @Query("SELECT s FROM LivestockSale s " +
+            "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
+            "AND (:fromDate IS NULL OR s.saleDate >= :fromDate) " +
+            "AND (:toDate IS NULL OR s.saleDate <= :toDate) " +
+            "AND (:categoryId IS NULL OR s.livestock.livestockCategory.id = :categoryId) " +
+            "AND (:saleStatus IS NULL OR s.saleStatus = :saleStatus) " +
+            "AND (:paymentStatus IS NULL OR s.paymentStatus = :paymentStatus) " +
+            "AND (:buyerId IS NULL OR s.buyer.id = :buyerId) " +
+            "AND (:minPrice IS NULL OR s.salePrice >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR s.salePrice <= :maxPrice)")
+    Page<LivestockSale> findWithFilters(
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate,
+            @Param("categoryId") UUID categoryId,
+            @Param("saleStatus") String saleStatus,
+            @Param("paymentStatus") String paymentStatus,
+            @Param("buyerId") UUID buyerId,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            Pageable pageable);
 }

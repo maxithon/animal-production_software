@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Other Expenses Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #f4f6fb;
+            --surface: #ffffff;
+            --surface-2: #f0f2f8;
+            --border: #e2e6f0;
+            --accent: #4f7dff;
+            --accent-glow: rgba(79, 125, 255, 0.12);
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --text-primary: #111827;
+            --text-secondary: #374151;
+            --text-muted: #6b7280;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+        * { box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text-primary); font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100vh; }
+        .dashboard-wrapper { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .page-title { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+        .page-title span { color: var(--accent); }
+        .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+        .back-link { font-size: 0.82rem; color: var(--accent); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .back-link:hover { text-decoration: underline; }
+
+        /* ── Filter bar ── */
+        .filter-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 22px; margin-bottom: 24px; }
+        .filter-form { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 5px; }
+        .filter-group label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+        .filter-group select, .filter-group input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.85rem; padding: 8px 12px; outline: none; }
+        .filter-group select:focus, .filter-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        .btn-filter { background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 9px 20px; cursor: pointer; transition: opacity 0.2s; }
+        .btn-filter:hover { opacity: 0.88; }
+        .btn-reset { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 9px 18px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-export { background: var(--success); border: none; border-radius: var(--radius-sm); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 9px 18px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+        .btn-export:hover { opacity: 0.88; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+        .kpi-card.accent-red::before   { background: var(--danger); }
+        .kpi-card.accent-blue::before  { background: var(--accent); }
+        .kpi-card.accent-green::before { background: var(--success); }
+        .kpi-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+        .kpi-value { font-size: 1.45rem; font-weight: 700; line-height: 1.2; color: var(--text-primary); font-family: 'DM Mono', monospace; word-break: break-word; }
+        .kpi-card.accent-red   .kpi-value { color: var(--danger); }
+        .kpi-card.accent-blue  .kpi-value { color: var(--accent); }
+        .kpi-card.accent-green .kpi-value { color: var(--success); }
+
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+        @media (max-width: 900px) { .charts-row { grid-template-columns: 1fr; } }
+        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; }
+        .chart-card-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; }
+        canvas { max-height: 240px; }
+
+        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .table-card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 0.9rem; font-weight: 700; }
+        .table-scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        thead tr { background: var(--surface-2); }
+        thead th { padding: 10px 12px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); white-space: nowrap; border-bottom: 1px solid var(--border); }
+        col.col-date { width: 10%; }
+        col.col-category { width: 14%; }
+        col.col-description { width: 26%; }
+        col.col-amount { width: 13%; }
+        col.col-payment { width: 11%; }
+        col.col-paidto { width: 13%; }
+        col.col-user { width: 13%; }
+        tbody tr { border-bottom: 1px solid var(--border); }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: rgba(79,125,255,0.04); }
+        td { padding: 9px 12px; font-size: 0.82rem; color: var(--text-secondary); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        td.mono { font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+        td.desc-cell { white-space: normal; font-weight: 600; color: var(--text-primary); }
+        td.amount-cell { font-weight: 700; font-family: 'DM Mono', monospace; color: var(--danger); }
+        .badge-category { background: rgba(79,125,255,0.1); color: var(--accent); font-size: 0.73rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; display: inline-block; white-space: nowrap; }
+        .badge-payment { background: var(--surface-2); color: var(--text-secondary); font-size: 0.72rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; display: inline-block; }
+        .table-footer { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); }
+        .table-footer strong { color: var(--text-secondary); }
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); font-size: 0.875rem; }
+
+        /* ═══════════════════ Printable letterhead (hidden on screen) ═══════════════════ */
+        .print-letterhead { display: none; }
+        .print-signoff { display: none; }
+        .print-footer-note { display: none; }
+
+        /* ═══════════════════════════════ PRINT STYLES ═══════════════════════════════ */
+        @media print {
+            @page { size: A4 landscape; margin: 14mm 12mm; }
+
+            body { background: #fff; color: #000; font-family: 'DM Mono', 'Courier New', monospace; }
+            .dashboard-wrapper { max-width: 100%; padding: 0; margin: 0; }
+
+            /* Hide everything interactive/on-screen-only */
+            .page-header, .back-link, .filter-card, .btn-export, .btn-filter, .btn-reset,
+            .charts-row { display: none !important; }
+
+            /* Letterhead */
+            .print-letterhead {
+                display: block;
+                border-bottom: 2px solid #000;
+                padding-bottom: 10px;
+                margin-bottom: 14px;
+            }
+            .print-letterhead .org-row { display: flex; justify-content: space-between; align-items: flex-start; }
+            .print-letterhead .org-name { font-size: 13pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Plus Jakarta Sans', sans-serif; }
+            .print-letterhead .org-sub { font-size: 8.5pt; color: #333; margin-top: 2px; }
+            .print-letterhead .report-meta { text-align: right; font-size: 8pt; color: #333; line-height: 1.5; }
+            .print-letterhead .report-title { text-align: center; font-size: 15pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-top: 12px; font-family: 'Plus Jakarta Sans', sans-serif; }
+            .print-letterhead .report-period { text-align: center; font-size: 9.5pt; color: #333; margin-top: 3px; }
+
+            /* KPI summary strip, print-safe (flat borders instead of card shadows) */
+            .kpi-grid { display: flex !important; gap: 0; margin-bottom: 14px; border: 1px solid #000; }
+            .kpi-card { border: none !important; border-right: 1px solid #000 !important; border-radius: 0 !important; padding: 8px 14px !important; flex: 1; }
+            .kpi-card:last-child { border-right: none !important; }
+            .kpi-card::before { display: none !important; }
+            .kpi-label { font-size: 7.5pt; color: #000 !important; }
+            .kpi-value { font-size: 11pt !important; color: #000 !important; }
+
+            /* Table: crisp borders, repeating header per printed page, no hover/shadow */
+            .table-card { border: 1px solid #000 !important; border-radius: 0 !important; box-shadow: none !important; }
+            .table-card-header { border-bottom: 1px solid #000 !important; font-size: 10pt; }
+            table { table-layout: auto !important; }
+            thead { display: table-header-group; }
+            thead tr { background: #e8e8e8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            thead th { border: 1px solid #000 !important; font-size: 7.5pt !important; color: #000 !important; }
+            tbody tr { break-inside: avoid; page-break-inside: avoid; }
+            td { border: 1px solid #666 !important; font-size: 8pt !important; color: #000 !important; white-space: normal !important; }
+            .badge-category, .badge-payment { background: none !important; border: 1px solid #000; color: #000 !important; padding: 1px 6px; }
+            .amount-cell { color: #000 !important; }
+
+            .table-footer { border-top: 1px solid #000 !important; font-size: 8pt !important; color: #000 !important; }
+
+            /* Signature block */
+            .print-signoff {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 40px;
+                padding-top: 8px;
+            }
+            .print-signoff .sig-block { width: 30%; font-size: 8.5pt; }
+            .print-signoff .sig-line { border-top: 1px solid #000; margin-top: 32px; padding-top: 4px; }
+            .print-signoff .sig-role { font-weight: 700; text-transform: uppercase; font-size: 7.5pt; letter-spacing: 0.04em; }
+            .print-signoff .sig-date { font-size: 7.5pt; color: #333; margin-top: 2px; }
+
+            .print-footer-note {
+                display: block;
+                margin-top: 18px;
+                font-size: 7pt;
+                color: #555;
+                text-align: center;
+                border-top: 1px solid #ccc;
+                padding-top: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard-wrapper">
+
+    <!-- Printable letterhead — hidden on screen, shown only via @media print -->
+    <div class="print-letterhead">
+        <div class="org-row">
+            <div>
+                <div class="org-name">Animal Production System</div>
+                <div class="org-sub">Livestock &amp; Breeding Management — Republic of Rwanda</div>
+            </div>
+            <div class="report-meta">
+                <div>Generated: <span th:text="${#temporals.format(generatedAt, 'dd MMM yyyy, HH:mm')}">date</span></div>
+                <div>Generated by: <span th:text="${generatedBy}">user</span></div>
+            </div>
+        </div>
+        <div class="report-title">Other Expenses Report</div>
+        <div class="report-period">
+            Period: <span th:text="${startDate} + ' — ' + ${endDate}">period</span>
+            <span th:if="${selectedCategory}"> &nbsp;|&nbsp; Category: <span th:text="${#strings.replace(#strings.toLowerCase(selectedCategory),'_',' ')}">category</span></span>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <div class="page-title">Other Expenses <span>Report</span></div>
+            <div class="page-subtitle">Miscellaneous spending, filterable by date range and category</div>
+        </div>
+        <a href="/other-expenses" class="back-link"><i class="bi bi-arrow-left"></i> Back to Other Expenses</a>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form class="filter-form" method="get" th:action="@{/other-expenses/report}">
+            <div class="filter-group">
+                <label for="startDate">From</label>
+                <input type="date" id="startDate" name="startDate" th:value="${startDate}">
+            </div>
+            <div class="filter-group">
+                <label for="endDate">To</label>
+                <input type="date" id="endDate" name="endDate" th:value="${endDate}">
+            </div>
+            <div class="filter-group">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All categories</option>
+                    <option th:each="c : ${allCategories}"
+                            th:value="${c}"
+                            th:text="${#strings.replace(#strings.toLowerCase(c),'_',' ')}"
+                            th:selected="${c == selectedCategory}">Category</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-filter"><i class="bi bi-funnel-fill"></i> Apply</button>
+            <a href="/other-expenses/report" class="btn-reset">Reset</a>
+            <button type="button" class="btn-export" id="exportCsvBtn"><i class="bi bi-download"></i> Export CSV</button>
+            <button type="button" class="btn-export" id="printBtn" style="background: var(--accent);"><i class="bi bi-printer-fill"></i> Print Report</button>
+        </form>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="kpi-card accent-red">
+            <div class="kpi-label">Total (Filtered Period)</div>
+            <div class="kpi-value" th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</div>
+        </div>
+        <div class="kpi-card accent-blue">
+            <div class="kpi-label">Records</div>
+            <div class="kpi-value" th:text="${expenses.size()}">0</div>
+        </div>
+        <div class="kpi-card accent-green">
+            <div class="kpi-label">Period</div>
+            <div class="kpi-value" style="font-size:1.05rem;" th:text="${startDate} + ' → ' + ${endDate}">—</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+        <div class="chart-card">
+            <div class="chart-card-title">By Category</div>
+            <canvas id="categoryChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <div class="chart-card-title">Monthly Trend</div>
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <div class="table-card-header">Expense Records</div>
+        <div class="table-scroll">
+            <table>
+                <colgroup>
+                    <col class="col-date"><col class="col-category"><col class="col-description">
+                    <col class="col-amount"><col class="col-payment"><col class="col-paidto"><col class="col-user">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Date</th><th>Category</th><th>Description</th><th>Amount (RWF)</th>
+                    <th>Payment</th><th>Paid To</th><th>Recorded By</th>
+                </tr>
+                </thead>
+                <tbody id="reportTableBody">
+                <tr th:each="e : ${expenses}"
+                    th:data-date="${e.expenseDate}" th:data-category="${#strings.replace(#strings.toLowerCase(e.category),'_',' ')}"
+                    th:data-description="${e.description}" th:data-amount="${e.amount}"
+                    th:data-payment="${e.paymentMethod != null ? e.paymentMethod : ''}"
+                    th:data-paidto="${e.paidTo != null ? e.paidTo : ''}"
+                    th:data-user="${e.createdByUsername != null ? e.createdByUsername : ''}">
+                    <td class="mono" th:text="${e.expenseDate}">Date</td>
+                    <td><span class="badge-category" th:text="${#strings.replace(#strings.toLowerCase(e.category),'_',' ')}">Category</span></td>
+                    <td class="desc-cell" th:text="${e.description}" th:title="${e.description}">Description</td>
+                    <td class="amount-cell" th:text="${#numbers.formatDecimal(e.amount, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</td>
+                    <td><span class="badge-payment" th:if="${e.paymentMethod}" th:text="${e.paymentMethod}">Payment</span></td>
+                    <td th:text="${e.paidTo != null ? e.paidTo : '—'}">Paid To</td>
+                    <td th:text="${e.createdByUsername != null ? e.createdByUsername : '—'}">User</td>
+                </tr>
+                </tbody>
+            </table>
+            <div class="empty-state" th:if="${expenses.isEmpty()}">No expenses recorded for this filter.</div>
+        </div>
+        <div class="table-footer">
+            Showing <strong th:text="${expenses.size()}">0</strong> record(s) for
+            <strong th:text="${startDate} + ' to ' + ${endDate}">period</strong>
+            <span th:if="${selectedCategory}"> in category <strong th:text="${#strings.replace(#strings.toLowerCase(selectedCategory),'_',' ')}">category</strong></span>.
+        </div>
+    </div>
+
+    <!-- Signature block — print only -->
+    <div class="print-signoff">
+        <div class="sig-block">
+            <div class="sig-line">
+                <div class="sig-role">Prepared By</div>
+                <div class="sig-date">Name &amp; Signature &nbsp;·&nbsp; Date</div>
+            </div>
+        </div>
+        <div class="sig-block">
+            <div class="sig-line">
+                <div class="sig-role">Verified By</div>
+                <div class="sig-date">Name &amp; Signature &nbsp;·&nbsp; Date</div>
+            </div>
+        </div>
+        <div class="sig-block">
+            <div class="sig-line">
+                <div class="sig-role">Approved By</div>
+                <div class="sig-date">Name &amp; Signature &nbsp;·&nbsp; Date</div>
+            </div>
+        </div>
+    </div>
+    <div class="print-footer-note">
+        This report was generated automatically by the Animal Production System and reflects records as of the generation timestamp above.
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const categoryTotals = /*[[${categoryTotals}]]*/ [];
+    const monthlyTotals  = /*[[${monthlyTotals}]]*/ [];
+    /*]]>*/
+
+    /* ── Category breakdown (doughnut) ── */
+    new Chart(document.getElementById('categoryChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: categoryTotals.map(c => (c.category || '').replace(/_/g, ' ')),
+            datasets: [{
+                data: categoryTotals.map(c => c.total),
+                backgroundColor: ['#4f7dff','#dc2626','#d97706','#16a34a','#8b5cf6','#0891b2','#db2777','#65a30d','#ea580c','#6366f1','#0d9488','#a3a3a3'],
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 }, color: '#374151' } },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${Number(ctx.parsed).toLocaleString('en-US')} RWF` } }
+            }
+        }
+    });
+
+    /* ── Monthly trend (line) ── */
+    new Chart(document.getElementById('trendChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: monthlyTotals.map(m => m.month),
+            datasets: [{
+                label: 'Total Spent',
+                data: monthlyTotals.map(m => m.total),
+                borderColor: '#dc2626',
+                backgroundColor: 'rgba(220,38,38,0.12)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${Number(ctx.parsed.y).toLocaleString('en-US')} RWF` } }
+            },
+            scales: {
+                x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { display: false } },
+                y: { beginAtZero: true, ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } }
+            }
+        }
+    });
+
+    /* ── Print (letterhead + signature block render via @media print) ── */
+    document.getElementById('printBtn').addEventListener('click', function () {
+        window.print();
+    });
+
+    /* ── CSV export of exactly what's shown in the table ── */
+    document.getElementById('exportCsvBtn').addEventListener('click', function () {
+        const rows = document.querySelectorAll('#reportTableBody tr');
+        if (rows.length === 0) { alert('No data to export for this filter.'); return; }
+
+        const header = ['Date', 'Category', 'Description', 'Amount (RWF)', 'Payment Method', 'Paid To', 'Recorded By'];
+        const lines = [header.join(',')];
+
+        rows.forEach(r => {
+            const d = r.dataset;
+            const csvRow = [
+                d.date,
+                `"${(d.category || '').replace(/"/g, '""')}"`,
+                `"${(d.description || '').replace(/"/g, '""')}"`,
+                d.amount,
+                d.payment || '',
+                `"${(d.paidto || '').replace(/"/g, '""')}"`,
+                `"${(d.user || '').replace(/"/g, '""')}"`
+            ];
+            lines.push(csvRow.join(','));
+        });
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `other-expenses-report_${document.getElementById('startDate').value}_to_${document.getElementById('endDate').value}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+</script>
+</body>
+</html>

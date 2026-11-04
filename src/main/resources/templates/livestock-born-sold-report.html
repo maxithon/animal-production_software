@@ -102,17 +102,33 @@
         .table-card-header h5 { margin: 0; font-size: 1rem; font-weight: 700; color: #1a202c; display: flex; align-items: center; gap: 8px; }
         .record-count { font-size: 0.78rem; color: #94a3b8; }
 
-        /* ── Table styles ── */
-        .rpt-table { width: 100%; border-collapse: collapse; }
+        /* ── Table styles ──
+           table-layout:fixed + a <colgroup> in PERCENTAGES (summing to 100%)
+           is what removes the horizontal scrollbar entirely: the table is
+           always exactly 100% of its container, at every viewport width, so
+           there's nothing to scroll. Long content (names, tags, locations)
+           wraps onto a 2nd line inside its column instead of pushing the
+           table wider. .table-scroll is kept only as a safety net for very
+           narrow phone screens where wrapping alone isn't enough. */
+        .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .rpt-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         .rpt-table thead th {
-            background: #f8f9fb; padding: 11px 14px; font-size: 0.75rem;
-            font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
-            color: #64748b; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+            position: sticky; top: 0; z-index: 2;
+            background: #f8f9fb; padding: 11px 12px; font-size: 0.72rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+            color: #64748b; border-bottom: 2px solid #e2e8f0;
+            white-space: normal; line-height: 1.25; vertical-align: bottom;
         }
         .rpt-table tbody td {
-            padding: 11px 14px; font-size: 0.87rem; color: #374151;
+            padding: 10px 12px; font-size: 0.85rem; color: #374151;
             border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+            overflow: hidden;
         }
+        /* columns that must never wrap (fixed-format values) */
+        .rpt-table td.col-nowrap { white-space: nowrap; text-overflow: ellipsis; }
+        /* columns that are allowed / expected to wrap to a 2nd line */
+        .rpt-table td.col-wrap { white-space: normal; word-break: break-word; }
+
         .rpt-table tbody tr:hover { background: #f8fbff; }
         .rpt-table tbody tr.row-sold   { background: #f0fdf4; }
         .rpt-table tbody tr.row-dead   { background: #fef2f2; }
@@ -131,8 +147,10 @@
         .bdg-female  { background: #fce7f3; color: #be185d; }
         .tag-chip {
             background: #f1f5f9; border: 1px solid #e2e8f0;
-            padding: 2px 8px; border-radius: 6px; font-size: 0.75rem;
+            padding: 2px 8px; border-radius: 6px; font-size: 0.72rem;
             font-weight: 600; color: #475569; font-family: monospace;
+            display: inline-block; max-width: 100%; overflow: hidden;
+            text-overflow: ellipsis; vertical-align: middle;
         }
         .days-chip {
             display: inline-flex; align-items: center; gap: 4px;
@@ -146,11 +164,24 @@
         .empty-state { text-align: center; padding: 55px 20px; color: #94a3b8; }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
 
+        /* ── Beneficiary cell ── */
+        .beneficiary-name { font-weight: 600; color: #1a202c; font-size: 0.85rem; line-height: 1.2; }
+        .beneficiary-phone {
+            display: inline-flex; align-items: center; gap: 4px;
+            margin-top: 3px; font-size: 0.78rem; color: var(--primary);
+            text-decoration: none; font-weight: 600;
+        }
+        .beneficiary-phone:hover { text-decoration: underline; color: var(--primary-light); }
+        .beneficiary-phone i { font-size: 0.75rem; }
+        .no-beneficiary { color: #94a3b8; font-size: 0.82rem; font-style: italic; }
+
         /* ── Print ── */
         @media print {
             .no-print  { display: none !important; }
             body, .table-card { box-shadow: none !important; }
             .page-header { background: #1a5f7a !important; -webkit-print-color-adjust: exact; }
+            .rpt-table { table-layout: auto; }
+            .rpt-table td.col-wrap, .rpt-table td.col-nowrap { white-space: normal; }
         }
         @media (max-width: 768px) {
             .summary-grid, .filter-bar, .export-bar, .table-card { margin-left: 15px; margin-right: 15px; }
@@ -225,12 +256,12 @@
     <button class="filter-btn" onclick="filterRows('DEAD', this)">
         <i class="bi bi-x-circle me-1"></i> Deceased
     </button>
-    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+    <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <label style="margin:0;">Search:</label>
         <input type="text" id="searchInput" class="filter-select"
-               placeholder="Tag number..."
+               placeholder="Tag, beneficiary or phone..."
                oninput="searchRows(this.value)"
-               style="width:160px;">
+               style="width:220px;">
     </div>
 </div>
 
@@ -260,33 +291,44 @@
         </a>
     </div>
 
-    <div th:if="${rows != null and !rows.empty}" class="table-responsive">
+    <div th:if="${rows != null and !rows.empty}" class="table-scroll">
         <table class="rpt-table" id="mainTable">
+            <colgroup>
+                <col style="width:3%;">    <!-- # -->
+                <col style="width:14%;">   <!-- Child Animal -->
+                <col style="width:14%;">   <!-- Beneficiary -->
+                <col style="width:9%;">    <!-- Mother -->
+                <col style="width:9%;">    <!-- Birth Date -->
+                <col style="width:8%;">    <!-- Status -->
+                <col style="width:11%;">   <!-- Sale Info (date + days) -->
+                <col style="width:9%;">    <!-- Sale Price -->
+                <col style="width:12%;">   <!-- Location & Reason -->
+                <col style="width:11%;" class="no-print">  <!-- Actions -->
+            </colgroup>
             <thead>
             <tr>
                 <th>#</th>
                 <th>Child Animal</th>
+                <th>Beneficiary</th>
                 <th>Mother</th>
                 <th>Birth Date</th>
                 <th>Status</th>
-                <th>Sale Date</th>
-                <th>Days (Birth → Sale)</th>
+                <th>Sale Info</th>
                 <th>Sale Price (RWF)</th>
-                <th>Sale Location</th>
-                <th>Reason</th>
+                <th>Location &amp; Reason</th>
                 <th class="no-print">Actions</th>
             </tr>
             </thead>
             <tbody id="reportBody">
             <tr th:each="row, i : ${rows}"
                 th:classappend="${row.status == 'SOLD'} ? 'row-sold' : (${row.status == 'DEAD'} ? 'row-dead' : 'row-active')"
-                th:attr="data-status=${row.status}, data-tag=${row.childTag}">
+                th:attr="data-status=${row.status}, data-tag=${row.childTag}, data-beneficiary=${row.get('beneficiaryName')}">
 
                 <!-- # -->
-                <td class="text-muted" th:text="${i.count}"></td>
+                <td class="text-muted col-nowrap" th:text="${i.count}"></td>
 
                 <!-- Child tag + gender + category -->
-                <td>
+                <td class="col-wrap">
                     <div class="fw-semibold" th:text="${row.childTag}">TAG-002</div>
                     <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">
                         <span th:if="${row.childGender == 'MALE'}"   class="bdg bdg-male">Male</span>
@@ -299,8 +341,32 @@
                     </div>
                 </td>
 
+                <!-- Beneficiary: name + phone.
+                     'row' is a LinkedHashMap here, not a POJO, so we must use
+                     row.get('key') rather than row.key — dot-access on a Map
+                     throws SpelEvaluationException (EL1008E) whenever the map
+                     doesn't already contain that exact key, e.g. before the
+                     controller/report builder has started putting
+                     "beneficiaryName"/"beneficiaryPhone" into each row. -->
+                <td class="col-wrap"
+                    th:with="benName=${row.get('beneficiaryName')}, benPhone=${row.get('beneficiaryPhone')}">
+                    <div th:if="${benName != null and !#strings.isEmpty(benName)}">
+                        <div class="beneficiary-name" th:text="${benName}">Jane Uwase</div>
+                        <a th:if="${benPhone != null and !#strings.isEmpty(benPhone)}"
+                           th:href="'tel:' + ${benPhone}"
+                           class="beneficiary-phone">
+                            <i class="bi bi-telephone-fill"></i>
+                            <span th:text="${benPhone}">0788123456</span>
+                        </a>
+                        <div th:if="${benPhone == null or #strings.isEmpty(benPhone)}"
+                             class="no-beneficiary">No phone on file</div>
+                    </div>
+                    <span th:if="${benName == null or #strings.isEmpty(benName)}"
+                          class="no-beneficiary">— No beneficiary —</span>
+                </td>
+
                 <!-- Mother -->
-                <td>
+                <td class="col-nowrap">
                     <a th:if="${row.motherId != null}"
                        th:href="@{/livestock/births/family/{id}(id=${row.motherId})}"
                        class="text-decoration-none">
@@ -311,20 +377,20 @@
                 </td>
 
                 <!-- Birth date -->
-                <td>
+                <td class="col-nowrap">
                     <span th:if="${row.birthDate != null}"
                           th:text="${#temporals.format(row.birthDate, 'dd-MM-yyyy')}"></span>
                     <span th:if="${row.birthDate == null}" class="text-muted">—</span>
                     <div th:if="${row.birthId != null}">
                         <a th:href="@{/livestock/births/view/{id}(id=${row.birthId})}"
-                           class="text-muted" style="font-size:0.73rem;">
+                           class="text-muted" style="font-size:0.7rem;">
                             <i class="bi bi-eye"></i> Birth record
                         </a>
                     </div>
                 </td>
 
                 <!-- Status badge -->
-                <td>
+                <td class="col-nowrap">
                     <span th:if="${row.status == 'SOLD'}"   class="bdg bdg-sold"><i class="bi bi-check-circle-fill"></i> Sold</span>
                     <span th:if="${row.status == 'ACTIVE'}" class="bdg bdg-active"><i class="bi bi-house-heart-fill"></i> On Farm</span>
                     <span th:if="${row.status == 'DEAD'}"   class="bdg bdg-dead"><i class="bi bi-x-circle-fill"></i> Dead</span>
@@ -333,51 +399,43 @@
                           class="tag-chip" th:text="${row.status}"></span>
                 </td>
 
-                <!-- Sale date -->
-                <td>
-                    <span th:if="${row.saleDate != null}"
-                          th:text="${#temporals.format(row.saleDate, 'dd-MM-yyyy')}"></span>
-                    <span th:if="${row.saleDate == null}" class="not-sold">Not sold yet</span>
-                </td>
-
-                <!-- Days birth → sale -->
-                <td>
-                    <span th:if="${row.daysToSale != null}">
+                <!-- Sale Info: date + days-to-sale merged into one column -->
+                <td class="col-wrap">
+                    <div th:if="${row.saleDate != null}"
+                         th:text="${#temporals.format(row.saleDate, 'dd-MM-yyyy')}"></div>
+                    <div th:if="${row.saleDate == null}" class="not-sold">Not sold yet</div>
+                    <div th:if="${row.daysToSale != null}" style="margin-top:3px;">
                         <span th:if="${row.daysToSale < 30}"
                               class="days-chip quick">
                             <i class="bi bi-lightning-fill"></i>
-                            <span th:text="${row.daysToSale}"></span> days
+                            <span th:text="${row.daysToSale}"></span>d
                         </span>
                         <span th:if="${row.daysToSale >= 30 and row.daysToSale <= 180}"
                               class="days-chip normal">
                             <i class="bi bi-clock"></i>
-                            <span th:text="${row.daysToSale}"></span> days
+                            <span th:text="${row.daysToSale}"></span>d
                         </span>
                         <span th:if="${row.daysToSale > 180}"
                               class="days-chip long">
                             <i class="bi bi-hourglass-split"></i>
-                            <span th:text="${row.daysToSale}"></span> days
+                            <span th:text="${row.daysToSale}"></span>d
                         </span>
-                    </span>
-                    <span th:if="${row.daysToSale == null}" class="not-sold">—</span>
+                    </div>
                 </td>
 
                 <!-- Sale price -->
-                <td>
+                <td class="col-nowrap">
                     <span th:if="${row.salePrice != null}"
                           class="fw-semibold text-success"
                           th:text="${#numbers.formatDecimal(row.salePrice, 1, 'COMMA', 0, 'POINT')}"></span>
                     <span th:if="${row.salePrice == null}" class="not-sold">—</span>
                 </td>
 
-                <!-- Sale location -->
-                <td th:text="${row.saleLocation}">—</td>
-
-                <!-- Reason -->
-                <td>
+                <!-- Location & Reason merged into one column -->
+                <td class="col-wrap">
+                    <div th:text="${row.saleLocation}">—</div>
                     <span th:if="${row.saleReason != '—'}"
-                          class="tag-chip" th:text="${row.saleReason}"></span>
-                    <span th:if="${row.saleReason == '—'}" class="text-muted">—</span>
+                          class="tag-chip" style="margin-top:3px;" th:text="${row.saleReason}"></span>
                 </td>
 
                 <!-- Actions -->
@@ -442,12 +500,14 @@
         updateCount();
     }
 
-    // ── Search by tag ─────────────────────────────────────────────────
+    // ── Search by tag, beneficiary name or phone ────────────────────────
     function searchRows(query) {
         query = query.trim().toUpperCase();
         document.querySelectorAll('#reportBody tr').forEach(function(row) {
             var tag = (row.getAttribute('data-tag') || '').toUpperCase();
-            row.style.display = (!query || tag.includes(query)) ? '' : 'none';
+            var beneficiary = (row.getAttribute('data-beneficiary') || '').toUpperCase();
+            var matches = !query || tag.includes(query) || beneficiary.includes(query);
+            row.style.display = matches ? '' : 'none';
         });
         updateCount();
     }
@@ -456,14 +516,16 @@
     function exportCSV() {
         var csv = 'Born → Sold Report\n';
         csv += 'Generated: ' + new Date().toLocaleString() + '\n\n';
-        csv += '"#","Child Tag","Mother Tag","Birth Date","Status","Sale Date","Days (Birth→Sale)","Sale Price (RWF)","Sale Location","Sale Reason"\n';
+        csv += '"#","Child Tag","Beneficiary","Mother Tag","Birth Date","Status","Sale Info","Sale Price (RWF)","Location & Reason"\n';
 
         document.querySelectorAll('#reportBody tr').forEach(function(row) {
             if (row.style.display === 'none') return;
             var tds = row.querySelectorAll('td');
             if (!tds.length) return;
             var cols = [];
-            for (var i = 0; i < 10; i++) {
+            // 9 visible data columns after merging Sale Date+Days and
+            // Sale Location+Reason (Actions, the 10th <td>, stays excluded).
+            for (var i = 0; i < 9; i++) {
                 var text = tds[i] ? tds[i].textContent.replace(/\s+/g,' ').trim().replace(/"/g,'""') : '';
                 cols.push('"' + text + '"');
             }

@@ -6,10 +6,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        /* ── Base ── */
         body { background: #f0f2f5; font-size: 0.875rem; color: #1e293b; }
 
-        /* ── Page header ── */
         .page-header {
             background: #fff;
             border-bottom: 1px solid #e2e8f0;
@@ -19,7 +17,6 @@
         .page-header h5 { font-size: 1rem; font-weight: 700; margin: 0; }
         .page-header .subtitle { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
 
-        /* ── Card ── */
         .detail-card {
             background: #fff;
             border-radius: 8px;
@@ -28,7 +25,6 @@
             margin: 0 20px 20px;
         }
 
-        /* ── Section titles ── */
         .section-title {
             font-size: 0.7rem;
             font-weight: 700;
@@ -38,7 +34,6 @@
             margin-bottom: 10px;
         }
 
-        /* ── Info grid ── */
         .info-grid {
             display: grid;
             grid-template-columns: 190px 1fr;
@@ -59,7 +54,6 @@
         }
         .info-grid > *:nth-last-child(-n+2) { border-bottom: none; }
 
-        /* ── Mother chip ── */
         .mother-chip {
             display: inline-flex;
             align-items: center;
@@ -73,7 +67,6 @@
             font-size: 0.78rem;
         }
 
-        /* ── Children table ── */
         .children-table { font-size: 0.78rem; }
         .children-table th {
             font-size: 0.68rem;
@@ -87,7 +80,6 @@
         .children-table td { padding: 6px 10px; vertical-align: middle; }
         .child-row-draft { background: #fffbeb; }
 
-        /* ── Status badges ── */
         .badge-xs {
             font-size: 0.67rem;
             padding: 2px 7px;
@@ -96,13 +88,50 @@
         }
         .badge-draft-label { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
-        /* ── Action buttons ── */
         .btn-xs { font-size: 0.72rem; padding: 2px 8px; }
+
+        .locked-banner {
+            background: #1e293b; color: #f1f5f9;
+            border-radius: 8px; padding: 10px 16px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.8rem; margin: 0 20px 16px;
+        }
+
+        /* ✅ NEW — offspring quick list (improvement #3) */
+        .offspring-quick-list {
+            list-style: none; margin: 0; padding: 0;
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .offspring-quick-list li {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.82rem; padding: 8px 12px;
+            background: #f8fafc; border: 1px solid #eef2f6; border-radius: 6px;
+        }
+        .offspring-quick-list .tag { font-weight: 700; color: #1e293b; min-width: 90px; }
+        .offspring-quick-list .gender-badge {
+            font-size: 0.68rem; padding: 2px 8px; border-radius: 12px; font-weight: 700;
+        }
+        .gender-male   { background: #dbeafe; color: #1d4ed8; }
+        .gender-female { background: #fce7f3; color: #be185d; }
+        .gender-unknown{ background: #f1f5f9; color: #64748b; }
+
+        /* ✅ NEW — birth outcome cards (improvement #4) */
+        .outcome-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .outcome-card {
+            background: #f8fafc; border: 1px solid #eef2f6; border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .outcome-card .label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+                                letter-spacing: .04em; color: #94a3b8; margin-bottom: 3px; }
+        .outcome-card .value { font-size: 0.9rem; font-weight: 700; color: #1e293b; }
+        .outcome-difficult { border-color: #fca5a5; background: #fff1f2; }
+        .outcome-difficult .value { color: #b91c1c; }
+        .outcome-assist { border-color: #fde68a; background: #fffbeb; }
+        .outcome-assist .value { color: #92400e; }
     </style>
 </head>
 <body>
 
-<!-- ── Page header ──────────────────────────────────────────────────────── -->
 <div class="page-header d-flex justify-content-between align-items-center">
     <div>
         <h5><i class="bi bi-heart-pulse text-success me-2"></i>Birth Record</h5>
@@ -114,12 +143,33 @@
         </div>
         <div class="subtitle" th:if="${motherTag == null}">Birth record</div>
     </div>
+
     <div class="d-flex gap-2">
-        <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
+        <span th:if="${birth.locked}" class="badge bg-dark align-self-center" style="font-size:0.72rem;">
+            <i class="bi bi-lock-fill me-1"></i>Locked
+        </span>
+
+        <form th:if="${!birth.locked}" th:action="@{/livestock/births/complete/{id}(id=${birth.id})}"
+              method="post" class="d-inline"
+              onsubmit="return confirm('Verify and lock this birth record? It will no longer be editable until amended.')">
+            <button type="submit" class="btn btn-outline-dark btn-sm">
+                <i class="bi bi-lock me-1"></i>Complete / Finalize
+            </button>
+        </form>
+        <!-- ✅ CHANGED wording: "Amend (Reopen)" per improvement #2 -->
+        <form th:if="${birth.locked}" th:action="@{/livestock/births/reopen/{id}(id=${birth.id})}"
+              method="post" class="d-inline"
+              onsubmit="return confirm('Amend this record? It will be reopened for correction.')">
+            <button type="submit" class="btn btn-outline-warning btn-sm">
+                <i class="bi bi-pencil-square me-1"></i>Amend (Reopen)
+            </button>
+        </form>
+
+        <a th:if="${!birth.locked}" th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
            class="btn btn-outline-success btn-sm">
             <i class="bi bi-diagram-3 me-1"></i>Manage Children
         </a>
-        <a th:href="@{/livestock/births/edit/{id}(id=${birth.id})}"
+        <a th:if="${!birth.locked}" th:href="@{/livestock/births/edit/{id}(id=${birth.id})}"
            class="btn btn-outline-primary btn-sm">
             <i class="bi bi-pencil me-1"></i>Edit
         </a>
@@ -129,9 +179,18 @@
     </div>
 </div>
 
+<div th:if="${birth.locked}" class="locked-banner">
+    <i class="bi bi-shield-lock-fill fs-5"></i>
+    <div>
+        <strong>This record is locked.</strong>
+        It's been verified/completed. Only <strong>View</strong> and
+        <strong>Amend (Reopen)</strong> are available — Edit, Delete, and
+        child linking are disabled until it's reopened.
+    </div>
+</div>
+
 <div class="detail-card">
 
-    <!-- Flash messages -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2 mb-3" style="font-size:0.8rem;">
         <i class="bi bi-check-circle-fill me-1"></i>
         <span th:text="${success}"></span>
@@ -144,16 +203,20 @@
     </div>
 
     <!-- ══ BIRTH EVENT DETAILS ═══════════════════════════════════════════ -->
-    <div class="section-title"><i class="bi bi-calendar-heart me-1"></i>Birth Event</div>
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="section-title mb-0"><i class="bi bi-calendar-heart me-1"></i>Birth Event</div>
+        <!-- ✅ NEW: birth source badge (improvement #1) -->
+        <span th:if="${birthSource != null}"
+              th:class="'badge ' + ${birthSource.badgeClass}" style="font-size:0.72rem;">
+            <i th:class="'bi ' + ${birthSource.icon} + ' me-1'"></i>
+            <span th:text="${birthSource.label}"></span>
+        </span>
+    </div>
 
-    <div class="info-grid">
+    <div class="info-grid mt-2">
 
         <div class="info-label">Mother Animal</div>
         <div class="info-value">
-            <!--
-                FIX: Use motherTag / motherCategory passed explicitly from the controller
-                     instead of birth.livestock (lazy-loaded, may be null in Thymeleaf).
-            -->
             <span th:if="${motherTag != null}" class="mother-chip">
                 <i class="bi bi-gender-female"></i>
                 <span th:text="${motherTag}"></span>
@@ -180,8 +243,17 @@
         <div class="info-label">Weaning Date</div>
         <div class="info-value" th:text="${birth.weaningDate != null ? birth.weaningDate : '—'}"></div>
 
-        <div class="info-label">Next Breeding Date</div>
-        <div class="info-value" th:text="${birth.nextBreedingDate != null ? birth.nextBreedingDate : '—'}"></div>
+        <!-- ✅ CHANGED — improvement #5: clarified label + helper text -->
+        <div class="info-label">Next Breeding (Suggested)</div>
+        <div class="info-value">
+            <span th:if="${birth.nextBreedingDate != null}" th:text="${birth.nextBreedingDate}"></span>
+            <span th:if="${birth.nextBreedingDate == null}" class="text-muted fst-italic">
+                Not calculated — configure a postpartum recovery period for this category
+            </span>
+            <div class="text-muted mt-1" style="font-size:0.7rem;">
+                Management/planning suggestion only, not an FAO-required field.
+            </div>
+        </div>
 
         <div class="info-label">Location / Origin Notes</div>
         <div class="info-value" th:text="${birth.sourceLocation != null ? birth.sourceLocation : '—'}"></div>
@@ -189,28 +261,85 @@
         <div class="info-label">Notes</div>
         <div class="info-value" th:text="${birth.notes != null ? birth.notes : '—'}"></div>
 
+        <div class="info-label">Verification Status</div>
+        <div class="info-value">
+            <span th:if="${birth.locked}" class="badge bg-dark" style="font-size:0.7rem;">
+                <i class="bi bi-lock-fill me-1"></i>Locked
+                <span th:if="${birth.completedAt != null}"
+                      th:text="' since ' + ${#temporals.format(birth.completedAt, 'dd-MM-yyyy HH:mm')}"></span>
+            </span>
+            <span th:unless="${birth.locked}" class="badge bg-light text-dark border" style="font-size:0.7rem;">
+                Open — not yet completed
+            </span>
+        </div>
+
     </div>
 
-    <!-- ══ LINKED CHILDREN ════════════════════════════════════════════════ -->
+    <!-- ══ BIRTH OUTCOME (improvement #4) ═══════════════════════════════ -->
+    <hr class="my-3" style="border-color:#f1f5f9;">
+    <div class="section-title"><i class="bi bi-clipboard2-pulse me-1"></i>Birth Outcome / Assistance</div>
+
+    <div class="outcome-grid">
+        <div th:class="${birth.birthType == 'DIFFICULT'} ? 'outcome-card outcome-difficult' : 'outcome-card'">
+            <div class="label">Birth Type</div>
+            <div class="value" th:text="${birth.birthType != null ? birth.birthType : 'Not recorded'}"></div>
+        </div>
+        <div th:class="${birth.assistanceRequired} ? 'outcome-card outcome-assist' : 'outcome-card'">
+            <div class="label">Assistance Required</div>
+            <div class="value" th:text="${birth.assistanceRequired} ? 'Yes' : 'No'"></div>
+        </div>
+        <div class="outcome-card">
+            <div class="label">Born Alive</div>
+            <div class="value" th:text="${birth.numberBornAlive != null ? birth.numberBornAlive : '—'}"></div>
+        </div>
+        <div th:class="${birth.numberStillborn != null and birth.numberStillborn > 0} ? 'outcome-card outcome-difficult' : 'outcome-card'">
+            <div class="label">Stillborn</div>
+            <div class="value" th:text="${birth.numberStillborn != null ? birth.numberStillborn : 0}"></div>
+        </div>
+        <div class="outcome-card">
+            <div class="label">Attendant / Veterinarian</div>
+            <div class="value" style="font-size:0.8rem;"
+                 th:text="${birth.attendantDisplayName != null ? birth.attendantDisplayName : '—'}"></div>
+        </div>
+    </div>
+
+    <!-- ══ OFFSPRING (individual detail — improvement #3) ════════════════ -->
     <hr class="my-3" style="border-color:#f1f5f9;">
 
     <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="section-title mb-0">
-            <i class="bi bi-diagram-3 me-1"></i>Linked Children
+            <i class="bi bi-diagram-3 me-1"></i>Offspring — Individual Detail
             <span class="badge bg-success ms-1" style="font-size:0.65rem;"
                   th:text="${#lists.size(linkedChildren)}">0</span>
         </div>
-        <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
+        <a th:if="${!birth.locked}" th:href="@{/livestock/births/{id}/children(id=${birth.id})}"
            class="btn btn-outline-success btn-xs">
             <i class="bi bi-plus-circle me-1"></i>Add / Manage
         </a>
     </div>
 
     <div th:if="${linkedChildren == null or linkedChildren.isEmpty()}"
-         class="text-muted fst-italic" style="font-size:0.8rem;">
+         class="text-muted fst-italic mb-3" style="font-size:0.8rem;">
         No children linked yet.
-        <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Link children &rarr;</a>
+        <a th:if="${!birth.locked}" th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Link children &rarr;</a>
     </div>
+
+    <!-- ✅ NEW: compact "GOAT-005 — Female — Birth Date: 15-08-2026" list -->
+    <ul th:unless="${linkedChildren == null or linkedChildren.isEmpty()}" class="offspring-quick-list mb-3">
+        <li th:each="child : ${linkedChildren}">
+            <span th:if="${child.isDraft}" class="badge-xs badge-draft-label">DRAFT</span>
+            <span class="tag" th:text="${child.tagNumber}"></span>
+            <span>&mdash;</span>
+            <span th:class="${child.gender == 'MALE'} ? 'gender-badge gender-male' :
+                             (${child.gender == 'FEMALE'} ? 'gender-badge gender-female' : 'gender-badge gender-unknown')"
+                  th:text="${child.gender != null ? child.gender : 'Unknown'}"></span>
+            <span>&mdash;</span>
+            <span>
+                Birth Date:
+                <strong th:text="${child.birthDate != null ? #temporals.format(child.birthDate, 'dd-MM-yyyy') : '—'}"></strong>
+            </span>
+        </li>
+    </ul>
 
     <div th:unless="${linkedChildren == null or linkedChildren.isEmpty()}"
          class="table-responsive">
@@ -230,7 +359,6 @@
             <tr th:each="child : ${linkedChildren}"
                 th:classappend="${child.isDraft} ? 'child-row-draft' : ''">
 
-                <!-- Tag -->
                 <td>
                     <span th:if="${child.isDraft}">
                         <span class="badge-xs badge-draft-label">
@@ -250,7 +378,6 @@
 
                 <td th:text="${child.livestockCategory != null ? child.livestockCategory.name : '—'}"></td>
 
-                <!-- Mother -->
                 <td>
                     <span th:if="${child.mother != null}" class="mother-chip">
                         <i class="bi bi-gender-female"></i>
@@ -266,7 +393,6 @@
 
                 <td th:text="${child.birthDate != null ? child.birthDate : '—'}"></td>
 
-                <!-- Status -->
                 <td>
                     <span th:if="${child.isDraft}" class="badge bg-warning text-dark badge-xs">Draft</span>
                     <span th:unless="${child.isDraft}"
@@ -277,8 +403,7 @@
                                                                   'badge bg-light text-dark badge-xs'}">
                     </span>
                 </td>
-<td th:if=""></td>
-                <!-- Actions -->
+
                 <td>
                     <div class="d-flex gap-1 flex-wrap">
                         <a th:if="${child.isDraft}"
@@ -291,7 +416,8 @@
                            class="btn btn-outline-primary btn-xs">
                             <i class="bi bi-eye me-1"></i>View
                         </a>
-                        <form th:action="@{/livestock/births/unlink-child/{cid}(cid=${child.id})}"
+                        <form th:if="${!birth.locked}"
+                              th:action="@{/livestock/births/unlink-child/{cid}(cid=${child.id})}"
                               method="post" class="d-inline"
                               onsubmit="return confirm('Unlink this animal from the birth record?')">
                             <input type="hidden" name="birthId" th:value="${birth.id}">
@@ -306,7 +432,6 @@
         </table>
     </div>
 
-    <!-- Pending drafts warning -->
     <div th:with="draftCount=${#lists.size(linkedChildren.?[isDraft == true])}"
          th:if="${draftCount > 0}"
          class="alert alert-warning mt-3 py-2" style="font-size:0.78rem;">

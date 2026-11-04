@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Other Expense Recorded</title>
+</head>
+<body style="margin:0; padding:0; background:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8; padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="680" cellpadding="0" cellspacing="0"
+                   style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+
+                <!-- Header -->
+                <tr>
+                    <td style="background:linear-gradient(135deg,#7f1d1d,#dc2626); padding:28px 32px;">
+                        <span style="font-size:28px;" th:text="${emoji ?: '💸📋'}">💸📋</span>
+                        <h1 style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:700;" th:text="${title ?: 'Other Expense Recorded'}">
+                            Other Expense Recorded
+                        </h1>
+                        <p style="margin:4px 0 0; color:#fecaca; font-size:13px;">
+                            Miscellaneous operational expense record
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Body -->
+                <tr>
+                    <td style="padding:28px 32px;">
+                        <p style="margin:0 0 20px; color:#334155; font-size:14px; line-height:1.6;">
+                            A new other-expense entry has been recorded against the operation's books. The full
+                            record captured is below, laid out in two columns to keep this email compact.
+                        </p>
+
+                        <!-- ══ TWO-COLUMN DATA GRID ══════════════════════════════════ -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <!-- LEFT COLUMN -->
+                                <td width="50%" valign="top" style="padding-right:8px;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                                Expense Details
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Date</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#0f172a;" th:text="${expenseDate ?: '—'}">2026-08-22</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Category</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${category ?: '—'}">Feed</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Description</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${description ?: '—'}">—</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Notes</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${notes ?: 'Not recorded'}">—</td>
+                                        </tr>
+                                    </table>
+
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-top:12px;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                                Amount
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Total</td>
+                                            <td style="padding:10px 14px; font-size:14px; font-weight:700; color:#dc2626;" th:text="${amount ?: '—'} + ' RWF'">50,000 RWF</td>
+                                        </tr>
+                                    </table>
+                                </td>
+
+                                <!-- RIGHT COLUMN -->
+                                <td width="50%" valign="top" style="padding-left:8px;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                                Payment
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Method</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${paymentMethod ?: 'Not recorded'}">Cash</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Paid To</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${paidTo ?: 'Not recorded'}">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Receipt Reference</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${receiptReference ?: 'Not recorded'}">—</td>
+                                        </tr>
+                                    </table>
+
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-top:12px;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                                Recorded By
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">User</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${createdByUsername ?: '—'}">—</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Recorded At</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${createdAt ?: '—'}">—</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="margin:20px 0 0; font-size:12px; color:#94a3b8;">
+                            Recorded on <strong th:text="${today}">2026-08-22</strong>.
+                            This record has also been written to the permanent audit log.
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td style="background:#f8fafc; padding:16px 32px; border-top:1px solid #e2e8f0;">
+                        <p style="margin:0; font-size:11px; color:#94a3b8;">
+                            Animal Production System | Version 0.1.0
+                            Developed by HABANABAKIZE &amp; NDAYIZEYE
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -231,7 +231,7 @@
         .fao-productivity-badge.medium { background:#fff3cd; color:#856404; }
         .fao-productivity-badge.low { background:#f8d7da; color:#721c24; }
 
-        .fao-stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(80px,1fr)); gap:6px; margin-top:8px; }
+        .fao-stats-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(80px, 1fr)); gap:6px; margin-top:8px; }
         .fao-stat-item { text-align:center; padding:6px 4px; border-radius:var(--fao-radius-sm); background:var(--fao-gray-50); transition:var(--fao-transition); }
         .fao-stat-item:hover { background:var(--fao-gray-100); }
         .fao-stat-value { font-weight:800; font-size:.92rem; display:block; line-height:1.2; }
@@ -326,11 +326,6 @@
             <div class="fao-kpi-label"><i class="fas fa-map-pin"></i> Locations with Livestock</div>
         </div>
 
-        <!--
-            ENHANCEMENT 3: "Total Livestock" card now shows the grand total PLUS
-            small per-category mini-pills so you can see the breakdown at a glance
-            without scrolling to the category summary below.
-        -->
         <div class="fao-kpi-card">
             <div class="fao-kpi-value" th:text="${report.totalAnimals}">0</div>
             <div class="fao-kpi-label"><i class="fas fa-paw"></i> Total Livestock</div>
@@ -363,11 +358,7 @@
         </div>
     </div>
 
-    <!--
-        ENHANCEMENT 3 (continued): Dedicated category breakdown panel below the KPI row.
-        Each category shown as a large pill with its count prominently displayed.
-        This is the "display below" the user requested.
-    -->
+    <!-- Category breakdown panel -->
     <div class="fao-category-summary" th:if="${not #maps.isEmpty(report.categoryTotals)}">
         <div class="fao-category-summary-title">
             <i class="fas fa-layer-group"></i>
@@ -390,7 +381,7 @@
         </div>
         <div class="fao-controls-group">
 
-            <!-- Sort selector — submits a real server-side sort request -->
+            <!-- Sort selector -->
             <form method="get" th:action="@{/livestock/location-distribution-report}" style="display:inline-flex; align-items:center; gap:6px;">
                 <input type="hidden" name="page" value="0">
                 <input type="hidden" name="size" th:value="${pageSize}">
@@ -407,7 +398,6 @@
                     <option value="beneficiaryCount"  th:selected="${sortBy == 'beneficiaryCount'}">Sort: Beneficiaries</option>
                 </select>
 
-                <!-- Toggle direction asc/desc -->
                 <input type="hidden" name="direction"
                        th:value="${direction == 'desc' ? 'asc' : 'desc'}"
                        id="directionInput">
@@ -449,11 +439,7 @@
                         <span class="fao-location-code" th:text="'#' + ${#strings.substring(loc.locationId, 0, 8)}">ID</span>
                     </div>
 
-                    <!--
-                        ENHANCEMENT 2: Full administrative path shown as a breadcrumb trail.
-                        Province › District › Sector › Cell › Village
-                        Each level label + name displayed, levels with no data are skipped.
-                    -->
+                    <!-- Full administrative path -->
                     <div class="fao-location-path" th:if="${loc.fullLocationPath != null and not #strings.isEmpty(loc.fullLocationPath)}">
                         <i class="fas fa-route" style="font-size:.6rem; color:var(--fao-gray-400); margin-right:2px;"></i>
 
@@ -495,15 +481,23 @@
                     </div>
                 </div>
 
-                <div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
                     <span class="fao-productivity-badge"
                           th:classappend="${loc.productivityIndex >= 70} ? 'high' : (${loc.productivityIndex >= 40} ? 'medium' : 'low')">
                         <i class="fas fa-chart-line"></i>
                         <span th:text="${#numbers.formatDecimal(loc.productivityIndex, 0, 'POINT', 0, 'POINT')}">0</span>% Productivity
+                        <i class="fas fa-info-circle" style="font-size: .65rem; opacity: .6; cursor: help;"
+                           title="Productivity Rate = Active Animals / Total Animals × 100"></i>
                     </span>
+                    <!-- View Animals Button -->
+                    <a th:href="@{/livestock/category-animals-report?locationId=${loc.locationId}}"
+                       class="fao-btn" style="background: var(--fao-primary); color: white; border: none; font-size: .65rem; padding: 4px 12px; border-radius: var(--fao-radius-sm); text-decoration: none;">
+                        <i class="fas fa-eye"></i> View Animals
+                    </a>
                 </div>
             </div>
 
+            <!-- Enhanced Stats Grid -->
             <div class="fao-stats-grid">
                 <div class="fao-stat-item">
                     <span class="fao-stat-value" style="color:var(--fao-primary);" th:text="${loc.totalAnimals}">0</span>
@@ -530,8 +524,46 @@
                           th:text="${#numbers.formatDecimal(loc.totalValue, 1, 'COMMA', 0, 'POINT')}">0</span>
                     <span class="fao-stat-label">Value (RWF)</span>
                 </div>
+                <!-- Average Value per Animal -->
                 <div class="fao-stat-item">
-                    <span class="fao-stat-value" style="color:var(--fao-info);" th:text="${loc.beneficiaryCount}">0</span>
+                    <span class="fao-stat-value" style="color:var(--fao-info);"
+                          th:text="${#numbers.formatDecimal(loc.averageValuePerAnimal, 1, 'COMMA', 0, 'POINT')}">0</span>
+                    <span class="fao-stat-label">Avg Value</span>
+                </div>
+                <!-- Male / Female -->
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color: #1d4ed8;">M: <span th:text="${loc.maleCount}">0</span></span>
+                    <span class="fao-stat-value" style="color: #be185d;">F: <span th:text="${loc.femaleCount}">0</span></span>
+                    <span class="fao-stat-label">Male / Female</span>
+                </div>
+                <!-- Pregnant Females -->
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:#8b5cf6;" th:text="${loc.pregnantCount}">0</span>
+                    <span class="fao-stat-label">Pregnant</span>
+                </div>
+                <!-- Ready-to-breed -->
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:#f59e0b;" th:text="${loc.readyToBreedCount}">0</span>
+                    <span class="fao-stat-label">Ready-to-breed</span>
+                </div>
+                <!-- Births / Offspring -->
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:#7c3aed;" th:text="${loc.birthCount}">0</span>
+                    <span class="fao-stat-label">Births</span>
+                </div>
+                <!-- Mortality & Sick Rates -->
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color: var(--fao-gray-600);"
+                          th:text="${#numbers.formatDecimal(loc.mortalityRate, 0, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                    <span class="fao-stat-label">Mortality</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color: var(--fao-danger);"
+                          th:text="${#numbers.formatDecimal(loc.sickRate, 0, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                    <span class="fao-stat-label">Sick Rate</span>
+                </div>
+                <div class="fao-stat-item">
+                    <span class="fao-stat-value" style="color:var(--fao-gray-600);" th:text="${loc.beneficiaryCount}">0</span>
                     <span class="fao-stat-label">Beneficiaries</span>
                 </div>
                 <div class="fao-stat-item">
@@ -549,55 +581,36 @@
         <p class="text-muted">There are currently no locations that have registered livestock.</p>
     </div>
 
-    <!--
-        ENHANCEMENT 1: Full server-side pagination.
-        pageNumbers is a List<Integer> injected by the controller (0-based).
-        All navigation triggers a real GET request to /livestock/location-distribution-report
-        with the correct page, size, sortBy, and direction parameters.
-        No T(java.util.Collections) and no forbidden SpEL calls.
-    -->
+    <!-- Pagination -->
     <div th:if="${totalPages > 1}" class="fao-pagination no-print">
-
-        <!-- First -->
         <a th:href="@{/livestock/location-distribution-report(page=0, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
            th:classappend="${currentPage == 0} ? 'disabled'" title="First page">
             <i class="fas fa-angle-double-left"></i>
         </a>
-
-        <!-- Prev -->
         <a th:href="@{/livestock/location-distribution-report(page=${currentPage - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
            th:classappend="${currentPage == 0} ? 'disabled'" title="Previous page">
             <i class="fas fa-angle-left"></i>
         </a>
-
-        <!-- Page numbers — controller injects pageNumbers as List<Integer> -->
         <th:block th:each="p : ${pageNumbers}">
-            <!-- Show first 2, last 2, and 2 either side of current; collapse others to "…" -->
             <th:block th:if="${p == 0 or p == totalPages - 1 or (p >= currentPage - 2 and p <= currentPage + 2)}">
                 <a th:href="@{/livestock/location-distribution-report(page=${p}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
                    th:text="${p + 1}"
                    th:classappend="${p == currentPage} ? 'active'">1</a>
             </th:block>
-            <!-- Ellipsis before current window -->
             <span th:if="${p == currentPage - 3 and p > 1}" class="page-btn disabled">…</span>
-            <!-- Ellipsis after current window -->
             <span th:if="${p == currentPage + 3 and p < totalPages - 2}" class="page-btn disabled">…</span>
         </th:block>
-
-        <!-- Next -->
         <a th:href="@{/livestock/location-distribution-report(page=${currentPage + 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
            th:classappend="${currentPage == totalPages - 1} ? 'disabled'" title="Next page">
             <i class="fas fa-angle-right"></i>
         </a>
-
-        <!-- Last -->
         <a th:href="@{/livestock/location-distribution-report(page=${totalPages - 1}, size=${pageSize}, sortBy=${sortBy}, direction=${direction})}"
            th:classappend="${currentPage == totalPages - 1} ? 'disabled'" title="Last page">
             <i class="fas fa-angle-double-right"></i>
         </a>
     </div>
 
-    <!-- Page size selector + pagination summary -->
+    <!-- Page size selector -->
     <div class="text-center mt-3 no-print" th:if="${totalPages > 0}">
         <span style="font-size:.72rem; color:var(--fao-gray-600); font-weight:500;">
             Page <strong th:text="${currentPage + 1}">1</strong>
@@ -620,23 +633,13 @@
         </form>
     </div>
 
-</div><!-- end fao-report-body -->
+</div>
 
 <!-- ── JAVASCRIPT ── -->
 <script th:inline="javascript">
-    /*<![CDATA[*/
     (function () {
         'use strict';
 
-        const state = {
-            currentPage: /*[[${currentPage}]]*/ 0,
-            totalPages:  /*[[${totalPages}]]*/ 1,
-            pageSize:    /*[[${pageSize}]]*/ 20,
-            sortBy:      /*[[${sortBy}]]*/ 'totalAnimals',
-            direction:   /*[[${direction}]]*/ 'desc'
-        };
-
-        // ── Search / Filter (client-side, within current page) ──
         window.filterLocations = function () {
             const term = document.getElementById('locationSearch').value.toLowerCase().trim();
             const cards = document.querySelectorAll('.fao-location-card');
@@ -652,7 +655,6 @@
                 visible + ' of ' + /*[[${report.totalElements}]]*/ 0 + ' locations';
         };
 
-        // ── View toggle (card / compact list) ──
         window.setView = function (view, btn) {
             document.querySelectorAll('.fao-control-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -670,15 +672,12 @@
             }
         };
 
-        // ── Direction toggle ──
         window.toggleDirection = function () {
             const inp = document.getElementById('directionInput');
-            // Flip the hidden input value before submitting the enclosing form
             inp.value = inp.value === 'desc' ? 'asc' : 'desc';
             inp.closest('form').submit();
         };
 
-        // ── Export CSV (current page) ──
         window.exportData = function () {
             const rows = [];
             document.querySelectorAll('.fao-location-card:not([style*="display: none"])').forEach(card => {
@@ -698,14 +697,12 @@
             URL.revokeObjectURL(link.href);
         };
 
-        // ── Refresh ──
         window.refreshData = function () {
             const btn = document.querySelector('[onclick="refreshData()"]');
             if (btn) { btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...'; btn.disabled = true; }
             setTimeout(() => window.location.reload(), 400);
         };
 
-        // ── Keyboard shortcuts ──
         document.addEventListener('keydown', function (e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
                 e.preventDefault();
@@ -718,19 +715,13 @@
             }
         });
 
-        // ── Init ──
         document.addEventListener('DOMContentLoaded', function () {
             const total = document.querySelectorAll('.fao-location-card').length;
             document.getElementById('visibleCount').innerHTML =
                 total + ' of ' + /*[[${report.totalElements}]]*/ 0 + ' locations';
-            document.querySelectorAll('.fao-location-card').forEach((c, i) => {
-                c.setAttribute('role', 'article');
-                c.setAttribute('aria-label', 'Location ' + (i + 1));
-            });
         });
 
     })();
-    /*]]>*/
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

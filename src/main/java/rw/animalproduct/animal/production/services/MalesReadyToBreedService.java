@@ -40,8 +40,6 @@ public class MalesReadyToBreedService {
                 .collect(Collectors.toList());
     }
 
-    // ── Stats helpers ─────────────────────────────────────────────────────────
-
     public long countReadyToBreed() {
         return getAllReadyToBreed().size();
     }
@@ -55,20 +53,28 @@ public class MalesReadyToBreedService {
                 .orElse(0.0);
     }
 
+    // NEW: average success rate scoped to natural-mating records only,
+    // across males who have at least one natural-mating attempt. Males
+    // with zero natural matings are excluded from the average rather than
+    // dragging it toward 0%, since they have no natural-mating outcome to
+    // average in the first place.
+    public double getAverageNaturalSuccessRate() {
+        List<MaleReadyToBreedDTO> list = getAllReadyToBreed().stream()
+                .filter(m -> !m.isNeverNaturallyBred())
+                .collect(Collectors.toList());
+        if (list.isEmpty()) return 0.0;
+        return list.stream()
+                .mapToDouble(MaleReadyToBreedDTO::getNaturalSuccessRate)
+                .average()
+                .orElse(0.0);
+    }
+
     public long countNeverBred() {
         return getAllReadyToBreed().stream()
                 .filter(MaleReadyToBreedDTO::isNeverBred)
                 .count();
     }
 
-    /**
-     * Returns an immutable empty list to be added to the Spring MVC model.
-     * The Thymeleaf template uses this as the default value in:
-     *   malesByCategory.getOrDefault(categoryName, emptyMaleList)
-     *
-     * This avoids using T(java.util.Collections).emptyList() directly in SpEL,
-     * which is blocked by Thymeleaf 3.1+ for security reasons.
-     */
     public List<MaleReadyToBreedDTO> emptyList() {
         return Collections.emptyList();
     }

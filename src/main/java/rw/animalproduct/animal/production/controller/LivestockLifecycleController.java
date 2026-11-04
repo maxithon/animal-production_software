@@ -1,5 +1,6 @@
 package rw.animalproduct.animal.production.controller;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -7,9 +8,15 @@ import rw.animalproduct.animal.production.dto.FemaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.dto.MaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.dto.PregnancyRowDTO;
 import rw.animalproduct.animal.production.dto.PurchasedPregnancyRowDTO;
+import rw.animalproduct.animal.production.entity.Beneficiary;
 import rw.animalproduct.animal.production.entity.Livestock;
+import rw.animalproduct.animal.production.entity.LivestockBirth;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
+import rw.animalproduct.animal.production.entity.Location;
+import rw.animalproduct.animal.production.notification.LivestockLifecycleService;
+import rw.animalproduct.animal.production.repository.BeneficiaryRepository;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
+import rw.animalproduct.animal.production.repository.LocationRepository;
 import rw.animalproduct.animal.production.services.*;
 
 import java.time.LocalDate;
@@ -25,12 +32,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/livestock/lifecycle")
 public class LivestockLifecycleController {
 
-    private final LivestockLifecycleService   lifecycleService;
+    private final LivestockLifecycleService lifecycleService;
     private final LivestockBreedingService    breedingService;
     private final MalesReadyToBreedService    malesReadyToBreedService;
     private final FemalesReadyToBreedService  femalesReadyToBreedService;
     private final LifecycleEmailService       emailService;
     private final LivestockRepository         livestockRepository;
+    private final LivestockBirthService       birthService;
+    // ✅ NEW
+    private final BeneficiaryRepository       beneficiaryRepository;
+    private final LocationRepository          locationRepository;
 
     public LivestockLifecycleController(
             LivestockLifecycleService lifecycleService,
@@ -38,19 +49,24 @@ public class LivestockLifecycleController {
             MalesReadyToBreedService malesReadyToBreedService,
             FemalesReadyToBreedService femalesReadyToBreedService,
             LifecycleEmailService emailService,
-            LivestockRepository livestockRepository) {
+            LivestockRepository livestockRepository,
+            LivestockBirthService birthService,
+            BeneficiaryRepository beneficiaryRepository,      // ✅ NEW
+            LocationRepository locationRepository) {          // ✅ NEW
         this.lifecycleService          = lifecycleService;
         this.breedingService           = breedingService;
         this.malesReadyToBreedService  = malesReadyToBreedService;
         this.femalesReadyToBreedService= femalesReadyToBreedService;
         this.emailService              = emailService;
         this.livestockRepository       = livestockRepository;
+        this.birthService              = birthService;
+        this.beneficiaryRepository     = beneficiaryRepository;  // ✅ NEW
+        this.locationRepository        = locationRepository;     // ✅ NEW
     }
 
     // =========================================================================
     // MAIN DASHBOARD
     // =========================================================================
-
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
 
@@ -89,7 +105,6 @@ public class LivestockLifecycleController {
     // =========================================================================
     // STAGE-SPECIFIC VIEWS
     // =========================================================================
-
     @GetMapping("/pre-breeding")
     public String preBreeding(Model model) {
         model.addAttribute("youngFemales", lifecycleService.getYoungFemales().stream()
@@ -105,7 +120,6 @@ public class LivestockLifecycleController {
     // =========================================================================
     // READY TO BREED
     // =========================================================================
-
     @GetMapping("/ready-to-breed")
     public String readyToBreed(
             @RequestParam(required = false) String category,
@@ -173,25 +187,11 @@ public class LivestockLifecycleController {
     // =========================================================================
     // PREGNANCY TRACKING
     // =========================================================================
-
-    /**
-     * Pregnancy tracking view.
-     *
-     * Two sources of pregnant animals are merged:
-     *
-     *   1. LivestockBreeding records with status = CONFIRMED_PREGNANT
-     *      → wrapped in PregnancyRowDTO so all ChronoUnit maths stay in Java.
-     *
-     *   2. Livestock rows where is_pregnant = true but NO confirmed-pregnant
-     *      breeding record exists yet (typically purchased/donated/transferred
-     *      animals whose pregnancy was flagged at intake).
-     *      → wrapped in PurchasedPregnancyRowDTO.
-     *
-     * Neither DTO requires T(...) or new-object expressions in Thymeleaf,
-     * which are forbidden in Thymeleaf 3.1+.
-     */
     @GetMapping("/pregnancy-tracking")
-    public String pregnancyTracking(Model model) {
+    public String pregnancyTracking(
+            @RequestParam(value = "birthPage", defaultValue = "0") int birthPage,
+            @RequestParam(value = "birthSize", defaultValue = "10") int birthSize,
+            Model model) {
 
         LocalDate today = LocalDate.now();
 
@@ -205,18 +205,22 @@ public class LivestockLifecycleController {
                 }))
                 .collect(Collectors.toList());
 
-        // ── FIX: Use the 7-argument constructor; PregnancyRowDTO computes today internally ──
         List<PregnancyRowDTO> pregnancyRows = allPregnant.stream()
-                .map(b -> new PregnancyRowDTO(
-                        b.getLivestock().getId(),
-                        b.getLivestock().getTagNumber(),
-                        b.getLivestock().getLivestockCategory() != null
-                                ? b.getLivestock().getLivestockCategory().getName() : null,
-                        b.getLivestock().getAcquisitionMethod(),
-                        b.getBreedingDate(),       // conceptionDate
-                        b.getExpectedDueDate(),    // expectedDueDate
-                        b.getBreedingMethod()      // inseminationMethod
-                ))
+                .map(b -> {
+                    Livestock ls = b.getLivestock();
+                    PregnancyRowDTO row = new PregnancyRowDTO(
+                            ls.getId(),
+                            ls.getTagNumber(),
+                            ls.getLivestockCategory() != null ? ls.getLivestockCategory().getName() : null,
+                            ls.getAcquisitionMethod(),
+                            b.getBreedingDate(),
+                            b.getExpectedDueDate(),
+                            b.getBreedingMethod());
+                    // ✅ NEW: pass beneficiary + location IDs for lookup
+                    if (ls.getBeneficiary() != null) row.setBeneficiaryId(ls.getBeneficiary().getId());
+                    if (ls.getLocation()    != null) row.setLocationId(ls.getLocation().getId());
+                    return row;
+                })
                 .collect(Collectors.toList());
 
         // ── SOURCE 2: Purchased/external animals without a breeding record ────
@@ -253,7 +257,6 @@ public class LivestockLifecycleController {
 
         long totalPregnantAll = pregnancyRows.size() + purchasedRows.size();
 
-        // ── Model ─────────────────────────────────────────────────────────────
         model.addAttribute("pregnancyRows",            pregnancyRows);
         model.addAttribute("purchasedRows",            purchasedRows);
         model.addAttribute("purchasedPregnantCount",   purchasedRows.size());
@@ -265,13 +268,100 @@ public class LivestockLifecycleController {
         model.addAttribute("today",                    today);
         model.addAttribute("pageTitle",                "Pregnancy Tracking");
 
+        // ════════════════════════════════════════════════════════════════════
+        // SECTION 3: "Given Birth" log, paginated
+        // ════════════════════════════════════════════════════════════════════
+        Page<LivestockBirth> birthPageResult = birthService.getPaged(birthPage, birthSize);
+
+        List<Map<String, Object>> givenBirthRows = new ArrayList<>();
+        for (LivestockBirth birth : birthPageResult.getContent()) {
+            if (birth.getLivestockId() == null) continue;
+
+            Livestock mother = livestockRepository.findById(birth.getLivestockId()).orElse(null);
+            if (mother == null) continue;
+
+            boolean pregnantAgain = Livestock.REPRO_PREGNANT.equals(mother.getReproductiveStatus());
+
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("birthId",          birth.getId());
+            row.put("motherId",         mother.getId());
+            row.put("tagNumber",        mother.getTagNumber());
+            row.put("categoryName",     mother.getLivestockCategory() != null
+                    ? mother.getLivestockCategory().getName() : null);
+            row.put("birthDate",        birth.getBirthDate());
+            row.put("daysSinceBirth",   birth.getBirthDate() != null
+                    ? ChronoUnit.DAYS.between(birth.getBirthDate(), today) : null);
+            row.put("offspringCount",   birth.getOffspringCount() != null ? birth.getOffspringCount() : 0);
+            row.put("linkedChildren",   birthService.countLiveOffspring(birth.getId()));
+            row.put("isPregnantAgain",  pregnantAgain);
+            row.put("reproductiveStatusLabel", mother.reproductiveStatusLabel());
+            // ✅ NEW: pass beneficiary + location IDs for lookup
+            if (mother.getBeneficiary() != null) row.put("beneficiaryId", mother.getBeneficiary().getId());
+            if (mother.getLocation()    != null) row.put("locationId",    mother.getLocation().getId());
+            givenBirthRows.add(row);
+        }
+
+        int totalBirthPages  = birthPageResult.getTotalPages();
+        int currentBirthPage = birthPageResult.getNumber();
+
+        int windowSize = 5;
+        int startPage  = Math.max(0, currentBirthPage - windowSize / 2);
+        int endPage    = Math.min(Math.max(totalBirthPages - 1, 0), startPage + windowSize - 1);
+        startPage      = Math.max(0, endPage - windowSize + 1);
+
+        List<Integer> givenBirthPageNumbers = new ArrayList<>();
+        for (int i = startPage; i <= endPage; i++) {
+            givenBirthPageNumbers.add(i);
+        }
+
+        model.addAttribute("givenBirthRows",         givenBirthRows);
+        model.addAttribute("givenBirthCurrentPage",  currentBirthPage);
+        model.addAttribute("givenBirthTotalPages",   totalBirthPages);
+        model.addAttribute("givenBirthTotalItems",   birthPageResult.getTotalElements());
+        model.addAttribute("givenBirthPageSize",     birthPageResult.getSize());
+        model.addAttribute("givenBirthPageNumbers",  givenBirthPageNumbers);
+
+        // ════════════════════════════════════════════════════════════════════
+        // Beneficiary + Location lookup maps for ALL 3 sections
+        // ════════════════════════════════════════════════════════════════════
+        Set<UUID> benefIds = new HashSet<>();
+        Set<UUID> locIds   = new HashSet<>();
+
+        for (PregnancyRowDTO r : pregnancyRows) {
+            if (r.getBeneficiaryId() != null) benefIds.add(r.getBeneficiaryId());
+            if (r.getLocationId()    != null) locIds.add(r.getLocationId());
+        }
+        for (PurchasedPregnancyRowDTO r : purchasedRows) {
+            if (r.getBeneficiaryId() != null) benefIds.add(r.getBeneficiaryId());
+            if (r.getLocationId()    != null) locIds.add(r.getLocationId());
+        }
+        for (Map<String, Object> r : givenBirthRows) {
+            Object bId = r.get("beneficiaryId");
+            Object lId = r.get("locationId");
+            if (bId instanceof UUID u) benefIds.add(u);
+            if (lId instanceof UUID u) locIds.add(u);
+        }
+
+        Map<UUID, Beneficiary> beneficiaryMap = benefIds.isEmpty()
+                ? Collections.emptyMap()
+                : beneficiaryRepository.findAllById(benefIds).stream()
+                .collect(Collectors.toMap(Beneficiary::getId, b -> b));
+
+        Map<UUID, LocationHierarchy> hierarchyMap = new HashMap<>();
+        for (UUID locId : locIds) {
+            locationRepository.findById(locId)
+                    .ifPresent(loc -> hierarchyMap.put(locId, LocationHierarchy.of(loc)));
+        }
+
+        model.addAttribute("beneficiaryMap", beneficiaryMap);
+        model.addAttribute("hierarchyMap",   hierarchyMap);
+
         return "livestock-pregnancy-tracking";
     }
 
     // =========================================================================
     // OTHER LIFECYCLE VIEWS
     // =========================================================================
-
     @GetMapping("/male-management")
     public String maleManagement(Model model) {
         model.addAttribute("allMales", lifecycleService.getAllMales().stream()
@@ -327,7 +417,6 @@ public class LivestockLifecycleController {
     // =========================================================================
     // REST / API ENDPOINTS
     // =========================================================================
-
     @GetMapping("/api/summary")
     @ResponseBody
     public Map<String, Object> apiSummary() {
@@ -359,7 +448,6 @@ public class LivestockLifecycleController {
     // =========================================================================
     // EMAIL TEST ENDPOINTS
     // =========================================================================
-
     @PostMapping("/test-email")
     @ResponseBody
     public Map<String, String> testEmail(@RequestParam UUID animalId) {
@@ -412,7 +500,25 @@ public class LivestockLifecycleController {
             List<Livestock> overdue = lifecycleService.getOverdue();
             if (overdue.isEmpty())
                 return Map.of("status", "info", "message", "No overdue animals found");
-            emailService.sendOverdueNotification(overdue);
+            for (Livestock animal : overdue) {
+                LivestockBreeding breeding = breedingService.getAll().stream()
+                        .filter(b -> b.getLivestock() != null
+                                && b.getLivestock().getId().equals(animal.getId())
+                                && LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (breeding != null) {
+                    long daysOverdue = 0;
+                    if (animal.getExpectedDueDate() != null) {
+                        daysOverdue = ChronoUnit.DAYS.between(animal.getExpectedDueDate(), LocalDate.now());
+                    }
+                    int tier = lifecycleService.overdueTierCrossed(daysOverdue);
+                    emailService.sendOverduePregnancyNotification(breeding, (int) daysOverdue, tier);
+                } else {
+                    logger.warn("No breeding record found for overdue animal: {}", animal.getTagNumber());
+                }
+            }
             return Map.of("status", "success",
                     "message", "Overdue notification sent for " + overdue.size() + " animals");
         } catch (Exception e) {
@@ -474,6 +580,8 @@ public class LivestockLifecycleController {
     // =========================================================================
     // HELPER METHODS
     // =========================================================================
+    private static final org.slf4j.Logger logger =
+            org.slf4j.LoggerFactory.getLogger(LivestockLifecycleController.class);
 
     private Map<String, Object> enrichAnimalData(Livestock animal) {
         Map<String, Object> data = new LinkedHashMap<>();
@@ -501,8 +609,9 @@ public class LivestockLifecycleController {
         }
 
         List<Livestock> offspring = lifecycleService.getOffspring(animal.getId());
-        data.put("offspring",      offspring);
-        data.put("offspringTotal", offspring.size());
+        data.put("offspring", offspring);
+        data.put("offspringTotal", offspring != null ? offspring.size() : 0);
+
         return data;
     }
 
@@ -541,5 +650,41 @@ public class LivestockLifecycleController {
         d.put("MALE",   (long) lifecycleService.getAllMales().size());
         d.put("FEMALE", (long) lifecycleService.getAllFemales().size());
         return d;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ✅ NEW — Nested helper: location hierarchy resolved from a leaf Location
+    // ══════════════════════════════════════════════════════════════════
+    public record LocationHierarchy(
+            String province, String district, String sector,
+            String cell, String village) {
+
+        public static LocationHierarchy of(Location leaf) {
+            String province = null, district = null, sector = null, cell = null, village = null;
+            Location cur = leaf;
+            while (cur != null) {
+                String type = cur.getLocationType() == null ? "" : cur.getLocationType().toUpperCase();
+                switch (type) {
+                    case "PROVINCE" -> province = cur.getName();
+                    case "DISTRICT" -> district = cur.getName();
+                    case "SECTOR"   -> sector   = cur.getName();
+                    case "CELL"     -> cell     = cur.getName();
+                    case "VILLAGE"  -> village  = cur.getName();
+                }
+                cur = cur.getParent();
+            }
+            return new LocationHierarchy(province, district, sector, cell, village);
+        }
+
+        public String getDisplay() {
+            StringBuilder sb = new StringBuilder();
+            if (village  != null) sb.append(village).append(", ");
+            if (cell     != null) sb.append(cell).append(", ");
+            if (sector   != null) sb.append(sector).append(", ");
+            if (district != null) sb.append(district).append(", ");
+            if (province != null) sb.append(province);
+            String out = sb.toString();
+            return out.endsWith(", ") ? out.substring(0, out.length() - 2) : out;
+        }
     }
 }

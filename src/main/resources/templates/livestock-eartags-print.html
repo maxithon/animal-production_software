@@ -5,13 +5,11 @@
     <title>Print Ear Tags</title>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        /* ── Screen styles ─────────────────────────────────────────── */
         :root {
             --tag-w: 85mm;
             --tag-h: 45mm;
             --tag-bg: #ffffff;
             --accent: #1a5f7a;
-            --accent2: #10b981;
             --text-dark: #0f172a;
             --text-mid: #475569;
             --border: #e2e8f0;
@@ -26,7 +24,6 @@
             color: var(--text-dark);
         }
 
-        /* ── Toolbar (hidden on print) ────────────────────────────── */
         .toolbar {
             background: white;
             border-radius: 12px;
@@ -108,7 +105,6 @@
         }
         .layout-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* ── Tag grid ─────────────────────────────────────────────── */
         .tags-grid {
             display: flex;
             flex-wrap: wrap;
@@ -118,7 +114,6 @@
         .tags-grid.layout-2col { max-width: 200mm; margin: 0 auto; }
         .tags-grid.layout-3col { max-width: 300mm; margin: 0 auto; }
 
-        /* ── Individual ear tag ───────────────────────────────────── */
         .ear-tag {
             width: var(--tag-w);
             height: var(--tag-h);
@@ -133,7 +128,6 @@
             page-break-inside: avoid;
         }
 
-        /* Top colored header band */
         .tag-header {
             background: linear-gradient(135deg, var(--accent) 0%, #2e8b9e 100%);
             padding: 4px 8px 4px 10px;
@@ -144,8 +138,7 @@
         }
         .tag-header.status-sold     { background: linear-gradient(135deg, #dc2626, #b91c1c); }
         .tag-header.status-dead     { background: linear-gradient(135deg, #475569, #334155); }
-        .tag-header.status-sick     { background: linear-gradient(135deg, #d97706, #b45309); }
-        .tag-header.status-pregnant { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+        .tag-header.status-transferred { background: linear-gradient(135deg, #4338ca, #3730a3); }
 
         .tag-number {
             font-family: 'DM Mono', monospace;
@@ -165,7 +158,6 @@
             letter-spacing: 0.08em;
         }
 
-        /* Body area */
         .tag-body {
             display: flex;
             flex: 1;
@@ -211,7 +203,16 @@
             font-weight: 800;
         }
 
-        /* QR code side */
+        .health-badge {
+            font-size: 5.5pt;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+        }
+        .health-HEALTHY         { background: #d1fae5; color: #065f46; }
+        .health-SICK             { background: #fee2e2; color: #991b1b; }
+        .health-UNDER_TREATMENT  { background: #fef9c3; color: #854d0e; }
+
         .tag-qr {
             display: flex;
             flex-direction: column;
@@ -235,7 +236,6 @@
             text-align: center;
         }
 
-        /* Bottom strip */
         .tag-footer {
             background: #f8fafc;
             border-top: 1px solid var(--border);
@@ -257,7 +257,6 @@
             color: var(--text-mid);
         }
 
-        /* Gender icon */
         .gender-dot {
             display: inline-block;
             width: 7px;
@@ -270,7 +269,6 @@
         .gender-dot.male   { background: #3b82f6; }
         .gender-dot.female { background: #ec4899; }
 
-        /* Punch hole indicator */
         .punch-hole {
             position: absolute;
             top: 50%;
@@ -283,7 +281,6 @@
             border: 1.5px dashed var(--accent);
         }
 
-        /* ── Empty state ─────────────────────────────────────────── */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -291,7 +288,6 @@
         }
         .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
 
-        /* ── Print media ──────────────────────────────────────────── */
         @media print {
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             body { background: white; padding: 5mm; }
@@ -307,7 +303,6 @@
 </head>
 <body>
 
-<!-- ── Toolbar ── -->
 <div class="toolbar" id="toolbar">
     <div class="toolbar-title">
         🏷️ Livestock Ear Tags
@@ -327,49 +322,38 @@
     </div>
 </div>
 
-<!-- ── Tags Grid ── -->
 <div class="tags-grid layout-2col" id="tagsGrid">
 
-    <!-- Empty state -->
     <div th:if="${animals == null or animals.empty}" class="empty-state" style="width:100%;">
         <span style="font-size:3rem;display:block;margin-bottom:12px;">🏷️</span>
         <p>No animals selected for printing.</p>
         <a href="/livestock/list" style="color:#1a5f7a;font-weight:700;margin-top:12px;display:inline-block;">← Back to Livestock List</a>
     </div>
 
-    <!-- Each ear tag -->
     <div class="ear-tag"
          th:each="animal : ${animals}"
          th:classappend="${animal.status == 'SOLD'} ? ' sold' :
-                        (${animal.status == 'DEAD'} ? ' dead' :
-                        (${animal.status == 'SICK'} ? ' sick' : ''))">
+                        (${animal.status == 'DEAD'} ? ' dead' : '')">
 
-        <!-- Punch hole -->
         <div class="punch-hole"></div>
 
-        <!-- Header -->
         <div class="tag-header"
              th:classappend="${animal.status == 'SOLD'}     ? ' status-sold'     :
                              (${animal.status == 'DEAD'}     ? ' status-dead'     :
-                             (${animal.status == 'SICK'}     ? ' status-sick'     :
-                             (${animal.status == 'PREGNANT'} ? ' status-pregnant' : '')))">
+                             (${animal.status == 'TRANSFERRED'} ? ' status-transferred' : ''))">
             <span class="tag-number" th:text="${animal.tagNumber}">TAG-001</span>
             <span class="tag-status-pill" th:text="${animal.status != null ? animal.status : 'ACTIVE'}">ACTIVE</span>
         </div>
 
-        <!-- Body -->
         <div class="tag-body">
 
-            <!-- Info block -->
             <div class="tag-info">
-                <!-- Category / Type -->
                 <div class="info-row">
                     <span class="info-label">Type</span>
                     <span class="info-value large"
                           th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : 'N/A'}">Cattle</span>
                 </div>
 
-                <!-- Gender -->
                 <div class="info-row">
                     <span class="info-label">Sex</span>
                     <span class="info-value">
@@ -380,7 +364,12 @@
                     </span>
                 </div>
 
-                <!-- Owner -->
+                <div class="info-row">
+                    <span class="info-label">Health</span>
+                    <span class="health-badge" th:classappend="'health-' + ${animal.healthStatus}"
+                          th:text="${animal.healthStatusLabel()}">Healthy</span>
+                </div>
+
                 <div class="info-row">
                     <span class="info-label">Owner</span>
                     <span class="info-value"
@@ -389,29 +378,19 @@
                             'Unassigned'}">John Doe</span>
                 </div>
 
-                <!-- Location -->
                 <div class="info-row">
                     <span class="info-label">Loc.</span>
                     <span class="info-value"
                           th:text="${animal.location != null ? animal.location.name : 'N/A'}">Sector A</span>
                 </div>
 
-                <!-- Date received -->
                 <div class="info-row">
                     <span class="info-label">Date</span>
                     <span class="info-value"
                           th:text="${animal.dateReceived != null ? #temporals.format(animal.dateReceived, 'dd/MM/yyyy') : '—'}">01/01/2024</span>
                 </div>
-
-                <!-- Value -->
-                <div class="info-row" th:if="${animal.currentValue != null}">
-                    <span class="info-label">Val.</span>
-                    <span class="info-value"
-                          th:text="${#numbers.formatDecimal(animal.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}">50,000 RWF</span>
-                </div>
             </div>
 
-            <!-- QR Code -->
             <div class="tag-qr">
                 <img th:src="@{/livestock/qr/image/{id}(id=${animal.id}, size=120)}"
                      alt="QR Code"
@@ -421,7 +400,6 @@
 
         </div>
 
-        <!-- Footer -->
         <div class="tag-footer">
             <span class="footer-farm">🐄 Animal Production System</span>
             <span class="footer-id"
@@ -432,16 +410,15 @@
 </div>
 
 <script>
-function setLayout(cols, btn) {
-    const grid = document.getElementById('tagsGrid');
-    grid.className = 'tags-grid layout-' + cols + 'col';
-    document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    function setLayout(cols, btn) {
+        const grid = document.getElementById('tagsGrid');
+        grid.className = 'tags-grid layout-' + cols + 'col';
+        document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-    // Adjust CSS variable based on columns
-    const colWidth = { 2: '85mm', 3: '82mm', 4: '78mm' };
-    document.documentElement.style.setProperty('--tag-w', colWidth[cols] || '85mm');
-}
+        const colWidth = { 2: '85mm', 3: '82mm', 4: '78mm' };
+        document.documentElement.style.setProperty('--tag-w', colWidth[cols] || '85mm');
+    }
 </script>
 </body>
 </html>

@@ -28,7 +28,6 @@
             margin: 0;
         }
 
-        /* ── TOP BAR ── */
         .top-bar {
             background: var(--surface);
             border-bottom: 1px solid var(--border);
@@ -70,12 +69,7 @@
         }
         .btn-cancel:hover { border-color: #94a3b8; color: var(--text); }
 
-        /* ── LAYOUT ── */
         .page-body { max-width: 1280px; margin: 32px auto; padding: 0 20px 60px; }
-
-        .page-intro { margin-bottom: 20px; }
-        .page-intro h4 { margin: 0 0 2px; font-weight: 700; font-size: 1.15rem; }
-        .page-intro p { margin: 0; color: var(--muted); font-size: 0.85rem; }
 
         .alert-banner {
             border-radius: 10px; padding: 14px 18px;
@@ -91,7 +85,6 @@
         }
         .alert-banner .close-x:hover { opacity: 1; }
 
-        /* ── CARD / TABLE ── */
         .form-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -141,14 +134,12 @@
 
         .row-idx { color: var(--muted); font-size: 0.8rem; }
 
-        /* ── EMPTY STATE ── */
         .empty-state { padding: 60px 20px; text-align: center; color: var(--muted); }
         .empty-state i { font-size: 2.4rem; display: block; margin-bottom: 12px; color: #cbd5e1; }
         .empty-state p { margin: 0 0 4px; font-size: 0.92rem; font-weight: 600; color: var(--text); }
         .empty-state a { color: var(--primary-d); text-decoration: none; font-weight: 600; }
         .empty-state a:hover { text-decoration: underline; }
 
-        /* ── PAGINATION ── */
         .pagination-bar {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px 24px; border-top: 1px solid var(--border);
@@ -163,7 +154,6 @@
         .page-item.active .page-link { background: var(--primary); border-color: var(--primary); }
         .page-link:hover { background: var(--primary-bg); border-color: var(--primary); color: var(--primary-d); }
 
-        /* ── DELETE MODAL ── */
         .modal-content { border-radius: 14px; border: none; }
         .modal-header { border-bottom: 1px solid var(--border); }
         .modal-footer { border-top: 1px solid var(--border); }
@@ -194,13 +184,13 @@
         </div>
     </div>
     <div class="d-flex gap-2">
-        <a href="/livestock/breeding" class="btn-cancel">
+        <a th:href="@{/livestock/breeding/dashboard}" class="btn-cancel">
             <i class="bi bi-speedometer2"></i> Dashboard
         </a>
         <a href="/livestock/list" class="btn-cancel">
             <i class="bi bi-arrow-left"></i> Back to Livestock
         </a>
-        <a href="/livestock/breeding/register" class="btn-primary-brand">
+        <a th:href="@{/livestock/breeding/form}" class="btn-primary-brand">
             <i class="bi bi-plus-circle"></i> Record Breeding
         </a>
     </div>
@@ -242,14 +232,13 @@
                         <div class="empty-state">
                             <i class="bi bi-inbox"></i>
                             <p>No breeding records yet.</p>
-                            <a href="/livestock/breeding/register">Record the first one →</a>
+                            <a th:href="@{/livestock/breeding/form}">Record the first one →</a>
                         </div>
                     </td>
                 </tr>
                 <tr th:each="b, i : ${breedings}">
                     <td class="row-idx" th:text="${(currentPage * pageSize) + i.count}"></td>
 
-                    <!-- Female animal -->
                     <td>
                         <strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong>
                         <div th:if="${b.livestock?.livestockCategory != null}" class="mt-1">
@@ -257,76 +246,54 @@
                         </div>
                     </td>
 
-                    <!-- Breeding date -->
-                    <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate, 'dd-MM-yyyy') : '—'}"></td>
 
-                    <!-- Method -->
                     <td>
-                        <span th:if="${b.breedingMethod == 'NATURAL'}"
-                              class="badge-soft method-natural">Natural</span>
-                        <span th:if="${b.breedingMethod == 'ARTIFICIAL_INSEMINATION'}"
-                              class="badge-soft method-ai">AI</span>
-                        <span th:if="${b.breedingMethod == 'EMBRYO_TRANSFER'}"
-                              class="badge-soft method-embryo">Embryo</span>
-                        <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}"
-                              class="badge-soft method-purchased">
+                        <span th:if="${b.breedingMethod == 'NATURAL'}" class="badge-soft method-natural">Natural</span>
+                        <span th:if="${b.breedingMethod == 'ARTIFICIAL_INSEMINATION'}" class="badge-soft method-ai">AI</span>
+                        <span th:if="${b.breedingMethod == 'EMBRYO_TRANSFER'}" class="badge-soft method-embryo">Embryo</span>
+                        <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}" class="badge-soft method-purchased">
                             <i class="bi bi-shop me-1"></i>Purchased Pregnant
                         </span>
                         <span th:if="${b.breedingMethod == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- Male animal -->
                     <td>
-                        <span th:if="${b.maleLivestock != null}"
-                              th:text="${b.maleLivestock.tagNumber}"></span>
+                        <span th:if="${b.maleLivestock != null}" th:text="${b.maleLivestock.tagNumber}"></span>
                         <span th:if="${b.maleLivestock == null}" class="text-muted">
                             <span th:if="${b.breedingMethod == 'PURCHASE_PREGNANT'}">N/A</span>
                             <span th:if="${b.breedingMethod != 'PURCHASE_PREGNANT'}">—</span>
                         </span>
                     </td>
 
-                    <!-- Status -->
                     <td>
-                        <span th:if="${b.status == 'PENDING'}"
-                              class="badge-soft badge-pending">Pending</span>
-                        <span th:if="${b.status == 'CONFIRMED_PREGNANT'}"
-                              class="badge-soft badge-confirmed">Confirmed Pregnant</span>
-                        <span th:if="${b.status == 'FAILED'}"
-                              class="badge-soft badge-failed">Failed</span>
-                        <span th:if="${b.status == 'COMPLETED'}"
-                              class="badge-soft badge-completed">Completed</span>
+                        <span th:if="${b.status == 'PENDING'}" class="badge-soft badge-pending">Pending</span>
+                        <span th:if="${b.status == 'CONFIRMED_PREGNANT'}" class="badge-soft badge-confirmed">Confirmed Pregnant</span>
+                        <span th:if="${b.status == 'FAILED'}" class="badge-soft badge-failed">Failed</span>
+                        <span th:if="${b.status == 'COMPLETED'}" class="badge-soft badge-completed">Completed</span>
                     </td>
 
-                    <!-- Pregnancy check date -->
                     <td>
-                        <span th:if="${b.expectedPregnancyCheckDate != null}"
-                              th:text="${#temporals.format(b.expectedPregnancyCheckDate, 'dd-MM-yyyy')}"></span>
+                        <span th:if="${b.expectedPregnancyCheckDate != null}" th:text="${#temporals.format(b.expectedPregnancyCheckDate, 'dd-MM-yyyy')}"></span>
                         <span th:if="${b.expectedPregnancyCheckDate == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- Expected due date -->
                     <td>
-                        <span th:if="${b.expectedDueDate != null}"
-                              th:text="${#temporals.format(b.expectedDueDate, 'dd-MM-yyyy')}"></span>
+                        <span th:if="${b.expectedDueDate != null}" th:text="${#temporals.format(b.expectedDueDate, 'dd-MM-yyyy')}"></span>
                         <span th:if="${b.expectedDueDate == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- Veterinarian -->
                     <td>
-                        <span th:if="${b.veterinarian != null}"
-                              th:text="${b.veterinarian.firstName + ' ' + b.veterinarian.lastName}"></span>
+                        <span th:if="${b.veterinarian != null}" th:text="${b.veterinarian.firstName + ' ' + b.veterinarian.lastName}"></span>
                         <span th:if="${b.veterinarian == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- Actions -->
                     <td>
                         <div class="d-flex gap-1">
-                            <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}"
-                               class="btn-row-action" title="View">
+                            <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn-row-action" title="View">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}"
-                               class="btn-row-action" title="Edit">
+                            <a th:href="@{/livestock/breeding/form(id=${b.id})}" class="btn-row-action" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                             <button class="btn-row-action danger" title="Delete"
@@ -336,7 +303,6 @@
                             </button>
                         </div>
 
-                        <!-- Delete confirmation modal -->
                         <div class="modal fade" th:id="'delModal' + ${b.id}" tabindex="-1">
                             <div class="modal-dialog modal-sm">
                                 <div class="modal-content">
@@ -348,7 +314,7 @@
                                     </div>
                                     <div class="modal-body small">
                                         Delete breeding record dated
-                                        <strong th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></strong>?
+                                        <strong th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate, 'dd-MM-yyyy') : ''}"></strong>?
                                     </div>
                                     <div class="modal-footer">
                                         <button class="btn-cancel-modal" data-bs-dismiss="modal">Cancel</button>
@@ -366,7 +332,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
         <div class="pagination-bar" th:if="${totalPages > 1}">
             <span>
                 Showing page <strong th:text="${currentPage + 1}"></strong>
@@ -376,20 +341,16 @@
             <nav>
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/livestock/breeding/list(page=${currentPage - 1}, size=${pageSize})}">
+                        <a class="page-link" th:href="@{/livestock/breeding/list(page=${currentPage - 1}, size=${pageSize})}">
                             <i class="bi bi-chevron-left"></i>
                         </a>
                     </li>
                     <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                         class="page-item" th:classappend="${i == currentPage} ? 'active'">
-                        <a class="page-link"
-                           th:href="@{/livestock/breeding/list(page=${i}, size=${pageSize})}"
-                           th:text="${i + 1}"></a>
+                        <a class="page-link" th:href="@{/livestock/breeding/list(page=${i}, size=${pageSize})}" th:text="${i + 1}"></a>
                     </li>
                     <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/livestock/breeding/list(page=${currentPage + 1}, size=${pageSize})}">
+                        <a class="page-link" th:href="@{/livestock/breeding/list(page=${currentPage + 1}, size=${pageSize})}">
                             <i class="bi bi-chevron-right"></i>
                         </a>
                     </li>

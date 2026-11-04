@@ -110,7 +110,9 @@ public class LivestockSickService {
                                 " has already been SOLD. Cannot record a sick event for a sold animal.");
             }
 
-            animal.setStatus(Livestock.STATUS_SICK);
+            // Sickness is tracked via healthStatus, not status — status only
+            // covers ACTIVE/SOLD/DEAD/TRANSFERRED and is independent of health.
+            animal.setHealthStatus(Livestock.HEALTH_SICK);
             livestockRepository.save(animal);
         }
 
@@ -173,15 +175,16 @@ public class LivestockSickService {
 
         if (newAnimal != null) {
             if (LivestockSick.SickStatus.RECOVERED.equals(existing.getStatus())) {
-                newAnimal.setStatus(Livestock.STATUS_ACTIVE);
+                // Recovery only affects health, not the animal's ACTIVE/SOLD/DEAD/TRANSFERRED status.
+                newAnimal.setHealthStatus(Livestock.HEALTH_HEALTHY);
             } else if (oldAnimal != null && !oldAnimal.getId().equals(newAnimal.getId())) {
-                oldAnimal.setStatus(Livestock.STATUS_ACTIVE);
+                oldAnimal.setHealthStatus(Livestock.HEALTH_HEALTHY);
                 livestockRepository.save(oldAnimal);
-                newAnimal.setStatus(Livestock.STATUS_SICK);
+                newAnimal.setHealthStatus(Livestock.HEALTH_SICK);
             } else {
                 if (!Livestock.STATUS_DEAD.equals(newAnimal.getStatus())
                         && !STATUS_SOLD.equals(newAnimal.getStatus())) {
-                    newAnimal.setStatus(Livestock.STATUS_SICK);
+                    newAnimal.setHealthStatus(Livestock.HEALTH_SICK);
                 }
             }
             livestockRepository.save(newAnimal);
@@ -238,7 +241,7 @@ public class LivestockSickService {
                 sick.setRecoveryDate(java.time.LocalDate.now());
             }
             if (sick.getLivestock() != null) {
-                sick.getLivestock().setStatus(Livestock.STATUS_ACTIVE);
+                sick.getLivestock().setHealthStatus(Livestock.HEALTH_HEALTHY);
                 livestockRepository.save(sick.getLivestock());
             }
         }
@@ -294,8 +297,8 @@ public class LivestockSickService {
 
         if (sick.getLivestock() != null) {
             Livestock animal = sick.getLivestock();
-            if (Livestock.STATUS_SICK.equals(animal.getStatus())) {
-                animal.setStatus(Livestock.STATUS_ACTIVE);
+            if (Livestock.HEALTH_SICK.equals(animal.getHealthStatus())) {
+                animal.setHealthStatus(Livestock.HEALTH_HEALTHY);
                 livestockRepository.save(animal);
             }
         }

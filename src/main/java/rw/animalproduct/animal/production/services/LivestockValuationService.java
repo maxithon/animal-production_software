@@ -1,8 +1,7 @@
 package rw.animalproduct.animal.production.services;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.Livestock;
@@ -12,162 +11,118 @@ import rw.animalproduct.animal.production.repository.LivestockValuationRepositor
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-/**
- * Owns every read and write of livestock valuation data.
- *
- * FAO standard implemented here:
- *   - An animal's value is never edited in place.
- *   - Every valuation event is appended as a new, immutable history row.
- *   - Livestock.currentValue is refreshed as a read-only cache pointing at
- *     the most recent valuation by date — never set directly anywhere else
- *     in the codebase.
- *
- * NEW: every valuation change is now (a) written to the audit log AND
- * (b) emailed to the notification address, mirroring how newborn
- * registrations already trigger an email via LifecycleEmailService.
- */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class LivestockValuationService {
-
-    private static final Logger log = LoggerFactory.getLogger(LivestockValuationService.class);
 
     private final LivestockValuationRepository valuationRepository;
     private final LivestockRepository livestockRepository;
-    private final AuditLogService auditLogService;
-    private final LifecycleEmailService emailService; // NEW
-
-    @Autowired
-    public LivestockValuationService(LivestockValuationRepository valuationRepository,
-                                     LivestockRepository livestockRepository,
-                                     AuditLogService auditLogService,
-                                     LifecycleEmailService emailService) { // NEW param
-        this.valuationRepository = valuationRepository;
-        this.livestockRepository = livestockRepository;
-        this.auditLogService = auditLogService;
-        this.emailService = emailService;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // WRITE — the only correct path for changing an animal's value
-    // ─────────────────────────────────────────────────────────────────────────
+    private final LifecycleEmailService emailService;
 
     @Transactional
-    public LivestockValuation recordValuation(UUID livestockId,
-                                              LocalDate valuationDate,
-                                              BigDecimal value,
-                                              String method,
-                                              String notes,
-                                              String recordedBy) {
+    public LivestockValuation recordValuation(UUID livestockId, LocalDate valuationDate,
+                                              BigDecimal estimatedValue, String valuationMethod,
+                                              String notes, String valuedBy) {
         Livestock livestock = livestockRepository.findById(livestockId)
                 .orElseThrow(() -> new RuntimeException("Livestock not found: " + livestockId));
 
-        if (value == null || value.signum() < 0) {
-            throw new IllegalArgumentException("Valuation amount must be zero or positive");
-        }
-        if (method == null || method.isBlank()) {
-            throw new IllegalArgumentException("Valuation method is required");
-        }
         if (valuationDate == null) {
             valuationDate = LocalDate.now();
         }
-        if (valuationDate.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Valuation date cannot be in the future");
-        }
 
-        BigDecimal previousValue = livestock.getCurrentValue();
+        Double oldValue = valuationRepository
+                .findFirstByLivestockIdOrderByValuationDateDesc(livestockId)
+                .map(LivestockValuation::getEstimatedValue)
+                .orElse(null);
 
-        LivestockValuation entry = new LivestockValuation(
-                livestock, valuationDate, value, method, notes, recordedBy);
-        valuationRepository.save(entry);
+        LivestockValuation valuation = new LivestockValuation(
+                livestock,
+                valuationDate,
+                estimatedValue,
+                valuationMethod,
+                notes,
+                valuedBy != null ? valuedBy : "system"
+        );
 
-        // Refresh the cached "current" figure only from whatever is now the
-        // most recent valuation chronologically. This protects the cache from
-        // being clobbered by a back-dated entry that isn't actually the latest.
-        Optional<LivestockValuation> latest = valuationRepository.findLatestForLivestock(livestockId);
-        latest.ifPresent(l -> {
-            livestock.setCurrentValue(l.getValue());
+        LivestockValuation saved = valuationRepository.save(valuation);
+        log.info("✅ Saved valuation id={} for livestock {} value={} (was {})",
+                saved.getId(), livestockId, estimatedValue, oldValue);
+
+        if (estimatedValue != null) {
+            livestock.setCurrentValue(estimatedValue);
             livestockRepository.save(livestock);
-        });
-
-        auditLogService.log(
-                "livestock_valuation",
-                livestockId,
-                "VALUATION_RECORDED",
-                recordedBy,
-                previousValue != null ? previousValue.toString() : "none",
-                value.toString(),
-                "Valuation recorded via " + method + (notes != null && !notes.isBlank() ? " — " + notes : "")
-        );
-
-        // NEW: email notification, same pattern as newborn/lifecycle emails.
-        // Wrapped in try/catch so a mail server hiccup never rolls back a
-        // valid valuation entry.
-        try {
-            emailService.sendValuationChangedNotification(livestock, previousValue, value, method, notes);
-        } catch (Exception e) {
-            log.error("❌ Failed to send valuation-changed email for {}: {}",
-                    livestock.getTagNumber(), e.getMessage());
         }
 
-        return entry;
+        try {
+            emailService.sendValuationChangedNotification(saved, oldValue);
+        } catch (Exception e) {
+            log.warn("Failed to send valuation email for {}: {}", livestockId, e.getMessage());
+        }
+
+        return saved;
     }
 
-    /**
-     * Convenience wrapper used at registration time — records the animal's
-     * very first (INITIAL) valuation. Called once, right after the Livestock
-     * row itself has been persisted.
-     */
     @Transactional
-    public void recordInitialValuation(Livestock livestock, BigDecimal value, String recordedBy) {
-        if (value == null) return;
-        LocalDate initialDate = livestock.getDateReceived() != null
-                ? livestock.getDateReceived()
-                : LocalDate.now();
-        recordValuation(
-                livestock.getId(),
-                initialDate,
-                value,
-                LivestockValuation.METHOD_INITIAL,
-                "Initial valuation at registration",
-                recordedBy
-        );
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // READ
-    // ─────────────────────────────────────────────────────────────────────────
-
-    public List<LivestockValuation> getHistory(UUID livestockId) {
-        return valuationRepository.findHistoryForLivestock(livestockId);
+    public LivestockValuation recordValuation(UUID livestockId, LocalDate valuationDate,
+                                              Double estimatedValue, String valuationMethod,
+                                              String notes, String valuedBy) {
+        BigDecimal value = estimatedValue != null ? BigDecimal.valueOf(estimatedValue) : null;
+        return recordValuation(livestockId, valuationDate, value, valuationMethod, notes, valuedBy);
     }
 
     public Optional<LivestockValuation> getLatest(UUID livestockId) {
-        return valuationRepository.findLatestForLivestock(livestockId);
+        return valuationRepository.findFirstByLivestockIdOrderByValuationDateDesc(livestockId);
     }
 
-    public long countValuations(UUID livestockId) {
-        return valuationRepository.countByLivestockId(livestockId);
-    }
-
-    public Map<UUID, LivestockValuation> getLatestForIds(List<UUID> livestockIds) {
-        if (livestockIds == null || livestockIds.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        List<LivestockValuation> rows = valuationRepository.findLatestValuationsForLivestockIds(livestockIds);
-        return rows.stream()
-                .collect(Collectors.toMap(v -> v.getLivestock().getId(), v -> v));
+    public List<LivestockValuation> getHistory(UUID livestockId) {
+        return valuationRepository.findByLivestockIdOrderByValuationDateDesc(livestockId);
     }
 
     public BigDecimal changeSincePrevious(UUID livestockId) {
         List<LivestockValuation> history = getHistory(livestockId);
         if (history.size() < 2) return BigDecimal.ZERO;
-        return history.get(0).getValue().subtract(history.get(1).getValue());
+        LivestockValuation latest = history.get(0);
+        LivestockValuation previous = history.get(1);
+        if (latest.getEstimatedValue() == null || previous.getEstimatedValue() == null) {
+            return BigDecimal.ZERO;
+        }
+        return BigDecimal.valueOf(latest.getEstimatedValue() - previous.getEstimatedValue());
+    }
+
+    public Double getTotalLivestockValue() {
+        Double total = valuationRepository.getTotalLivestockValue();
+        return total != null ? total : 0.0;
+    }
+
+    public Double getCurrentValue(UUID livestockId) {
+        return getLatest(livestockId).map(LivestockValuation::getEstimatedValue).orElse(null);
+    }
+
+    @Transactional
+    public void softDelete(UUID valuationId, String deletedBy) {
+        LivestockValuation v = valuationRepository.findById(valuationId)
+                .orElseThrow(() -> new RuntimeException("Valuation not found: " + valuationId));
+        v.softDelete(deletedBy);
+        valuationRepository.save(v);
+    }
+
+    @Transactional
+    public void restore(UUID valuationId) {
+        LivestockValuation v = valuationRepository.findById(valuationId)
+                .orElseThrow(() -> new RuntimeException("Valuation not found: " + valuationId));
+        v.restore();
+        valuationRepository.save(v);
+    }
+
+    @Transactional
+    public void hardDelete(UUID valuationId) {
+        LivestockValuation v = valuationRepository.findById(valuationId)
+                .orElseThrow(() -> new RuntimeException("Valuation not found: " + valuationId));
+        valuationRepository.delete(v);
     }
 }

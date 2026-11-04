@@ -21,13 +21,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Serves /livestock/medication-usage-report — the HTML dashboard.
- *
- * MedicationUsageController is a @RestController under /api/medication-usage
- * and only returns JSON, so nothing was mapped to this page URL, which is why
- * it 404'd as a missing static resource.
- */
 @Controller
 @RequestMapping("/livestock")
 public class MedicationUsageReportController {
@@ -47,8 +40,8 @@ public class MedicationUsageReportController {
         LocalDate fromDate = (from != null) ? from : LocalDate.now().minusDays(30);
         LocalDate toDate = (to != null) ? to : LocalDate.now();
 
-        List<LivestockTreatment> treatments =
-                livestockTreatmentRepository.findByTreatmentDateBetweenAndIsDeletedFalse(fromDate, toDate);
+        // ✅ FIXED: Use the existing method findByTreatmentDateBetween (already filters isDeleted = false)
+        List<LivestockTreatment> treatments = livestockTreatmentRepository.findByTreatmentDateBetween(fromDate, toDate);
 
         MedicationUsageReportDto report = buildReport(treatments, fromDate, toDate);
 
@@ -112,8 +105,7 @@ public class MedicationUsageReportController {
             spendByCategory.merge(categoryName, medicationTotalCost, BigDecimal::add);
         }
 
-        // Sort rows by total cost descending, so the "Top Medications" chart
-        // and table show the highest-spend items first.
+        // Sort rows by total cost descending
         rows.sort((a, b) -> b.getTotalCost().compareTo(a.getTotalCost()));
 
         report.setTotalSpend(totalSpend);

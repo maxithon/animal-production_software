@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upcoming Births Report</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <!-- html2pdf library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        :root {
+            --bg: #f4f7f6;
+            --surface: #ffffff;
+            --text: #0f1a18;
+            --text-muted: #5f6e6a;
+            --border: #e2e8e5;
+            --purple: #6d28d9;
+            --purple-bg: #eeebff;
+            --amber: #b45309;
+            --amber-bg: #fffbeb;
+            --red: #b91c1c;
+            --red-bg: #fef2f2;
+            --red-border: #fecaca;
+            --green: #15803d;
+            --green-bg: #dcfce7;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-hover: 0 4px 16px rgba(0,0,0,0.08);
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 15px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container-fluid { max-width: 1440px; padding: 24px 32px; }
+
+        /* HEADER */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .report-header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .report-header h1 i { color: var(--purple); }
+        .report-header .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 2px;
+        }
+        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .header-actions .btn {
+            font-size: 0.8rem;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* KPI GRID - ICON + NUMBER ON SAME ROW */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        @media (max-width: 1100px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 680px) { .kpi-grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 460px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 16px 12px;
+            box-shadow: var(--shadow);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .kpi-card.accent-purple::before { background: var(--purple); }
+        .kpi-card.accent-amber::before { background: var(--amber); }
+        .kpi-card.accent-green::before { background: var(--green); }
+        .kpi-card.accent-red::before { background: var(--red); }
+
+        /* Icon + Number row */
+        .kpi-card .kpi-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .kpi-card .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .kpi-card .number {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .kpi-card .label {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 4px;
+        }
+        .kpi-card .sub {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+        }
+        .kpi-card .category-breakdown {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px 14px;
+        }
+        .kpi-card .category-breakdown .cat-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .kpi-card .category-breakdown .cat-item .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        .kpi-card .category-breakdown .cat-item .dot.cow { background: #65a30d; }
+        .kpi-card .category-breakdown .cat-item .dot.goat { background: #0891b2; }
+        .kpi-card .category-breakdown .cat-item .dot.pig { background: #db2777; }
+        .kpi-card .category-breakdown .cat-item .count {
+            font-weight: 700;
+            color: var(--text);
+        }
+        .kpi-card .category-breakdown .cat-item .count.overdue {
+            color: var(--red);
+        }
+
+        .kpi-card.alert {
+            border-color: var(--red-border);
+            background: #fefaf9;
+        }
+
+        .icon--purple { background: var(--purple-bg); color: var(--purple); }
+        .icon--amber  { background: var(--amber-bg); color: var(--amber); }
+        .icon--red    { background: var(--red-bg); color: var(--red); }
+        .icon--green  { background: var(--green-bg); color: var(--green); }
+
+        .scope-note {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            background: var(--surface);
+            padding: 6px 18px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0 20px;
+        }
+        .scope-note i { color: var(--purple); }
+
+        /* TABLE CARD */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+        }
+        .table-card .card-header {
+            padding: 12px 18px;
+            background: #fafcfb;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .table-card .card-header i { color: var(--purple); }
+
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .breakdown-table thead th {
+            background: #f8faf9;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 8px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .breakdown-table thead th.text-end,
+        .breakdown-table tbody td.text-end {
+            text-align: right;
+        }
+        .breakdown-table tbody td {
+            padding: 8px 14px;
+            border-top: 1px solid var(--border);
+        }
+        .breakdown-table tbody td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        .breakdown-table .cat-tag {
+            display: inline-block;
+            background: var(--purple-bg);
+            color: var(--purple);
+            border: 1px solid #d5ccfa;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .breakdown-table .cat-tag.cow { background: #ecfccb; color: #4d7c0f; border-color: #d9f99d; }
+        .breakdown-table .cat-tag.goat { background: #cffafe; color: #0e7490; border-color: #a5f3fc; }
+        .breakdown-table .cat-tag.pig { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+        .breakdown-table .total-row td {
+            border-top: 2px solid var(--text);
+            background: #fafcfb;
+            font-weight: 600;
+            padding: 10px 14px;
+        }
+        .breakdown-table .total-row td.num { text-align: right; }
+        .breakdown-table .has-overdue { color: var(--red); font-weight: 700; }
+
+        /* FILTER BAR */
+        .filter-bar {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            box-shadow: var(--shadow);
+            margin-bottom: 6px;
+        }
+        .filter-bar .form-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+        .filter-bar .form-control,
+        .filter-bar .form-select {
+            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            border-color: var(--border);
+            padding: 5px 10px;
+            height: 36px;
+        }
+        .filter-bar .form-control:focus,
+        .filter-bar .form-select:focus {
+            border-color: var(--purple);
+            box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.12);
+        }
+        .btn-apply {
+            background: var(--purple);
+            border-color: var(--purple);
+            color: #fff;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            padding: 5px 18px;
+            font-size: 0.85rem;
+            height: 36px;
+        }
+        .btn-apply:hover {
+            background: #5b21b6;
+            border-color: #5b21b6;
+            color: #fff;
+        }
+        .btn-clear {
+            border-radius: var(--radius-sm);
+            padding: 5px 12px;
+            font-size: 0.85rem;
+            height: 36px;
+        }
+        .filter-scope-note {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin: 8px 0 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* DETAIL TABLE */
+        .report-table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .table-toolbar .count {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .table-toolbar .count span {
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+        .report-table thead th {
+            background: #f8faf9;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        .report-table tbody td {
+            padding: 10px 10px;
+            border-top: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        .report-table tbody tr.overdue-row {
+            background: var(--red-bg);
+        }
+        .report-table tbody tr.overdue-row td:first-child {
+            border-left: 3px solid var(--red);
+        }
+        .report-table tbody tr:hover {
+            background: #f8faf9;
+        }
+
+        .tag-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.82rem;
+        }
+        .tag-link:hover { color: var(--purple); }
+        .tag-link i { color: var(--purple); font-size: 0.75rem; }
+
+        .cat-badge {
+            display: inline-block;
+            background: var(--purple-bg);
+            color: var(--purple);
+            border: 1px solid #d5ccfa;
+            border-radius: 20px;
+            padding: 1px 12px;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .cat-badge.cow { background: #ecfccb; color: #4d7c0f; border-color: #d9f99d; }
+        .cat-badge.goat { background: #cffafe; color: #0e7490; border-color: #a5f3fc; }
+        .cat-badge.pig { background: #fce7f3; color: #be185d; border-color: #fbcfe8; }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            border-radius: 30px;
+            padding: 2px 12px 2px 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .status-pill--overdue {
+            background: var(--red-bg);
+            color: var(--red);
+            border: 1px solid var(--red-border);
+        }
+        .status-pill--planned {
+            background: var(--green-bg);
+            color: var(--green);
+            border: 1px solid #bbf7d0;
+        }
+        .status-pill--soon {
+            background: var(--amber-bg);
+            color: var(--amber);
+            border: 1px solid #fde68a;
+        }
+
+        .loc-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-muted);
+            font-size: 0.76rem;
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .action-cell .btn {
+            padding: 3px 7px;
+            font-size: 0.68rem;
+            line-height: 1.4;
+            border-radius: var(--radius-sm);
+        }
+
+        .days-remaining { font-weight: 700; }
+        .days-remaining.overdue { color: var(--red); }
+
+        .pagination-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pagination-bar .btn {
+            font-size: 0.78rem;
+            border-radius: var(--radius-sm);
+            padding: 3px 12px;
+        }
+
+        /* PDF loading overlay */
+        .pdf-loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .pdf-loading.show {
+            display: flex;
+        }
+        .pdf-loading .spinner-box {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .pdf-loading .spinner-box .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8e5;
+            border-top: 4px solid var(--purple);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .pdf-loading .spinner-box p {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        @media (max-width: 768px) {
+            .container-fluid { padding: 16px; }
+            .report-header h1 { font-size: 1.3rem; }
+            .kpi-card .number { font-size: 1.8rem; }
+            .kpi-card .kpi-row { gap: 8px; }
+            .kpi-card .icon { width: 32px; height: 32px; font-size: 0.9rem; }
+            .report-table { font-size: 0.7rem; }
+            .report-table thead th,
+            .report-table tbody td { padding: 6px 6px; }
+            .action-cell .btn { padding: 2px 5px; font-size: 0.6rem; }
+            .kpi-card .category-breakdown .cat-item { font-size: 0.6rem; }
+        }
+        @media (max-width: 576px) {
+            .filter-bar .row > div { margin-bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- PDF Loading Overlay -->
+<div class="pdf-loading" id="pdfLoading">
+    <div class="spinner-box">
+        <div class="spinner"></div>
+        <p>Generating PDF...</p>
+    </div>
+</div>
+
+<div class="container-fluid" id="reportContent">
+
+    <!-- HEADER -->
+    <div class="report-header">
+        <div>
+            <h1><i class="bi bi-calendar-heart-fill"></i>Upcoming Births</h1>
+            <div class="subtitle">Pregnant animals — plan pens, staff, and vet visits ahead.</div>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline-secondary btn-sm" onclick="exportCSV()">
+                <i class="bi bi-filetype-csv me-1"></i>CSV
+            </button>
+            <button class="btn btn-outline-primary btn-sm" onclick="exportPDF()">
+                <i class="bi bi-filetype-pdf me-1"></i>PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI CARDS - Icon + Number on same row -->
+    <div class="kpi-grid">
+        <!-- 1. TOTAL PREGNANT ANIMALS -->
+        <div class="kpi-card accent-purple">
+            <div class="kpi-row">
+                <div class="icon icon--purple"><i class="bi bi-heart-fill"></i></div>
+                <div class="number">4</div>
+            </div>
+            <div class="label">Total Pregnant Animals</div>
+            <div class="sub">Across all categories</div>
+            <div class="category-breakdown">
+                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">2</span></span>
+                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">2</span></span>
+            </div>
+        </div>
+
+        <!-- 2. DUE WITHIN 3 DAYS -->
+        <div class="kpi-card accent-amber">
+            <div class="kpi-row">
+                <div class="icon icon--amber"><i class="bi bi-hourglass-split"></i></div>
+                <div class="number">0</div>
+            </div>
+            <div class="label">Due Within 3 Days</div>
+            <div class="sub">Prep pens &amp; staff now</div>
+            <div class="category-breakdown">
+                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            </div>
+        </div>
+
+        <!-- 3. DUE THIS WEEK -->
+        <div class="kpi-card accent-green">
+            <div class="kpi-row">
+                <div class="icon icon--green"><i class="bi bi-alarm-fill"></i></div>
+                <div class="number">0</div>
+            </div>
+            <div class="label">Due This Week</div>
+            <div class="sub">Next 7 days</div>
+            <div class="category-breakdown">
+                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            </div>
+        </div>
+
+        <!-- 4. DUE THIS MONTH -->
+        <div class="kpi-card accent-green">
+            <div class="kpi-row">
+                <div class="icon icon--green"><i class="bi bi-calendar3"></i></div>
+                <div class="number">0</div>
+            </div>
+            <div class="label">Due This Month</div>
+            <div class="sub">Next 30 days</div>
+            <div class="category-breakdown">
+                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            </div>
+        </div>
+
+        <!-- 5. OVERDUE PREGNANCIES -->
+        <div class="kpi-card alert accent-red">
+            <div class="kpi-row">
+                <div class="icon icon--red"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div class="number">1</div>
+            </div>
+            <div class="label">Overdue Pregnancies</div>
+            <div class="sub">Expected birth date has passed</div>
+            <div class="category-breakdown">
+                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
+                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count overdue">1</span></span>
+                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="scope-note">
+        <i class="bi bi-info-circle-fill"></i>
+        These totals cover <strong>every</strong> pregnant animal, regardless of the window or filters below.
+        The table underneath shows only records matching your current filters.
+    </div>
+
+    <!-- CATEGORY BREAKDOWN -->
+    <div class="table-card">
+        <div class="card-header">
+            <i class="bi bi-grid-3x3-gap-fill"></i>
+            Pregnant Animals by Category
+        </div>
+        <div class="table-responsive">
+            <table class="breakdown-table">
+                <thead>
+                <tr>
+                    <th>Category</th>
+                    <th class="text-end">Total Pregnant</th>
+                    <th class="text-end">Due ≤3 Days</th>
+                    <th class="text-end">Due This Week</th>
+                    <th class="text-end">Due This Month</th>
+                    <th class="text-end">Overdue</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><span class="cat-tag cow">Cow</span></td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                </tr>
+                <tr>
+                    <td><span class="cat-tag goat">Goat</span></td>
+                    <td class="num">2</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num has-overdue">1</td>
+                </tr>
+                <tr>
+                    <td><span class="cat-tag pig">Pig</span></td>
+                    <td class="num">2</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                    <td class="num">0</td>
+                </tr>
+                </tbody>
+                <tfoot>
+                <tr class="total-row">
+                    <td><strong>Total</strong></td>
+                    <td class="num"><strong>4</strong></td>
+                    <td class="num"><strong>0</strong></td>
+                    <td class="num"><strong>0</strong></td>
+                    <td class="num"><strong>0</strong></td>
+                    <td class="num has-overdue"><strong>1</strong></td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <form class="filter-bar" method="get">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label"><i class="bi bi-tag me-1"></i>Category</label>
+                <select name="categoryId" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <option value="1">Cow</option>
+                    <option value="2" selected>Goat</option>
+                    <option value="3">Pig</option>
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <label class="form-label"><i class="bi bi-calendar-range me-1"></i>Window</label>
+                <select name="windowDays" class="form-select form-select-sm">
+                    <option value="3">Next 3 days</option>
+                    <option value="7">Next 7 days</option>
+                    <option value="30" selected>Next 30 days</option>
+                </select>
+            </div>
+            <div class="col-md-4 col-sm-8">
+                <label class="form-label"><i class="bi bi-search me-1"></i>Search Tag</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="e.g. GOAT-009" value="GOAT-007" />
+            </div>
+            <div class="col-md-2 col-sm-4 d-flex gap-2">
+                <button type="submit" class="btn btn-apply btn-sm flex-grow-1">
+                    <i class="bi bi-funnel-fill me-1"></i>Apply
+                </button>
+                <a href="#" class="btn btn-outline-secondary btn-sm btn-clear">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <div class="filter-scope-note">
+        <i class="bi bi-funnel-fill"></i>
+        The table below shows only animals due within the selected window and matching your filters.
+    </div>
+
+    <!-- DETAIL TABLE -->
+    <div class="report-table-wrap">
+        <div class="table-toolbar">
+            <div class="count">1 <span>record matching your filters</span></div>
+            <div class="text-muted small">Page 1 of 1</div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="report-table">
+                <colgroup>
+                    <col style="width:10%" />
+                    <col style="width:8%" />
+                    <col style="width:11%" />
+                    <col style="width:12%" />
+                    <col style="width:10%" />
+                    <col style="width:11%" />
+                    <col style="width:10%" />
+                    <col style="width:10%" />
+                    <col style="width:18%" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Tag Number</th>
+                    <th>Category</th>
+                    <th>Breeding Date</th>
+                    <th>Expected Birth Date</th>
+                    <th>Days Remaining</th>
+                    <th>Status</th>
+                    <th>Expected Offspring</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class="overdue-row">
+                    <td>
+                        <a href="#" class="tag-link">
+                            <i class="bi bi-tag-fill"></i>GOAT-007
+                        </a>
+                    </td>
+                    <td><span class="cat-badge goat">Goat</span></td>
+                    <td>27 Apr 26</td>
+                    <td>19 Aug 26</td>
+                    <td><span class="days-remaining overdue">10d overdue</span></td>
+                    <td>
+                                <span class="status-pill status-pill--overdue">
+                                    <i class="bi bi-exclamation-circle-fill"></i>Overdue
+                                </span>
+                    </td>
+                    <td>2 <span class="text-muted small">(est.)</span></td>
+                    <td>
+                        <span class="loc-text"><i class="bi bi-geo-alt"></i>Bigega</span>
+                    </td>
+                    <td>
+                        <div class="action-cell">
+                            <button class="btn btn-outline-secondary btn-sm" title="View Animal">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" title="View Pregnancy">
+                                <i class="bi bi-clipboard2-heart"></i>
+                            </button>
+                            <button class="btn btn-success btn-sm" title="Record Birth">
+                                <i class="bi bi-clipboard2-pulse"></i>
+                            </button>
+                            <button class="btn btn-warning btn-sm" title="Pregnancy Check">
+                                <i class="bi bi-clipboard2-x"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar">
+            <div>Showing page 1 of 1 · 10 rows/page</div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary btn-sm disabled">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </button>
+                <button class="btn btn-outline-secondary btn-sm disabled">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /**
+     * Export report as PDF using html2pdf library
+     */
+    function exportPDF() {
+        const loading = document.getElementById('pdfLoading');
+        loading.classList.add('show');
+
+        const element = document.getElementById('reportContent');
+
+        const opt = {
+            margin:        [10, 10, 10, 10],
+            filename:      'upcoming-births-report.pdf',
+            image:         { type: 'jpeg', quality: 0.98 },
+            html2canvas:   { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:     { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        html2pdf().set(opt).from(element).save().then(function() {
+            loading.classList.remove('show');
+        }).catch(function(err) {
+            console.error('PDF generation error:', err);
+            loading.classList.remove('show');
+            alert('Error generating PDF. Please try again.');
+        });
+    }
+
+    /**
+     * Export report as CSV
+     */
+    function exportCSV() {
+        const rows = document.querySelectorAll('.report-table tbody tr');
+        const headers = ['Tag Number', 'Category', 'Breeding Date', 'Expected Birth Date', 'Days Remaining', 'Status', 'Expected Offspring', 'Location'];
+
+        let csvContent = headers.join(',') + '\n';
+
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            const data = [];
+            for (let i = 0; i < cells.length - 1; i++) {
+                let text = cells[i].textContent.trim();
+                text = text.replace(/\s+/g, ' ').trim();
+                if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+                    text = '"' + text.replace(/"/g, '""') + '"';
+                }
+                data.push(text);
+            }
+            csvContent += data.join(',') + '\n';
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'upcoming-births-report.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+</script>
+
+</body>
+</html>

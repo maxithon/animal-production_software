@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livestock Manager Pro — My Dashboard</title>
+    <title>Livestock Manager Pro — My Farm</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -22,84 +22,112 @@
           --sh1:0 3px 12px rgba(0,0,0,.08);
           --sh2:0 8px 28px rgba(0,0,0,.11);
           --ease:cubic-bezier(.4,0,.2,1);
+          --fs-xs:0.6875rem;
+          --fs-sm:0.75rem;
+          --fs-md:0.8125rem;
+          --fs-lg:0.875rem;
         }
+
+        :root{
+          --fs-xs:0.8125rem;
+          --fs-sm:0.875rem;
+          --fs-md:0.9375rem;
+          --fs-lg:1rem;
+        }
+        body{ font-size: var(--fs-lg); }
+
         *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-        body{font-family:'Inter',sans-serif;background:var(--s2);color:var(--tx1);min-height:100vh;overflow-x:hidden;font-size:.875rem;}
         ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--g4);border-radius:99px;}
 
         .top-header{position:fixed;top:0;left:0;right:0;height:var(--hh);background:var(--g9);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:1030;box-shadow:0 1px 16px rgba(0,0,0,.25);}
         .logo-area{display:flex;align-items:center;gap:10px;}
-        .logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
-        .logo-text{font-size:.9rem;font-weight:700;color:#fff;}
-        .logo-sub{font-size:.55rem;color:var(--g4);font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
+        .logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--g5),var(--g4));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);}
+        .logo-text{font-size:var(--fs-lg);font-weight:700;color:#fff;}
+        .logo-sub{font-size:var(--fs-xs);color:var(--g4);font-weight:500;letter-spacing:.08em;text-transform:uppercase;}
         .header-right{display:flex;align-items:center;gap:10px;}
         .header-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:3px 12px 3px 3px;}
-        .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--g5),var(--g4));display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--g9);}
-        .hname{font-size:.75rem;color:#fff;font-weight:500;}
-        .hrole{font-size:.55rem;color:var(--g4);}
-        .btn-exit{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:5px 12px;border-radius:99px;font-size:.72rem;font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:background .2s;}
+        .avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--g5),var(--g4));display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);font-weight:700;color:var(--g9);}
+        .hname{font-size:var(--fs-sm);color:#fff;font-weight:500;}
+        .hrole{font-size:var(--fs-xs);color:var(--g4);}
+        .btn-exit{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:5px 12px;border-radius:99px;font-size:var(--fs-sm);font-weight:500;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:background .2s;}
         .btn-exit:hover{background:rgba(255,255,255,.16);color:#fff;}
-        .menu-toggle{display:none;background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:7px;font-size:.9rem;cursor:pointer;align-items:center;justify-content:center;}
+        .menu-toggle{display:none;background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:7px;font-size:var(--fs-lg);cursor:pointer;align-items:center;justify-content:center;}
 
         .sidebar{position:fixed;top:var(--hh);left:0;width:var(--sw);height:calc(100vh - var(--hh));background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:999;transition:transform .3s var(--ease);}
         .sidebar-inner{padding:10px 10px 40px;}
-        .nav-section-label{padding:14px 10px 4px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txm);}
+        .nav-section-label{padding:14px 10px 4px;font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txm);}
         .nav-item{margin:1px 0;}
-        .nav-btn{width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;background:none;border-radius:var(--r1);color:var(--tx2);font-family:'Inter',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;text-align:left;justify-content:space-between;transition:background .15s,color .15s;}
+        .nav-btn{width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;border:none;background:none;border-radius:var(--r1);color:var(--tx2);font-family:'Inter',sans-serif;font-size:var(--fs-md);font-weight:500;cursor:pointer;text-align:left;justify-content:space-between;transition:background .15s,color .15s;}
         .nav-btn:hover{background:var(--g0);color:var(--g7);}
         .nav-btn.active{background:var(--g1);color:var(--g8);font-weight:600;}
         .nav-btn-inner{display:flex;align-items:center;gap:8px;}
-        .nav-icon{width:26px;height:26px;background:var(--s2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+        .nav-icon{width:26px;height:26px;background:var(--s2);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-md);flex-shrink:0;transition:background .15s;}
         .nav-btn.active .nav-icon{background:var(--g4);color:var(--g9);}
         .nav-btn:hover .nav-icon{background:var(--g1);color:var(--g7);}
-        .arrow{font-size:.6rem;transition:transform .2s var(--ease);color:var(--txm);}
+        .arrow{font-size:var(--fs-xs);transition:transform .2s var(--ease);color:var(--txm);}
         .nav-btn.active .arrow,.nav-btn.open .arrow{transform:rotate(90deg);color:var(--g6);}
         .submenu{max-height:0;overflow:hidden;transition:max-height .3s var(--ease);margin-left:6px;border-left:2px solid var(--g1);padding-left:4px;}
         .submenu.open{max-height:900px;}
-        .submenu-link{display:flex;align-items:center;gap:7px;padding:6px 9px;color:var(--tx2);text-decoration:none;font-size:.75rem;font-weight:400;border-radius:7px;transition:background .12s,color .12s,padding-left .15s;cursor:pointer;}
+        .submenu-link{display:flex;align-items:center;gap:7px;padding:6px 9px;color:var(--tx2);text-decoration:none;font-size:var(--fs-sm);font-weight:400;border-radius:7px;transition:background .12s,color .12s,padding-left .15s;cursor:pointer;}
         .submenu-link:hover{background:var(--g0);color:var(--g7);padding-left:13px;}
         .submenu-link.active-item{background:var(--g0);color:var(--g7);font-weight:600;}
         .submenu-link i{width:14px;text-align:center;opacity:.7;}
-        .sub-divider{display:flex;align-items:center;gap:5px;padding:8px 7px 3px;}
-        .sub-divider::after{content:'';flex:1;height:1px;background:var(--border);}
-        .sub-divider span{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);white-space:nowrap;}
+        .nested-submenu{max-height:0;overflow:hidden;transition:max-height .3s var(--ease);margin-left:14px;}
+        .nested-submenu.active{max-height:300px;}
+        .nested-link{display:flex;align-items:center;gap:7px;padding:5px 9px;color:var(--tx2);text-decoration:none;font-size:var(--fs-xs);border-radius:7px;transition:background .12s,color .12s;cursor:pointer;}
+        .nested-link:hover{background:var(--g0);color:var(--g7);}
+        .submenu-group-label{font-size:var(--fs-xs);text-transform:uppercase;letter-spacing:.06em;color:#9aa1ac;padding:10px 16px 4px;font-weight:700;}
 
-        .main-content{margin-top:var(--hh);margin-left:var(--sw);padding:18px 22px 40px;min-height:calc(100vh - var(--hh));transition:margin-left .3s var(--ease);}
+        .main-content{margin-top:var(--hh);margin-left:var(--sw);padding:14px 22px 40px;min-height:calc(100vh - var(--hh));transition:margin-left .3s var(--ease);}
         .view{display:none;animation:fadeUp .25s var(--ease);}
         .view.active{display:block;}
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-        .hero-banner{background:linear-gradient(130deg,var(--g8) 0%,var(--g9) 65%);border-radius:var(--r3);padding:16px 20px;margin-bottom:14px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+        .hero-banner{background:linear-gradient(130deg,var(--g8) 0%,var(--g9) 65%);border-radius:var(--r3);padding:12px 16px;margin-bottom:8px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
         .hero-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 0%,rgba(82,183,136,.2) 0%,transparent 60%);pointer-events:none;}
-        .hero-deco{position:absolute;right:16px;bottom:-12px;font-size:3.4rem;opacity:.06;pointer-events:none;}
-        .hero-title{font-size:1.05rem;font-weight:700;color:#fff;margin-bottom:2px;letter-spacing:-.01em;}
-        .hero-sub{color:var(--g4);font-size:.72rem;}
-        .hero-date{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:4px 12px;color:rgba(255,255,255,.7);font-size:.68rem;white-space:nowrap;}
-        .role-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(116,198,157,.16);border:1px solid rgba(116,198,157,.32);border-radius:99px;padding:3px 11px;font-size:.65rem;font-weight:600;color:var(--g4);margin-top:6px;}
+        .hero-title{font-size:var(--fs-lg);font-weight:600;color:#fff;margin-bottom:2px;letter-spacing:-.01em;}
+        .hero-sub{color:var(--g4);font-size:var(--fs-sm);margin-bottom:6px;}
+        .hero-date{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:4px 12px;color:rgba(255,255,255,.7);font-size:var(--fs-xs);white-space:nowrap;}
+        .hero-actions{display:flex;gap:6px;flex-wrap:wrap;position:relative;}
+        .hero-action{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#fff;padding:4px 10px;border-radius:99px;font-size:var(--fs-xs);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:5px;cursor:pointer;transition:background .15s;}
+        .hero-action:hover{background:rgba(255,255,255,.24);color:#fff;}
 
-        .no-beneficiary-note{display:flex;align-items:center;gap:8px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:var(--r2);padding:9px 14px;font-size:.72rem;font-weight:500;margin-bottom:14px;}
-        .no-beneficiary-note i{font-size:.9rem;color:var(--amber-d);}
+        .alerts-strip{background:#fff;border-radius:var(--r2);padding:8px 12px;border:1px solid var(--border);box-shadow:var(--sh0);margin-bottom:8px;}
+        .alerts-strip.critical{background:#fef2f2;border-color:#fecaca;}
+        .alerts-title{font-size:var(--fs-xs);font-weight:700;color:var(--tx1);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+        .alerts-title i.crit{color:var(--rose);}
+        .alert-row{display:flex;align-items:flex-start;gap:6px;padding:3px 0;font-size:var(--fs-xs);line-height:1.3;border-bottom:1px solid var(--border);}
+        .alert-row:last-child{border-bottom:none;}
+        .alert-badge{font-size:var(--fs-xs);font-weight:800;padding:1px 5px;border-radius:20px;flex-shrink:0;display:inline-flex;align-items:center;gap:2px;}
+        .alert-badge.CRITICAL{background:#fee2e2;color:#991b1b;}
+        .alert-badge.WARNING{background:#fef3c7;color:#92400e;}
+        .alert-badge.INFO{background:#e0f2fe;color:#075985;}
 
-        /* ─── FINANCIAL-STYLE SUMMARY CARDS ─── */
-        .financial-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+        .financial-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;}
         .financial-card{background:var(--surface);border-radius:var(--r2);padding:8px 10px;border:1px solid var(--border);box-shadow:var(--sh0);position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
+        .financial-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+        .financial-card.acc-income::before{background:linear-gradient(90deg,#10b981,#34d399);}
+        .financial-card.acc-expense::before{background:linear-gradient(90deg,#f43f5e,#fb7185);}
+        .financial-card.acc-profit::before{background:linear-gradient(90deg,#3b82f6,#60a5fa);}
         .financial-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
-        .financial-card .card-header{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
-        .financial-card .card-header .icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+        .financial-card .card-header{display:flex;align-items:center;gap:6px;margin-bottom:2px;}
+        .financial-card .card-header .icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm);flex-shrink:0;}
         .financial-card .card-header .icon.income{background:#d1fae5;color:#065f46;}
         .financial-card .card-header .icon.expense{background:#ffe4e6;color:#9f1239;}
         .financial-card .card-header .icon.profit{background:#dbeafe;color:#1e40af;}
-        .financial-card .card-header .title{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);}
-        .financial-card .total-amount{font-size:1.2rem;font-weight:800;color:var(--tx1);letter-spacing:-.02em;line-height:1.2;}
+        .financial-card .card-header .title{font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);}
+        .financial-card .total-amount{font-size:1.05rem;font-weight:800;color:var(--tx1);letter-spacing:-.02em;line-height:1.15;}
         .financial-card .total-amount.income-color{color:#065f46;}
         .financial-card .total-amount.expense-color{color:#9f1239;}
-        .financial-card .breakdown{margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
-        .financial-card .breakdown-item{display:flex;justify-content:space-between;font-size:.62rem;padding:1px 0;color:var(--tx2);}
-        .financial-card .breakdown-item .label{font-weight:400;display:flex;align-items:center;gap:4px;}
-        .financial-card .breakdown-item .label i{font-size:.55rem;width:12px;}
+        .financial-card .total-amount.profit-color{color:#1e40af;}
+        .financial-card .breakdown{margin-top:5px;padding-top:5px;border-top:1px solid var(--border);}
+        .financial-card .breakdown-item{display:flex;justify-content:space-between;font-size:var(--fs-xs);padding:1px 0;color:var(--tx2);line-height:1.35;}
+        .financial-card .breakdown-item .label{font-weight:400;display:flex;align-items:center;gap:3px;}
         .financial-card .breakdown-item .value{font-weight:600;color:var(--tx1);}
+        .financial-card .delta{font-size:var(--fs-xs);font-weight:700;margin-top:4px;display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:20px;}
+        .financial-card .delta.up{background:#d1fae5;color:#065f46;}
+        .financial-card .delta.down{background:#fee2e2;color:#991b1b;}
 
-        /* ─── STAT CARDS ─── */
         .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px;}
         .stat-card{background:var(--surface);border-radius:var(--r2);padding:8px 9px;border:1px solid var(--border);box-shadow:var(--sh0);transition:transform .2s var(--ease),box-shadow .2s var(--ease);position:relative;overflow:hidden;}
         .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
@@ -109,33 +137,27 @@
         .stat-card.acc-purple::before{background:linear-gradient(90deg,var(--purple),#a78bfa);}
         .stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
         .stat-inner{display:flex;align-items:flex-start;gap:10px;}
-        .stat-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+        .stat-ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);flex-shrink:0;}
         .stat-ic.green{background:#d8f3dc;color:var(--g7);}
         .stat-ic.amber{background:#fef0e4;color:var(--amber-d);}
         .stat-ic.sky{background:#e0f2fe;color:var(--sky);}
         .stat-ic.purple{background:#ede9fe;color:var(--purple);}
         .stat-right{flex:1;min-width:0;}
         .stat-num{font-size:1rem;font-weight:800;color:var(--tx1);line-height:1;margin-bottom:1px;letter-spacing:-.03em;}
-        .stat-lbl{font-size:.55rem;color:var(--txm);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
-        .stat-mini-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
-        .mini-pill{display:inline-flex;align-items:center;gap:3px;font-size:.5rem;font-weight:600;padding:2px 6px;border-radius:10px;background:var(--s2);border:1px solid var(--border);color:var(--tx2);white-space:nowrap;}
+        .stat-lbl{font-size:var(--fs-xs);color:var(--txm);font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+        .stat-sparkline{margin-top:6px;height:30px;position:relative;}
+        .mini-pill{display:inline-flex;align-items:center;gap:3px;font-size:var(--fs-xs);font-weight:600;padding:2px 6px;border-radius:10px;background:var(--s2);border:1px solid var(--border);color:var(--tx2);white-space:nowrap;}
         .mini-pill b{color:var(--tx1);font-weight:800;}
+        .stat-mini-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+        .stat-badges{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;}
 
-        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;}
-        .section-title{font-size:.82rem;font-weight:700;color:var(--tx1);display:flex;align-items:center;gap:6px;}
-        .section-title i{color:var(--g6);font-size:.82rem;}
-        .btn-view-all{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:.62rem;font-weight:600;color:var(--g7);text-decoration:none;transition:background .15s;cursor:pointer;}
+        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px;margin-top:6px;}
+        .section-title{font-size:var(--fs-lg);font-weight:700;color:var(--tx1);display:flex;align-items:center;gap:6px;}
+        .section-title i{color:var(--g6);font-size:var(--fs-lg);}
+        .btn-view-all{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:3px 10px;font-size:var(--fs-xs);font-weight:600;color:var(--g7);text-decoration:none;transition:background .15s;cursor:pointer;}
         .btn-view-all:hover{background:var(--g0);border-color:var(--g4);color:var(--g8);}
 
-        /* ─── QUICK ACTIONS ─── */
-        .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
-        .quick-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:12px 10px;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .2s var(--ease),box-shadow .2s var(--ease),border-color .2s;}
-        .quick-btn:hover{transform:translateY(-2px);box-shadow:var(--sh1);border-color:var(--g4);}
-        .quick-btn-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
-        .quick-btn span{font-size:.66rem;font-weight:600;color:var(--tx2);}
-
-        /* ─── ACTIVITY CARDS ─── */
-        .activity-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px;}
+        .activity-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;}
         .act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:0;text-decoration:none;transition:transform .2s var(--ease),box-shadow .2s var(--ease);position:relative;overflow:hidden;display:block;cursor:pointer;}
         .act-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
         .act-card.births::after{background:linear-gradient(90deg,#0ea5e9,#38bdf8);}
@@ -145,98 +167,87 @@
         .act-card.abort::after{background:linear-gradient(90deg,#f97316,#fb923c);}
         .act-card.deaths::after{background:linear-gradient(90deg,#f43f5e,#fb7185);}
         .act-card:hover{transform:translateY(-3px);box-shadow:var(--sh1);}
-        .act-top{padding:12px 8px 10px;text-align:center;}
-        .act-icon-wrap{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem;margin:0 auto 6px;}
+        .act-top{padding:10px 8px 4px;text-align:center;}
+        .act-icon-wrap{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:var(--fs-lg);margin:0 auto 4px;}
         .act-card.births .act-icon-wrap{background:#e0f2fe;}
         .act-card.sales .act-icon-wrap{background:#d1fae5;}
         .act-card.treat .act-icon-wrap{background:#ede9fe;}
         .act-card.sick .act-icon-wrap{background:#fef3c7;}
         .act-card.abort .act-icon-wrap{background:#ffedd5;}
         .act-card.deaths .act-icon-wrap{background:#ffe4e6;}
-        .act-num{font-size:1.05rem;font-weight:800;color:var(--tx1);line-height:1;letter-spacing:-.02em;}
-        .act-lbl{font-size:.52rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);margin-top:3px;}
-
-        /* ─── FARM ANALYSIS ─── */
-        .farm-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;align-items:stretch;}
-        .herd-composition-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px;box-shadow:var(--sh0);position:relative;overflow:hidden;transition:transform .2s var(--ease),box-shadow .2s var(--ease);height:100%;display:flex;flex-direction:column;}
-        .herd-composition-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--g5),var(--g4));}
-        .herd-composition-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
-        .herd-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;}
-        .herd-title{font-weight:700;font-size:.78rem;color:var(--tx1);display:flex;align-items:center;gap:6px;}
-        .herd-title i{color:var(--g6);font-size:.78rem;}
-        .herd-badge{background:var(--g1);color:var(--g7);font-size:.48rem;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--g4);}
-        .herd-subtitle{font-size:.58rem;color:var(--txm);margin-bottom:4px;}
-        .herd-content{display:flex;align-items:center;gap:10px;flex:1;min-height:0;}
-        .herd-chart-wrap{flex:0 0 170px;height:170px;position:relative;}
-        .herd-stats-list{flex:1;display:flex;flex-direction:column;gap:5px;min-width:0;justify-content:center;}
-        .herd-stat-row{display:flex;align-items:center;justify-content:space-between;padding:3px 8px;border-radius:4px;transition:background .15s;cursor:default;}
-        .herd-stat-row:hover{background:var(--s2);}
-        .herd-stat-left{display:flex;align-items:center;gap:5px;}
-        .herd-stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-        .herd-stat-label{font-size:.62rem;font-weight:500;color:var(--tx2);}
-        .herd-stat-value{font-size:.7rem;font-weight:700;color:var(--tx1);}
-        .herd-stat-percent{font-size:.5rem;color:var(--txm);font-weight:400;margin-left:3px;}
-
-        .right-panel{display:flex;flex-direction:column;gap:6px;height:100%;}
-        .farm-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
-        .farm-stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:7px 6px;text-align:center;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
-        .farm-stat-card:hover{transform:translateY(-2px);box-shadow:var(--sh1);}
-        .farm-stat-value{font-size:.85rem;font-weight:800;color:var(--tx1);line-height:1.15;letter-spacing:-.02em;}
-        .farm-stat-label{font-size:.44rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);margin-top:1px;}
-        .farm-stat-icon{font-size:.75rem;margin-bottom:2px;display:block;}
-        .farm-stat-icon.green{color:var(--g5);}
-        .farm-stat-icon.blue{color:var(--sky);}
-        .farm-stat-icon.amber{color:var(--amber);}
-        .farm-stat-icon.rose{color:var(--rose);}
-        .farm-stat-sub{font-size:.42rem;color:var(--txm);margin-top:2px;}
-
-        .kpi-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
-        .kpi-mini{background:var(--s2);border:1px solid var(--border);border-radius:var(--r1);padding:5px 8px;position:relative;overflow:hidden;transition:background .15s;}
-        .kpi-mini:hover{background:var(--g0);}
-        .kpi-mini::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;}
-        .kpi-mini.rev::before{background:var(--teal);}
-        .kpi-mini.cost::before{background:var(--rose);}
-        .kpi-mini.net::before{background:var(--g5);}
-        .kpi-mini.rec::before{background:var(--sky);}
-        .kpi-mini-label{font-size:.44rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--txm);}
-        .kpi-mini-val{font-size:.72rem;font-weight:800;line-height:1.25;letter-spacing:-.02em;}
-        .kpi-mini-sub{font-size:.42rem;color:var(--txm);margin-top:1px;line-height:1.2;}
+        .act-num{font-size:1rem;font-weight:800;color:var(--tx1);line-height:1;letter-spacing:-.02em;}
+        .act-lbl{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);margin-top:1px;}
+        .act-cat{font-size:var(--fs-xs);color:var(--tx2);margin-top:2px;font-weight:500;padding:0 4px 4px;text-align:center;min-height:18px;}
+        .act-chart-wrap{height:24px;padding:0 4px 2px;position:relative;}
 
         .chart-row{display:grid;gap:8px;margin-bottom:8px;}
         .chart-row.two{grid-template-columns:1fr 1fr;}
+        .chart-row.wide{grid-template-columns:2fr 1fr;}
+        .chart-row.three{grid-template-columns:1fr 1fr 1fr;}
         .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:12px 14px;box-shadow:var(--sh0);}
-        .chart-card-title{font-weight:700;font-size:.75rem;color:var(--tx1);display:flex;align-items:center;gap:6px;margin-bottom:1px;}
-        .chart-card-title i{color:var(--g6);font-size:.75rem;}
-        .chart-card-sub{font-size:.6rem;color:var(--txm);margin-bottom:6px;}
-        .chart-wrap-md{position:relative;height:170px;width:100%;}
+        .chart-card-title{font-weight:700;font-size:var(--fs-md);color:var(--tx1);display:flex;align-items:center;gap:6px;margin-bottom:1px;}
+        .chart-card-title i{color:var(--g6);font-size:var(--fs-md);}
+        .chart-card-sub{font-size:var(--fs-xs);color:var(--txm);margin-bottom:6px;}
+        .chart-legend{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+        .legend-item{display:flex;align-items:center;gap:3px;font-size:var(--fs-xs);color:var(--tx2);}
+        .legend-dot{width:6px;height:6px;border-radius:2px;flex-shrink:0;}
+        .chart-wrap-md{position:relative;height:150px;width:100%;}
+        .chart-wrap-md canvas{max-width:100%;height:100% !important;}
 
-        /* ─── HEALTH / FINANCIAL RECAP ─── */
-        .health-costs-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:12px 14px;box-shadow:var(--sh0);display:flex;flex-direction:column;}
-        .health-costs-card .card-title{font-weight:700;font-size:.75rem;color:var(--tx1);display:flex;align-items:center;gap:6px;margin-bottom:6px;}
-        .health-costs-card .card-title i{color:var(--purple);font-size:.75rem;}
-        .health-cost-item{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.7rem;}
-        .health-cost-item:last-child{border-bottom:none;}
-        .health-cost-item .label{color:var(--tx2);font-weight:500;}
-        .health-cost-item .value{font-weight:700;color:var(--tx1);}
-        .health-cost-item .value.positive{color:#065f46;}
-        .health-cost-item .value.negative{color:#9f1239;}
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+        .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:12px 14px;box-shadow:var(--sh0);}
+        .panel-title{font-weight:700;font-size:var(--fs-md);color:var(--tx1);display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+        .panel-title i{color:var(--g6);font-size:var(--fs-md);}
+
+        .cal-list{list-style:none;padding:0;margin:0;max-height:280px;overflow-y:auto;}
+        .cal-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+        .cal-item:last-child{border-bottom:none;}
+        .cal-date{flex:0 0 48px;text-align:center;background:var(--s2);border-radius:8px;padding:6px 4px;}
+        .cal-date .d{font-size:var(--fs-md);font-weight:800;color:var(--tx1);line-height:1;}
+        .cal-date .m{font-size:var(--fs-xs);font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+        .cal-icon{font-size:var(--fs-lg);flex-shrink:0;line-height:1;}
+        .cal-body{flex:1;min-width:0;}
+        .cal-title{font-size:var(--fs-sm);font-weight:600;color:var(--tx1);}
+        .cal-meta{font-size:var(--fs-xs);color:var(--txm);margin-top:2px;}
+        .cal-daysaway{display:inline-block;font-size:var(--fs-xs);font-weight:700;padding:1px 7px;border-radius:20px;margin-left:4px;}
+        .cal-daysaway.today{background:#d1fae5;color:#065f46;}
+        .cal-daysaway.soon{background:#fef3c7;color:#92400e;}
+        .cal-daysaway.later{background:#e0f2fe;color:#075985;}
+
+        .benef-strip{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px 16px;box-shadow:var(--sh0);margin-bottom:12px;}
+        .benef-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+        .benef-item{background:var(--s2);border-radius:10px;padding:10px 12px;}
+        .benef-item .num{font-size:1.35rem;font-weight:800;color:var(--tx1);line-height:1.1;}
+        .benef-item .lbl{font-size:var(--fs-xs);font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
+
+        .funnel{display:flex;flex-direction:column;gap:6px;margin-top:4px;}
+        .funnel-step{display:flex;align-items:center;gap:10px;}
+        .funnel-bar{flex:1;height:26px;border-radius:6px;background:linear-gradient(90deg,var(--g7),var(--g4));display:flex;align-items:center;padding:0 12px;color:#fff;font-size:var(--fs-sm);font-weight:700;}
+        .funnel-lbl{flex:0 0 130px;font-size:var(--fs-sm);font-weight:600;color:var(--tx2);}
+        .funnel-val{font-size:var(--fs-sm);font-weight:800;color:var(--tx1);flex:0 0 44px;text-align:right;}
+
+        .dq-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
+        .dq-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;box-shadow:var(--sh0);}
+        .dq-item.warn{border-color:#fcd34d;background:#fffbeb;}
+        .dq-item .n{font-size:1rem;font-weight:800;color:var(--tx1);line-height:1.1;}
+        .dq-item .l{font-size:var(--fs-xs);font-weight:700;color:var(--txm);text-transform:uppercase;letter-spacing:.05em;margin-top:3px;}
 
         .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px;box-shadow:var(--sh0);margin-bottom:12px;}
         .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px;}
         .kpi-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--r2);padding:8px 12px;}
         .kpi-val{font-size:1.1rem;font-weight:800;color:var(--g7);line-height:1;margin-bottom:2px;}
-        .kpi-lbl{font-size:.54rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);}
+        .kpi-lbl{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--txm);}
         .report-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
         .report-title{font-size:1rem;font-weight:800;color:var(--tx1);display:flex;align-items:center;gap:6px;}
         .report-title i{color:var(--g6);}
-        .btn-back{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:.68rem;font-weight:600;color:var(--tx1);cursor:pointer;text-decoration:none;transition:background .15s;}
+        .btn-back{display:inline-flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:4px 12px;font-size:var(--fs-xs);font-weight:600;color:var(--tx1);cursor:pointer;text-decoration:none;transition:background .15s;}
         .btn-back:hover{background:var(--g0);border-color:var(--g4);color:var(--g7);}
         .data-table{width:100%;border-collapse:collapse;}
-        .data-table thead th{background:var(--s2);padding:6px 8px;font-size:.54rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);border-bottom:2px solid var(--border);white-space:nowrap;}
-        .data-table tbody td{padding:6px 8px;font-size:.7rem;color:var(--tx1);border-bottom:1px solid var(--border);}
+        .data-table thead th{background:var(--s2);padding:6px 8px;font-size:var(--fs-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txm);border-bottom:2px solid var(--border);white-space:nowrap;}
+        .data-table tbody td{padding:6px 8px;font-size:var(--fs-sm);color:var(--tx1);border-bottom:1px solid var(--border);}
         .data-table tbody tr:last-child td{border-bottom:none;}
         .data-table tbody tr:hover{background:var(--s2);}
-        .badge{display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:99px;font-size:.54rem;font-weight:600;}
+        .badge{display:inline-flex;align-items:center;gap:2px;padding:2px 6px;border-radius:99px;font-size:var(--fs-xs);font-weight:600;}
         .badge-success{background:#d1fae5;color:#065f46;}
         .badge-warning{background:#fef3c7;color:#92400e;}
         .badge-danger{background:#ffe4e6;color:#9f1239;}
@@ -246,36 +257,95 @@
         .loading{display:flex;align-items:center;justify-content:center;padding:30px;color:var(--txm);gap:6px;}
         .spin{animation:spin 1s linear infinite;}
         @keyframes spin{to{transform:rotate(360deg);}}
-        .toast-notif{position:fixed;bottom:18px;right:18px;background:var(--surface);border-radius:var(--r2);padding:8px 14px;box-shadow:var(--sh2);display:flex;align-items:center;gap:6px;z-index:1200;animation:slideIn .28s var(--ease);border-left:4px solid var(--teal);font-size:.7rem;font-weight:500;}
+        .toast-notif{position:fixed;bottom:18px;right:18px;background:var(--surface);border-radius:var(--r2);padding:8px 14px;box-shadow:var(--sh2);display:flex;align-items:center;gap:6px;z-index:1200;animation:slideIn .28s var(--ease);border-left:4px solid var(--teal);font-size:var(--fs-sm);font-weight:500;}
         @keyframes slideIn{from{transform:translateX(110%);opacity:0;}to{transform:translateX(0);opacity:1;}}
         .iframe-view{height:calc(100vh - var(--hh) - 44px);}
         .content-frame{width:100%;height:100%;border:none;border-radius:var(--r3);background:var(--surface);}
-        .dash-footer{border-top:1px solid var(--border);padding-top:12px;margin-top:4px;text-align:center;color:var(--txm);font-size:.6rem;}
+        .dash-footer{border-top:1px solid var(--border);padding-top:12px;margin-top:14px;text-align:center;color:var(--txm);font-size:var(--fs-xs);}
         .sidebar-overlay{display:none;position:fixed;top:var(--hh);left:0;width:100%;height:calc(100vh - var(--hh));background:rgba(0,0,0,.4);z-index:998;}
 
         .export-bar{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f8f9fb;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:10px;flex-wrap:wrap;}
-        .export-bar span{font-size:.62rem;font-weight:600;color:#475569;}
-        .btn-export{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:600;border:none;cursor:pointer;}
+        .export-bar span{font-size:var(--fs-xs);font-weight:600;color:#475569;}
+        .btn-export{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:var(--fs-xs);font-weight:600;border:none;cursor:pointer;}
         .btn-export.csv{background:#dcfce7;color:#16a34a;}
         .btn-export.print{background:#dbeafe;color:#2563eb;}
+
         .table-responsive{overflow-x:auto;}
+
+        /* ✅ Livestock Assets + Farm Analysis combined panels */
+        .combined-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+        .combined-panel{border-radius:var(--r3);padding:16px 18px;box-shadow:var(--sh0);
+          position:relative;overflow:hidden;}
+        .combined-panel.livestock-assets{background:linear-gradient(140deg,#f0f9ff 0%,#e0f2fe 100%);
+          border:1px solid #bae6fd;}
+        .combined-panel.livestock-assets::before{content:'';position:absolute;top:0;left:0;right:0;
+          height:3px;background:linear-gradient(90deg,#0ea5e9,#38bdf8);}
+        .combined-panel.farm-analysis{background:linear-gradient(140deg,#f0fdf4 0%,#dcfce7 100%);
+          border:1px solid #bbf7d0;}
+        .combined-panel.farm-analysis::before{content:'';position:absolute;top:0;left:0;right:0;
+          height:3px;background:linear-gradient(90deg,#10b981,#34d399);}
+        .combined-panel-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+        .combined-panel-icon{width:36px;height:36px;border-radius:9px;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center;font-size:1rem;color:#fff;}
+        .combined-panel.livestock-assets .combined-panel-icon{
+          background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+          box-shadow:0 3px 8px rgba(14,165,233,.28);}
+        .combined-panel.farm-analysis .combined-panel-icon{
+          background:linear-gradient(135deg,#10b981,#34d399);
+          box-shadow:0 3px 8px rgba(16,185,129,.28);}
+        .combined-panel-title{font-size:1.125rem;font-weight:700;color:var(--tx1);line-height:1.2;}
+        .combined-panel-sub{font-size:0.6875rem;color:var(--tx2);font-weight:500;margin-top:1px;}
+        .combined-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+        .combined-stat{background:rgba(255,255,255,.85);border-radius:10px;
+          padding:10px 12px;border:1px solid rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.04);
+          transition:transform .15s ease,box-shadow .15s ease;}
+        .combined-stat:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(0,0,0,.08);}
+        .combined-stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+        .combined-stat-icon{width:26px;height:26px;border-radius:7px;display:flex;
+          align-items:center;justify-content:center;font-size:0.75rem;}
+        .combined-panel.livestock-assets .combined-stat-icon{background:#e0f2fe;color:#0369a1;}
+        .combined-panel.farm-analysis .combined-stat-icon{background:#dcfce7;color:#065f46;}
+        .combined-stat-delta{font-size:0.5625rem;font-weight:700;padding:1px 6px;border-radius:99px;}
+        .combined-stat-delta.up  {background:#d1fae5;color:#065f46;}
+        .combined-stat-delta.down{background:#fee2e2;color:#991b1b;}
+        .combined-stat-value{font-size:1.125rem;font-weight:700;color:var(--tx1);line-height:1.15;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .combined-stat-label{font-size:0.625rem;color:var(--txm);font-weight:500;
+          text-transform:uppercase;letter-spacing:.04em;margin-top:2px;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+        .combined-panel-footer{display:flex;gap:6px;flex-wrap:wrap;}
+        .combined-panel-footer .btn-card-action{width:100%;display:inline-flex;align-items:center;
+          justify-content:center;gap:6px;padding:8px 12px;border:none;border-radius:8px;
+          font-family:'Inter',sans-serif;font-size:var(--fs-sm);font-weight:600;color:#fff;
+          cursor:pointer;transition:filter .15s ease,transform .15s ease;}
+        .combined-panel-footer .btn-card-action:hover{filter:brightness(1.08);transform:translateY(-1px);}
+        .combined-panel-footer .btn-card-action.primary{background:linear-gradient(90deg,#0ea5e9,#0284c7);}
+        .combined-panel-footer .btn-card-action.success{background:linear-gradient(90deg,#10b981,#059669);}
+
+        .stat-num{ font-size: 1.35rem; }
+        .stat-lbl{ font-size: var(--fs-sm); }
+        .hero-title{ font-size: 1.15rem; }
+        .act-num{ font-size: 1.25rem; }
+        .benef-item .num{ font-size: 1.35rem; }
+        .financial-card .total-amount{ font-size: 1.05rem; }
 
         @media(max-width:1300px){
             .stats-grid{grid-template-columns:repeat(2,1fr);}
             .financial-grid{grid-template-columns:1fr 1fr;}
-            .farm-analysis-grid{grid-template-columns:1fr;}
-            .farm-stats-grid{grid-template-columns:repeat(2,1fr);}
+            .chart-row.three{grid-template-columns:1fr 1fr;}
+            .death-health-grid{grid-template-columns:1fr;}
+            .two-col{grid-template-columns:1fr;}
         }
         @media(max-width:1100px){
-            .activity-grid{grid-template-columns:repeat(3,1fr);}
+            .activity-grid{grid-template-columns:repeat(4,1fr);}
+            .chart-row.wide{grid-template-columns:1fr;}
             .chart-row.two{grid-template-columns:1fr;}
+            .chart-row.three{grid-template-columns:1fr;}
+            .combined-analysis-grid{grid-template-columns:1fr;}
         }
         @media(max-width:900px){
             .activity-grid{grid-template-columns:repeat(3,1fr);}
             .financial-grid{grid-template-columns:1fr;}
-            .herd-content{flex-direction:column;align-items:center;}
-            .herd-chart-wrap{flex:0 0 150px;height:150px;width:150px;}
-            .herd-stats-list{width:100%;}
         }
         @media(max-width:768px){
             .menu-toggle{display:flex;}
@@ -284,18 +354,13 @@
             .main-content{margin-left:0;padding:10px 8px 20px;}
             .stats-grid{grid-template-columns:1fr 1fr;}
             .activity-grid{grid-template-columns:repeat(2,1fr);}
-            .farm-stats-grid{grid-template-columns:1fr 1fr;}
-            .kpi-mini-grid{grid-template-columns:1fr 1fr;}
             .hero-date{display:none;}
-            .hero-title{font-size:.85rem;}
-            .financial-card .total-amount{font-size:1rem;}
+            .chart-wrap-md{height:130px;}
+            .combined-stats-grid{grid-template-columns:1fr;}
         }
         @media(max-width:480px){
             .stats-grid{grid-template-columns:1fr;}
             .activity-grid{grid-template-columns:1fr 1fr;}
-            .farm-stats-grid{grid-template-columns:1fr;}
-            .kpi-mini-grid{grid-template-columns:1fr;}
-            .herd-chart-wrap{flex:0 0 120px;height:120px;width:120px;}
             .financial-grid{grid-template-columns:1fr;}
         }
         @media print{
@@ -308,7 +373,6 @@
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- ══ HEADER ══════════════════════════════════════════════════════════ -->
 <header class="top-header">
     <div class="logo-area">
         <button class="menu-toggle" onclick="toggleSidebar()"><i class="bi bi-list"></i></button>
@@ -317,8 +381,8 @@
     </div>
     <div class="header-right">
         <div class="header-pill">
-            <div class="avatar" th:text="${userInitial != null ? userInitial : 'U'}">U</div>
-            <div><div class="hname" th:text="${username != null ? username : 'User'}">User</div><div class="hrole">Regular User</div></div>
+            <div class="avatar" th:text="${userInitial}">U</div>
+            <div><div class="hname" th:text="${username}">User</div><div class="hrole">Beneficiary</div></div>
         </div>
         <form th:action="@{/logout}" method="post" style="display:inline;">
             <button type="submit" class="btn-exit"><i class="bi bi-box-arrow-right"></i> Sign out</button>
@@ -326,12 +390,6 @@
     </div>
 </header>
 
-<!-- ══ SIDEBAR ══════════════════════════════════════════════════════════
-     Regular User: view-only for People (no register links); no Manage Users,
-     no Audit Log. Everything else is enforced server-side too
-     (SecurityConfig hasRole('ADMIN') on register / manage-users endpoints)
-     so this is UX-hiding, not the only line of defense.
-──────────────────────────────────────────────────────────────────────── -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-inner">
         <div class="nav-item">
@@ -340,68 +398,55 @@
             </button>
         </div>
 
-        <div class="nav-section-label">People</div>
-        <div class="nav-item">
-            <button class="nav-btn" onclick="toggleSub('representatives',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-badge"></i></div>Representatives</div>
-                <i class="bi bi-chevron-right arrow"></i>
-            </button>
-            <div class="submenu" id="submenu-representatives">
-                <a th:href="@{/representatives/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
-            </div>
-        </div>
-        <div class="nav-item">
-            <button class="nav-btn" onclick="toggleSub('beneficiaries',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-person-check"></i></div>Beneficiaries</div>
-                <i class="bi bi-chevron-right arrow"></i>
-            </button>
-            <div class="submenu" id="submenu-beneficiaries">
-                <a th:href="@{/beneficiaries/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
-            </div>
-        </div>
-        <div class="nav-item">
-            <button class="nav-btn" onclick="toggleSub('buyers',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-cart3"></i></div>Buyers</div>
-                <i class="bi bi-chevron-right arrow"></i>
-            </button>
-            <div class="submenu" id="submenu-buyers">
-                <a th:href="@{/buyers}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View Buyers</a>
-            </div>
-        </div>
-        <div class="nav-item">
-            <button class="nav-btn" onclick="toggleSub('veterinarians',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-heart-pulse"></i></div>Veterinarians</div>
-                <i class="bi bi-chevron-right arrow"></i>
-            </button>
-            <div class="submenu" id="submenu-veterinarians">
-                <a th:href="@{/veterinarians}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-list-ul"></i>View All</a>
-            </div>
-        </div>
-
-        <div class="nav-section-label">Livestock</div>
+        <div class="nav-section-label">My Livestock</div>
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('livestock',this)">
-                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-box2-heart"></i></div>Livestock</div>
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-box2-heart"></i></div>My Animals</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-livestock">
-                <a th:href="@{/livestock/categories}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-tag-fill"></i>Categories</a>
-                <a th:href="@{/livestock/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-grid-fill"></i>Livestock List</a>
-                <a th:href="@{/livestock/overview}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-diagram-3"></i>Age &amp; Lifecycle</a>
-                <div class="sub-divider"><span>Lifecycle</span></div>
-                <a th:href="@{/livestock/lifecycle/dashboard}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-diagram-3-fill"></i>Lifecycle Dashboard</a>
-                <a th:href="@{/livestock/lifecycle/ready-to-breed}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-arrow"></i>Ready to Breed</a>
-                <a th:href="@{/livestock/lifecycle/breeding-management}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-fill"></i>Breeding</a>
-                <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-hourglass-split"></i>Pregnancy Tracking</a>
-                <div class="sub-divider"><span>Events</span></div>
-                <a th:href="@{/livestock/births/list}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-stars"></i>Births</a>
-                <a th:href="@{/medications}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-capsule-fill"></i>Medications</a>
-                <a th:href="@{/livestock/sick}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-bandaid-fill"></i>Sick Animals</a>
-                <a th:href="@{/livestock/treatments}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
-                <a th:href="@{/livestock/abortions}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-exclamation-triangle-fill"></i>Abortions</a>
-                <div class="sub-divider"><span>Exit</span></div>
-                <a th:href="@{/livestock/sales}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-cash-stack"></i>Sales</a>
-                <a th:href="@{/livestock/deaths}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-x-circle-fill"></i>Deaths</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/list')"><i class="bi bi-grid-fill"></i>Livestock List</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/categories')"><i class="bi bi-tag-fill"></i>Categories</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/overview')"><i class="bi bi-diagram-3"></i>Age &amp; Lifecycle</a>
+            </div>
+        </div>
+
+        <div class="nav-section-label">Breeding &amp; Reproduction</div>
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('breeding',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-heart-fill"></i></div>Breeding</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-breeding">
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/lifecycle/ready-to-breed')"><i class="bi bi-heart-arrow"></i>Ready to Breed</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/breeding/management')"><i class="bi bi-heart-fill"></i>Breeding</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/lifecycle/pregnancy-tracking')"><i class="bi bi-hourglass-split"></i>Pregnancy Tracking</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/births/list')"><i class="bi bi-stars"></i>Births</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/abortions')"><i class="bi bi-exclamation-triangle-fill"></i>Abortions</a>
+            </div>
+        </div>
+
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('health',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-heart-pulse-fill"></i></div>Animal Health</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-health">
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sick')"><i class="bi bi-bandaid-fill"></i>Sick Animals</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/treatments')"><i class="bi bi-heart-pulse-fill"></i>Treatments</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/deaths')"><i class="bi bi-x-circle-fill"></i>Deaths</a>
+            </div>
+        </div>
+
+        <div class="nav-section-label">Finance</div>
+        <div class="nav-item">
+            <button class="nav-btn" onclick="toggleSub('finance',this)">
+                <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-wallet2"></i></div>Finance</div>
+                <i class="bi bi-chevron-right arrow"></i>
+            </button>
+            <div class="submenu" id="submenu-finance">
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sales')"><i class="bi bi-cash-stack"></i>My Sales</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/financial-summary')"><i class="bi bi-calculator-fill"></i>Financial Summary</a>
             </div>
         </div>
 
@@ -412,96 +457,111 @@
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-reports">
-                <div class="sub-divider"><span>Quick Reports</span></div>
-                <a href="#" class="submenu-link" id="birthReportLink" onclick="showBirthReport(event,this)"><i class="bi bi-stars"></i>Birth Report</a>
-                <a th:href="@{/livestock/births/report/born-and-sold}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-arrow-left-right"></i>Born → Sold</a>
-                <a href="#" class="submenu-link" id="treatmentReportLink" onclick="showTreatmentReport(event,this)"><i class="bi bi-heart-pulse-fill"></i>Treatment Report</a>
-                <a href="#" class="submenu-link" id="sickReportLink" onclick="showSickReport(event,this)"><i class="bi bi-bandaid-fill"></i>Sick Report</a>
-                <a href="#" class="submenu-link" id="abortionReportLink" onclick="showAbortionReport(event,this)"><i class="bi bi-heartbreak-fill"></i>Abortion Report</a>
-                <a href="#" class="submenu-link" id="salesReportLink" onclick="showSalesReport(event,this)"><i class="bi bi-cash-stack"></i>Sales Report</a>
-                <a href="#" class="submenu-link" id="deathsReportLink" onclick="showDeathsReport(event,this)"><i class="bi bi-x-circle-fill"></i>Deaths Report</a>
-                <div class="sub-divider"><span>Summary</span></div>
-                <a th:href="@{/livestock/summary-report}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-file-earmark-bar-graph-fill"></i>Summary Report</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/births/report/birth-summary')"><i class="bi bi-stars"></i>Birth Report</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/treatments/report')"><i class="bi bi-heart-pulse-fill"></i>Treatment Report</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sick/report')"><i class="bi bi-bandaid-fill"></i>Sick Report</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/deaths-report')"><i class="bi bi-x-circle-fill"></i>Deaths Report</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/livestock/sales-report-detailed')"><i class="bi bi-cash-stack"></i>Sales Report</a>
             </div>
         </div>
 
-        <!-- Regular User: profile + password only, no "Manage Users" (ADMIN only,
-             also enforced server-side in SecurityConfig regardless of this menu) -->
-        <div class="nav-section-label">My Account</div>
+        <div class="nav-section-label">Account</div>
         <div class="nav-item">
             <button class="nav-btn" onclick="toggleSub('settings',this)">
                 <div class="nav-btn-inner"><div class="nav-icon"><i class="bi bi-gear-fill"></i></div>Settings</div>
                 <i class="bi bi-chevron-right arrow"></i>
             </button>
             <div class="submenu" id="submenu-settings">
-                <a th:href="@{/settings/profile}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-person-circle"></i>My Profile</a>
-                <a th:href="@{/settings/change-password}" class="submenu-link" onclick="navigateTo(event,this)"><i class="bi bi-key-fill"></i>Change Password</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/settings/profile')"><i class="bi bi-person-circle"></i>My Profile</a>
+                <a href="#" class="submenu-link" onclick="navigateTo(event,this,'/settings/change-password')"><i class="bi bi-key-fill"></i>Change Password</a>
             </div>
         </div>
     </div>
 </aside>
 
-<!-- ══ MAIN CONTENT ══════════════════════════════════════════════════════ -->
 <main class="main-content" id="mainContent">
 
-    <!-- ══ DASHBOARD ══ -->
     <div id="dashboard-view" class="view active">
+
         <div class="hero-banner">
             <div>
-                <div class="hero-title">Welcome back, <span style="font-weight:300;opacity:.85;" th:text="${username != null ? username : 'User'}">User</span> 🌾</div>
-                <div class="hero-sub">Here's your farm activity snapshot for today.</div>
-                <div class="role-badge"><i class="bi bi-person-fill"></i> Regular User</div>
+                <div class="hero-title">Welcome back, <span style="font-weight:300;opacity:.85;" th:text="${username}">User</span> 🌾</div>
+                <div class="hero-sub">Here's your farm snapshot for today.</div>
+                <div class="hero-actions no-print">
+                    <a href="#" class="hero-action" onclick="navigateTo(event,this,'/livestock/births/list')"><i class="bi bi-plus-circle"></i> Add Birth</a>
+                    <a href="#" class="hero-action" onclick="navigateTo(event,this,'/livestock/treatments')"><i class="bi bi-plus-circle"></i> Treatment</a>
+                    <a href="#" class="hero-action" onclick="navigateTo(event,this,'/livestock/sales')"><i class="bi bi-plus-circle"></i> Record Sale</a>
+                    <a href="#" class="hero-action" onclick="navigateTo(event,this,'/livestock/sick')"><i class="bi bi-plus-circle"></i> Sick Case</a>
+                </div>
             </div>
             <div class="hero-date no-print" id="todayDate"></div>
-            <div class="hero-deco">🐄🐑</div>
         </div>
 
-        <div class="no-beneficiary-note" th:if="${noBeneficiary}">
-            <i class="bi bi-info-circle-fill"></i>
-            <span>Your account isn't linked to a beneficiary record yet, so livestock figures below are showing as zero. Contact your administrator to get linked.</span>
+        <div class="alerts-strip" th:if="${noBeneficiary != null and noBeneficiary}"
+             style="background:#fef3c7;border-color:#fcd34d;">
+            <div class="alerts-title">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#92400e;"></i>
+                Account not linked to a beneficiary
+            </div>
+            <div style="font-size:var(--fs-sm);color:#92400e;padding:4px 0;">
+                Your account is not yet linked to a beneficiary record. Please contact your farm administrator.
+            </div>
         </div>
 
-        <!-- ========== MY FARM SUMMARY (financial-style cards) ========== -->
         <div class="section-head">
-            <div class="section-title"><i class="bi bi-calculator-fill"></i> My Farm Summary</div>
+            <div class="section-title"><i class="bi bi-calculator-fill"></i> Financial Summary</div>
         </div>
+
         <div class="financial-grid">
-            <div class="financial-card">
+            <div class="financial-card acc-income">
                 <div class="card-header">
                     <div class="icon income"><i class="bi bi-arrow-up-circle-fill"></i></div>
-                    <div class="title">Sales Revenue</div>
+                    <div class="title">Total Revenue</div>
                 </div>
-                <div class="total-amount income-color" th:text="${userTotalRevenue != null ? #numbers.formatDecimal(userTotalRevenue,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</div>
+                <div class="total-amount income-color"
+                     th:text="${userTotalRevenue != null ? 'RWF ' + #numbers.formatDecimal(userTotalRevenue,1,'COMMA',2,'POINT') : '0 RWF'}">0 RWF</div>
                 <div class="breakdown">
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-cash-stack"></i> Sales Recorded</span><span class="value" th:text="${totalSales != null ? totalSales : 0}">0</span></div>
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-box2-heart-fill"></i> Current Herd Value</span><span class="value" th:text="${userTotalValue != null ? #numbers.formatDecimal(userTotalValue,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span></div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-cash-stack"></i> Livestock Sales</span>
+                        <span class="value"
+                              th:text="${userTotalRevenue != null ? 'RWF ' + #numbers.formatDecimal(userTotalRevenue,1,'COMMA',2,'POINT') : '0 RWF'}">0 RWF</span>
+                    </div>
                 </div>
             </div>
-            <div class="financial-card">
+
+            <div class="financial-card acc-expense">
                 <div class="card-header">
                     <div class="icon expense"><i class="bi bi-arrow-down-circle-fill"></i></div>
                     <div class="title">Treatment Costs</div>
                 </div>
-                <div class="total-amount expense-color" th:text="${userTreatmentCost != null ? #numbers.formatDecimal(userTreatmentCost,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</div>
+                <div class="total-amount expense-color"
+                     th:text="${userTreatmentCost != null ? 'RWF ' + #numbers.formatDecimal(userTreatmentCost,1,'COMMA',2,'POINT') : '0 RWF'}">0 RWF</div>
                 <div class="breakdown">
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-heart-pulse-fill"></i> Treatments Given</span><span class="value" th:text="${totalTreatments != null ? totalTreatments : 0}">0</span></div>
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-x-circle-fill" style="color:var(--rose);"></i> Value Lost to Deaths</span><span class="value" th:text="${userDeathValue != null ? #numbers.formatDecimal(userDeathValue,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span></div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-clipboard-check"></i> Treatments</span>
+                        <span class="value" th:text="${totalTreatments != null ? totalTreatments : 0}">0</span>
+                    </div>
                 </div>
             </div>
-            <div class="financial-card">
+
+            <div class="financial-card acc-profit">
                 <div class="card-header">
-                    <div class="icon profit"><i class="bi bi-graph-up-arrow"></i></div>
-                    <div class="title">Net Position</div>
+                    <div class="icon profit"><i class="bi bi-box2-heart-fill"></i></div>
+                    <div class="title">Herd Value</div>
                 </div>
-                <div class="total-amount" id="netPositionAmount">0 RWF</div>
+                <div class="total-amount profit-color"
+                     th:text="${userTotalValue != null ? 'RWF ' + #numbers.formatDecimal(userTotalValue,1,'COMMA',2,'POINT') : '0 RWF'}">0 RWF</div>
                 <div class="breakdown">
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-arrow-up" style="color:#065f46;"></i> Revenue</span><span class="value positive" th:text="${userTotalRevenue != null ? #numbers.formatDecimal(userTotalRevenue,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span></div>
-                    <div class="breakdown-item"><span class="label"><i class="bi bi-arrow-down" style="color:#9f1239;"></i> Treatment Costs</span><span class="value negative" th:text="${userTreatmentCost != null ? #numbers.formatDecimal(userTreatmentCost,0,'COMMA',0,'DEFAULT') + ' RWF' : '0 RWF'}">0 RWF</span></div>
+                    <div class="breakdown-item">
+                        <span class="label"><i class="bi bi-list-ol"></i> Animals</span>
+                        <span class="value" th:text="${totalLivestock != null ? totalLivestock : 0}">0</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Stats: 4 cards (no system-users card for regular user) -->
+        <div id="dashboardOverviewContent"></div>
+
         <div class="stats-grid">
             <div class="stat-card acc-green">
                 <div class="stat-inner">
@@ -510,160 +570,226 @@
                         <div class="stat-num" th:text="${totalLivestock != null ? totalLivestock : 0}">0</div>
                         <div class="stat-lbl">My Livestock</div>
                         <div class="stat-mini-row">
-                            <span class="mini-pill"><i class="bi bi-check-circle-fill"></i> <b th:text="${userActiveLivestock != null ? userActiveLivestock : 0}">0</b> Active</span>
+                            <span class="mini-pill" title="Alive and on farm">
+                                <i class="bi bi-check-circle-fill" style="color:#16a34a;"></i>
+                                <b th:text="${userActiveLivestock != null ? userActiveLivestock : 0}">0</b> Active
+                            </span>
+                            <span class="mini-pill" title="Total value">
+                                <i class="bi bi-coin" style="color:#b45309;"></i>
+                                <b th:text="${userTotalValue != null ? 'RWF ' + #numbers.formatDecimal(userTotalValue,1,'COMMA',0,'POINT') : '0'}">0</b>
+                            </span>
                         </div>
                     </div>
                 </div>
+                <div class="stat-sparkline"><canvas id="sparkHerd"></canvas></div>
             </div>
+
             <div class="stat-card acc-amber">
                 <div class="stat-inner">
-                    <div class="stat-ic amber"><i class="bi bi-cash-coin"></i></div>
+                    <div class="stat-ic amber"><i class="bi bi-egg-fill"></i></div>
                     <div class="stat-right">
-                        <div class="stat-num" th:text="${userTotalValue != null ? #numbers.formatDecimal(userTotalValue,0,'COMMA',0,'DEFAULT') : 0}">0</div>
-                        <div class="stat-lbl">Herd Value (RWF)</div>
+                        <div class="stat-num" th:text="${totalBirths != null ? totalBirths : 0}">0</div>
+                        <div class="stat-lbl">Total Births</div>
+                        <div class="stat-mini-row">
+                            <span class="mini-pill"><i class="bi bi-calendar-week"></i> <b th:text="${userRecentBirths != null ? userRecentBirths : 0}">0</b> last 30d</span>
+                        </div>
                     </div>
                 </div>
+                <div class="stat-sparkline"><canvas id="sparkBirths"></canvas></div>
             </div>
+
             <div class="stat-card acc-sky">
                 <div class="stat-inner">
-                    <div class="stat-ic sky"><i class="bi bi-people-fill"></i></div>
+                    <div class="stat-ic sky"><i class="bi bi-cash-coin"></i></div>
                     <div class="stat-right">
-                        <div class="stat-num" th:text="${(totalRepresentatives != null ? totalRepresentatives : 0) + (totalBeneficiaries != null ? totalBeneficiaries : 0)}">0</div>
-                        <div class="stat-lbl">Reps &amp; Beneficiaries</div>
+                        <div class="stat-num" th:text="${totalSales != null ? totalSales : 0}">0</div>
+                        <div class="stat-lbl">Total Sales</div>
                         <div class="stat-mini-row">
-                            <span class="mini-pill"><i class="bi bi-person-badge-fill"></i> <b th:text="${totalRepresentatives != null ? totalRepresentatives : 0}">0</b> Reps</span>
-                            <span class="mini-pill"><i class="bi bi-person-lines-fill"></i> <b th:text="${totalBeneficiaries != null ? totalBeneficiaries : 0}">0</b> Beneficiaries</span>
+                            <span class="mini-pill"><i class="bi bi-coin"></i>
+                                <b th:text="${userTotalRevenue != null ? 'RWF ' + #numbers.formatDecimal(userTotalRevenue,1,'COMMA',0,'POINT') : '0'}">0</b>
+                            </span>
                         </div>
                     </div>
                 </div>
+                <div class="stat-sparkline"><canvas id="sparkSales"></canvas></div>
             </div>
+
             <div class="stat-card acc-purple">
                 <div class="stat-inner">
-                    <div class="stat-ic purple"><i class="bi bi-heart-pulse-fill"></i></div>
+                    <div class="stat-ic purple"><i class="bi bi-bandaid-fill"></i></div>
                     <div class="stat-right">
                         <div class="stat-num" th:text="${totalSick != null ? totalSick : 0}">0</div>
-                        <div class="stat-lbl">Sick Animals</div>
+                        <div class="stat-lbl">Sick Cases</div>
                         <div class="stat-mini-row">
-                            <span class="mini-pill"><i class="bi bi-clipboard-check"></i> <b th:text="${totalTreatments != null ? totalTreatments : 0}">0</b> Treated</span>
+                            <span class="mini-pill"><i class="bi bi-heart-pulse"></i> <b th:text="${totalTreatments != null ? totalTreatments : 0}">0</b> Treatments</span>
                         </div>
                     </div>
                 </div>
+                <div class="stat-sparkline"><canvas id="sparkSick"></canvas></div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="section-head">
-            <div class="section-title"><i class="bi bi-lightning-fill"></i> Quick Actions</div>
-        </div>
-        <div class="quick-actions">
-            <a th:href="@{/livestock/list}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#d8f3dc;color:var(--g7);"><i class="bi bi-grid-fill"></i></div>
-                <span>View Livestock</span>
-            </a>
-            <a th:href="@{/livestock/births/list}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#e0f2fe;color:#0369a1;"><i class="bi bi-stars"></i></div>
-                <span>Record Birth</span>
-            </a>
-            <a th:href="@{/livestock/treatments}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#ede9fe;color:#6d28d9;"><i class="bi bi-heart-pulse-fill"></i></div>
-                <span>Add Treatment</span>
-            </a>
-            <a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#fef3c7;color:#92400e;"><i class="bi bi-hourglass-split"></i></div>
-                <span>Pregnancy Track</span>
-            </a>
-            <a th:href="@{/livestock/sick}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#fef3c7;color:#d97706;"><i class="bi bi-bandaid-fill"></i></div>
-                <span>Sick Animals</span>
-            </a>
-            <a th:href="@{/livestock/sales}" class="quick-btn" onclick="navigateTo(event,this)">
-                <div class="quick-btn-icon" style="background:#d1fae5;color:#065f46;"><i class="bi bi-cash-stack"></i></div>
-                <span>Record Sale</span>
-            </a>
-        </div>
-
-        <!-- Activity cards -->
-        <div class="section-head">
-            <div class="section-title"><i class="bi bi-activity"></i> Livestock Activity</div>
-            <a th:href="@{/livestock/list}" class="btn-view-all no-print" onclick="navigateTo(event,this)">View All <i class="bi bi-arrow-right"></i></a>
+            <div class="section-title"><i class="bi bi-activity"></i> My Livestock Activity</div>
         </div>
         <div class="activity-grid">
-            <a href="#" class="act-card births" onclick="showBirthReport(event,document.getElementById('birthReportLink'))">
+            <a href="#" class="act-card births" onclick="showBirthReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">🐣</div>
+                    <div class="act-icon-wrap"><i class="bi bi-egg-fill"></i></div>
                     <div class="act-num" th:text="${totalBirths != null ? totalBirths : 0}">0</div>
                     <div class="act-lbl">Births</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microBirths"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
-            <a href="#" class="act-card sales" onclick="showSalesReport(event,document.getElementById('salesReportLink'))">
+            <a href="#" class="act-card sales" onclick="showSalesReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">💰</div>
+                    <div class="act-icon-wrap"><i class="bi bi-cash-coin"></i></div>
                     <div class="act-num" th:text="${totalSales != null ? totalSales : 0}">0</div>
                     <div class="act-lbl">Sales</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microSales"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
-            <a href="#" class="act-card treat" onclick="showTreatmentReport(event,document.getElementById('treatmentReportLink'))">
+            <a href="#" class="act-card treat" onclick="showTreatmentReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">💊</div>
+                    <div class="act-icon-wrap"><i class="bi bi-capsule"></i></div>
                     <div class="act-num" th:text="${totalTreatments != null ? totalTreatments : 0}">0</div>
                     <div class="act-lbl">Treatments</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microTreat"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
-            <a href="#" class="act-card sick" onclick="showSickReport(event,document.getElementById('sickReportLink'))">
+            <a href="#" class="act-card sick" onclick="showSickReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">🤒</div>
+                    <div class="act-icon-wrap"><i class="bi bi-bandaid-fill"></i></div>
                     <div class="act-num" th:text="${totalSick != null ? totalSick : 0}">0</div>
                     <div class="act-lbl">Sick</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microSick"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
-            <a href="#" class="act-card abort" onclick="showAbortionReport(event,document.getElementById('abortionReportLink'))">
+            <a href="#" class="act-card abort" onclick="showAbortionReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">⚠️</div>
+                    <div class="act-icon-wrap"><i class="bi bi-exclamation-triangle-fill"></i></div>
                     <div class="act-num" th:text="${totalAbortions != null ? totalAbortions : 0}">0</div>
                     <div class="act-lbl">Abortions</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microAbort"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
-            <a href="#" class="act-card deaths" onclick="showDeathsReport(event,document.getElementById('deathsReportLink'))">
+            <a href="#" class="act-card deaths" onclick="showDeathsReport(event,this)">
                 <div class="act-top">
-                    <div class="act-icon-wrap">🕊️</div>
+                    <div class="act-icon-wrap"><i class="bi bi-heartbreak-fill"></i></div>
                     <div class="act-num" th:text="${totalDeaths != null ? totalDeaths : 0}">0</div>
                     <div class="act-lbl">Deaths</div>
                 </div>
+                <div class="act-chart-wrap"><canvas id="microDeaths"></canvas></div>
+                <div class="act-cat">—</div>
             </a>
         </div>
 
-        <!-- Farm Analysis with Herd Composition -->
-        <div id="dashboardOverviewContent"></div>
+        <div class="section-head">
+            <div class="section-title"><i class="bi bi-bar-chart-fill"></i> Herd &amp; Health Overview</div>
+        </div>
+        <div class="chart-row wide">
+            <div class="chart-card">
+                <div class="chart-card-title"><i class="bi bi-graph-up"></i> Monthly Activity</div>
+                <div class="chart-card-sub">Births · sales · treatments (last 12 months)</div>
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="legend-dot" style="background:#38bdf8;"></span>Births</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#34d399;"></span>Sales</span>
+                    <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6;"></span>Treatments</span>
+                </div>
+                <div class="chart-wrap-md"><canvas id="chartActivity"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-card-title"><i class="bi bi-heart-pulse-fill"></i> Health Snapshot</div>
+                <div class="chart-card-sub">Sick · treatments</div>
+                <div class="chart-wrap-md"><canvas id="chartHealth"></canvas></div>
+            </div>
+        </div>
+
+        <div class="benef-strip">
+            <div class="panel-title" style="margin-bottom:10px;">
+                <i class="bi bi-person-lines-fill"></i> My Farm Summary
+            </div>
+            <div class="benef-grid">
+                <div class="benef-item">
+                    <div class="num" th:text="${totalLivestock != null ? totalLivestock : 0}">0</div>
+                    <div class="lbl">Total Animals</div>
+                </div>
+                <div class="benef-item">
+                    <div class="num" th:text="${userActiveLivestock != null ? userActiveLivestock : 0}">0</div>
+                    <div class="lbl">Active</div>
+                </div>
+                <div class="benef-item">
+                    <div class="num" th:text="${totalBirths != null ? totalBirths : 0}">0</div>
+                    <div class="lbl">Births Recorded</div>
+                </div>
+                <div class="benef-item">
+                    <div class="num" th:text="${totalSales != null ? totalSales : 0}">0</div>
+                    <div class="lbl">Sales Recorded</div>
+                </div>
+                <div class="benef-item">
+                    <div class="num" th:text="${totalTreatments != null ? totalTreatments : 0}">0</div>
+                    <div class="lbl">Treatments</div>
+                </div>
+                <div class="benef-item">
+                    <div class="num" th:text="${totalDeaths != null ? totalDeaths : 0}">0</div>
+                    <div class="lbl">Deaths</div>
+                </div>
+            </div>
+        </div>
 
         <div class="dash-footer">
-            <p>© <span id="footYear"></span> Livestock Manager Pro · Sustainable Farming Solutions</p>
+            <p>© <span th:text="${#dates.year(#dates.createNow())}"></span> Livestock Manager Pro · Sustainable Farming Solutions</p>
             <div style="margin-top:3px;"><i class="bi bi-tree-fill" style="color:var(--g5);"></i> Empowering farmers through technology</div>
+            <div style="margin-top:2px;opacity:.7;">Designed by NDAYIZEYE &amp; HABANABAKIZE</div>
         </div>
     </div>
 
-    <!-- ══ REPORT VIEWS ══ -->
+    <!-- Report views -->
     <div id="report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-stars"></i> Birth Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-stars"></i> Birth Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="birthReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="treatment-report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-heart-pulse-fill" style="color:#8b5cf6;"></i> Treatment Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-heart-pulse-fill" style="color:#8b5cf6;"></i> Treatment Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="treatmentReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="sick-report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-bandaid-fill"></i> Sick Livestock Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-bandaid-fill"></i> Sick Livestock Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="sickReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="abortion-report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-heartbreak-fill" style="color:#dc2626;"></i> Abortion Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-heartbreak-fill" style="color:#dc2626;"></i> Abortion Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="abortionReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="sales-report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-cash-stack"></i> Sales Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-cash-stack"></i> Sales Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="salesReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="deaths-report-view" class="view">
-        <div class="report-header"><div class="report-title"><i class="bi bi-x-circle-fill"></i> Deaths Report</div><button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="report-header">
+            <div class="report-title"><i class="bi bi-x-circle-fill"></i> Deaths Report</div>
+            <button class="btn-back" onclick="showDashboard(document.getElementById('dashMenuHeader'))"><i class="bi bi-arrow-left"></i> Back</button>
+        </div>
         <div class="card" id="deathsReportContent"><div class="loading"><i class="bi bi-arrow-repeat spin"></i> Loading…</div></div>
     </div>
     <div id="iframe-view" class="view iframe-view">
@@ -671,106 +797,121 @@
     </div>
 </main>
 
-<!-- ── Hidden server data ──
-     Only fields that DashboardController#userDashboard() actually populates
-     are read here. Per-record lists (recentBirths, treatmentList, sickList,
-     abortionList, salesList, deathsList) and monthly trend arrays are NOT
-     currently added to the model for regular users, so the quick-report
-     tables below will show "no records found" until the controller is
-     extended to supply user-scoped lists — the totals/cards above already
-     work today because they map 1:1 to attributes the controller sets. -->
-<div id="serverData" style="display:none;"
-     th:data-total-livestock="${totalLivestock}"
-     th:data-user-active-livestock="${userActiveLivestock}"
-     th:data-user-total-value="${userTotalValue}"
-     th:data-total-representatives="${totalRepresentatives}"
-     th:data-total-beneficiaries="${totalBeneficiaries}"
-     th:data-total-births="${totalBirths}"
-     th:data-user-recent-births="${userRecentBirths}"
-     th:data-total-sales="${totalSales}"
-     th:data-user-recent-sales="${userRecentSales}"
-     th:data-user-total-revenue="${userTotalRevenue}"
-     th:data-total-treatments="${totalTreatments}"
-     th:data-user-treatment-cost="${userTreatmentCost}"
-     th:data-total-sick="${totalSick}"
-     th:data-user-sick-animals="${userSickAnimals}"
-     th:data-total-abortions="${totalAbortions}"
-     th:data-total-deaths="${totalDeaths}"
-     th:data-user-death-value="${userDeathValue}"
-     th:data-recent-births="${recentBirths}"
-     th:data-treatment-list="${treatmentList}"
-     th:data-sick-list="${sickList}"
-     th:data-abortion-list="${abortionList}"
-     th:data-sales-list="${salesList}"
-     th:data-deaths-list="${deathsList}">
-</div>
-
 <script th:inline="javascript">
     /*<![CDATA[*/
+    window.SERVER_DATA = {
+        totalLivestock:       /*[[${totalLivestock}]]*/ 0,
+        userActiveLivestock:  /*[[${userActiveLivestock}]]*/ 0,
+        userTotalValue:       /*[[${userTotalValue}]]*/ 0,
+        totalBirths:          /*[[${totalBirths}]]*/ 0,
+        userRecentBirths:     /*[[${userRecentBirths}]]*/ 0,
+        totalSales:           /*[[${totalSales}]]*/ 0,
+        userRecentSales:      /*[[${userRecentSales}]]*/ 0,
+        userTotalRevenue:     /*[[${userTotalRevenue}]]*/ 0,
+        totalSick:            /*[[${totalSick}]]*/ 0,
+        totalTreatments:      /*[[${totalTreatments}]]*/ 0,
+        userTreatmentCost:    /*[[${userTreatmentCost}]]*/ 0,
+        totalDeaths:          /*[[${totalDeaths}]]*/ 0,
+        userDeathValue:       /*[[${userDeathValue}]]*/ 0,
+        totalAbortions:       /*[[${totalAbortions}]]*/ 0,
+        avgAnimalValue:       /*[[${avgAnimalValue}]]*/ 0,
+        newbornValue:         /*[[${newbornValue}]]*/ 0,
+        netFarmPosition:      /*[[${netFarmPosition}]]*/ 0,
+        netFarmPositive:      /*[[${netFarmPositive}]]*/ true,
+        categoryBreakdown:    /*[[${categoryBreakdown}]]*/ '{}'
+    };
+    /*]]>*/
+</script>
+
+<script>
     (function(){
     'use strict';
 
-    function parseJ(s){if(!s||s==='null'||s==='undefined'||s==='')return null;try{return JSON.parse(s.replace(/&quot;/g,'"'));}catch(e){return null;}}
-    var S=document.getElementById('serverData');
-    function sd(k){return S?S.dataset[k]:null;}
+    var raw = window.SERVER_DATA || {};
 
-    var dd={
-      totalLivestock:     +sd('totalLivestock')||0,
-      userActiveLivestock:+sd('userActiveLivestock')||0,
-      userTotalValue:     +sd('userTotalValue')||0,
-      totalReps:          +sd('totalRepresentatives')||0,
-      totalBene:          +sd('totalBeneficiaries')||0,
-      totalBirths:        +sd('totalBirths')||0,
-      userRecentBirths:   +sd('userRecentBirths')||0,
-      totalSales:         +sd('totalSales')||0,
-      userRecentSales:    +sd('userRecentSales')||0,
-      userTotalRevenue:   +sd('userTotalRevenue')||0,
-      totalTreat:         +sd('totalTreatments')||0,
-      userTreatmentCost:  +sd('userTreatmentCost')||0,
-      totalSick:          +sd('totalSick')||0,
-      userSickAnimals:    +sd('userSickAnimals')||0,
-      totalAbort:         +sd('totalAbortions')||0,
-      totalDeaths:        +sd('totalDeaths')||0,
-      userDeathValue:     +sd('userDeathValue')||0,
-      recentBirths:  parseJ(sd('recentBirths'))||[],
-      treatList:     parseJ(sd('treatmentList'))||[],
-      sickList:      parseJ(sd('sickList'))||[],
-      abortList:     parseJ(sd('abortionList'))||[],
-      salesList:     parseJ(sd('salesList'))||[],
-      deathsList:    parseJ(sd('deathsList'))||[]
-    };
-
-    var fmt=function(n){return(n==null?'0':(+n).toLocaleString());};
-    var fmtC=function(n){return(n==null?'0 RWF':(+n).toLocaleString()+' RWF');};
-    var fmtK=function(n){if(n==null)return'0';return Math.round(+n).toLocaleString('en-US');};
-    var fmtD=function(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-GB');}catch(e){return'—';}};
-    var C={births:'#38bdf8',sales:'#34d399',treat:'#a78bfa',sick:'#fbbf24',abort:'#fb923c',deaths:'#fb7185',green:'#52b788',teal:'#14b8a6',rose:'#f43f5e',sky:'#38bdf8'};
-
-    function mkLegend(pairs){
-      var h='<div class="chart-legend" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">';
-      for(var i=0;i<pairs.length;i+=2)h+='<span class="legend-item" style="display:flex;align-items:center;gap:3px;font-size:.58rem;color:var(--tx2);"><span style="width:6px;height:6px;border-radius:2px;display:inline-block;background:'+pairs[i]+'"></span>'+pairs[i+1]+'</span>';
-      return h+'</div>';
+    function parseMaybe(v, fallback){
+      if (v == null) return fallback;
+      if (typeof v === 'object') return v;
+      if (typeof v === 'string') {
+        var s = v.trim();
+        if (!s || s === 'null' || s === 'undefined') return fallback;
+        try { return JSON.parse(s); } catch(e) { return fallback; }
+      }
+      return fallback;
     }
 
-    function toast(msg,type){
+    var dd = {
+      totalLivestock:      +raw.totalLivestock || 0,
+      userActiveLivestock: +raw.userActiveLivestock || 0,
+      userTotalValue:      +raw.userTotalValue || 0,
+      totalBirths:         +raw.totalBirths || 0,
+      userRecentBirths:    +raw.userRecentBirths || 0,
+      totalSales:          +raw.totalSales || 0,
+      userRecentSales:     +raw.userRecentSales || 0,
+      userTotalRevenue:    +raw.userTotalRevenue || 0,
+      totalSick:           +raw.totalSick || 0,
+      totalTreatments:     +raw.totalTreatments || 0,
+      userTreatmentCost:   +raw.userTreatmentCost || 0,
+      totalDeaths:         +raw.totalDeaths || 0,
+      userDeathValue:      +raw.userDeathValue || 0,
+      totalAbortions:      +raw.totalAbortions || 0,
+      avgAnimalValue:      +raw.avgAnimalValue || 0,
+      newbornValue:        +raw.newbornValue || 0,
+      netFarmPosition:     +raw.netFarmPosition || 0,
+      netFarmPositive:     raw.netFarmPositive === true || raw.netFarmPositive === 'true',
+      categoryBreakdown:   parseMaybe(raw.categoryBreakdown, {})
+    };
+
+    var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var C={births:'#38bdf8',sales:'#34d399',treat:'#a78bfa',sick:'#fbbf24',
+           abort:'#fb923c',deaths:'#fb7185',green:'#52b788',teal:'#14b8a6',
+           rose:'#f43f5e',sky:'#38bdf8',purple:'#8b5cf6',amber:'#f4a261'};
+
+    function fmt(n){return (n==null?'0':(+n).toLocaleString());}
+    function fmtK(n){if(n==null)return'0';return Math.round(+n).toLocaleString('en-US');}
+    function fmtD(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-GB');}catch(e){return'—';}}
+    function fmtRWF(n){
+      if (n === null || n === undefined || isNaN(+n)) return '0.00 RWF';
+      return Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' RWF';
+    }
+    function safe(v){ return (v === null || v === undefined) ? '' : v; }
+
+    function toast(msg){
       var el=document.createElement('div');el.className='toast-notif';
-      el.style.borderLeftColor=type==='error'?'var(--rose)':'var(--teal)';
       el.innerHTML='<i class="bi bi-check-circle-fill" style="color:var(--teal)"></i><span>'+msg+'</span>';
       document.body.appendChild(el);setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},3000);
     }
+    window.toast = toast;
 
-    window.exportCSV = function(type){
-      var d=dd;var csv='';var fn='';
-      if(type==='birth'){csv='Tag,Category,Birth Date,Offspring,Gender,Children\n';d.recentBirths.forEach(function(b){var cat=b.livestock&&b.livestock.livestockCategory?b.livestock.livestockCategory.name:'—';csv+='"'+((b.livestock&&b.livestock.tagNumber)?b.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(b.birthDate)+'",'+(b.offspringCount||0)+',"'+(b.offspringGender||'—')+'",'+(b.children||0)+'\n';});fn='births.csv';}
-      else if(type==='sick'){csv='Tag,Category,Reported,Diagnosis,Severity,Status\n';d.sickList.forEach(function(s){var cat=s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—';csv+='"'+((s.livestock&&s.livestock.tagNumber)?s.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(s.reportedDate)+'","'+(s.diagnosis||'—')+'","'+(s.severityLevel||'—')+'","'+(s.status||'—')+'"\n';});fn='sick.csv';}
-      else if(type==='sale'){csv='Tag,Category,Sale Date,Price,Buyer\n';d.salesList.forEach(function(s){var cat=s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—';csv+='"'+((s.livestock&&s.livestock.tagNumber)?s.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(s.saleDate)+'",'+(s.salePrice||0)+',"'+(s.buyer&&s.buyer.name?s.buyer.name:(s.buyerName||'—'))+'"\n';});fn='sales.csv';}
-      else if(type==='death'){csv='Tag,Category,Death Date,Cause,Value Lost\n';d.deathsList.forEach(function(x){var cat=x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—';csv+='"'+((x.livestock&&x.livestock.tagNumber)?x.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(x.deathDate)+'","'+(x.causeOfDeath||'Unknown')+'",'+(x.livestock&&x.livestock.currentValue?x.livestock.currentValue:0)+'\n';});fn='deaths.csv';}
-      else if(type==='treat'){csv='Tag,Category,Date,Medication,Type,Status,Cost,Paid\n';d.treatList.forEach(function(t){var cat=t.livestock&&t.livestock.livestockCategory?t.livestock.livestockCategory.name:'—';csv+='"'+((t.livestock&&t.livestock.tagNumber)?t.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(t.treatmentDate)+'","'+(t.medication&&t.medication.name?t.medication.name:'—')+'","'+(t.treatmentType||'—')+'","'+(t.treatmentStatus||'—')+'",'+(t.treatmentCost||0)+','+(t.isPaid?'Yes':'No')+'\n';});fn='treatments.csv';}
-      else if(type==='abort'){csv='Tag,Category,Abortion Date,Expected Birth,Pregnancy#\n';d.abortList.forEach(function(a){var cat=a.livestock&&a.livestock.livestockCategory?a.livestock.livestockCategory.name:'—';csv+='"'+((a.livestock&&a.livestock.tagNumber)?a.livestock.tagNumber:'—')+'","'+cat+'","'+fmtD(a.abortionDate)+'","'+(a.expectedBirthDate?fmtD(a.expectedBirthDate):'—')+'",'+(a.pregnancyNumber||'—')+'\n';});fn='abortions.csv';}
-      if(!csv)return;
-      var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);
-      toast('Export ready!');
-    };
+    function drawSparkline(id,data,color){
+      var el=document.getElementById(id);if(!el)return;
+      if(!data||!data.length)return;
+      el.width=el.offsetWidth||120;el.height=30;
+      var ctx=el.getContext('2d');if(!ctx)return;
+      var max=Math.max.apply(null,data)||1;
+      var min=Math.min.apply(null,data);
+      var range=max-min||1;
+      var w=el.width/(data.length-1||1),h=el.height;
+      ctx.clearRect(0,0,el.width,h);
+      ctx.beginPath();
+      for(var i=0;i<data.length;i++){
+        var x=i*w,y=h-((data[i]-min)/range)*(h-4)-2;
+        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+      }
+      ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();
+      ctx.lineTo((data.length-1)*w,h);ctx.lineTo(0,h);ctx.closePath();
+      ctx.fillStyle=color+'22';ctx.fill();
+    }
+
+    var microCharts=[];
+    function drawMicroBar(id,data,color){
+      var el=document.getElementById(id);if(!el)return null;
+      var c=new Chart(el,{type:'bar',data:{labels:MONTHS,datasets:[{data:data||[],backgroundColor:color+'aa',borderRadius:2,borderSkipped:false}]},
+        options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},
+          plugins:{legend:{display:false},tooltip:{enabled:false}},
+          scales:{x:{display:false},y:{display:false,beginAtZero:true}}}});
+      microCharts.push(c);return c;
+    }
 
     var ALL_VIEWS=['dashboard','report','treatment-report','sick-report','abortion-report','sales-report','deaths-report','iframe'];
 
@@ -787,29 +928,6 @@
       setTimeout(renderDashboardOverview,100);
     };
 
-    function markActive(el){
-      document.querySelectorAll('.submenu-link').forEach(function(l){l.classList.remove('active-item');});
-      if(el)el.classList.add('active-item');
-    }
-
-    window.showBirthReport = function(e,el){e.preventDefault();showView('report');markActive(el);renderBirthReport();closeMobile();};
-    window.showTreatmentReport = function(e,el){e.preventDefault();showView('treatment-report');markActive(el);renderTreatmentReport();closeMobile();};
-    window.showSickReport = function(e,el){e.preventDefault();showView('sick-report');markActive(el);renderSickReport();closeMobile();};
-    window.showAbortionReport = function(e,el){e.preventDefault();showView('abortion-report');markActive(el);renderAbortionReport();closeMobile();};
-    window.showSalesReport = function(e,el){e.preventDefault();showView('sales-report');markActive(el);renderSalesReport();closeMobile();};
-    window.showDeathsReport = function(e,el){e.preventDefault();showView('deaths-report');markActive(el);renderDeathsReport();closeMobile();};
-
-    window.navigateTo = function(e,el){
-      e.preventDefault();
-      var targetUrl = el.getAttribute('href');
-      if(!targetUrl||targetUrl==='#')return;
-      showView('iframe');
-      var f=document.getElementById('contentFrame');
-      if(f)f.src=targetUrl;
-      markActive(el);
-      closeMobile();
-    };
-
     window.toggleSidebar = function(){
       var s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');
       if(!s)return;
@@ -818,17 +936,42 @@
     };
 
     window.toggleSub = function(id,btn){
-      var sub=document.getElementById('submenu-'+id);
-      if(!sub)return;
+      var sub=document.getElementById('submenu-'+id);if(!sub)return;
       var isOpen=sub.classList.contains('open');
       document.querySelectorAll('.submenu').forEach(function(s){s.classList.remove('open');});
       document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('open');});
       if(!isOpen){sub.classList.add('open');if(btn)btn.classList.add('open');}
     };
 
+    window.toggleNested = function(id){
+      var el=document.getElementById('nested-submenu-'+id);
+      if(el)el.classList.toggle('active');
+    };
+
+    window.navigateTo = function(e,el,url){
+      e.preventDefault();
+      var targetUrl = url || el.getAttribute('href');
+      if(!targetUrl||targetUrl==='#')return;
+      showView('iframe');
+      var f=document.getElementById('contentFrame');
+      if(f)f.src=targetUrl;
+      closeMobile();
+    };
+
     function closeMobile(){
-      if(window.innerWidth<=768){var s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');if(s)s.classList.remove('active');if(o)o.style.display='none';}
+      if(window.innerWidth<=768){
+        var s=document.getElementById('sidebar'),o=document.getElementById('sidebarOverlay');
+        if(s)s.classList.remove('active');
+        if(o)o.style.display='none';
+      }
     }
+
+    window.showBirthReport = function(e,el){e.preventDefault();showView('report');renderBirthReport();closeMobile();};
+    window.showTreatmentReport = function(e,el){e.preventDefault();showView('treatment-report');renderTreatmentReport();closeMobile();};
+    window.showSickReport = function(e,el){e.preventDefault();showView('sick-report');renderSickReport();closeMobile();};
+    window.showAbortionReport = function(e,el){e.preventDefault();showView('abortion-report');renderAbortionReport();closeMobile();};
+    window.showSalesReport = function(e,el){e.preventDefault();showView('sales-report');renderSalesReport();closeMobile();};
+    window.showDeathsReport = function(e,el){e.preventDefault();showView('deaths-report');renderDeathsReport();closeMobile();};
 
     var dashCharts=[];
     function destroyCharts(){dashCharts.forEach(function(c){try{c.destroy();}catch(e){}});dashCharts=[];}
@@ -837,161 +980,280 @@
       destroyCharts();
       var container=document.getElementById('dashboardOverviewContent');if(!container)return;
       var d=dd;
-      var net=d.userTotalRevenue-d.userTreatmentCost;
-      var profit=net>=0;
-
-      var netEl=document.getElementById('netPositionAmount');
-      if(netEl){netEl.textContent=fmtC(Math.abs(net))+(profit?'':' (loss)');netEl.style.color=profit?'#1e40af':'#9f1239';}
 
       var activeHerd=d.userActiveLivestock;
-      var total=activeHerd+d.totalSales+d.totalDeaths+d.totalSick;
-      var pct=function(v){return total>0?Math.round((v/total)*100):0;};
+      var total=d.totalLivestock;
+      var pct=function(v){ return total>0 ? Math.round((v/total)*100) : 0; };
 
-      container.innerHTML =
-        '<div class="section-head" style="margin-bottom:6px;">' +
-          '<div class="section-title"><i class="bi bi-graph-up-arrow"></i> My Farm Analysis</div>' +
-        '</div>' +
-
-        '<div class="farm-analysis-grid">' +
-          '<div class="herd-composition-card">' +
-            '<div class="herd-header">' +
-              '<div class="herd-title"><i class="bi bi-pie-chart-fill"></i> Herd Composition</div>' +
-              '<span class="herd-badge"><i class="bi bi-dot"></i> ' + fmt(d.totalLivestock) + ' total</span>' +
-            '</div>' +
-            '<div class="herd-subtitle">Your current herd status distribution</div>' +
-            '<div class="herd-content">' +
-              '<div class="herd-chart-wrap"><canvas id="chartDonut"></canvas></div>' +
-              '<div class="herd-stats-list">' +
-                '<div class="herd-stat-row"><div class="herd-stat-left"><span class="herd-stat-dot" style="background:'+C.green+';"></span><span class="herd-stat-label">Active</span></div><div><span class="herd-stat-value">'+fmt(activeHerd)+'</span><span class="herd-stat-percent">('+pct(activeHerd)+'%)</span></div></div>' +
-                '<div class="herd-stat-row"><div class="herd-stat-left"><span class="herd-stat-dot" style="background:'+C.births+';"></span><span class="herd-stat-label">Sold</span></div><div><span class="herd-stat-value">'+fmt(d.totalSales)+'</span><span class="herd-stat-percent">('+pct(d.totalSales)+'%)</span></div></div>' +
-                '<div class="herd-stat-row"><div class="herd-stat-left"><span class="herd-stat-dot" style="background:'+C.deaths+';"></span><span class="herd-stat-label">Deceased</span></div><div><span class="herd-stat-value">'+fmt(d.totalDeaths)+'</span><span class="herd-stat-percent">('+pct(d.totalDeaths)+'%)</span></div></div>' +
-                '<div class="herd-stat-row"><div class="herd-stat-left"><span class="herd-stat-dot" style="background:'+C.sick+';"></span><span class="herd-stat-label">Sick</span></div><div><span class="herd-stat-value">'+fmt(d.totalSick)+'</span><span class="herd-stat-percent">('+pct(d.totalSick)+'%)</span></div></div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="right-panel">' +
-            '<div class="farm-stats-grid">' +
-              '<div class="farm-stat-card"><span class="farm-stat-icon green">🐄</span><div class="farm-stat-value">' + fmt(activeHerd) + '</div><div class="farm-stat-label">Active Herd</div></div>' +
-              '<div class="farm-stat-card"><span class="farm-stat-icon blue">📈</span><div class="farm-stat-value">' + fmtK(d.userTotalRevenue) + ' RWF</div><div class="farm-stat-label">Revenue</div></div>' +
-              '<div class="farm-stat-card"><span class="farm-stat-icon amber">💊</span><div class="farm-stat-value">' + fmtK(d.userTreatmentCost) + ' RWF</div><div class="farm-stat-label">Treatment Costs</div><div class="farm-stat-sub">' + fmt(d.totalTreat) + ' treatments</div></div>' +
-              '<div class="farm-stat-card"><span class="farm-stat-icon ' + (profit ? 'green' : 'rose') + '">' + (profit ? '💰' : '📉') + '</span><div class="farm-stat-value" style="color:' + (profit ? 'var(--teal)' : 'var(--rose)') + '">' + fmtK(Math.abs(net)) + ' RWF</div><div class="farm-stat-label">' + (profit ? 'Net Profit' : 'Net Loss') + '</div></div>' +
-            '</div>' +
-            '<div class="kpi-mini-grid">' +
-              '<div class="kpi-mini rev"><div class="kpi-mini-label">Revenue</div><div class="kpi-mini-val" style="color:var(--teal)">'+fmtK(d.userTotalRevenue)+' RWF</div></div>' +
-              '<div class="kpi-mini cost"><div class="kpi-mini-label">Costs</div><div class="kpi-mini-val" style="color:var(--rose)">'+fmtK(d.userTreatmentCost)+' RWF</div></div>' +
-              '<div class="kpi-mini net"><div class="kpi-mini-label">Net '+(profit?'Profit':'Loss')+'</div><div class="kpi-mini-val" style="color:'+(profit?'var(--teal)':'var(--rose)')+'">'+fmtK(Math.abs(net))+' RWF</div></div>' +
-              '<div class="kpi-mini rec"><div class="kpi-mini-label">Value Lost (Deaths)</div><div class="kpi-mini-val" style="color:var(--sky)">'+fmtK(d.userDeathValue)+' RWF</div></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-
-        '<div class="chart-row two">' +
-          '<div class="chart-card">' +
-            '<div class="chart-card-title"><i class="bi bi-bar-chart-fill"></i> Event Overview</div>' +
-            '<div class="chart-card-sub">Births · sales · treatments · sick · abortions · deaths</div>' +
-            '<div class="chart-wrap-md"><canvas id="chartBar"></canvas></div>' +
-          '</div>' +
-          '<div class="chart-card">' +
-            '<div class="chart-card-title"><i class="bi bi-activity"></i> Event Radar</div>' +
-            '<div class="chart-card-sub">All key metrics at a glance</div>' +
-            '<div class="chart-wrap-md"><canvas id="chartRadar"></canvas></div>' +
-          '</div>' +
+      /* ---------- Herd Composition ---------- */
+      var herdHtml =
+        '<div class="section-head" style="margin-bottom:6px;">'+
+          '<div class="section-title"><i class="bi bi-graph-up-arrow"></i> My Farm Analysis</div>'+
+        '</div>'+
+        '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r3);padding:14px;box-shadow:var(--sh0);margin-bottom:8px;">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">'+
+            '<div style="font-weight:700;font-size:var(--fs-md);color:var(--tx1);display:flex;align-items:center;gap:5px;">'+
+              '<i class="bi bi-pie-chart-fill" style="color:var(--g6);"></i> Herd Composition</div>'+
+            '<span style="background:var(--g1);color:var(--g7);font-size:var(--fs-xs);font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid var(--g4);">'+
+              '<i class="bi bi-dot"></i> '+fmt(total)+' total</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">'+
+            '<div style="flex:0 0 200px;height:200px;position:relative;"><canvas id="chartDonut"></canvas></div>'+
+            '<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px;">'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+                '<span style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--tx2);">'+
+                  '<span style="width:8px;height:8px;border-radius:50%;background:'+C.green+';"></span>Active</span>'+
+                '<span style="font-weight:700;font-size:var(--fs-sm);">'+fmt(activeHerd)+' <span style="color:var(--txm);font-weight:400;">('+pct(activeHerd)+'%)</span></span>'+
+              '</div>'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+                '<span style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--tx2);">'+
+                  '<span style="width:8px;height:8px;border-radius:50%;background:'+C.births+';"></span>Sold</span>'+
+                '<span style="font-weight:700;font-size:var(--fs-sm);">'+fmt(d.totalSales)+' <span style="color:var(--txm);font-weight:400;">('+pct(d.totalSales)+'%)</span></span>'+
+              '</div>'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+                '<span style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--tx2);">'+
+                  '<span style="width:8px;height:8px;border-radius:50%;background:'+C.deaths+';"></span>Deceased</span>'+
+                '<span style="font-weight:700;font-size:var(--fs-sm);">'+fmt(d.totalDeaths)+' <span style="color:var(--txm);font-weight:400;">('+pct(d.totalDeaths)+'%)</span></span>'+
+              '</div>'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;">'+
+                '<span style="display:flex;align-items:center;gap:6px;font-size:var(--fs-sm);color:var(--tx2);">'+
+                  '<span style="width:8px;height:8px;border-radius:50%;background:'+C.sick+';"></span>Sick</span>'+
+                '<span style="font-weight:700;font-size:var(--fs-sm);">'+fmt(d.totalSick)+' <span style="color:var(--txm);font-weight:400;">('+pct(d.totalSick)+'%)</span></span>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
         '</div>';
 
+      /* ---------- Livestock Assets + Farm Analysis ---------- */
+      var totalValue   = d.userTotalValue || 0;
+      var activeCount  = d.userActiveLivestock || 0;
+      var avgValue     = activeCount > 0 ? (totalValue / activeCount) : 0;
+      var newbornVal   = d.newbornValue || 0;
+      var deathLossVal = d.userDeathValue || 0;
+      var healthCosts  = d.userTreatmentCost || 0;
+      var revenue      = d.userTotalRevenue || 0;
+      var netPosition  = d.netFarmPosition || (revenue - healthCosts - deathLossVal);
+      var isPositive   = d.netFarmPositive !== undefined ? d.netFarmPositive : (netPosition >= 0);
+
+      var combinedHtml =
+        '<div class="combined-analysis-grid" style="margin-top:10px;">'+
+          '<div class="combined-panel livestock-assets">'+
+            '<div class="combined-panel-header">'+
+              '<div class="combined-panel-icon"><i class="bi bi-box2-heart-fill"></i></div>'+
+              '<div>'+
+                '<div class="combined-panel-title">Livestock Assets</div>'+
+                '<div class="combined-panel-sub">Biological asset value · Not cash income</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="combined-stats-grid">'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-clipboard2-pulse-fill"></i></div><span class="combined-stat-delta up"><i class="bi bi-dot"></i> live</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(totalValue) +'</div>'+
+                '<div class="combined-stat-label">Current Herd Value</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-coin"></i></div><span class="combined-stat-delta up"><i class="bi bi-dot"></i> avg</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(avgValue) +'</div>'+
+                '<div class="combined-stat-label">Avg Value / Animal</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-stars"></i></div><span class="combined-stat-delta up"><i class="bi bi-dot"></i> births</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(newbornVal) +'</div>'+
+                '<div class="combined-stat-label">Newborn Value</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-x-octagon-fill"></i></div><span class="combined-stat-delta down"><i class="bi bi-dot"></i> lost</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(deathLossVal) +'</div>'+
+                '<div class="combined-stat-label">Death Loss</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="combined-panel-footer">'+
+              '<button type="button" class="btn-card-action primary" style="flex:1;" onclick="navigateTo(event,this,\'/livestock/list\')">'+
+                '<i class="bi bi-list-ul"></i> View My Livestock'+
+              '</button>'+
+            '</div>'+
+          '</div>'+
+          '<div class="combined-panel farm-analysis">'+
+            '<div class="combined-panel-header">'+
+              '<div class="combined-panel-icon"><i class="bi bi-graph-up-arrow"></i></div>'+
+              '<div>'+
+                '<div class="combined-panel-title">Farm Analysis</div>'+
+                '<div class="combined-panel-sub">Performance &amp; financial metrics</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="combined-stats-grid">'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-cart-check-fill"></i></div><span class="combined-stat-delta up"><i class="bi bi-arrow-up-short"></i> revenue</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(revenue) +'</div>'+
+                '<div class="combined-stat-label">Sales Revenue</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-wallet2"></i></div>'+
+                  '<span class="combined-stat-delta '+ (isPositive ? 'up' : 'down') +'">'+
+                    '<i class="bi '+ (isPositive ? 'bi-arrow-up-short' : 'bi-arrow-down-short') +'"></i>'+
+                    '<span>'+ (isPositive ? 'positive' : 'negative') +'</span>'+
+                  '</span>'+
+                '</div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(netPosition) +'</div>'+
+                '<div class="combined-stat-label">Net Farm Position</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-heart-pulse-fill"></i></div><span class="combined-stat-delta down"><i class="bi bi-dot"></i> cost</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(healthCosts) +'</div>'+
+                '<div class="combined-stat-label">Health Costs</div>'+
+              '</div>'+
+              '<div class="combined-stat">'+
+                '<div class="combined-stat-header"><div class="combined-stat-icon"><i class="bi bi-hourglass-split"></i></div><span class="combined-stat-delta down"><i class="bi bi-dot"></i> owed</span></div>'+
+                '<div class="combined-stat-value">'+ fmtRWF(0) +'</div>'+
+                '<div class="combined-stat-label">Receivables</div>'+
+              '</div>'+
+            '</div>'+
+            '<div class="combined-panel-footer">'+
+              '<button type="button" class="btn-card-action success" style="flex:1;" onclick="navigateTo(event,this,\'/livestock/financial-summary\')">'+
+                '<i class="bi bi-bar-chart-fill"></i> Full Analysis'+
+              '</button>'+
+            '</div>'+
+          '</div>'+
+        '</div>';
+
+      container.innerHTML = herdHtml + combinedHtml;
+
+      /* ---------- Donut chart ---------- */
       var ctxD=document.getElementById('chartDonut');
-      if(ctxD)dashCharts.push(new Chart(ctxD,{type:'doughnut',data:{labels:['Active','Sold','Dead','Sick'],datasets:[{data:[activeHerd,d.totalSales,d.totalDeaths,d.totalSick],backgroundColor:[C.green,C.births,C.deaths,C.sick],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}}));
+      if(ctxD)dashCharts.push(new Chart(ctxD,{
+        type:'doughnut',
+        data:{
+          labels:['Active','Sold','Dead','Sick'],
+          datasets:[{
+            data:[activeHerd,d.totalSales,d.totalDeaths,d.totalSick],
+            backgroundColor:[C.green,C.births,C.deaths,C.sick],
+            borderWidth:0,hoverOffset:6
+          }]
+        },
+        options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}
+      }));
 
-      var ctxBar=document.getElementById('chartBar');
-      if(ctxBar)dashCharts.push(new Chart(ctxBar,{type:'bar',data:{labels:['Births','Sales','Treatments','Sick','Abortions','Deaths'],datasets:[{data:[d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths],backgroundColor:[C.births,C.sales,C.treat,C.sick,C.abort,C.deaths],borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}}}}}));
+      /* ---------- Monthly activity chart ---------- */
+      var mBirths=[0,0,0,0,0,0,0,0,0,0,0,d.totalBirths];
+      var mSales =[0,0,0,0,0,0,0,0,0,0,0,d.totalSales];
+      var mTreat =[0,0,0,0,0,0,0,0,0,0,0,d.totalTreatments];
 
-      var ctxR=document.getElementById('chartRadar');
-      if(ctxR){
-        var maxV=Math.max(d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths,1);
-        dashCharts.push(new Chart(ctxR,{type:'radar',data:{labels:['Births','Sales','Treat.','Sick','Abort.','Deaths'],datasets:[{data:[d.totalBirths,d.totalSales,d.totalTreat,d.totalSick,d.totalAbort,d.totalDeaths],backgroundColor:'rgba(82,183,136,.14)',borderColor:C.green,pointBackgroundColor:C.green,borderWidth:2,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{beginAtZero:true,ticks:{font:{size:7},stepSize:Math.ceil(maxV/5)},pointLabels:{font:{size:8}},grid:{color:'rgba(0,0,0,.06)'},angleLines:{color:'rgba(0,0,0,.06)'}}}}}));
-      }
+      var ctxAct=document.getElementById('chartActivity');
+      if(ctxAct)dashCharts.push(new Chart(ctxAct,{
+        type:'bar',
+        data:{labels:MONTHS,datasets:[
+          {label:'Births',data:mBirths,backgroundColor:C.births,borderRadius:3,borderSkipped:false},
+          {label:'Sales',data:mSales,backgroundColor:C.sales,borderRadius:3,borderSkipped:false},
+          {label:'Treatments',data:mTreat,backgroundColor:C.treat,borderRadius:3,borderSkipped:false}
+        ]},
+        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{grid:{display:false},ticks:{font:{size:9},autoSkip:false}},
+                  y:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}}}}
+      }));
+
+      var ctxH=document.getElementById('chartHealth');
+      if(ctxH)dashCharts.push(new Chart(ctxH,{
+        type:'bar',
+        data:{labels:['Sick','Treatments'],
+          datasets:[{data:[d.totalSick,d.totalTreatments],
+            backgroundColor:[C.rose,C.treat],borderRadius:5,borderSkipped:false}]},
+        options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+          scales:{x:{beginAtZero:true,ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}},
+                  y:{grid:{display:false},ticks:{font:{size:9}}}}}
+      }));
     }
 
-    function exportBar(type){return '<div class="export-bar no-print"><span>Export:</span><button class="btn-export csv" onclick="exportCSV(\''+type+'\')"><i class="bi bi-file-earmark-excel-fill"></i> CSV</button><button class="btn-export print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print</button></div>';}
+    function exportBar(type){
+      return '<div class="export-bar no-print"><span>Export:</span><button class="btn-export print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print</button></div>';
+    }
 
     function renderBirthReport(){
       var el=document.getElementById('birthReportContent');if(!el)return;
-      var d=dd;
-      if(!d.recentBirths.length){el.innerHTML='<div class="empty-state"><i class="bi bi-stars"></i><p>No birth records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalBirths)+'</div><div class="kpi-lbl">Total Births</div></div><div class="kpi-card"><div class="kpi-val">'+fmt(d.userRecentBirths)+'</div><div class="kpi-lbl">Last 30 Days</div></div></div>'+exportBar('birth')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Mother Tag</th><th>Category</th><th>Birth Date</th><th>Offspring</th><th>Gender</th><th>Children</th></tr></thead><tbody>';
-      d.recentBirths.forEach(function(b,i){
-        var cat=b.livestock&&b.livestock.livestockCategory?b.livestock.livestockCategory.name:'—';
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(b.livestock&&b.livestock.tagNumber?b.livestock.tagNumber:'—')+'</strong></td><td>'+cat+'</td><td>'+fmtD(b.birthDate)+'</td><td><span class="badge badge-success">'+(b.offspringCount||0)+'</span></td><td>'+(b.offspringGender||'—')+'</td><td>'+(b.children||0)+'</td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalBirths)+'</div><div class="kpi-lbl">Total Births</div></div>'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.userRecentBirths)+'</div><div class="kpi-lbl">Last 30 Days</div></div>'+
+      '</div>'+exportBar('birth')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed birth records available on the Births page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/births/list\')">Go to Births <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     function renderTreatmentReport(){
       var el=document.getElementById('treatmentReportContent');if(!el)return;
-      var d=dd;
-      if(!d.treatList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-heart-pulse"></i><p>No treatment records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalTreat)+'</div><div class="kpi-lbl">Total Treatments</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.userTreatmentCost)+' RWF</div><div class="kpi-lbl">Total Cost</div></div></div>'+exportBar('treat')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Date</th><th>Medication</th><th>Type</th><th>Status</th><th>Cost</th><th>Paid</th></tr></thead><tbody>';
-      d.treatList.forEach(function(t,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(t.livestock&&t.livestock.tagNumber?t.livestock.tagNumber:'—')+'</strong></td><td>'+(t.livestock&&t.livestock.livestockCategory?t.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(t.treatmentDate)+'</td><td>'+(t.medication&&t.medication.name?t.medication.name:'—')+'</td><td><span class="badge badge-info">'+(t.treatmentType||'—')+'</span></td><td><span class="badge '+(t.treatmentStatus==='COMPLETED'?'badge-success':'badge-warning')+'">'+(t.treatmentStatus||'—')+'</span></td><td>'+(t.treatmentCost?fmtK(t.treatmentCost)+' RWF':'—')+'</td><td>'+(t.isPaid?'<span class="badge badge-success">Yes</span>':'<span class="badge badge-warning">No</span>')+'</td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalTreatments)+'</div><div class="kpi-lbl">Total Treatments</div></div>'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmtK(dd.userTreatmentCost)+' RWF</div><div class="kpi-lbl">Total Cost</div></div>'+
+      '</div>'+exportBar('treat')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed treatment records available on the Treatments page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/treatments\')">Go to Treatments <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     function renderSickReport(){
       var el=document.getElementById('sickReportContent');if(!el)return;
-      var d=dd;
-      if(!d.sickList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-emoji-smile" style="color:var(--teal);"></i><p>No sick animals — all your livestock are healthy! 🎉</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalSick)+'</div><div class="kpi-lbl">Total Sick</div></div></div>'+exportBar('sick')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Reported</th><th>Diagnosis</th><th>Severity</th><th>Status</th></tr></thead><tbody>';
-      d.sickList.forEach(function(s,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'</strong></td><td>'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(s.reportedDate)+'</td><td>'+(s.diagnosis||'—')+'</td><td><span class="badge '+(s.severityLevel==='LIFE_THREATENING'||s.severityLevel==='SEVERE'?'badge-danger':'badge-warning')+'">'+(s.severityLevel||'—')+'</span></td><td><span class="badge '+(s.status==='RECOVERED'?'badge-success':'badge-warning')+'">'+(s.status||'—')+'</span></td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      if(!dd.totalSick){
+        el.innerHTML='<div class="empty-state"><i class="bi bi-emoji-smile" style="color:var(--teal);"></i><p>No sick animals — all your livestock are healthy! 🎉</p></div>';
+        return;
+      }
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalSick)+'</div><div class="kpi-lbl">Total Sick</div></div>'+
+      '</div>'+exportBar('sick')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed sick records available on the Sick Animals page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/sick\')">Go to Sick Animals <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     function renderAbortionReport(){
       var el=document.getElementById('abortionReportContent');if(!el)return;
-      var d=dd;
-      if(!d.abortList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-heartbreak"></i><p>No abortion records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalAbort)+'</div><div class="kpi-lbl">Total Abortions</div></div></div>'+exportBar('abort')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Abortion Date</th><th>Expected Birth</th><th>Pregnancy #</th></tr></thead><tbody>';
-      d.abortList.forEach(function(a,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(a.livestock&&a.livestock.tagNumber?a.livestock.tagNumber:'—')+'</strong></td><td>'+(a.livestock&&a.livestock.livestockCategory?a.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(a.abortionDate)+'</td><td>'+(a.expectedBirthDate?fmtD(a.expectedBirthDate):'—')+'</td><td>'+(a.pregnancyNumber||'—')+'</td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalAbortions)+'</div><div class="kpi-lbl">Total Abortions</div></div>'+
+      '</div>'+exportBar('abort')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed abortion records available on the Abortions page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/abortions\')">Go to Abortions <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     function renderSalesReport(){
       var el=document.getElementById('salesReportContent');if(!el)return;
-      var d=dd;
-      if(!d.salesList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-bag-x"></i><p>No sales records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalSales)+'</div><div class="kpi-lbl">Total Sales</div></div><div class="kpi-card"><div class="kpi-val" style="color:var(--teal)">'+fmtK(d.userTotalRevenue)+' RWF</div><div class="kpi-lbl">Total Revenue</div></div></div>'+exportBar('sale')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Sale Date</th><th>Price</th><th>Buyer</th></tr></thead><tbody>';
-      d.salesList.forEach(function(s,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(s.livestock&&s.livestock.tagNumber?s.livestock.tagNumber:'—')+'</strong></td><td>'+(s.livestock&&s.livestock.livestockCategory?s.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(s.saleDate)+'</td><td><span class="badge badge-success">'+(s.salePrice?fmtK(s.salePrice)+' RWF':'—')+'</span></td><td>'+(s.buyer&&s.buyer.name?s.buyer.name:(s.buyerName||'—'))+'</td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalSales)+'</div><div class="kpi-lbl">Total Sales</div></div>'+
+        '<div class="kpi-card"><div class="kpi-val" style="color:var(--teal)">'+fmtK(dd.userTotalRevenue)+' RWF</div><div class="kpi-lbl">Total Revenue</div></div>'+
+      '</div>'+exportBar('sale')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed sales records available on the Sales page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/sales\')">Go to Sales <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     function renderDeathsReport(){
       var el=document.getElementById('deathsReportContent');if(!el)return;
-      var d=dd;
-      if(!d.deathsList.length){el.innerHTML='<div class="empty-state"><i class="bi bi-inbox"></i><p>No death records found.</p></div>';return;}
-      var html='<div class="kpi-grid"><div class="kpi-card"><div class="kpi-val">'+fmt(d.totalDeaths)+'</div><div class="kpi-lbl">Total Deaths</div></div><div class="kpi-card"><div class="kpi-val">'+fmtK(d.userDeathValue)+' RWF</div><div class="kpi-lbl">Value Lost</div></div></div>'+exportBar('death')+'<div class="table-responsive"><table class="data-table"><thead><tr><th>#</th><th>Animal Tag</th><th>Category</th><th>Death Date</th><th>Cause</th><th>Value Lost</th></tr></thead><tbody>';
-      d.deathsList.forEach(function(x,i){
-        html+='<tr><td>'+(i+1)+'</td><td><strong>'+(x.livestock&&x.livestock.tagNumber?x.livestock.tagNumber:'—')+'</strong></td><td>'+(x.livestock&&x.livestock.livestockCategory?x.livestock.livestockCategory.name:'—')+'</td><td>'+fmtD(x.deathDate)+'</td><td><span class="badge badge-danger">'+(x.causeOfDeath||'Unknown')+'</span></td><td>'+(x.livestock&&x.livestock.currentValue?fmtK(x.livestock.currentValue)+' RWF':'—')+'</td></tr>';
-      });
-      el.innerHTML=html+'</tbody></table></div>';
+      el.innerHTML='<div class="kpi-grid">'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmt(dd.totalDeaths)+'</div><div class="kpi-lbl">Total Deaths</div></div>'+
+        '<div class="kpi-card"><div class="kpi-val">'+fmtK(dd.userDeathValue)+' RWF</div><div class="kpi-lbl">Value Lost</div></div>'+
+      '</div>'+exportBar('death')+
+      '<div class="empty-state"><i class="bi bi-info-circle"></i><p>Detailed death records available on the Deaths page.</p>'+
+      '<a href="#" class="btn-view-all" onclick="navigateTo(event,this,\'/livestock/deaths\')">Go to Deaths <i class="bi bi-arrow-right"></i></a></div>';
     }
 
     document.addEventListener('DOMContentLoaded',function(){
       var dateEl=document.getElementById('todayDate');
       if(dateEl)dateEl.textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-      var yearEl=document.getElementById('footYear');
-      if(yearEl)yearEl.textContent=new Date().getFullYear();
+
+      var d=dd;
+      setTimeout(function(){
+        drawSparkline('sparkHerd',[0,0,0,0,0,0,0,0,0,0,0,d.totalLivestock],'#52b788');
+        drawSparkline('sparkBirths',[0,0,0,0,0,0,0,0,0,0,0,d.totalBirths],'#f4a261');
+        drawSparkline('sparkSales',[0,0,0,0,0,0,0,0,0,0,0,d.totalSales],'#0ea5e9');
+        drawSparkline('sparkSick',[0,0,0,0,0,0,0,0,0,0,0,d.totalSick],'#8b5cf6');
+      },50);
+
+      setTimeout(function(){
+        drawMicroBar('microBirths',[0,0,0,0,0,0,0,0,0,0,0,d.totalBirths],'#0ea5e9');
+        drawMicroBar('microSales',[0,0,0,0,0,0,0,0,0,0,0,d.totalSales],'#10b981');
+        drawMicroBar('microTreat',[0,0,0,0,0,0,0,0,0,0,0,d.totalTreatments],'#8b5cf6');
+        drawMicroBar('microSick',[0,0,0,0,0,0,0,0,0,0,0,d.totalSick],'#f59e0b');
+        drawMicroBar('microAbort',[0,0,0,0,0,0,0,0,0,0,0,d.totalAbortions],'#fb923c');
+        drawMicroBar('microDeaths',[0,0,0,0,0,0,0,0,0,0,0,d.totalDeaths],'#f43f5e');
+      },80);
 
       setTimeout(renderDashboardOverview,150);
       window.addEventListener('resize',closeMobile);
     });
     })();
-    /*]]>*/
 </script>
 </body>
 </html>

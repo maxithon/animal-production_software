@@ -11,8 +11,6 @@ import java.util.UUID;
 @Table(name = "beneficiaries")
 public class Beneficiary {
 
-    // Status values. Kept as a String (not a JPA @Enumerated) to stay consistent
-    // with how this entity already handles gender / maritialStatus.
     public static final String STATUS_ACTIVE = "ACTIVE";
     public static final String STATUS_INACTIVE = "INACTIVE";
 
@@ -71,22 +69,15 @@ public class Beneficiary {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-    // NEW: lifecycle status, independent from isDeleted.
-    // isDeleted = record removed from the system (audit-logged hard-delete flag).
-    // status    = whether this beneficiary is currently active in the program.
-    // A beneficiary can be INACTIVE (left the program, suspended, etc.) while
-    // their record and history stay fully intact.
     @Column(name = "status", nullable = false, length = 20)
     private String status = STATUS_ACTIVE;
 
     @Transient
     private String representativeIdValue;
 
-    // Constructors
     public Beneficiary() {
     }
 
-    // Getters and Setters
     public UUID getId() {
         return id;
     }

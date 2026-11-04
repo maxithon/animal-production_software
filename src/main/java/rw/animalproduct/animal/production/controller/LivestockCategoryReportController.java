@@ -1,8 +1,6 @@
 package rw.animalproduct.animal.production.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,8 +25,16 @@ import java.util.stream.Collectors;
  *   - livestock-category-report.html / -paginated.html need `categoryStatsList`,
  *     `totalCategories`, `totalActiveLivestock`, `largestCategoryName`,
  *     `avgAnimalsPerCategory`, plus a JSON endpoint for the paginated variant.
- * Neither existed before, so both pages threw when Thymeleaf tried to
- * resolve missing expressions.
+ *
+ * UPDATED: repository method renamed from findAllByIsDeletedFalse() to
+ * findAllActiveOrderByName() to match the current LivestockCategoryRepository —
+ * behavior is identical (excludes soft-deleted categories), name now reflects
+ * that it's also pre-sorted by name.
+ *
+ * FIX: buildStat() referenced Livestock.STATUS_SICK, which doesn't exist —
+ * "sick" is tracked via the separate healthStatus field (HEALTH_SICK), not
+ * the status field (which only has ACTIVE/SOLD/DEAD/TRANSFERRED). Added a
+ * countByHealth() helper and switched setSickCount() to use it.
  */
 @Controller
 public class LivestockCategoryReportController {
@@ -45,7 +51,7 @@ public class LivestockCategoryReportController {
 
     @GetMapping("/livestock/categories/filter-report")
     public String filterReport(Model model) {
-        List<LivestockCategory> categories = categoryRepository.findAllByIsDeletedFalse();
+        List<LivestockCategory> categories = categoryRepository.findAllActiveOrderByName();
 
         List<CategoryWithCount> categoriesWithCount = categories.stream()
                 .map(c -> new CategoryWithCount(
@@ -78,7 +84,7 @@ public class LivestockCategoryReportController {
 
     @GetMapping("/livestock/categories/report")
     public String fullReport(Model model) {
-        List<LivestockCategory> categories = categoryRepository.findAllByIsDeletedFalse();
+        List<LivestockCategory> categories = categoryRepository.findAllActiveOrderByName();
         List<CategoryStat> statsList = categories.stream()
                 .map(this::buildStat)
                 .sorted(Comparator.comparing(CategoryStat::getCategoryName, String.CASE_INSENSITIVE_ORDER))
@@ -100,13 +106,16 @@ public class LivestockCategoryReportController {
         return "livestock-category-report";
     }
 
+    // FIX: the old implementation called fullReport(model) and then compared its
+    // return value to itself in a ternary that could never take the false branch —
+    // dead conditional logic. Since both branches produced the identical result,
+    // this just populates the model and returns the paginated view name directly.
     @GetMapping("/livestock/categories/report/paginated")
     public String paginatedReport(Model model) {
         // Same summary data; the paginated template lazy-loads each
         // category's animals via /livestock/category/{id}/animals below.
-        return fullReport(model).equals("livestock-category-report")
-                ? "livestock-category-report-paginated"
-                : "livestock-category-report-paginated";
+        fullReport(model);
+        return "livestock-category-report-paginated";
     }
 
     /** Backs the collapsible/paginated animal table on the paginated report page */
@@ -143,7 +152,7 @@ public class LivestockCategoryReportController {
         stat.setActiveCount(count(animals, Livestock.STATUS_ACTIVE));
         stat.setSoldCount(count(animals, Livestock.STATUS_SOLD));
         stat.setDeadCount(count(animals, Livestock.STATUS_DEAD));
-        stat.setSickCount(count(animals, Livestock.STATUS_SICK));
+        stat.setSickCount(countByHealth(animals, Livestock.HEALTH_SICK));
         stat.setMaleCount(animals.stream().filter(a -> "MALE".equalsIgnoreCase(a.getGender())).count());
         stat.setFemaleCount(animals.stream().filter(a -> "FEMALE".equalsIgnoreCase(a.getGender())).count());
         stat.setPregnantCount(animals.stream().filter(a -> Boolean.TRUE.equals(a.getIsPregnant())).count());
@@ -155,8 +164,14 @@ public class LivestockCategoryReportController {
         return stat;
     }
 
+    /** Counts animals matching a given `status` value (ACTIVE, SOLD, DEAD, TRANSFERRED). */
     private long count(List<Livestock> animals, String status) {
         return animals.stream().filter(a -> status.equals(a.getStatus())).count();
+    }
+
+    /** Counts animals matching a given `healthStatus` value (HEALTHY, SICK, UNDER_TREATMENT). */
+    private long countByHealth(List<Livestock> animals, String healthStatus) {
+        return animals.stream().filter(a -> healthStatus.equals(a.getHealthStatus())).count();
     }
 
     private Map<String, Object> toAnimalJson(Livestock a) {

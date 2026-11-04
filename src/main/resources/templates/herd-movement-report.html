@@ -10,41 +10,61 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
-        /* Force landscape + tighter margins when printing, so the wide
-           Movement-by-Category table has room to fit without scrolling */
         @page { size: A4 landscape; margin: 10mm; }
+        :root { --primary:#1a5f7a; --primary-light:#2e8b9e; --ink:#1a2535; --muted:#64748b; --line:#eef1f5; }
+        body { background:#f8f9fb; font-family:'DM Sans',sans-serif; padding:24px; color:var(--ink); }
 
-        :root { --primary:#1a5f7a; --primary-light:#2e8b9e; }
-        body { background:#f8f9fb; font-family:'DM Sans',sans-serif; padding:24px; }
-
-        .action-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; max-width:1200px; margin-left:auto; margin-right:auto; }
+        /* ─── Action bar ─── */
+        .action-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; max-width:1400px; margin-left:auto; margin-right:auto; }
         .btn-back { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; padding:8px 16px; border-radius:8px; font-size:.85rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
         .btn-back:hover { background:#e2e8f0; color:#1a202c; }
         .btn-print { background:linear-gradient(135deg,#1a5f7a,#2e8b9e); color:white; border:none; padding:8px 20px; border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+        .btn-export { background:#dcfce7; color:#166534; border:1px solid #86efac; padding:8px 16px; border-radius:8px; font-size:.85rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+        .btn-export:hover { background:#bbf7d0; }
 
-        .report-card { background:white; border-radius:14px; padding:32px 36px; box-shadow:0 2px 12px rgba(0,0,0,.08); max-width:1200px; margin:0 auto; }
+        /* ─── Report card ─── */
+        .report-card { background:white; border-radius:14px; padding:32px 36px; box-shadow:0 2px 12px rgba(0,0,0,.08); max-width:1400px; margin:0 auto; }
 
+        /* ─── Report header ─── */
         .report-header { border-bottom:3px solid #1a5f7a; padding-bottom:18px; margin-bottom:24px; display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; }
         .report-header h1 { font-family:'Manrope',sans-serif; font-size:1.5rem; font-weight:800; color:#1a2535; margin:0; display:flex; align-items:center; gap:10px; letter-spacing:-0.01em; }
         .report-header h1 i { color:#1a5f7a; }
         .report-meta { font-size:.8rem; color:#64748b; text-align:right; }
         .type-chip { display:inline-flex; align-items:center; gap:6px; background:#eef2ff; color:#3730a3; border:1.5px solid #c7d2fe; border-radius:20px; padding:4px 14px; font-size:.78rem; font-weight:700; margin-top:6px; }
         .fao-chip { display:inline-flex; align-items:center; gap:6px; background:#f0fdf4; color:#166534; border:1.5px solid #bbf7d0; border-radius:20px; padding:4px 14px; font-size:.75rem; font-weight:700; margin-top:6px; margin-left:8px; }
+        .cross-link { font-size:.72rem; color:#64748b; margin-top:10px; }
+        .cross-link a { color:#1a5f7a; text-decoration:underline; font-weight:600; }
 
+        /* ─── Filters ─── */
         .filter-card { background:#f8fafc; border-radius:12px; padding:16px 20px; margin-bottom:24px; }
+        .period-presets { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+        .period-btn { background:#fff; border:1px solid #e2e8f0; color:#475569; padding:5px 12px; border-radius:20px; font-size:.72rem; font-weight:600; text-decoration:none; cursor:pointer; }
+        .period-btn:hover { background:#f1f5f9; }
 
+        /* ─── Section titles ─── */
         .section-title { font-family:'Manrope',sans-serif; font-size:.85rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#64748b; margin-bottom:14px; display:flex; align-items:center; gap:8px; padding-bottom:8px; border-bottom:2px solid #f0f2f5; flex-wrap:wrap; }
         .section-badge { font-family:'DM Sans',sans-serif; text-transform:none; letter-spacing:0; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:20px; padding:2px 10px; font-size:.7rem; font-weight:700; margin-left:auto; }
         .section-note { font-size:.72rem; color:#94a3b8; font-weight:500; margin:-8px 0 16px; }
 
-        /* Reconciliation banner */
+        /* ─── Reconciliation banner ─── */
         .recon-banner { border-radius:12px; padding:16px 22px; margin-bottom:26px; display:flex; align-items:center; gap:14px; font-weight:700; }
         .recon-ok   { background:#ecfdf5; border:1.5px solid #6ee7b7; color:#065f46; }
         .recon-bad  { background:#fef2f2; border:1.5px solid #fca5a5; color:#991b1b; }
         .recon-banner i { font-size:1.4rem; }
         .recon-sub  { font-weight:500; font-size:.8rem; opacity:.85; margin-top:2px; }
 
-        /* KPI strip */
+        /* ─── Data-quality panel ─── */
+        .dq-panel { background:#fffbeb; border:1px solid #fde68a; border-radius:12px; padding:14px 18px; margin-bottom:22px; }
+        .dq-panel.error { background:#fef2f2; border-color:#fecaca; }
+        .dq-title { font-weight:800; font-size:.78rem; color:#92400e; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+        .dq-panel.error .dq-title { color:#991b1b; }
+        .dq-item { font-size:.78rem; color:#78350f; padding:4px 0; display:flex; gap:8px; align-items:flex-start; }
+        .dq-panel.error .dq-item { color:#7f1d1d; }
+        .dq-item .sev { font-weight:800; font-size:.65rem; padding:2px 8px; border-radius:20px; background:#fef3c7; color:#92400e; flex-shrink:0; }
+        .dq-panel.error .dq-item .sev { background:#fee2e2; color:#991b1b; }
+        .dq-item .ctx { color:#a16207; font-size:.72rem; opacity:.85; margin-left:6px; }
+
+        /* ─── KPI strip ─── */
         .kpi-strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:14px; margin-bottom:30px; }
         .kpi-card { border-radius:12px; padding:18px 20px; color:white; position:relative; overflow:hidden; }
         .kpi-card::after { content:''; position:absolute; top:-18px; right:-18px; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.1); }
@@ -63,26 +83,58 @@
         .kpi-val  { font-family:'Manrope',sans-serif; font-size:1.35rem; font-weight:800; line-height:1; margin-bottom:6px; word-break:break-word; }
         .kpi-lbl  { font-size:.63rem; font-weight:700; opacity:.85; text-transform:uppercase; letter-spacing:.06em; }
         .kpi-amount { font-family:'Manrope',sans-serif; font-size:.78rem; font-weight:700; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,.25); display:flex; align-items:center; gap:5px; }
+        .kpi-delta { font-size:.68rem; margin-top:6px; opacity:.9; display:flex; align-items:center; gap:4px; }
 
+        /* ─── Chart ─── */
         .chart-wrapper { position:relative; height:320px; width:100%; }
 
-        /* Category / structure tables */
-        .rpt-table { width:100%; border-collapse:collapse; }
-        .rpt-table thead th { background:#f8f9fb; padding:10px 12px; font-size:.66rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#64748b; border-bottom:2px solid #e2e8f0; white-space:nowrap; text-align:right; }
+        /* ═══════════════════════════════════════════════════════════
+           TABLE STYLES — NO BOTTOM SCROLLBAR
+           The table uses table-layout:fixed so columns share the
+           available width evenly. Cells wrap instead of forcing
+           the table wider than its container. No overflow-x
+           anywhere, so the browser never adds a scrollbar.
+        ═══════════════════════════════════════════════════════════ */
+        .table-wrap { width:100%; overflow:visible; }
+
+        .rpt-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        .rpt-table thead th {
+            background:#f8f9fb; padding:10px 6px;
+            font-size:.6rem; font-weight:700; text-transform:uppercase;
+            letter-spacing:.03em; color:#64748b;
+            border-bottom:2px solid #e2e8f0;
+            text-align:right;
+            white-space:normal;
+            word-break:break-word;
+            vertical-align:bottom;
+        }
         .rpt-table thead th:first-child { text-align:left; }
-        .rpt-table tbody td { padding:10px 12px; font-size:.82rem; color:#374151; border-bottom:1px solid #f0f2f5; text-align:right; vertical-align:middle; white-space:nowrap; }
-        .rpt-table tbody td:first-child { text-align:left; font-weight:700; color:#1a2535; white-space:normal; }
+        .rpt-table tbody td {
+            padding:8px 6px; font-size:.75rem; color:#374151;
+            border-bottom:1px solid #f0f2f5;
+            text-align:right; vertical-align:middle;
+            white-space:normal;
+            word-break:break-word;
+        }
+        .rpt-table tbody td:first-child {
+            text-align:left; font-weight:700; color:#1a2535;
+        }
         .rpt-table tbody tr:hover { background:#f8fbff; }
-        .rpt-table tbody tr.row-active { background:#eef9ff; }
-        .rpt-table tfoot td { padding:11px 12px; font-size:.84rem; font-weight:800; background:#f0f9ff; border-top:2px solid #bae6fd; text-align:right; }
+        .rpt-table tfoot td {
+            padding:10px 6px; font-size:.78rem; font-weight:800;
+            background:#f0f9ff; border-top:2px solid #bae6fd;
+            text-align:right; white-space:normal;
+        }
         .rpt-table tfoot td:first-child { text-align:left; }
+
+        .col-group-divider { border-left:2px solid #e2e8f0; }
 
         .badge-ok  { background:#d1fae5; color:#065f46; border-radius:20px; padding:2px 8px; font-size:.68rem; font-weight:700; }
         .badge-bad { background:#fee2e2; color:#991b1b; border-radius:20px; padding:2px 8px; font-size:.68rem; font-weight:700; }
         .val-pos   { color:#059669; font-weight:700; }
         .val-neg   { color:#dc2626; font-weight:700; }
-        .col-group-divider { border-left:2px solid #e2e8f0; }
 
+        /* ─── Sex/age pills ─── */
         .class-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
         .class-adult-female { background:#fce7f3; color:#be185d; }
         .class-adult-male   { background:#dbeafe; color:#1d4ed8; }
@@ -90,47 +142,58 @@
         .class-young-male   { background:#e0f2fe; color:#0369a1; }
         .class-unknown      { background:#f1f5f9; color:#64748b; }
 
-        .pct-bar-wrap { background:#f1f5f9; border-radius:6px; height:6px; width:80px; overflow:hidden; display:inline-block; vertical-align:middle; margin-left:8px; }
+        .pct-bar-wrap { background:#f1f5f9; border-radius:6px; height:6px; width:60px; overflow:hidden; display:inline-block; vertical-align:middle; margin-left:6px; }
         .pct-bar { height:100%; background:linear-gradient(90deg,#1a5f7a,#2e8b9e); }
 
-        /* ══════════════════════════════════════════════════════════
-           PRINT FIXES
-           Problem: .table-responsive uses overflow-x:auto for the
-           on-screen scrollbar, but overflow-x has no effect on print —
-           anything past the page width is simply clipped, invisibly.
-           Fix: on print, (1) switch the page to landscape (done above
-           via @page), (2) remove the scroll container's overflow so
-           nothing is clipped, (3) shrink the table and let long cells
-           wrap instead of forcing nowrap, so 13 columns fit the width.
-        ══════════════════════════════════════════════════════════ */
+        /* ─── Signature block (print) ─── */
+        .signature-block { display:none; margin-top:36px; padding-top:18px; border-top:2px solid #f0f2f5; grid-template-columns:1fr 1fr; gap:60px; }
+        .signature-line { border-top:1px solid #94a3b8; padding-top:6px; font-size:.72rem; color:#64748b; }
+
+        /* ─── On narrower screens, hide least-important columns ─── */
+        @media (max-width:1200px) {
+            /* Hide Opening Value, Net Value Change, Avg Value, Check */
+            .rpt-table thead th:nth-child(10),
+            .rpt-table tbody td:nth-child(10),
+            .rpt-table tfoot td:nth-child(10),
+            .rpt-table thead th:nth-child(12),
+            .rpt-table tbody td:nth-child(12),
+            .rpt-table tfoot td:nth-child(12),
+            .rpt-table thead th:nth-child(13),
+            .rpt-table tbody td:nth-child(13),
+            .rpt-table tfoot td:nth-child(13),
+            .rpt-table thead th:nth-child(14),
+            .rpt-table tbody td:nth-child(14),
+            .rpt-table tfoot td:nth-child(14) {
+                display:none;
+            }
+        }
+        @media (max-width:900px) {
+            /* Also hide Donated and TLU */
+            .rpt-table thead th:nth-child(5),
+            .rpt-table tbody td:nth-child(5),
+            .rpt-table tfoot td:nth-child(5),
+            .rpt-table thead th:nth-child(9),
+            .rpt-table tbody td:nth-child(9),
+            .rpt-table tfoot td:nth-child(9) {
+                display:none;
+            }
+        }
+
+        /* ─── Print ─── */
         @media print {
             .action-bar, .no-print { display:none !important; }
             body { background:white; padding:0; }
             .report-card { box-shadow:none; padding:12px; max-width:100%; }
-            .kpi-card, .recon-banner { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-
-            .table-responsive {
-                overflow-x: visible !important;
-                width: 100%;
+            .kpi-card, .recon-banner, .dq-panel { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+            .table-wrap { overflow:visible !important; }
+            .rpt-table { width:100% !important; table-layout:fixed; font-size:0.58rem; }
+            .rpt-table thead th, .rpt-table tbody td, .rpt-table tfoot td {
+                white-space:normal !important; word-break:break-word; padding:5px 3px;
             }
-            .rpt-table {
-                width: 100% !important;
-                table-layout: fixed;
-                font-size: 0.62rem;
-            }
-            .rpt-table thead th,
-            .rpt-table tbody td,
-            .rpt-table tfoot td {
-                white-space: normal !important;
-                word-break: break-word;
-                padding: 5px 4px;
-            }
-            .rpt-table tbody tr,
-            .rpt-table thead {
-                page-break-inside: avoid;
-            }
-            .pct-bar-wrap { width: 40px; }
-            .kpi-strip { grid-template-columns: repeat(4, 1fr) !important; }
+            .rpt-table tbody tr, .rpt-table thead { page-break-inside:avoid; }
+            .pct-bar-wrap { width:30px; }
+            .kpi-strip { grid-template-columns:repeat(4,1fr) !important; }
+            .signature-block { display:grid; }
         }
         @media (max-width:600px) { .kpi-strip { grid-template-columns:1fr 1fr; } }
     </style>
@@ -139,7 +202,11 @@
 
 <div class="action-bar no-print">
     <a href="/admin/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
-    <button class="btn-print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Report</button>
+    <div style="display:flex;gap:8px;">
+        <a th:href="@{'/livestock/herd-movement-report/csv?from=' + ${#temporals.format(fromDate,'yyyy-MM-dd')} + '&to=' + ${#temporals.format(toDate,'yyyy-MM-dd')}}"
+           class="btn-export"><i class="bi bi-file-earmark-excel-fill"></i> Export CSV</a>
+        <button class="btn-print" onclick="window.print()"><i class="bi bi-printer-fill"></i> Print Report</button>
+    </div>
 </div>
 
 <div class="report-card">
@@ -149,6 +216,10 @@
             <h1><i class="bi bi-arrow-left-right"></i> Herd Movement &amp; Reconciliation Report</h1>
             <span class="type-chip"><i class="bi bi-tag-fill"></i> <span th:text="${selectedCategoryName}">All Categories</span></span>
             <span class="fao-chip"><i class="bi bi-globe2"></i> FAO Livestock Inventory Method</span>
+            <div class="cross-link">
+                Looking for performance metrics?
+                <a href="/livestock/overview-report">Open Business Overview →</a>
+            </div>
         </div>
         <div class="report-meta">
             <strong>Period</strong>
@@ -156,17 +227,23 @@
         </div>
     </div>
 
-    <!-- Date + Type Filter -->
     <div class="filter-card no-print">
-        <form method="get" action="/livestock/herd-movement-report" class="row g-2 align-items-end">
+        <div class="period-presets">
+            <button type="button" class="period-btn" onclick="setPeriod('this-month')">This Month</button>
+            <button type="button" class="period-btn" onclick="setPeriod('last-month')">Last Month</button>
+            <button type="button" class="period-btn" onclick="setPeriod('this-quarter')">This Quarter</button>
+            <button type="button" class="period-btn" onclick="setPeriod('ytd')">Year to Date</button>
+            <button type="button" class="period-btn" onclick="setPeriod('last-year')">Last Year</button>
+        </div>
+        <form method="get" action="/livestock/herd-movement-report" class="row g-2 align-items-end" id="filterForm">
             <div class="col-md-3">
                 <label class="form-label fw-semibold small mb-1">From Date</label>
-                <input type="date" name="from" class="form-control form-control-sm"
+                <input type="date" name="from" id="fromInput" class="form-control form-control-sm"
                        th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
             </div>
             <div class="col-md-3">
                 <label class="form-label fw-semibold small mb-1">To Date</label>
-                <input type="date" name="to" class="form-control form-control-sm"
+                <input type="date" name="to" id="toInput" class="form-control form-control-sm"
                        th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
             </div>
             <div class="col-md-3">
@@ -176,7 +253,7 @@
                     <option th:each="cat : ${allCategories}"
                             th:value="${cat.id}"
                             th:text="${cat.name}"
-                            th:selected="${selectedCategoryId != null and cat.id == selectedCategoryId}">
+                            th:selected="${!selectedCategoryIds.isEmpty() and selectedCategoryIds.size() == 1 and cat.id == selectedCategoryIds[0]}">
                     </option>
                 </select>
             </div>
@@ -186,23 +263,39 @@
         </form>
     </div>
 
-    <!-- Reconciliation banner -->
     <div class="recon-banner" th:classappend="${report.reconciled} ? 'recon-ok' : 'recon-bad'">
         <i class="bi" th:classappend="${report.reconciled} ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'"></i>
         <div>
-            <div th:if="${report.reconciled}">Reconciled — Opening + In − Out = Closing, exactly as expected.</div>
+            <div th:if="${report.reconciled}">Count reconciled — Opening + In − Out = Closing, exactly as expected.</div>
             <div th:if="${!report.reconciled}">
-                Reconciliation mismatch — expected closing stock of
+                Count reconciliation mismatch — expected closing stock of
                 <span th:text="${report.expectedClosingCount}">0</span> but found
-                <span th:text="${report.closingCount}">0</span>.
+                <span th:text="${report.closingCount}">0</span>
+                (gap: <span th:text="${report.reconciliationGap}">0</span>).
             </div>
             <div class="recon-sub" th:if="${!report.reconciled}">
-                This usually means an animal's dates (received/birth) are missing or fall outside expected ranges — check draft/unresolved records.
+                This usually means an animal's dates (received/birth) are missing or fall outside expected ranges — check the data-quality panel below.
+            </div>
+            <div class="recon-sub" th:if="${report.reconciled}">
+                Value reconciliation:
+                <span th:if="${report.valueReconciled}">✅ within tolerance</span>
+                <span th:unless="${report.valueReconciled}">⚠️ gap of RWF <span th:text="${#numbers.formatDecimal(report.valueReconciliationGap.abs(),1,'COMMA',0,'POINT')}">0</span></span>
             </div>
         </div>
     </div>
 
-    <!-- KPI Strip -->
+    <div class="dq-panel" th:if="${report.dataQualityFlags != null and !report.dataQualityFlags.isEmpty()}"
+         th:classappend="${report.dataQualityFlags[0].severity == 'ERROR'} ? ' error' : ''">
+        <div class="dq-title"><i class="bi bi-shield-exclamation"></i> Data-Quality Notes</div>
+        <div class="dq-item" th:each="f : ${report.dataQualityFlags}">
+            <span class="sev" th:text="${f.severity}">WARN</span>
+            <span>
+                <span th:text="${f.message}">message</span>
+                <span class="ctx" th:if="${f.context != null}" th:text="'(' + ${f.context} + ')'"></span>
+            </span>
+        </div>
+    </div>
+
     <div class="section-title">
         <i class="bi bi-lightning-charge-fill"></i> Movement Summary
         <span class="section-badge" th:text="${selectedCategoryName}">All Categories</span>
@@ -267,16 +360,19 @@
         <div class="kpi-card" th:classappend="${report.netFinancialChange.signum() >= 0} ? 'born' : 'dead'">
             <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
             <div class="kpi-val" th:text="${report.netChange}">0</div>
-            <div class="kpi-lbl">Net Financial Change</div>
+            <div class="kpi-lbl">Net Change</div>
             <div class="kpi-amount"><i class="bi bi-cash"></i>
                 <span th:text="${(report.netFinancialChange.signum() >= 0 ? '+' : '−') + #numbers.formatDecimal(report.netFinancialChange.abs(),1,'COMMA',0,'POINT') + ' RWF'}">RWF 0</span>
+            </div>
+            <div class="kpi-delta" th:if="${report.previous != null}">
+                <i class="bi bi-clock-history"></i>
+                <span th:text="'Prev: ' + report.previous.netChange">Prev</span>
             </div>
         </div>
     </div>
 
-    <!-- FAO Standard Indicators -->
     <div class="section-title"><i class="bi bi-clipboard2-data-fill"></i> FAO Standard Indicators</div>
-    <div class="section-note">Mortality &amp; offtake rates are calculated against opening stock, as per FAO livestock survey methodology.</div>
+    <div class="section-note">Mortality &amp; offtake rates are calculated against opening stock, as per FAO livestock survey methodology. Colour bands: green = healthy, amber = monitor, red = action needed.</div>
     <div class="kpi-strip" style="margin-bottom:30px;">
         <div class="kpi-card tlu">
             <span class="kpi-icon"><i class="bi bi-globe-americas"></i></span>
@@ -284,42 +380,55 @@
             <div class="kpi-lbl">Total Herd (TLU)</div>
             <div class="kpi-amount"><i class="bi bi-info-circle"></i> Tropical Livestock Units</div>
         </div>
-        <div class="kpi-card" th:classappend="${report.mortalityRatePercent <= 5} ? 'rate-ok' : (${report.mortalityRatePercent <= 15} ? 'rate-warn' : 'rate-bad')">
+        <div class="kpi-card"
+             th:classappend="${report.mortalityBenchmark == 'good'} ? 'rate-ok' : (${report.mortalityBenchmark == 'warn'} ? 'rate-warn' : 'rate-bad')">
             <span class="kpi-icon"><i class="bi bi-heart-pulse"></i></span>
             <div class="kpi-val" th:text="${report.mortalityRatePercent} + '%'">0%</div>
             <div class="kpi-lbl">Mortality Rate</div>
             <div class="kpi-amount"><i class="bi bi-info-circle"></i> Deaths ÷ Opening Stock</div>
+            <div class="kpi-delta" th:if="${report.previous != null}">
+                <i class="bi bi-clock-history"></i>
+                <span th:text="'Prev: ' + report.previous.mortalityRatePercent + '%'">Prev</span>
+            </div>
         </div>
-        <div class="kpi-card" th:classappend="${report.offtakeRatePercent <= 20} ? 'rate-ok' : (${report.offtakeRatePercent <= 40} ? 'rate-warn' : 'rate-bad')">
+        <div class="kpi-card"
+             th:classappend="${report.offtakeBenchmark == 'good'} ? 'rate-ok' : (${report.offtakeBenchmark == 'warn'} ? 'rate-warn' : 'rate-bad')">
             <span class="kpi-icon"><i class="bi bi-box-arrow-up-right"></i></span>
             <div class="kpi-val" th:text="${report.offtakeRatePercent} + '%'">0%</div>
             <div class="kpi-lbl">Offtake Rate</div>
             <div class="kpi-amount"><i class="bi bi-info-circle"></i> (Sold + Died) ÷ Opening Stock</div>
+            <div class="kpi-delta" th:if="${report.previous != null}">
+                <i class="bi bi-clock-history"></i>
+                <span th:text="'Prev: ' + report.previous.offtakeRatePercent + '%'">Prev</span>
+            </div>
         </div>
-        <div class="kpi-card" th:classappend="${report.herdGrowthRatePercent >= 0} ? 'rate-ok' : 'rate-bad'">
+        <div class="kpi-card"
+             th:classappend="${report.growthBenchmark == 'good'} ? 'rate-ok' : (${report.growthBenchmark == 'warn'} ? 'rate-warn' : 'rate-bad')">
             <span class="kpi-icon"><i class="bi bi-graph-up"></i></span>
             <div class="kpi-val" th:text="${(report.herdGrowthRatePercent >= 0 ? '+' : '') + report.herdGrowthRatePercent} + '%'">0%</div>
             <div class="kpi-lbl">Herd Growth Rate</div>
             <div class="kpi-amount"><i class="bi bi-info-circle"></i> (Closing − Opening) ÷ Opening</div>
         </div>
+        <div class="kpi-card rate-ok">
+            <span class="kpi-icon"><i class="bi bi-stars"></i></span>
+            <div class="kpi-val" th:text="${report.birthRatePercent} + '%'">0%</div>
+            <div class="kpi-lbl">Birth Rate</div>
+            <div class="kpi-amount"><i class="bi bi-info-circle"></i> Births ÷ Opening Stock</div>
+        </div>
     </div>
 
-    <!-- Waterfall chart -->
     <div class="section-title">
         <i class="bi bi-bar-chart-steps"></i> Movement Waterfall
         <span class="section-badge" th:text="${selectedCategoryName}">All Categories</span>
     </div>
+    <div class="section-note">Blue dashed line shows the running herd count through the period. Bars show each event's impact.</div>
     <div class="chart-wrapper mb-4">
         <canvas id="waterfallChart"></canvas>
     </div>
 
-    <!-- Herd Structure by Sex & Age (FAO classification) -->
     <div class="section-title"><i class="bi bi-diagram-3-fill"></i> Herd Structure by Sex &amp; Age (FAO Classification)</div>
-    <div class="section-note">
-        Closing-stock composition per FAO herd inventory convention. "Adult" = age at/above the category's minimum breeding age
-        (or presumed mature for purchased animals with no recorded birth date).
-    </div>
-    <div class="table-responsive mb-4">
+    <div class="section-note">Closing-stock composition per FAO herd inventory convention. "Adult" = age at/above the category's minimum breeding age.</div>
+    <div class="table-wrap mb-4">
         <table class="rpt-table">
             <thead>
             <tr>
@@ -352,12 +461,11 @@
         </table>
     </div>
 
-    <!-- Category breakdown table -->
     <div class="section-title">
         <i class="bi bi-grid-3x3-gap-fill"></i> Movement by Category
-        <span class="section-badge" th:if="${selectedCategoryId != null}">Filtered — clear Type above to see all</span>
+        <span class="section-badge" th:if="${!selectedCategoryIds.isEmpty()}">Filtered — clear Type above to see all</span>
     </div>
-    <div class="table-responsive">
+    <div class="table-wrap">
         <table class="rpt-table">
             <thead>
             <tr>
@@ -378,8 +486,7 @@
             </tr>
             </thead>
             <tbody>
-            <tr th:each="row : ${report.byCategory}"
-                th:classappend="${selectedCategoryId != null and row.categoryName == selectedCategoryName} ? 'row-active' : ''">
+            <tr th:each="row : ${report.byCategory}">
                 <td th:text="${row.categoryName}">Category</td>
                 <td th:text="${row.openingCount}">0</td>
                 <td th:text="${row.bornCount}">0</td>
@@ -396,11 +503,11 @@
                 <td th:text="${#numbers.formatDecimal(row.avgValuePerAnimal,1,'COMMA',0,'POINT')}">0</td>
                 <td>
                     <span th:if="${row.reconciled}" class="badge-ok"><i class="bi bi-check"></i> OK</span>
-                    <span th:if="${!row.reconciled}" class="badge-bad" th:text="'Expected ' + ${row.expectedClosingCount}">Mismatch</span>
+                    <span th:if="${!row.reconciled}" class="badge-bad" th:text="'Gap ' + ${row.expectedClosingCount - row.closingCount}">Mismatch</span>
                 </td>
             </tr>
             <tr th:if="${report.byCategory.isEmpty()}">
-                <td colspan="13" class="text-center text-muted py-4">No livestock records found.</td>
+                <td colspan="14" class="text-center text-muted py-4">No livestock records found.</td>
             </tr>
             </tbody>
             <tfoot>
@@ -425,6 +532,11 @@
         </table>
     </div>
 
+    <div class="signature-block">
+        <div class="signature-line">Prepared by (Veterinarian / Farm Manager)</div>
+        <div class="signature-line">Verified by (Auditor / M&amp;E Officer)</div>
+    </div>
+
     <div style="margin-top:32px;padding-top:16px;border-top:2px solid #f0f2f5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:.75rem;color:#94a3b8;">
         <span><i class="bi bi-shield-check text-success me-1"></i> Animal Production System — Confidential</span>
         <span th:text="'Generated on ' + ${#temporals.format(#temporals.createNow(),'dd MMMM yyyy HH:mm')}">Today</span>
@@ -436,53 +548,49 @@
     /*<![CDATA[*/
     Chart.register(ChartDataLabels);
 
-    function fmtRwf(n) {
-        return Math.round(n).toLocaleString() + ' RWF';
-    }
+    function fmtRwf(n) { return Math.round(n).toLocaleString() + ' RWF'; }
 
-    var opening   = { count: /*[[${report.openingCount}]]*/ 0,  value: /*[[${report.openingValue}]]*/ 0 };
-    var born      = { count: /*[[${report.bornCount}]]*/ 0,     value: /*[[${report.bornValue}]]*/ 0 };
+    var opening   = { count: /*[[${report.openingCount}]]*/ 0,   value: /*[[${report.openingValue}]]*/ 0 };
+    var born      = { count: /*[[${report.bornCount}]]*/ 0,      value: /*[[${report.bornValue}]]*/ 0 };
     var purchased = { count: /*[[${report.purchasedCount}]]*/ 0, value: /*[[${report.purchasedValue}]]*/ 0 };
-    var donated   = { count: /*[[${report.donatedCount}]]*/ 0,  value: /*[[${report.donatedValue}]]*/ 0 };
-    var sold      = { count: /*[[${report.soldCount}]]*/ 0,     value: /*[[${report.soldRevenue}]]*/ 0 };
-    var dead      = { count: /*[[${report.deadCount}]]*/ 0,     value: /*[[${report.deadValueLoss}]]*/ 0 };
-    var closing   = { count: /*[[${report.closingCount}]]*/ 0,  value: /*[[${report.closingValue}]]*/ 0 };
+    var donated   = { count: /*[[${report.donatedCount}]]*/ 0,   value: /*[[${report.donatedValue}]]*/ 0 };
+    var sold      = { count: /*[[${report.soldCount}]]*/ 0,      value: /*[[${report.soldRevenue}]]*/ 0 };
+    var dead      = { count: /*[[${report.deadCount}]]*/ 0,      value: /*[[${report.deadValueLoss}]]*/ 0 };
+    var closing   = { count: /*[[${report.closingCount}]]*/ 0,   value: /*[[${report.closingValue}]]*/ 0 };
 
     var running = opening.count;
-    var steps = [
-        { label: 'Opening',  count: opening.count,   value: opening.value,   base: 0,       color: '#64748b' }
-    ];
-    steps.push({ label: 'Born',      count: born.count,      value: born.value,      base: running, color: '#10b981' }); running += born.count;
+    var steps = [{ label: 'Opening', count: opening.count, value: opening.value, base: 0, color: '#64748b' }];
+    steps.push({ label: 'Born', count: born.count, value: born.value, base: running, color: '#10b981' }); running += born.count;
     steps.push({ label: 'Purchased', count: purchased.count, value: purchased.value, base: running, color: '#0ea5e9' }); running += purchased.count;
-    steps.push({ label: 'Donated',   count: donated.count,   value: donated.value,   base: running, color: '#8b5cf6' }); running += donated.count;
+    steps.push({ label: 'Donated', count: donated.count, value: donated.value, base: running, color: '#8b5cf6' }); running += donated.count;
     running -= sold.count;
-    steps.push({ label: 'Sold',      count: sold.count,      value: sold.value,      base: running, color: '#f97316' });
+    steps.push({ label: 'Sold', count: sold.count, value: sold.value, base: running, color: '#f97316' });
     running -= dead.count;
-    steps.push({ label: 'Died',      count: dead.count,      value: dead.value,      base: running, color: '#ef4444' });
-    steps.push({ label: 'Closing',   count: closing.count,   value: closing.value,   base: 0,       color: '#1a5f7a' });
+    steps.push({ label: 'Died', count: dead.count, value: dead.value, base: running, color: '#ef4444' });
+    steps.push({ label: 'Closing', count: closing.count, value: closing.value, base: 0, color: '#1a5f7a' });
+
+    var runningLine = [opening.count];
+    var r = opening.count;
+    r += born.count;      runningLine.push(r);
+    r += purchased.count; runningLine.push(r);
+    r += donated.count;   runningLine.push(r);
+    r -= sold.count;      runningLine.push(r);
+    r -= dead.count;      runningLine.push(r);
+    runningLine.push(closing.count);
 
     new Chart(document.getElementById('waterfallChart'), {
         type: 'bar',
         data: {
             labels: steps.map(s => s.label),
             datasets: [
-                {
-                    label: 'base',
-                    data: steps.map(s => s.base),
-                    backgroundColor: 'rgba(0,0,0,0)',
-                    stack: 'stack1',
-                    datalabels: { display: false }
-                },
+                { label: 'base', data: steps.map(s => s.base), backgroundColor: 'rgba(0,0,0,0)', stack: 'stack1', datalabels: { display: false } },
                 {
                     label: 'Animals',
                     data: steps.map(s => s.count),
                     backgroundColor: steps.map(s => s.color),
-                    borderRadius: 6,
-                    stack: 'stack1',
+                    borderRadius: 6, stack: 'stack1',
                     datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        offset: 2,
+                        anchor: 'end', align: 'top', offset: 2,
                         color: '#1a2535',
                         font: { weight: 800, size: 11, family: 'Manrope' },
                         formatter: function(value, ctx) {
@@ -492,6 +600,22 @@
                         },
                         textAlign: 'center'
                     }
+                },
+                {
+                    label: 'Running herd',
+                    type: 'line',
+                    data: runningLine,
+                    borderColor: '#1a5f7a',
+                    backgroundColor: 'transparent',
+                    borderWidth: 2,
+                    borderDash: [6, 4],
+                    pointRadius: 4,
+                    pointBackgroundColor: '#1a5f7a',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    tension: 0,
+                    datalabels: { display: false },
+                    yAxisID: 'y'
                 }
             ]
         },
@@ -500,12 +624,13 @@
             maintainAspectRatio: false,
             layout: { padding: { top: 28 } },
             plugins: {
-                legend: { display: false },
+                legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, font: { size: 11, family: 'Manrope', weight: 700 } } },
                 tooltip: {
                     callbacks: {
                         title: function(items) { return items[0].label; },
                         label: function(ctx) {
                             if (ctx.datasetIndex === 0) return null;
+                            if (ctx.datasetIndex === 2) return 'Running: ' + ctx.parsed.y + ' animals';
                             var s = steps[ctx.dataIndex];
                             return [' ' + s.count + ' animals', ' ' + fmtRwf(s.value)];
                         }
@@ -518,6 +643,33 @@
             }
         }
     });
+
+    function setPeriod(preset) {
+        const today = new Date();
+        let from, to;
+        const fmt = d => d.toISOString().slice(0, 10);
+
+        if (preset === 'this-month') {
+            from = new Date(today.getFullYear(), today.getMonth(), 1);
+            to = today;
+        } else if (preset === 'last-month') {
+            from = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            to = new Date(today.getFullYear(), today.getMonth(), 0);
+        } else if (preset === 'this-quarter') {
+            const q = Math.floor(today.getMonth() / 3);
+            from = new Date(today.getFullYear(), q * 3, 1);
+            to = today;
+        } else if (preset === 'ytd') {
+            from = new Date(today.getFullYear(), 0, 1);
+            to = today;
+        } else if (preset === 'last-year') {
+            from = new Date(today.getFullYear() - 1, 0, 1);
+            to = new Date(today.getFullYear() - 1, 11, 31);
+        }
+        document.getElementById('fromInput').value = fmt(from);
+        document.getElementById('toInput').value = fmt(to);
+        document.getElementById('filterForm').submit();
+    }
     /*]]>*/
 </script>
 

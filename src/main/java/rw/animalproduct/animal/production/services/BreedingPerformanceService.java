@@ -499,7 +499,8 @@ public class BreedingPerformanceService {
         dto.setTagNumber(animal.getTagNumber());
         dto.setCategoryName(animal.getLivestockCategory() != null
                 ? animal.getLivestockCategory().getName() : "Unknown");
-        dto.setConceptionDate(breeding.getBreedingDate());
+        dto.setConceptionDate(breeding.getConceptionDate() != null
+                ? breeding.getConceptionDate() : breeding.getBreedingDate());
         dto.setExpectedDueDate(breeding.getExpectedDueDate());
         dto.setBreedingMethod(breeding.getBreedingMethod());
         dto.setStatus(breeding.getStatus());
@@ -526,15 +527,43 @@ public class BreedingPerformanceService {
         return dto;
     }
 
+    /**
+     * Fallback used by getCurrentPregnancies() when a livestock record is
+     * flagged STATUS_PREGNANT but has no matching CONFIRMED_PREGNANT
+     * LivestockBreeding record (data-entry gap, or the status was set
+     * manually rather than through the breeding workflow).
+     *
+     * FIXED: previously called animal.getConceptionDate() /
+     * animal.getExpectedDueDate() — Livestock no longer stores a conception
+     * date (that field was removed; conception_date now lives only on
+     * livestock_breeding — see Livestock.java / LivestockBreeding.java).
+     * This now falls back to the animal's most recent breeding record of
+     * ANY status (not just CONFIRMED_PREGNANT) to recover a conception date
+     * if one exists, and leaves it null with a note in the DTO status if no
+     * breeding record exists at all — rather than silently reading a field
+     * that no longer holds real data. expectedDueDate is still read from
+     * Livestock, since that denormalized snapshot is still maintained by
+     * LivestockBreedingService.
+     */
     private PregnancyTrackingDto createPregnancyDtoFromLivestock(Livestock animal) {
         PregnancyTrackingDto dto = new PregnancyTrackingDto();
         dto.setAnimalId(animal.getId());
         dto.setTagNumber(animal.getTagNumber());
         dto.setCategoryName(animal.getLivestockCategory() != null
                 ? animal.getLivestockCategory().getName() : "Unknown");
-        dto.setConceptionDate(animal.getConceptionDate());
+
+        LocalDate resolvedConceptionDate = null;
+        Optional<LivestockBreeding> mostRecent =
+                breedingRepository.findMostRecentByLivestockId(animal.getId());
+        if (mostRecent.isPresent()) {
+            LivestockBreeding b = mostRecent.get();
+            resolvedConceptionDate = b.getConceptionDate() != null ? b.getConceptionDate() : b.getBreedingDate();
+        }
+        dto.setConceptionDate(resolvedConceptionDate);
         dto.setExpectedDueDate(animal.getExpectedDueDate());
-        dto.setStatus("PREGNANT (from livestock record)");
+        dto.setStatus(resolvedConceptionDate != null
+                ? "PREGNANT (from livestock record)"
+                : "PREGNANT (from livestock record — no breeding history found)");
         dto.setBreedingMethod("UNKNOWN");
 
         if (animal.getExpectedDueDate() != null) {

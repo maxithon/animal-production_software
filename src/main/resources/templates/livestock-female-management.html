@@ -132,7 +132,7 @@
                                 <i class="bi bi-eye"></i>
                             </a>
                             <a th:if="${animal.lifecycleStage == 'READY_TO_BREED'}"
-                               th:href="@{/livestock/breeding/register}" class="btn btn-sm"
+                               th:href="@{/livestock/breeding/form(livestockId=${animal.id})}" class="btn btn-sm"
                                style="background:#db2777;color:white;border:none;" title="Breed">
                                 <i class="bi bi-heart-fill"></i>
                             </a>
@@ -205,7 +205,7 @@
                     <td><span th:text="${animal.categoryName}" class="badge bg-info"></span></td>
                     <td th:text="${animal.ageInMonths != null ? animal.ageInMonths + ' months' : 'Unknown'}"></td>
                     <td>
-                        <a th:href="@{/livestock/breeding/register}" class="btn btn-sm" style="background:#7c3aed;color:white;">
+                        <a th:href="@{/livestock/breeding/form(livestockId=${animal.id})}" class="btn btn-sm" style="background:#7c3aed;color:white;">
                             <i class="bi bi-heart-fill"></i> Breed
                         </a>
                     </td>

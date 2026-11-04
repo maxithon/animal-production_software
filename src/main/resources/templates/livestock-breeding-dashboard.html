@@ -251,10 +251,15 @@
         </div>
     </div>
     <div class="d-flex gap-2">
-        <a href="/livestock/breeding/list" class="btn-cancel">
+        <a th:href="@{/livestock/breeding/list}" class="btn-cancel">
             <i class="bi bi-list-ul"></i> View All
         </a>
-        <a href="/livestock/breeding/register" class="btn-primary-brand">
+        <!-- FIXED: was href="/livestock/breeding/register" — a plain (non
+             Thymeleaf-resolved) href that never had a matching controller
+             mapping. Spring fell through to the static-resource handler
+             and 404'd ("No static resource livestock/breeding/register").
+             The one real create/edit entry point is /livestock/breeding/form. -->
+        <a th:href="@{/livestock/breeding/form}" class="btn-primary-brand">
             <i class="bi bi-plus-circle"></i> Record Breeding
         </a>
     </div>
@@ -275,7 +280,7 @@
                 <i class="bi bi-heart-fill"></i>
             </div>
             <div class="stat-body">
-                <div class="stat-number" th:text="${totalBreedings}">0</div>
+                <div class="stat-number" th:text="${stats?.totalBreedings != null ? stats.totalBreedings : 0}">0</div>
                 <div class="stat-label">Total Breedings</div>
             </div>
         </div>
@@ -284,7 +289,7 @@
                 <i class="bi bi-hourglass-split"></i>
             </div>
             <div class="stat-body">
-                <div class="stat-number" th:text="${pendingCount}">0</div>
+                <div class="stat-number" th:text="${stats?.pending != null ? stats.pending : 0}">0</div>
                 <div class="stat-label">Pending</div>
             </div>
         </div>
@@ -293,7 +298,7 @@
                 <i class="bi bi-check-circle-fill"></i>
             </div>
             <div class="stat-body">
-                <div class="stat-number" th:text="${confirmedCount}">0</div>
+                <div class="stat-number" th:text="${stats?.confirmedPregnant != null ? stats.confirmedPregnant : 0}">0</div>
                 <div class="stat-label">Confirmed Pregnant</div>
             </div>
         </div>
@@ -302,39 +307,30 @@
                 <i class="bi bi-graph-up-arrow"></i>
             </div>
             <div class="stat-body">
-                <div class="stat-number" th:text="${#numbers.formatDecimal(successRate, 1, 1) + '%'}">0%</div>
+                <div class="stat-number" th:text="${stats?.successRate != null ? #numbers.formatDecimal(stats.successRate, 1, 1) + '%' : '0%'}">0%</div>
                 <div class="stat-label">Success Rate</div>
             </div>
         </div>
     </div>
 
     <!-- Overdue pregnancy checks alert -->
-    <div th:if="${dueForCheck != null and !dueForCheck.empty}" class="form-card">
+    <div th:if="${overdueChecks != null and !overdueChecks.empty}" class="form-card">
         <div class="alert-strip warning">
             <i class="bi bi-exclamation-triangle-fill"></i>
-            <strong th:text="${dueForCheck.size()}">0</strong> animal(s) are overdue for a pregnancy check.
+            <strong th:text="${overdueChecks.size()}">0</strong> animal(s) are overdue for a pregnancy check.
             <a href="#dueForCheckTable" class="ms-2">View below ↓</a>
-        </div>
-    </div>
-
-    <!-- Approaching due dates alert -->
-    <div th:if="${approachingDueDate != null and !approachingDueDate.empty}" class="form-card">
-        <div class="alert-strip success">
-            <i class="bi bi-bell-fill"></i>
-            <strong th:text="${approachingDueDate.size()}">0</strong> animal(s) are due to give birth within 30 days.
-            <a href="#approachingTable" class="ms-2">View below ↓</a>
         </div>
     </div>
 
     <!-- Due for Pregnancy Check table -->
     <div class="form-card" id="dueForCheckTable"
-         th:if="${dueForCheck != null and !dueForCheck.empty}">
+         th:if="${overdueChecks != null and !overdueChecks.empty}">
         <div class="form-card-header">
             <div class="card-icon" style="background:#fffbeb;color:#b45309;">
                 <i class="bi bi-calendar-x-fill"></i>
             </div>
             <h6>Overdue Pregnancy Checks</h6>
-            <span class="count-badge" th:text="${dueForCheck.size()}">0</span>
+            <span class="count-badge" th:text="${overdueChecks.size()}">0</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -349,22 +345,26 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="b : ${dueForCheck}">
+                <tr th:each="b : ${overdueChecks}">
                     <td><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong></td>
                     <td>
                         <span class="badge-soft badge-cat"
                               th:if="${b.livestock?.livestockCategory != null}"
                               th:text="${b.livestock.livestockCategory.name}"></span>
                     </td>
-                    <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
-                    <td th:text="${#temporals.format(b.expectedPregnancyCheckDate, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate, 'dd-MM-yyyy') : '—'}"></td>
+                    <td th:text="${b.expectedPregnancyCheckDate != null ? #temporals.format(b.expectedPregnancyCheckDate, 'dd-MM-yyyy') : '—'}"></td>
                     <td>
-                        <span class="badge-soft badge-danger-soft">
+                        <span class="badge-soft badge-danger-soft"
+                              th:if="${b.expectedPregnancyCheckDate != null}">
                             <span th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(b.expectedPregnancyCheckDate, T(java.time.LocalDate).now())}"></span> days
                         </span>
                     </td>
                     <td>
-                        <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}" class="btn-row-action" title="Update Status">
+                        <!-- FIXED: was /livestock/breeding/edit/{id} — no such
+                             mapping exists. The correct edit route is
+                             /livestock/breeding/form?id={id}. -->
+                        <a th:href="@{/livestock/breeding/form(id=${b.id})}" class="btn-row-action" title="Update Status">
                             <i class="bi bi-pencil"></i>
                         </a>
                     </td>
@@ -374,15 +374,24 @@
         </div>
     </div>
 
-    <!-- Approaching Due Dates table -->
-    <div class="form-card" id="approachingTable"
-         th:if="${approachingDueDate != null and !approachingDueDate.empty}">
+    <!-- Approaching Due Dates alert -->
+    <div th:if="${activePregnancies != null and !activePregnancies.empty}" class="form-card">
+        <div class="alert-strip success">
+            <i class="bi bi-bell-fill"></i>
+            <strong th:text="${activePregnancies.size()}">0</strong> animal(s) currently confirmed pregnant.
+            <a href="#activePregnanciesTable" class="ms-2">View below ↓</a>
+        </div>
+    </div>
+
+    <!-- Active Pregnancies table -->
+    <div class="form-card" id="activePregnanciesTable"
+         th:if="${activePregnancies != null and !activePregnancies.empty}">
         <div class="form-card-header">
             <div class="card-icon" style="background:#f0fdf4;color:#15803d;">
-                <i class="bi bi-bell-fill"></i>
+                <i class="bi bi-heart-fill"></i>
             </div>
-            <h6>Approaching Due Dates (Next 30 Days)</h6>
-            <span class="count-badge" th:text="${approachingDueDate.size()}">0</span>
+            <h6>Active Pregnancies</h6>
+            <span class="count-badge" th:text="${activePregnancies.size()}">0</span>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle">
@@ -397,17 +406,18 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="b : ${approachingDueDate}">
+                <tr th:each="b : ${activePregnancies}">
                     <td><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}"></strong></td>
                     <td>
                         <span class="badge-soft badge-cat"
                               th:if="${b.livestock?.livestockCategory != null}"
                               th:text="${b.livestock.livestockCategory.name}"></span>
                     </td>
-                    <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
-                    <td th:text="${#temporals.format(b.expectedDueDate, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate, 'dd-MM-yyyy') : '—'}"></td>
+                    <td th:text="${b.expectedDueDate != null ? #temporals.format(b.expectedDueDate, 'dd-MM-yyyy') : '—'}"></td>
                     <td>
-                        <span class="badge-soft badge-info-soft">
+                        <span class="badge-soft badge-info-soft"
+                              th:if="${b.expectedDueDate != null}">
                             <span th:text="${T(java.time.temporal.ChronoUnit).DAYS.between(T(java.time.LocalDate).now(), b.expectedDueDate)}"></span> days
                         </span>
                     </td>
@@ -429,7 +439,7 @@
                 <i class="bi bi-clock-history"></i>
             </div>
             <h6>Recent Breeding Records</h6>
-            <a href="/livestock/breeding/list" class="view-all">
+            <a th:href="@{/livestock/breeding/list}" class="view-all">
                 View All <i class="bi bi-arrow-right"></i>
             </a>
         </div>
@@ -437,7 +447,8 @@
         <div class="empty-state" th:if="${recentBreedings == null or recentBreedings.empty}">
             <i class="bi bi-inbox"></i>
             <p>No breeding records yet.</p>
-            <a href="/livestock/breeding/register" class="btn-primary-brand">
+            <!-- FIXED: same dead /register link as the top button. -->
+            <a th:href="@{/livestock/breeding/form}" class="btn-primary-brand">
                 <i class="bi bi-plus-circle"></i> Record First Breeding
             </a>
         </div>
@@ -466,7 +477,7 @@
                               th:if="${b.livestock?.livestockCategory != null}"
                               th:text="${b.livestock.livestockCategory.name}"></span>
                     </td>
-                    <td th:text="${#temporals.format(b.breedingDate, 'dd-MM-yyyy')}"></td>
+                    <td th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate, 'dd-MM-yyyy') : '—'}"></td>
                     <td>
                         <span th:if="${b.breedingMethod == 'NATURAL'}"
                               class="badge-soft method-natural">Natural</span>
@@ -508,7 +519,9 @@
                             <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn-row-action" title="View">
                                 <i class="bi bi-eye"></i>
                             </a>
-                            <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}" class="btn-row-action" title="Edit">
+                            <!-- FIXED: was /livestock/breeding/edit/{id} — no such
+                                 mapping exists on the controller. -->
+                            <a th:href="@{/livestock/breeding/form(id=${b.id})}" class="btn-row-action" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
                         </div>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bulk Animal Registration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f0f4f8; font-family: 'DM Sans', sans-serif; color: #0f172a; }
+        .page-header { background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
+            color: white; padding: 24px 32px; margin-bottom: 24px; }
+        .page-header h4 { font-weight: 700; margin: 0; }
+        .card-panel { background: white; border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07); padding: 24px; margin-bottom: 20px; }
+        .section-head { font-size: .7rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: .08em; color: #94a3b8; margin-bottom: 14px;
+            padding-bottom: 8px; border-bottom: 1.5px solid #f1f5f9; }
+        .step { display: flex; gap: 16px; align-items: flex-start;
+            padding: 16px 0; border-bottom: 1px dashed #e2e8f0; }
+        .step:last-child { border-bottom: none; }
+        .step-num { flex: 0 0 36px; height: 36px; border-radius: 50%;
+            background: #ecfdf5; color: #059669; font-weight: 700;
+            display: grid; place-items: center; font-size: .95rem; }
+        .step-body h6 { font-weight: 700; margin: 0 0 4px; font-size: .95rem; }
+        .step-body p { font-size: .84rem; color: #64748b; margin: 0; }
+        .btn-download { background: #0ea5e9; color: #fff; border: none;
+            padding: 10px 22px; border-radius: 10px; font-weight: 600;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-download:hover { background: #0284c7; color: #fff; }
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px;
+            padding: 40px 20px; text-align: center; background: #f8fafc;
+            cursor: pointer; transition: all .15s ease; display: block; }
+        .drop-zone:hover { border-color: #10b981; background: #f0fdf4; }
+        .drop-zone input[type=file] { display: none; }
+        .drop-zone i { font-size: 2.5rem; color: #94a3b8; display: block; margin-bottom: 12px; }
+        .drop-zone .dz-title { font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .drop-zone .dz-sub { font-size: .84rem; color: #64748b; }
+        .sample-table { width: 100%; border-collapse: collapse; font-size: .78rem;
+            font-family: ui-monospace, monospace; }
+        .sample-table th { background: #f1f5f9; padding: 8px 12px; text-align: left;
+            font-weight: 700; color: #475569; border: 1px solid #e2e8f0; }
+        .sample-table td { padding: 8px 12px; border: 1px solid #e2e8f0; color: #334155; }
+
+        .preview-legend { display:flex; gap:16px; flex-wrap:wrap;
+            padding:10px 14px; background:#f8fafc; border-radius:8px;
+            margin-bottom:10px; font-size:12px; }
+        .preview-legend span { display:inline-flex; align-items:center; gap:5px; }
+        .status-icon-OK { color:#16a34a; }
+        .status-icon-WARNING { color:#f59e0b; }
+        .status-icon-ERROR { color:#dc2626; }
+        table.pv { width:100%; border-collapse:collapse; font-size:.82rem; }
+        table.pv th { background:#f1f5f9; padding:8px 10px; text-align:left;
+            font-weight:700; color:#475569; border-bottom:1.5px solid #e2e8f0;
+            white-space:nowrap; }
+        table.pv td { padding:8px 10px; border-bottom:1px solid #f0f2f5;
+            vertical-align:middle; color:#334155; }
+        table.pv tbody tr:hover { background:#f8fbff; }
+        tr.row-ERROR { background:#fef2f2; }
+        tr.row-WARNING { background:#fffbeb; }
+        .status-cell { width:56px; text-align:center; }
+        .msg-cell { font-size:.72rem; color:#64748b; max-width:360px; }
+        .btn-act { display:inline-flex; align-items:center; gap:5px; padding:7px 14px;
+            border-radius:8px; font-size:12px; font-weight:600;
+            text-decoration:none; border:1px solid; transition:all .15s; cursor:pointer; }
+        .btn-act.primary { background:#0ea5e9; color:#fff; border-color:#0ea5e9; }
+        .btn-act.primary:hover { background:#0284c7; }
+        .btn-act.ghost { background:#fff; color:#475569; border-color:#cbd5e1; }
+        .btn-act.ghost:hover { background:#f1f5f9; }
+        .btn-act.success { background:#059669; color:#fff; border-color:#059669; }
+        .btn-act.success:hover { background:#047857; }
+        .btn-act:disabled { opacity:.5; cursor:not-allowed; }
+        .req-star { color:#dc2626; font-weight:700; }
+
+        /* ✅ Suggestion pill — clickable, one-click accept */
+        .tag-suggestion-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px 3px 4px; border-radius: 20px;
+            background: #ecfdf5; border: 1px solid #6ee7b7;
+            color: #065f46; font-size: 0.72rem; font-weight: 700;
+            cursor: pointer; margin-left: 6px; white-space: nowrap;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+        .tag-suggestion-pill:hover {
+            background: #d1fae5; transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
+        }
+        .tag-suggestion-pill .check-icon {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #10b981; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; flex-shrink: 0;
+            animation: pulse-check 1.6s ease-in-out infinite;
+        }
+        @keyframes pulse-check {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); }
+            50%     { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+        }
+        .tag-suggestion-pill .label { font-weight: 500; opacity: 0.85; }
+        .tag-suggestion-pill .tagcode { font-family: ui-monospace, monospace; }
+        .suggestion-accepted {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px;
+            background: #d1fae5; border: 1px solid #6ee7b7;
+            color: #065f46; font-size: 0.72rem; font-weight: 700;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4><i class="bi bi-cloud-upload me-2"></i>Bulk Animal Registration</h4>
+        <small style="opacity:.9">Upload an Excel file to create many animals at once</small>
+    </div>
+    <a href="/livestock/list" class="btn btn-light btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Livestock
+    </a>
+</div>
+
+<div class="container-fluid px-4 pb-5">
+
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- ══════════════ PREVIEW (only when preview != null) ══════════════ -->
+    <div class="card-panel" th:if="${preview != null}">
+        <div class="section-head">Preview — review before importing</div>
+
+        <div th:if="${preview.fileError}" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${preview.fileError}"></span>
+        </div>
+
+        <div th:if="${preview.fileError == null}">
+            <div style="display:flex;gap:16px;flex-wrap:wrap;
+                        padding:10px 14px;background:#f0fdf4;
+                        border:1px solid #bbf7d0;border-radius:8px;
+                        margin-bottom:12px;font-size:12px;">
+                <span><i class="bi bi-file-earmark-excel text-success"></i>
+                      <strong th:text="${preview.fileName}">file.xlsx</strong></span>
+                <span>Total rows:
+                    <strong th:text="${preview.totalRows}">0</strong></span>
+            </div>
+
+            <div class="preview-legend">
+                <span><i class="bi bi-check-circle-fill status-icon-OK"></i>
+                    <strong th:text="${preview.okRows}">0</strong> Ready to import</span>
+                <span><i class="bi bi-exclamation-triangle-fill status-icon-WARNING"></i>
+                    <strong th:text="${preview.warningRows}">0</strong> Warnings</span>
+                <span><i class="bi bi-x-circle-fill status-icon-ERROR"></i>
+                    <strong th:text="${preview.errorRows}">0</strong> Blocked</span>
+                <span style="color:#94a3b8;font-weight:500;">
+                    <i class="bi bi-lightbulb"></i>
+                    Click the green
+                    <span style="display:inline-flex;align-items:center;gap:4px;
+                                 padding:1px 8px;border-radius:20px;
+                                 background:#ecfdf5;border:1px solid #6ee7b7;
+                                 color:#065f46;font-size:11px;font-weight:700;">
+                        <i class="bi bi-check-lg"></i> Use
+                    </span>
+                    pill to auto-fix duplicate tags.
+                </span>
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table class="pv">
+                    <thead>
+                    <tr>
+                        <th class="status-cell">Status</th>
+                        <th>#</th>
+                        <th>Tag</th>
+                        <th>Species</th>
+                        <th>Gender</th>
+                        <th>Birth Date</th>
+                        <th>Location</th>
+                        <th>Beneficiary NID</th>
+                        <th>Photo</th>
+                        <th>Message</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${preview.rows}"
+                        th:classappend="${row.status == 'ERROR'} ? ' row-ERROR'
+                                        : (${row.status == 'WARNING'} ? ' row-WARNING' : '')">
+                        <td class="status-cell" th:title="${row.message}">
+                            <i th:if="${row.status == 'OK'}"
+                               class="bi bi-check-circle-fill status-icon-OK"
+                               style="font-size:1.15rem;" title="Will be imported"></i>
+                            <i th:if="${row.status == 'WARNING'}"
+                               class="bi bi-exclamation-triangle-fill status-icon-WARNING"
+                               style="font-size:1.15rem;" th:title="${row.message}"></i>
+                            <i th:if="${row.status == 'ERROR'}"
+                               class="bi bi-x-circle-fill status-icon-ERROR"
+                               style="font-size:1.15rem;" th:title="${row.message}"></i>
+                        </td>
+                        <td th:text="${row.rowNumber}">1</td>
+                        <td>
+                            <strong th:text="${row.tagNumber != null ? row.tagNumber : '—'}">—</strong>
+                            <span th:if="${row.tagNumber == null}"
+                                  class="badge bg-info text-dark"
+                                  style="font-size:9px;margin-left:4px;">auto</span>
+                        </td>
+                        <td th:text="${row.species != null ? row.species : '—'}">—</td>
+                        <td th:text="${row.gender != null ? row.gender : '—'}">—</td>
+                        <td th:text="${row.birthDate != null
+                                        ? #temporals.format(row.birthDate,'dd MMM yyyy')
+                                        : '—'}">—</td>
+                        <td th:text="${row.locationName != null ? row.locationName : '—'}">—</td>
+                        <td th:text="${row.beneficiaryNid != null ? row.beneficiaryNid : '—'}">—</td>
+                        <td>
+                            <span th:if="${row.photoUrl != null}"
+                                  class="badge bg-secondary"
+                                  style="font-size:9px;">URL</span>
+                            <span th:unless="${row.photoUrl != null}"
+                                  style="color:#94a3b8;">—</span>
+                        </td>
+                        <td class="msg-cell">
+                            <span th:text="${row.message != null ? row.message : ''}">Message</span>
+
+                            <!-- ✅ Suggestion pill: click to accept the auto-generated tag -->
+                            <form th:if="${row.hasSuggestedTag() and !row.suggestionAccepted}"
+                                  th:action="@{/livestock/bulk-import/accept-suggestion}"
+                                  method="post" style="display:inline;">
+                                <input type="hidden" name="rowNumber" th:value="${row.rowNumber}"/>
+                                <button type="submit" class="tag-suggestion-pill"
+                                        title="Click to use this tag">
+                                    <span class="check-icon"><i class="bi bi-check-lg"></i></span>
+                                    <span class="label">Use</span>
+                                    <span class="tagcode" th:text="${row.suggestedTag}">GOAT-046</span>
+                                </button>
+                            </form>
+
+                            <!-- ✅ Once accepted, show a green check confirmation -->
+                            <span th:if="${row.suggestionAccepted and row.hasSuggestedTag()}"
+                                  class="suggestion-accepted">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Using <span th:text="${row.tagNumber}">GOAT-046</span>
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;
+                        margin-top:16px;flex-wrap:wrap;">
+                <form th:action="@{/livestock/bulk-import/cancel}" method="post"
+                      style="display:inline;">
+                    <button type="submit" class="btn-act ghost">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </form>
+                <form th:action="@{/livestock/bulk-import/confirm}" method="post"
+                      style="display:inline;">
+                    <button type="submit" class="btn-act success"
+                            th:disabled="${preview.okRows == 0 and preview.warningRows == 0}">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Import <span th:text="${preview.okRows + preview.warningRows}">0</span> rows
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ UPLOAD FORM ══════════════ -->
+    <div class="row g-4" th:if="${preview == null}">
+        <div class="col-12 col-lg-7">
+            <div class="card-panel">
+                <div class="section-head">How it works</div>
+
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <h6>Download the Excel template</h6>
+                        <p>Includes a <strong>Reference sheet</strong> with valid
+                            Species, Location, and Beneficiary NID dropdowns so you
+                            can't make a typo.</p>
+                        <a th:href="@{/livestock/bulk-import/template}" class="btn-download mt-3">
+                            <i class="bi bi-download"></i> Download Excel template
+                        </a>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <h6>Fill it in and upload it</h6>
+                        <p>One row per animal. Leave Tag Number blank to auto-assign.
+                            Birth Date is required.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <h6>Preview &amp; fix</h6>
+                        <p>You'll see ✓ / ⚠ / ✗ per row with the exact reason.
+                            Duplicate tags get a one-click "Use GOAT-046" fix.</p>
+                    </div>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-body">
+                        <h6>Confirm &amp; import</h6>
+                        <p>All valid rows are created in a single transaction.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-panel">
+                <div class="section-head">Upload your file</div>
+                <form th:action="@{/livestock/bulk-import/upload}"
+                      method="post" enctype="multipart/form-data">
+                    <label class="drop-zone" for="fileInput">
+                        <input type="file" id="fileInput" name="file"
+                               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                               required onchange="showFileName(this)">
+                        <i class="bi bi-file-earmark-excel"></i>
+                        <div class="dz-title">Click to choose your Excel file</div>
+                        <div class="dz-sub">.xlsx only &mdash; max 50 MB</div>
+                        <div id="fileNameDisplay" class="mt-2 fw-semibold text-success"
+                             style="display:none;"></div>
+                    </label>
+                    <button type="submit" class="btn btn-success mt-3">
+                        <i class="bi bi-cloud-upload me-1"></i> Upload &amp; preview
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="card-panel">
+                <div class="section-head">Required columns</div>
+                <ul style="font-size:.85rem;color:#475569;line-height:1.9;padding-left:18px;">
+                    <li><span class="req-star">*</span> <strong>Species</strong> — dropdown</li>
+                    <li><span class="req-star">*</span> <strong>Gender</strong> — MALE / FEMALE / MIXED</li>
+                    <li><span class="req-star">*</span> <strong>Birth Date</strong> — yyyy-MM-dd preferred</li>
+                </ul>
+
+                <div class="section-head" style="margin-top:20px;">Optional columns</div>
+                <ul style="font-size:.85rem;color:#475569;line-height:1.9;padding-left:18px;">
+                    <li><strong>Tag Number</strong> — leave blank to auto-assign</li>
+                    <li><strong>Location</strong> — dropdown from Reference sheet</li>
+                    <li><strong>Beneficiary NID</strong> — dropdown from Reference sheet</li>
+                    <li><strong>Photo URL</strong> — paste a URL or /uploads/... path</li>
+                    <li><strong>Is Group</strong> + <strong>Quantity</strong> — for batches</li>
+                </ul>
+
+                <div class="section-head" style="margin-top:20px;">Example</div>
+                <table class="sample-table">
+                    <thead>
+                    <tr>
+                        <th>Tag</th><th>Species</th><th>Gender</th>
+                        <th>Birth Date</th><th>Is Group</th><th>Quantity</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>(blank)</td><td>GOAT</td><td>FEMALE</td>
+                        <td>2024-06-15</td><td>no</td><td>—</td>
+                    </tr>
+                    <tr style="background:#f0fdf4;">
+                        <td>BROILER-2026-001</td><td>CHICKEN</td><td>MIXED</td>
+                        <td>2026-03-20</td><td><strong>yes</strong></td><td><strong>500</strong></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showFileName(input) {
+        const el = document.getElementById('fileNameDisplay');
+        if (input.files && input.files.length > 0) {
+            el.textContent = '📄 ' + input.files[0].name + ' (' +
+                (input.files[0].size / 1024).toFixed(1) + ' KB)';
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>

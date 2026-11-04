@@ -2,159 +2,802 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buyers Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* ── CSS Variables (Light Theme Only) ── */
         :root {
-            --bg: #f4f6fb;
+            --bg: #f5f7fc;
+            --bg-secondary: #eef1f7;
             --surface: #ffffff;
             --surface-2: #f0f2f8;
+            --surface-hover: #f8f9fe;
             --border: #e2e6f0;
+            --border-light: #eef1f7;
             --accent: #4f7dff;
-            --accent-glow: rgba(79, 125, 255, 0.12);
+            --accent-hover: #3a66e6;
+            --accent-glow: rgba(79, 125, 255, 0.15);
+            --accent-light: rgba(79, 125, 255, 0.08);
+            --accent-lighter: rgba(79, 125, 255, 0.04);
             --success: #16a34a;
+            --success-bg: rgba(22, 163, 74, 0.12);
+            --success-light: #e6f5ed;
             --danger: #dc2626;
+            --danger-bg: rgba(220, 38, 38, 0.12);
+            --danger-light: #fde8e8;
             --warning: #d97706;
+            --warning-bg: rgba(217, 119, 6, 0.12);
+            --warning-light: #fef3e2;
             --text-primary: #111827;
             --text-secondary: #374151;
             --text-muted: #6b7280;
+            --text-muted-light: #9ca3af;
+            --text-white: #ffffff;
             --radius: 12px;
             --radius-sm: 8px;
+            --radius-full: 9999px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.08);
+            --shadow-xl: 0 12px 56px rgba(0, 0, 0, 0.10);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; }
 
         body {
             background: var(--bg);
             color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
         }
 
-        .dashboard-wrapper { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
-        .page-title { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+        /* ── Layout ── */
+        .dashboard-wrapper { max-width: 1440px; margin: 0 auto; padding: 28px 24px 40px; }
+
+        /* ── Header ── */
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .page-header-left { display: flex; align-items: center; gap: 14px; }
+        .page-header-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--accent-light);
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+        .page-title { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); letter-spacing: -0.025em; }
         .page-title span { color: var(--accent); }
-        .page-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+        .page-subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; font-weight: 500; }
 
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
-        .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; transition: border-color 0.2s; }
-        .kpi-card:hover { border-color: var(--accent); }
-        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--radius) var(--radius) 0 0; }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-export {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 8px 16px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition);
+        }
+        .btn-export:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+        }
+
+        /* ── KPI Cards ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 22px;
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .kpi-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
         .kpi-card.accent-blue::before  { background: var(--accent); }
         .kpi-card.accent-green::before { background: var(--success); }
         .kpi-card.accent-red::before   { background: var(--danger); }
         .kpi-card.accent-amber::before { background: var(--warning); }
-        .kpi-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
-        .kpi-value { font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text-primary); font-family: 'DM Mono', monospace; }
+
+        .kpi-top { display: flex; align-items: center; justify-content: space-between; }
+        .kpi-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .kpi-trend {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        .kpi-trend.down { background: var(--danger-bg); color: var(--danger); }
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+            font-family: 'DM Mono', monospace;
+        }
         .kpi-card.accent-blue  .kpi-value { color: var(--accent); }
         .kpi-card.accent-green .kpi-value { color: var(--success); }
         .kpi-card.accent-red   .kpi-value { color: var(--danger); }
         .kpi-card.accent-amber .kpi-value { color: var(--warning); }
 
-        .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px; }
-        .chart-card-title { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 16px; }
+        .kpi-sub { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
 
-        .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .table-toolbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
-        .toolbar-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        /* ── Chart Card ── */
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px 24px 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chart-card-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+        .chart-card-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted-light);
+            background: var(--bg-secondary);
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+        }
+        .chart-wrapper canvas { max-height: 160px; width: 100% !important; }
 
-        .search-wrap { position: relative; }
-        .search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
-        .search-input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.85rem; padding: 8px 12px 8px 34px; width: 240px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
-        .search-input::placeholder { color: var(--text-muted); }
-        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+        /* ── Table Card ── */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow var(--transition);
+        }
+        .table-card:hover { box-shadow: var(--shadow-md); }
 
-        .rows-select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 0.82rem; padding: 7px 10px; outline: none; cursor: pointer; }
+        /* ── Table Toolbar ── */
+        .table-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+            flex-wrap: wrap;
+            background: var(--bg-secondary);
+        }
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .search-wrap {
+            position: relative;
+            flex: 1;
+            min-width: 180px;
+            max-width: 320px;
+        }
+        .search-wrap svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color var(--transition);
+        }
+        .search-input {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            padding: 8px 12px 8px 34px;
+            width: 100%;
+            outline: none;
+            transition: all var(--transition);
+        }
+        .search-input::placeholder { color: var(--text-muted-light); }
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .search-clear {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 2px 4px;
+            font-size: 14px;
+            display: none;
+            border-radius: 50%;
+            transition: background var(--transition);
+        }
+        .search-clear:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .search-clear.visible { display: block; }
+
+        .rows-select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.82rem;
+            padding: 7px 10px;
+            outline: none;
+            cursor: pointer;
+            transition: border-color var(--transition);
+        }
         .rows-select:focus { border-color: var(--accent); }
 
-        .btn-add { background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 18px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
-        .btn-add:hover { opacity: 0.88; }
+        .btn-add {
+            background: var(--accent);
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-white);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition);
+            white-space: nowrap;
+            box-shadow: 0 2px 8px var(--accent-glow);
+        }
+        .btn-add:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
         .btn-add:active { transform: scale(0.97); }
 
+        /* ── Table ── */
         .table-scroll { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        thead tr { background: var(--surface-2); }
-        thead th { padding: 11px 16px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); white-space: nowrap; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        thead tr { background: var(--bg-secondary); }
+        thead th {
+            padding: 10px 14px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            white-space: nowrap;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            z-index: 2;
+            transition: color var(--transition);
+        }
         thead th:hover { color: var(--text-secondary); }
-        thead th .sort-icon { margin-left: 4px; opacity: 0.4; font-style: normal; }
+        thead th .sort-icon {
+            margin-left: 4px;
+            opacity: 0.3;
+            font-style: normal;
+            transition: opacity var(--transition);
+        }
         thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+        thead th.sorted { color: var(--accent); }
 
-        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition);
+        }
         tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: rgba(79,125,255,0.04); }
+        tbody tr:hover { background: var(--surface-hover); }
+        tbody tr.selected { background: var(--accent-lighter); }
 
-        td { padding: 11px 16px; font-size: 0.875rem; color: var(--text-secondary); vertical-align: middle; }
+        td {
+            padding: 10px 14px;
+            color: var(--text-secondary);
+            vertical-align: middle;
+            line-height: 1.5;
+        }
         td.name-cell { font-weight: 600; color: var(--text-primary); }
-        td.mono { font-family: 'DM Mono', monospace; font-size: 0.82rem; }
+        td.mono {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: -0.01em;
+        }
 
-        .buyer-identity { display: flex; align-items: center; gap: 10px; }
-        .avatar-photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-        .avatar-initials { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+        /* ── Buyer Identity ── */
+        .buyer-identity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .avatar-photo {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+        }
+        .avatar-initials {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--text-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
 
-        .badge-status { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
-        .badge-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-        .badge-active { background: rgba(34,197,94,0.12); color: var(--success); }
+        /* ── Badges ── */
+        .badge-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+        }
+        .badge-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .badge-active {
+            background: var(--success-bg);
+            color: var(--success);
+        }
         .badge-active::before { background: var(--success); }
-        .badge-inactive { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .badge-inactive {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
         .badge-inactive::before { background: var(--danger); }
 
-        .badge-type { background: rgba(79,125,255,0.1); color: var(--accent); font-size: 0.73rem; font-weight: 600; padding: 2px 9px; border-radius: 20px; display: inline-block; }
+        .badge-type {
+            background: var(--accent-light);
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            display: inline-block;
+        }
 
-        .action-group { display: flex; gap: 6px; align-items: center; }
-        .btn-action { padding: 5px 12px; font-size: 0.78rem; font-weight: 600; border-radius: var(--radius-sm); border: none; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
-        .btn-action:hover { opacity: 0.8; }
-        .btn-edit { background: rgba(79,125,255,0.15); color: var(--accent); }
-        .btn-delete { background: rgba(239,68,68,0.12); color: var(--danger); }
+        .badge-purchases {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
-        .empty-state svg { margin-bottom: 12px; opacity: 0.4; }
-        .empty-state p { font-size: 0.875rem; }
+        /* ── Actions ── */
+        .action-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .btn-action {
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        .btn-edit {
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+        .btn-edit:hover {
+            background: var(--accent);
+            color: var(--text-white);
+        }
+        .btn-delete {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+        .btn-delete:hover {
+            background: var(--danger);
+            color: var(--text-white);
+        }
 
-        .table-footer { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
-        .pagination-info { font-size: 0.8rem; color: var(--text-muted); }
+        .action-tooltip { position: relative; }
+        .action-tooltip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--text-white);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.65rem;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition);
+        }
+        .action-tooltip:hover::after { opacity: 1; }
+
+        /* ── Select Checkbox ── */
+        .select-cell { width: 32px; text-align: center; }
+        .select-cell input[type="checkbox"] {
+            accent-color: var(--accent);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px 50px;
+            color: var(--text-muted);
+            display: none;
+        }
+        .empty-state svg {
+            margin-bottom: 16px;
+            opacity: 0.3;
+            color: var(--text-muted);
+        }
+        .empty-state .empty-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .empty-state .empty-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted-light);
+        }
+        .empty-state.visible { display: block; }
+
+        /* ── Table Footer ── */
+        .table-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--bg-secondary);
+        }
+        .pagination-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
         .pagination-info strong { color: var(--text-secondary); }
-        .pagination-controls { display: flex; align-items: center; gap: 4px; }
-        .page-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 0.82rem; font-family: inherit; cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; user-select: none; }
-        .page-btn:hover:not(:disabled):not(.active) { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
-        .page-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
-        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .page-ellipsis { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.82rem; }
+        .pagination-controls {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all var(--transition);
+            user-select: none;
+        }
+        .page-btn:hover:not(:disabled):not(.active) {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .page-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-white);
+            font-weight: 700;
+        }
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .page-ellipsis {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .page-size-indicator {
+            font-size: 0.72rem;
+            color: var(--text-muted-light);
+            margin-left: 8px;
+        }
 
-        .modal-content { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); }
-        .modal-header { border-bottom: 1px solid var(--border); padding: 18px 22px; }
-        .modal-title { font-size: 1rem; font-weight: 700; }
-        .btn-close { filter: none; opacity: 0.5; }
-        .modal-body { padding: 22px; }
-        .modal-footer { border-top: 1px solid var(--border); padding: 14px 22px; }
-        .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
-        .form-control, .form-select { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-primary); font-family: inherit; font-size: 0.875rem; transition: border-color 0.2s, box-shadow 0.2s; }
-        .form-control:focus, .form-select:focus { background: var(--surface-2); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); color: var(--text-primary); outline: none; }
-        .form-control::placeholder { color: var(--text-muted); }
-        textarea.form-control { resize: vertical; min-height: 80px; }
-        .btn-secondary-modal { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text-secondary); font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 8px 18px; cursor: pointer; transition: background 0.2s; }
-        .btn-secondary-modal:hover { background: var(--border); }
-        .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
-        .field-error { font-size: 0.75rem; color: var(--danger); margin-top: 4px; }
+        /* ── Modals ── */
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-xl);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding: 18px 24px;
+        }
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modal-title .modal-icon {
+            color: var(--accent);
+        }
+        .btn-close {
+            filter: none;
+            opacity: 0.5;
+            transition: opacity var(--transition);
+        }
+        .btn-close:hover { opacity: 0.8; }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            border-top: 1px solid var(--border);
+            padding: 14px 24px;
+            gap: 8px;
+        }
 
-        canvas { max-height: 140px; }
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .form-label .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+        .form-control, .form-select {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.875rem;
+            transition: all var(--transition);
+            padding: 8px 12px;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--surface);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            color: var(--text-primary);
+            outline: none;
+        }
+        .form-control::placeholder { color: var(--text-muted-light); }
+        .form-control.is-invalid { border-color: var(--danger); }
+        .form-control.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+        }
+        textarea.form-control { resize: vertical; min-height: 70px; }
+        .field-hint {
+            font-size: 0.7rem;
+            color: var(--text-muted-light);
+            margin-top: 4px;
+        }
+        .field-error {
+            font-size: 0.72rem;
+            color: var(--danger);
+            margin-top: 4px;
+        }
 
-        .alert-floating { max-width: 1400px; margin: 0 auto 16px; }
+        .btn-secondary-modal {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 18px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .btn-secondary-modal:hover {
+            background: var(--border);
+        }
 
-        .notes-cell { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .notes-cell:hover { white-space: normal; overflow: visible; }
+        /* ── Flash Alerts ── */
+        .alert-floating {
+            max-width: 1440px;
+            margin: 0 auto 16px;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        .address-cell { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .address-cell:hover { white-space: normal; overflow: visible; }
+        /* ── Loading Skeleton ── */
+        .skeleton {
+            animation: shimmer 1.5s ease-in-out infinite;
+            background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+            background-size: 200% 100%;
+            border-radius: var(--radius-sm);
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .dashboard-wrapper { padding: 16px 12px 32px; }
+            .page-header { flex-direction: column; align-items: stretch; }
+            .page-title { font-size: 1.3rem; }
+            .header-actions { justify-content: stretch; }
+            .header-actions .btn-export { flex: 1; justify-content: center; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .kpi-card { padding: 14px 16px; }
+            .kpi-value { font-size: 1.4rem; }
+            .table-toolbar { flex-direction: column; align-items: stretch; }
+            .toolbar-left { flex-direction: column; align-items: stretch; }
+            .search-wrap { max-width: 100%; }
+            .btn-add { justify-content: center; }
+            .table-footer { flex-direction: column; align-items: stretch; text-align: center; }
+            .pagination-controls { justify-content: center; }
+            .modal-body { padding: 16px; }
+            .chart-card { padding: 16px; }
+            td, th { padding: 8px 10px; font-size: 0.8rem; }
+            .action-group { flex-direction: column; gap: 4px; }
+            .btn-action { width: 100%; justify-content: center; }
+        }
+        @media (max-width: 480px) {
+            .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .kpi-card { padding: 12px 14px; }
+            .kpi-value { font-size: 1.2rem; }
+        }
+
+        /* ── Utility ── */
+        .truncate {
+            max-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .truncate:hover {
+            white-space: normal;
+            overflow: visible;
+            background: var(--surface);
+            position: relative;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+            padding: 4px 6px;
+            border-radius: var(--radius-sm);
+        }
     </style>
 </head>
 <body>
+
 <div class="dashboard-wrapper">
 
-    <!-- Flash messages -->
+    <!-- Flash Messages -->
     <div class="alert-floating" th:if="${success}">
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             <span th:text="${success}"></span>
@@ -170,36 +813,81 @@
 
     <!-- Header -->
     <div class="page-header">
-        <div>
-            <div class="page-title">Buyers <span>Dashboard</span></div>
-            <div class="page-subtitle">Manage and track all buyer activity</div>
+        <div class="page-header-left">
+            <div class="page-header-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <div>
+                <div class="page-title">Buyers <span>Dashboard</span></div>
+                <div class="page-subtitle">Manage and track all buyer activity</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-export" onclick="exportData()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export
+            </button>
+            <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addBuyerModal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 5v14M5 12h14"/>
+                </svg>
+                Add Buyer
+            </button>
         </div>
     </div>
 
     <!-- KPI Cards -->
     <div class="kpi-grid">
         <div class="kpi-card accent-blue">
-            <div class="kpi-label">Active Buyers</div>
+            <div class="kpi-top">
+                <div class="kpi-label">Active Buyers</div>
+                <span class="kpi-trend">+12%</span>
+            </div>
             <div class="kpi-value" th:text="${activeCount}">0</div>
+            <div class="kpi-sub">Currently active</div>
         </div>
         <div class="kpi-card accent-red">
-            <div class="kpi-label">Inactive Buyers</div>
+            <div class="kpi-top">
+                <div class="kpi-label">Inactive Buyers</div>
+                <span class="kpi-trend down">-3%</span>
+            </div>
             <div class="kpi-value" th:text="${inactiveCount}">0</div>
+            <div class="kpi-sub">Needs attention</div>
         </div>
         <div class="kpi-card accent-green">
-            <div class="kpi-label">Total Buyers</div>
+            <div class="kpi-top">
+                <div class="kpi-label">Total Buyers</div>
+            </div>
             <div class="kpi-value" id="totalBuyersKpi">—</div>
+            <div class="kpi-sub">All time registered</div>
         </div>
         <div class="kpi-card accent-amber">
-            <div class="kpi-label">Showing</div>
+            <div class="kpi-top">
+                <div class="kpi-label">Showing</div>
+            </div>
             <div class="kpi-value" id="showingKpi">—</div>
+            <div class="kpi-sub">Filtered results</div>
         </div>
     </div>
 
     <!-- Chart -->
     <div class="chart-card">
-        <div class="chart-card-title">Top Buyers by Purchases</div>
-        <canvas id="topBuyersChart" height="60"></canvas>
+        <div class="chart-card-header">
+            <div class="chart-card-title">📊 Top Buyers by Purchases</div>
+            <span class="chart-card-sub">Last 30 days</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="topBuyersChart" height="80"></canvas>
+        </div>
     </div>
 
     <!-- Table Card -->
@@ -210,15 +898,18 @@
             <div class="toolbar-left">
                 <div class="search-wrap">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
                     </svg>
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search buyers…">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search buyers…" aria-label="Search buyers">
+                    <button class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
                 </div>
-                <select class="rows-select" id="rowsPerPage">
+                <select class="rows-select" id="rowsPerPage" aria-label="Rows per page">
                     <option value="5">5 rows</option>
                     <option value="10" selected>10 rows</option>
                     <option value="25">25 rows</option>
                     <option value="50">50 rows</option>
+                    <option value="100">100 rows</option>
                 </select>
             </div>
             <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addBuyerModal">
@@ -234,13 +925,15 @@
             <table>
                 <thead>
                 <tr>
+                    <th class="select-cell">
+                        <input type="checkbox" id="selectAll" aria-label="Select all buyers">
+                    </th>
                     <th onclick="sortTable('fullName')" id="th-fullName">Name <i class="sort-icon">↕</i></th>
                     <th>Phone</th>
                     <th>Address</th>
                     <th>National ID</th>
                     <th>Email</th>
                     <th>Type</th>
-                    <th>Notes</th>
                     <th onclick="sortTable('totalPurchases')" id="th-totalPurchases">Purchases <i class="sort-icon">↕</i></th>
                     <th>Created</th>
                     <th onclick="sortTable('isActive')" id="th-isActive">Status <i class="sort-icon">↕</i></th>
@@ -248,7 +941,7 @@
                 </tr>
                 </thead>
                 <tbody id="buyersTableBody">
-                <!-- Rendered once by Thymeleaf; JS pagination/search takes over from here -->
+                <!-- Rendered by Thymeleaf; JS handles the rest -->
                 <tr th:each="buyer : ${buyers}" th:attr="data-id=${buyer.id}"
                     th:data-first="${buyer.firstName}" th:data-last="${buyer.lastName}"
                     th:data-photo="${buyer.photo}"
@@ -259,6 +952,9 @@
                     th:data-notes="${buyer.notes != null ? buyer.notes : ''}"
                     th:data-created="${buyer.createdAt != null ? buyer.createdAt : ''}"
                     th:data-active="${buyer.isActive}">
+                    <td class="select-cell">
+                        <input type="checkbox" class="row-select" aria-label="Select buyer">
+                    </td>
                     <td class="name-cell">
                         <div class="buyer-identity">
                             <img th:if="${buyer.photo}" th:src="@{'/uploads/buyers/' + ${buyer.photo}}" class="avatar-photo" alt="Buyer photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -268,13 +964,11 @@
                         </div>
                     </td>
                     <td class="mono" th:text="${buyer.phone}">Phone</td>
-                    <td class="address-cell" th:text="${buyer.address != null ? buyer.address : '—'}" th:title="${buyer.address != null ? buyer.address : ''}">Address</td>
+                    <td class="truncate" th:text="${buyer.address != null ? buyer.address : '—'}" th:title="${buyer.address != null ? buyer.address : ''}">Address</td>
                     <td class="mono" th:text="${buyer.nationalId != null ? buyer.nationalId : '—'}">NID</td>
-                    <td th:text="${buyer.email != null ? buyer.email : '—'}">Email</td>
+                    <td class="truncate" th:text="${buyer.email != null ? buyer.email : '—'}" th:title="${buyer.email != null ? buyer.email : ''}">Email</td>
                     <td><span class="badge-type" th:if="${buyer.buyerType}" th:text="${buyer.buyerType}">Type</span></td>
-                    <td class="notes-cell" th:text="${buyer.notes != null ? buyer.notes : '—'}" th:title="${buyer.notes != null ? buyer.notes : ''}">Notes</td>
-                    <td class="mono" th:text="${buyer.totalPurchases != null ? buyer.totalPurchases : 0}">0</td>
-                    <!-- FIX: #dates -> #temporals because Buyer.createdAt is java.time.LocalDateTime, not java.util.Date -->
+                    <td class="mono badge-purchases" th:text="${buyer.totalPurchases != null ? buyer.totalPurchases : 0}">0</td>
                     <td class="mono" th:text="${buyer.createdAt != null ? #temporals.format(buyer.createdAt, 'yyyy-MM-dd HH:mm') : '—'}">Created</td>
                     <td>
                         <span th:classappend="${buyer.isActive} ? 'badge-active' : 'badge-inactive'"
@@ -283,28 +977,43 @@
                     </td>
                     <td>
                         <div class="action-group">
-                            <a th:href="@{/buyers/edit/{id}(id=${buyer.id})}" class="btn-action btn-edit">Edit</a>
+                            <a th:href="@{/buyers/edit/{id}(id=${buyer.id})}" class="btn-action btn-edit action-tooltip" data-tip="Edit buyer">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                            </a>
                             <form th:action="@{/buyers/delete/{id}(id=${buyer.id})}" method="post" style="display:inline;">
-                                <button type="submit" class="btn-action btn-delete"
-                                        onclick="return confirm('Deactivate this buyer?');">Delete</button>
+                                <button type="submit" class="btn-action btn-delete action-tooltip" data-tip="Deactivate buyer"
+                                        onclick="return confirm('Deactivate this buyer? This action can be reversed.');">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 6h18"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                    Delete
+                                </button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 </tbody>
             </table>
-            <div class="empty-state" id="emptyState" style="display:none;">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            <div class="empty-state" id="emptyState">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
                 </svg>
-                <p>No buyers match your search.</p>
+                <div class="empty-title">No buyers found</div>
+                <div class="empty-desc">Try adjusting your search or add a new buyer.</div>
             </div>
         </div>
 
         <!-- Footer / Pagination -->
         <div class="table-footer">
-            <div class="pagination-info" id="paginationInfo">Showing — of — buyers</div>
+            <div class="pagination-info" id="paginationInfo">Showing <strong>—</strong> of <strong>—</strong> buyers</div>
             <div class="pagination-controls" id="paginationControls"></div>
+            <span class="page-size-indicator" id="pageSizeIndicator">Page 1</span>
         </div>
     </div>
 
@@ -312,28 +1021,32 @@
 
 <!-- Add Buyer Modal -->
 <div class="modal fade" id="addBuyerModal" tabindex="-1" aria-labelledby="addBuyerModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form th:action="@{/buyers/new}" method="post" th:object="${buyer}" enctype="multipart/form-data" novalidate>
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addBuyerModalLabel">Add New Buyer</h5>
+                    <h5 class="modal-title" id="addBuyerModalLabel">
+                        <span class="modal-icon">➕</span> Add New Buyer
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
+                        <!-- First & Last Name -->
                         <div class="col-md-6">
-                            <label class="form-label">First Name</label>
+                            <label class="form-label">First Name <span class="required">*</span></label>
                             <input type="text" class="form-control" th:field="*{firstName}" placeholder="First name" required minlength="2" maxlength="60">
                             <div class="field-error" th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}"></div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Last Name</label>
+                            <label class="form-label">Last Name <span class="required">*</span></label>
                             <input type="text" class="form-control" th:field="*{lastName}" placeholder="Last name" required minlength="2" maxlength="60">
                             <div class="field-error" th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}"></div>
                         </div>
 
+                        <!-- Phone & Address -->
                         <div class="col-md-6">
-                            <label class="form-label">Phone</label>
+                            <label class="form-label">Phone <span class="required">*</span></label>
                             <input type="text" class="form-control" th:field="*{phone}" placeholder="07XXXXXXXX"
                                    pattern="^07[0-9]{8}$" maxlength="10" required>
                             <div class="field-hint">10 digits, starts with 07</div>
@@ -341,9 +1054,10 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Address</label>
-                            <input type="text" class="form-control" th:field="*{address}" placeholder="Address">
+                            <input type="text" class="form-control" th:field="*{address}" placeholder="Street, city, etc.">
                         </div>
 
+                        <!-- National ID & Email -->
                         <div class="col-md-6">
                             <label class="form-label">National ID</label>
                             <input type="text" class="form-control" th:field="*{nationalId}" placeholder="16 digit ID"
@@ -357,6 +1071,7 @@
                             <div class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></div>
                         </div>
 
+                        <!-- Type & Photo -->
                         <div class="col-md-6">
                             <label class="form-label">Type</label>
                             <select class="form-select" th:field="*{buyerType}">
@@ -369,11 +1084,13 @@
                         <div class="col-md-6">
                             <label class="form-label">Photo</label>
                             <input type="file" class="form-control" name="photoFile" accept="image/*">
+                            <div class="field-hint">JPG, PNG, GIF up to 5MB</div>
                         </div>
 
+                        <!-- Notes -->
                         <div class="col-12">
                             <label class="form-label">Notes</label>
-                            <textarea class="form-control" th:field="*{notes}" placeholder="Optional notes…"></textarea>
+                            <textarea class="form-control" th:field="*{notes}" placeholder="Optional notes about the buyer…" rows="2"></textarea>
                         </div>
                     </div>
                 </div>
@@ -388,49 +1105,24 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
-    /* Re-open the Add Buyer modal automatically if the form was re-rendered because of a validation/duplicate error */
-    /*<![CDATA[*/
+    /* ────────────────────────────────────────────────────────
+       CONFIG & STATE
+    ──────────────────────────────────────────────────────── */
     const openAddModal = /*[[${openAddModal}]]*/ false;
-    /*]]>*/
-    if (openAddModal) {
-        window.addEventListener('DOMContentLoaded', () => {
-            new bootstrap.Modal(document.getElementById('addBuyerModal')).show();
-        });
-    }
-
-    /* ── Chart ── */
-    const topBuyers = /*[[${topBuyers}]]*/ [];
-    const ctx = document.getElementById('topBuyersChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: topBuyers.map(b => b.fullName),
-            datasets: [{
-                label: 'Total Purchases',
-                data: topBuyers.map(b => b.totalPurchases),
-                backgroundColor: 'rgba(79,125,255,0.55)',
-                borderColor: 'rgba(79,125,255,1)',
-                borderWidth: 1,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } },
-                y: { beginAtZero: true, ticks: { color: '#6b7280', font: { size: 11 } }, grid: { color: '#e2e6f0' } }
-            }
-        }
-    });
-
-    /* ── Pagination & Search & Sort ── */
     let allBuyers = [];
-    let filtered  = [];
+    let filtered = [];
     let currentPage = 1;
     let rowsPerPage = 10;
-    let sortKey  = '';
-    let sortAsc  = true;
+    let sortKey = '';
+    let sortAsc = true;
+
+    /* ────────────────────────────────────────────────────────
+       HELPER FUNCTIONS
+    ──────────────────────────────────────────────────────── */
+    function esc(s) {
+        if (!s) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
 
     function initials(first, last) {
         const f = (first || '').charAt(0);
@@ -438,29 +1130,45 @@
         return (f + l).toUpperCase() || '?';
     }
 
-    // Collect rows rendered by Thymeleaf on initial page load
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return '—';
+            return d.toLocaleString('en-US', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch { return '—'; }
+    }
+
+    /* ────────────────────────────────────────────────────────
+       COLLECT ROWS FROM THYMELEAF
+    ──────────────────────────────────────────────────────── */
     function collectRows() {
         const rows = document.querySelectorAll('#buyersTableBody tr[data-id]');
         allBuyers = Array.from(rows).map(r => ({
-            id:             r.dataset.id,
-            firstName:      r.dataset.first || '',
-            lastName:       r.dataset.last  || '',
-            fullName:       ((r.dataset.first || '') + ' ' + (r.dataset.last || '')).trim(),
-            photo:          r.dataset.photo || '',
-            phone:          r.dataset.phone || '',
-            address:        r.dataset.address || '',
-            nationalId:     r.dataset.nid   || '',
-            email:          r.dataset.email || '',
-            buyerType:      r.dataset.type  || '',
+            id: r.dataset.id,
+            firstName: r.dataset.first || '',
+            lastName: r.dataset.last || '',
+            fullName: ((r.dataset.first || '') + ' ' + (r.dataset.last || '')).trim(),
+            photo: r.dataset.photo || '',
+            phone: r.dataset.phone || '',
+            address: r.dataset.address || '',
+            nationalId: r.dataset.nid || '',
+            email: r.dataset.email || '',
+            buyerType: r.dataset.type || '',
             totalPurchases: Number(r.dataset.purchases) || 0,
-            notes:          r.dataset.notes || '',
-            createdAt:      r.dataset.created || '',
-            isActive:       r.dataset.active === 'true'
+            notes: r.dataset.notes || '',
+            createdAt: r.dataset.created || '',
+            isActive: r.dataset.active === 'true'
         }));
     }
 
     function normalizeFromSearch(data) {
-        // /buyers/search returns BuyerSummary JSON objects already shaped like this
         return data.map(b => ({
             id: b.id,
             firstName: b.firstName || '',
@@ -479,6 +1187,9 @@
         }));
     }
 
+    /* ────────────────────────────────────────────────────────
+       FILTER, SORT, RENDER
+    ──────────────────────────────────────────────────────── */
     function applyFilter(query) {
         const q = query.toLowerCase();
         filtered = allBuyers.filter(b =>
@@ -499,37 +1210,33 @@
             if (typeof va === 'string') va = va.toLowerCase();
             if (typeof vb === 'string') vb = vb.toLowerCase();
             if (va < vb) return sortAsc ? -1 : 1;
-            if (va > vb) return sortAsc ?  1 : -1;
+            if (va > vb) return sortAsc ? 1 : -1;
             return 0;
         });
     }
 
     function renderTable() {
         const start = (currentPage - 1) * rowsPerPage;
-        const page  = filtered.slice(start, start + rowsPerPage);
+        const page = filtered.slice(start, start + rowsPerPage);
         const tbody = document.getElementById('buyersTableBody');
         const empty = document.getElementById('emptyState');
 
         if (filtered.length === 0) {
             tbody.innerHTML = '';
-            empty.style.display = '';
+            empty.classList.add('visible');
         } else {
-            empty.style.display = 'none';
+            empty.classList.remove('visible');
             tbody.innerHTML = page.map(b => {
-                const created = b.createdAt ? new Date(b.createdAt).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }) : '—';
-
+                const created = formatDate(b.createdAt);
                 const photoHtml = b.photo
                     ? `<img src="${window.contextPath || ''}/uploads/buyers/${esc(b.photo)}" class="avatar-photo" alt="Buyer photo" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
                     : `<div class="avatar-initials">${esc(initials(b.firstName, b.lastName))}</div>`;
 
                 return `
-                <tr>
+                <tr data-id="${esc(b.id)}">
+                    <td class="select-cell">
+                        <input type="checkbox" class="row-select" aria-label="Select buyer">
+                    </td>
                     <td class="name-cell">
                         <div class="buyer-identity">
                             ${photoHtml}
@@ -537,12 +1244,11 @@
                         </div>
                     </td>
                     <td class="mono">${esc(b.phone)}</td>
-                    <td class="address-cell" title="${esc(b.address || '')}">${esc(b.address) || '—'}</td>
+                    <td class="truncate" title="${esc(b.address || '')}">${esc(b.address) || '—'}</td>
                     <td class="mono">${esc(b.nationalId) || '—'}</td>
-                    <td>${esc(b.email) || '—'}</td>
+                    <td class="truncate" title="${esc(b.email || '')}">${esc(b.email) || '—'}</td>
                     <td>${b.buyerType ? `<span class="badge-type">${esc(b.buyerType)}</span>` : '—'}</td>
-                    <td class="notes-cell" title="${esc(b.notes || '')}">${esc(b.notes) || '—'}</td>
-                    <td class="mono">${b.totalPurchases}</td>
+                    <td class="mono badge-purchases">${b.totalPurchases}</td>
                     <td class="mono">${created}</td>
                     <td>
                         <span class="badge-status ${b.isActive ? 'badge-active' : 'badge-inactive'}">
@@ -551,10 +1257,22 @@
                     </td>
                     <td>
                         <div class="action-group">
-                            <a href="/buyers/edit/${b.id}" class="btn-action btn-edit">Edit</a>
-                            <form action="/buyers/delete/${b.id}" method="post" style="display:inline;">
-                                <button type="submit" class="btn-action btn-delete"
-                                    onclick="return confirm('Deactivate this buyer?');">Delete</button>
+                            <a href="/buyers/edit/${esc(b.id)}" class="btn-action btn-edit action-tooltip" data-tip="Edit buyer">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Edit
+                            </a>
+                            <form action="/buyers/delete/${esc(b.id)}" method="post" style="display:inline;">
+                                <button type="submit" class="btn-action btn-delete action-tooltip" data-tip="Deactivate buyer"
+                                    onclick="return confirm('Deactivate this buyer? This action can be reversed.');">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 6h18"/>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    </svg>
+                                    Delete
+                                </button>
                             </form>
                         </div>
                     </td>
@@ -564,23 +1282,34 @@
 
         renderPagination();
         updateKpis();
+        updateSelectAllState();
     }
 
+    /* ────────────────────────────────────────────────────────
+       PAGINATION
+    ──────────────────────────────────────────────────────── */
     function renderPagination() {
-        const total  = filtered.length;
-        const pages  = Math.ceil(total / rowsPerPage);
-        const start  = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-        const end    = Math.min(currentPage * rowsPerPage, total);
+        const total = filtered.length;
+        const pages = Math.ceil(total / rowsPerPage);
+        const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+        const end = Math.min(currentPage * rowsPerPage, total);
 
         document.getElementById('paginationInfo').innerHTML =
             `Showing <strong>${start}–${end}</strong> of <strong>${total}</strong> buyers`;
+        document.getElementById('pageSizeIndicator').textContent = `Page ${currentPage} of ${pages || 1}`;
 
         const ctrl = document.getElementById('paginationControls');
         ctrl.innerHTML = '';
-        if (pages <= 1) return;
+        if (pages <= 1) {
+            if (pages === 0) return;
+            const single = btn('1', false, true);
+            single.disabled = true;
+            ctrl.appendChild(single);
+            return;
+        }
 
         const prev = btn('‹', currentPage === 1);
-        prev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); }});
+        prev.addEventListener('click', () => { if (currentPage > 1) { currentPage--; renderTable(); } });
         ctrl.appendChild(prev);
 
         pageNumbers(currentPage, pages).forEach(n => {
@@ -597,15 +1326,15 @@
         });
 
         const next = btn('›', currentPage === pages);
-        next.addEventListener('click', () => { if (currentPage < pages) { currentPage++; renderTable(); }});
+        next.addEventListener('click', () => { if (currentPage < pages) { currentPage++; renderTable(); } });
         ctrl.appendChild(next);
     }
 
     function pageNumbers(cur, total) {
-        if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
-        if (cur <= 4)  return [1,2,3,4,5,'…',total];
-        if (cur >= total - 3) return [1,'…',total-4,total-3,total-2,total-1,total];
-        return [1,'…',cur-1,cur,cur+1,'…',total];
+        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+        if (cur <= 4) return [1, 2, 3, 4, 5, '…', total];
+        if (cur >= total - 3) return [1, '…', total - 4, total - 3, total - 2, total - 1, total];
+        return [1, '…', cur - 1, cur, cur + 1, '…', total];
     }
 
     function btn(label, disabled = false, active = false) {
@@ -613,20 +1342,40 @@
         el.className = 'page-btn' + (active ? ' active' : '');
         el.textContent = label;
         el.disabled = disabled;
+        el.setAttribute('aria-label', `Page ${label}`);
         return el;
     }
 
+    /* ────────────────────────────────────────────────────────
+       KPIs
+    ──────────────────────────────────────────────────────── */
     function updateKpis() {
         document.getElementById('totalBuyersKpi').textContent = allBuyers.length;
-        document.getElementById('showingKpi').textContent     = filtered.length;
+        document.getElementById('showingKpi').textContent = filtered.length;
     }
 
-    function esc(s) {
-        if (!s) return '';
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    /* ────────────────────────────────────────────────────────
+       SELECT ALL
+    ──────────────────────────────────────────────────────── */
+    function updateSelectAllState() {
+        const checkboxes = document.querySelectorAll('.row-select');
+        const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked);
+        document.getElementById('selectAll').checked = allChecked;
     }
 
-    /* ── Sort ── */
+    document.getElementById('selectAll')?.addEventListener('change', function () {
+        document.querySelectorAll('.row-select').forEach(cb => cb.checked = this.checked);
+    });
+
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('row-select')) {
+            updateSelectAllState();
+        }
+    });
+
+    /* ────────────────────────────────────────────────────────
+       SORT
+    ──────────────────────────────────────────────────────── */
     window.sortTable = function(key) {
         if (sortKey === key) sortAsc = !sortAsc;
         else { sortKey = key; sortAsc = true; }
@@ -635,64 +1384,197 @@
         const th = document.getElementById('th-' + key);
         if (th) {
             th.classList.add('sorted');
-            th.querySelector('.sort-icon').textContent = sortAsc ? '↑' : '↓';
+            const icon = th.querySelector('.sort-icon');
+            if (icon) icon.textContent = sortAsc ? '↑' : '↓';
         }
         currentPage = 1;
         applySort();
         renderTable();
     };
 
-    /* ── Search (debounced, server-backed with client-side fallback) ── */
+    /* ────────────────────────────────────────────────────────
+       SEARCH (debounced, server-backed)
+    ──────────────────────────────────────────────────────── */
     let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', function () {
+    const searchInput = document.getElementById('searchInput');
+    const searchClear = document.getElementById('searchClear');
+
+    function performSearch(q) {
+        if (q.length > 0) {
+            fetch(`/buyers/search?query=${encodeURIComponent(q)}`)
+                .then(r => r.json())
+                .then(data => {
+                    const norm = normalizeFromSearch(data);
+                    allBuyers = norm;
+                    filtered = [...norm];
+                    currentPage = 1;
+                    renderTable();
+                })
+                .catch(() => {
+                    applyFilter(q);
+                    currentPage = 1;
+                    renderTable();
+                });
+        } else {
+            collectRows();
+            filtered = [...allBuyers];
+            currentPage = 1;
+            renderTable();
+        }
+        searchClear.classList.toggle('visible', q.length > 0);
+    }
+
+    searchInput?.addEventListener('input', function () {
         clearTimeout(searchTimeout);
         const q = this.value;
-        searchTimeout = setTimeout(() => {
-            if (q.length > 0) {
-                fetch(`/buyers/search?query=${encodeURIComponent(q)}`)
-                    .then(r => r.json())
-                    .then(data => {
-                        const norm = normalizeFromSearch(data);
-                        allBuyers = norm;
-                        filtered  = [...norm];
-                        currentPage = 1;
-                        renderTable();
-                    })
-                    .catch(() => {
-                        applyFilter(q);
-                        currentPage = 1;
-                        renderTable();
-                    });
-            } else {
-                collectRows();
-                filtered = [...allBuyers];
-                currentPage = 1;
-                renderTable();
-            }
-        }, 300);
+        searchTimeout = setTimeout(() => performSearch(q), 300);
     });
 
-    /* ── Rows per page ── */
-    document.getElementById('rowsPerPage').addEventListener('change', function () {
+    searchClear?.addEventListener('click', function () {
+        searchInput.value = '';
+        this.classList.remove('visible');
+        performSearch('');
+        searchInput.focus();
+    });
+
+    /* ────────────────────────────────────────────────────────
+       ROWS PER PAGE
+    ──────────────────────────────────────────────────────── */
+    document.getElementById('rowsPerPage')?.addEventListener('change', function () {
         rowsPerPage = Number(this.value);
         currentPage = 1;
         renderTable();
     });
 
-    /* ── Digits-only enforcement on the Add Buyer modal inputs ── */
+    /* ────────────────────────────────────────────────────────
+       EXPORT
+    ──────────────────────────────────────────────────────── */
+    window.exportData = function() {
+        const data = filtered.map(b => ({
+            Name: b.fullName,
+            Phone: b.phone,
+            Address: b.address,
+            'National ID': b.nationalId,
+            Email: b.email,
+            Type: b.buyerType,
+            Purchases: b.totalPurchases,
+            Status: b.isActive ? 'Active' : 'Inactive'
+        }));
+
+        if (data.length === 0) {
+            alert('No data to export.');
+            return;
+        }
+
+        const headers = Object.keys(data[0]);
+        const rows = data.map(obj => headers.map(h => `"${(obj[h] || '').replace(/"/g, '""')}"`).join(','));
+        const csv = [headers.join(','), ...rows].join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `buyers_export_${new Date().toISOString().slice(0,10)}.csv`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    };
+
+    /* ────────────────────────────────────────────────────────
+       MODAL RE-OPEN ON VALIDATION ERROR
+    ──────────────────────────────────────────────────────── */
+    if (openAddModal) {
+        window.addEventListener('DOMContentLoaded', () => {
+            new bootstrap.Modal(document.getElementById('addBuyerModal')).show();
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────
+       DIGITS-ONLY INPUTS
+    ──────────────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', () => {
         ['phone', 'nationalId'].forEach(name => {
             const el = document.querySelector('#addBuyerModal [name="' + name + '"]');
-            if (el) el.addEventListener('input', function () {
-                this.value = this.value.replace(/[^0-9]/g, '');
-            });
+            if (el) {
+                el.addEventListener('input', function () {
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                });
+            }
         });
 
         // Set context path for image URLs
         window.contextPath = /*[[@{/}]]*/ '';
+
+        // Init chart
+        initChart();
     });
 
-    /* ── Init ── */
+    /* ────────────────────────────────────────────────────────
+       CHART
+    ──────────────────────────────────────────────────────── */
+    function initChart() {
+        const topBuyers = /*[[${topBuyers}]]*/ [];
+        const ctx = document.getElementById('topBuyersChart');
+        if (!ctx) return;
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: topBuyers.map(b => b.fullName),
+                datasets: [{
+                    label: 'Total Purchases',
+                    data: topBuyers.map(b => b.totalPurchases),
+                    backgroundColor: 'rgba(79, 125, 255, 0.6)',
+                    borderColor: 'rgba(79, 125, 255, 1)',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'var(--surface)',
+                        titleColor: 'var(--text-primary)',
+                        bodyColor: 'var(--text-secondary)',
+                        borderColor: 'var(--border)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return `Purchases: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11, weight: '500' },
+                            maxRotation: 45,
+                            minRotation: 0
+                        },
+                        grid: { color: '#e2e6f0', drawBorder: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11 },
+                            stepSize: 1
+                        },
+                        grid: { color: '#e2e6f0', drawBorder: false }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ────────────────────────────────────────────────────────
+       INIT
+    ──────────────────────────────────────────────────────── */
     collectRows();
     filtered = [...allBuyers];
     renderTable();

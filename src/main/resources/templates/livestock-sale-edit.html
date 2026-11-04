@@ -1,52 +1,361 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><meta charset="UTF-8"><title>Edit Sale Record</title>
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Sale Record</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>body{background:#f8f9fa;padding:20px;}.edit-card{background:white;border-radius:12px;padding:30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);}</style>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #f1f5f9;
+            padding: 20px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 0.875rem;
+        }
+        .edit-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .form-label {
+            font-weight: 600;
+            font-size: 0.78rem;
+            color: #475569;
+            margin-bottom: 3px;
+        }
+        .form-hint { font-size: 0.65rem; color: #94a3b8; margin-top: 2px; }
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #0f172a;
+            border-bottom: 2px solid #e9edf2;
+            padding-bottom: 10px;
+            margin-bottom: 18px;
+        }
+        .section-title i { color: #f59e0b; margin-right: 6px; }
+        .form-control, .form-select {
+            border-radius: 8px;
+            font-size: 0.85rem;
+            border-color: #e2e8f0;
+            padding: 0.4rem 0.6rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
+        }
+        .readonly-field {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #0f172a;
+            cursor: not-allowed;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .status-badge.draft { background: #e2e8f0; color: #475569; }
+        .status-badge.confirmed { background: #dbeafe; color: #1e40af; }
+        .status-badge.cancelled { background: #fee2e2; color: #991b1b; }
+        .status-badge.refunded { background: #fef3c7; color: #92400e; }
+        .status-badge.unpaid { background: #fef3c7; color: #92400e; }
+        .status-badge.partial { background: #fde68a; color: #78350f; }
+        .status-badge.paid { background: #d1fae5; color: #065f46; }
+        .profit-positive { color: #059669; font-weight: 700; }
+        .profit-negative { color: #dc2626; font-weight: 700; }
+        .btn { font-size: 0.8rem; border-radius: 8px; font-weight: 600; padding: 0.4rem 1rem; }
+        .btn-primary { background: #0f172a; border-color: #0f172a; }
+        .btn-primary:hover { background: #1e293b; border-color: #1e293b; }
+        .btn-warning { background: #f59e0b; border-color: #f59e0b; color: #fff; }
+        .btn-warning:hover { background: #d97706; border-color: #d97706; color: #fff; }
+        .invalid-feedback { font-size: 0.7rem; }
+
+        .animal-search-wrapper { position: relative; }
+        .animal-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1.5px solid #4299e1;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            z-index: 1055;
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .animal-dropdown.show { display: block; }
+        .animal-dropdown-item {
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            border-bottom: 1px solid #f0f4f8;
+            transition: background .12s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .animal-dropdown-item:hover { background: #ebf4ff; }
+        .animal-dropdown-item .tag { font-weight: 600; color: #2d3748; }
+        .animal-dropdown-item .category { font-size: 0.72rem; color: #718096; }
+        .animal-dropdown-item .cost { font-size: 0.72rem; color: #059669; font-weight: 600; }
+        .selected-animal-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ebf4ff;
+            border: 1px solid #bee3f8;
+            border-radius: 20px;
+            padding: 4px 10px 4px 12px;
+            font-size: 0.82rem;
+            color: #2b6cb0;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .selected-animal-chip .remove {
+            cursor: pointer;
+            color: #63b3ed;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .selected-animal-chip .remove:hover { color: #c53030; }
+
+        .buyer-search-wrapper { position: relative; }
+        .buyer-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1.5px solid #4299e1;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            z-index: 1055;
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        .buyer-dropdown.show { display: block; }
+        .buyer-dropdown-item {
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            border-bottom: 1px solid #f0f4f8;
+            transition: background .12s;
+        }
+        .buyer-dropdown-item:hover { background: #ebf4ff; }
+        .buyer-dropdown-item .name { font-weight: 600; color: #2d3748; }
+        .buyer-dropdown-item .details { font-size: 0.72rem; color: #718096; }
+        .buyer-dropdown-item.add-new {
+            background: #ecfdf5;
+            color: #059669;
+            font-weight: 600;
+            border-top: 2px solid #10b981;
+        }
+        .buyer-dropdown-item.add-new:hover { background: #d1fae5; }
+        .selected-buyer-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 20px;
+            padding: 4px 10px 4px 12px;
+            font-size: 0.82rem;
+            color: #166534;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .selected-buyer-chip .remove {
+            cursor: pointer;
+            color: #dc2626;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .selected-buyer-chip .remove:hover { background: #fee2e2; border-radius: 50%; }
+
+        #newBuyerFields {
+            display: none;
+            padding-top: 16px;
+            margin-top: 12px;
+            border-top: 2px dashed #e2e8f0;
+        }
+        #newBuyerFields .field-error {
+            font-size: 0.68rem;
+            color: #dc2626;
+            margin-top: 2px;
+            display: none;
+        }
+        #newBuyerFields .is-invalid ~ .field-error,
+        #newBuyerFields .field-error.show { display: block; }
+
+        .status-bar {
+            background: #f8fafc;
+            border: 1px solid #e9edf2;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-bar .label { color: #64748b; font-size: 0.78rem; }
+        .status-bar .value { font-weight: 600; font-size: 0.85rem; }
+
+        @media (max-width: 768px) {
+            .edit-card { padding: 16px; }
+            .status-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
 </head>
 <body>
-<div class="container"><div class="row justify-content-center"><div class="col-lg-8">
+<div class="container">
     <div class="edit-card">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="bi bi-pencil-square"></i> Edit Sale Record</h3>
-            <a href="/livestock/sales" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+
+        <!-- ==================== HEADER ==================== -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-0"><i class="bi bi-pencil-square" style="color:#f59e0b;"></i> Edit Sale</h3>
+                <p class="text-muted small mb-0">
+                    Reference: <strong th:text="${sale.saleReference}"></strong>
+                    <span class="status-badge" th:class="${sale.saleStatusBadgeClass}" th:text="${sale.saleStatusLabel}"></span>
+                    <span class="status-badge ms-1" th:class="${sale.paymentStatusBadgeClass}" th:text="${sale.paymentStatusLabel}"></span>
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/livestock/sales" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a th:href="@{/livestock/sales/details/{id}(id=${sale.id})}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-eye"></i> Details
+                </a>
+            </div>
         </div>
-        <form th:action="@{/livestock/sales/update/{id}(id=${sale.id})}" th:object="${sale}" method="post">
+
+        <!-- ==================== STATUS BAR ==================== -->
+        <div class="status-bar">
+            <div>
+                <span class="label">Sale Status:</span>
+                <span class="status-badge" th:class="${sale.saleStatusBadgeClass}" th:text="${sale.saleStatusLabel}"></span>
+            </div>
+            <div>
+                <span class="label">Payment Status:</span>
+                <span class="status-badge" th:class="${sale.paymentStatusBadgeClass}" th:text="${sale.paymentStatusLabel}"></span>
+            </div>
+            <div>
+                <span class="label">Balance:</span>
+                <span class="value" id="statusBalance" th:text="${#numbers.formatDecimal(sale.balance, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
+            </div>
+            <div>
+                <span class="label">Gross Profit:</span>
+                <span class="value" th:if="${sale.grossProfit != null}"
+                      th:class="${sale.grossProfit >= 0} ? 'profit-positive' : 'profit-negative'"
+                      th:text="${#numbers.formatDecimal(sale.grossProfit, 1, 'COMMA', 0, 'POINT') + ' RWF'}">
+                </span>
+                <span th:if="${sale.grossProfit == null}" class="text-muted">—</span>
+            </div>
+            <div th:if="${!sale.editable}" class="text-danger">
+                <i class="bi bi-lock-fill"></i> This sale cannot be edited
+            </div>
+        </div>
+
+        <!-- ==================== FORM ==================== -->
+        <form th:action="@{/livestock/sales/update/{id}(id=${sale.id})}" th:object="${sale}" method="post" id="editSaleForm">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <input type="hidden" name="acquisitionCost" id="acquisitionCostHidden"
+                   th:value="${sale.acquisitionCost != null ? sale.acquisitionCost : 0}">
+
+            <!-- ===== ANIMAL ===== -->
+            <div class="section-title"><i class="bi bi-tag"></i> Animal</div>
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Animal (Tag) *</label>
-                    <!--
-                        FIXED: was th:field="*{livestockIdValue}", which renders
-                        name="livestockIdValue". LivestockSaleController#updateSale requires
-                        @RequestParam("livestockId"), causing the same
-                        "Required parameter 'livestockId' is not present" 400 error seen on
-                        the Record New Sale form. name="livestockId" here matches the controller.
-                    -->
-                    <select class="form-select" name="livestockId" required>
-                        <option value="">Select animal...</option>
-                        <option th:each="ls : ${livestockList}" th:value="${ls.id}"
-                                th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}"
-                                th:selected="${ls.id.toString() == sale.livestockIdValue}"></option>
-                    </select>
+                <div class="col-md-7 mb-3">
+                    <label class="form-label">Animal (Tag) *</label>
+                    <div class="animal-search-wrapper">
+                        <input type="text" id="animalSearchInput" class="form-control"
+                               placeholder="Search by tag, name, or category..." autocomplete="off"
+                               th:value="${sale.livestock != null ? sale.livestock.tagNumber + (sale.livestock.livestockCategory != null ? ' (' + sale.livestock.livestockCategory.name + ')' : '') : ''}">
+                        <input type="hidden" name="livestockId" id="animalIdField"
+                               th:value="${sale.livestock != null ? sale.livestock.id : ''}">
+                        <div class="animal-dropdown" id="animalDropdown"></div>
+                    </div>
+                    <div id="selectedAnimalChip">
+                        <div th:if="${sale.livestock != null}" class="selected-animal-chip">
+                            <i class="bi bi-tag-fill"></i>
+                            <span th:text="${sale.livestock.tagNumber}"></span>
+                            <span th:if="${sale.livestock.livestockCategory != null}"
+                                  style="color:#63b3ed;font-weight:400;">
+                                (<span th:text="${sale.livestock.livestockCategory.name}"></span>)
+                            </span>
+                            <span class="remove" onclick="clearAnimal()">×</span>
+                        </div>
+                    </div>
+                    <div class="form-hint" id="animalStatusHint"></div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label fw-semibold">Sale Date *</label>
-                    <input type="date" class="form-control" th:field="*{saleDate}" required>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Category</label>
+                    <input type="text" class="form-control readonly-field" id="categoryDisplay"
+                           th:value="${sale.livestock != null and sale.livestock.livestockCategory != null ? sale.livestock.livestockCategory.name : '—'}"
+                           readonly>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-semibold">Sale Price (RWF)</label>
-                    <input type="number" class="form-control" th:field="*{salePrice}" min="0" step="0.01">
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Acquisition Cost</label>
+                    <input type="text" class="form-control readonly-field" id="acquisitionCostDisplay"
+                           th:value="${sale.acquisitionCost != null ? #numbers.formatDecimal(sale.acquisitionCost, 1, 'COMMA', 0, 'POINT') + ' RWF' : '0 RWF'}"
+                           data-raw-value="${sale.acquisitionCost != null ? sale.acquisitionCost : 0}"
+                           readonly>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label class="form-label fw-semibold">Sale Location</label>
-                    <input type="text" class="form-control" th:field="*{saleLocation}">
+            </div>
+
+            <!-- ===== SALE DETAILS ===== -->
+            <div class="section-title"><i class="bi bi-info-circle"></i> Sale Details</div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Sale Date *</label>
+                    <input type="date" class="form-control" name="saleDate"
+                           th:value="${sale.saleDate != null ? #temporals.format(sale.saleDate, 'yyyy-MM-dd') : ''}"
+                           max="[[#temporals.format(#temporals.createToday(), 'yyyy-MM-dd')]]"
+                           required>
+                    <div class="form-hint">Cannot be in the future</div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <label class="form-label fw-semibold">Sale Reason</label>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Sale Price (RWF) *</label>
+                    <input type="number" class="form-control" th:field="*{salePrice}" id="salePriceInput"
+                           min="0" step="1000" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Amount Paid (RWF)</label>
+                    <input type="number" class="form-control" th:field="*{amountPaid}" id="amountPaidInput"
+                           min="0" step="1000">
+                    <div class="invalid-feedback" id="amountPaidError">Amount paid cannot exceed sale price</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Balance</label>
+                    <input type="text" class="form-control readonly-field" id="balanceDisplay" readonly>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Location</label>
+                    <input type="text" class="form-control" th:field="*{saleLocation}" placeholder="Sale location">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Reason</label>
                     <select class="form-select" th:field="*{saleReason}">
-                        <option value="">Select reason...</option>
+                        <option value="">Select...</option>
                         <option value="COMMERCIAL">Commercial</option>
                         <option value="EMERGENCY">Emergency</option>
                         <option value="OVERSTOCKING">Overstocking</option>
@@ -54,14 +363,501 @@
                         <option value="OTHER">Other</option>
                     </select>
                 </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Gross Profit / Loss</label>
+                    <input type="text" class="form-control readonly-field" id="profitDisplay" readonly>
+                    <div class="form-hint">🔒 Sale Price − Acquisition Cost</div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Reference</label>
+                    <input type="text" class="form-control readonly-field" th:field="*{saleReference}" readonly>
+                    <div class="form-hint">🔒 Fixed at creation</div>
+                </div>
             </div>
-            <div class="d-flex justify-content-end gap-2">
-                <a href="/livestock/sales" class="btn btn-secondary">Cancel</a>
-                <button type="submit" class="btn btn-primary">Update</button>
+
+            <!-- ===== BUYER ===== -->
+            <div class="section-title"><i class="bi bi-person"></i> Buyer &amp; Payment</div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Buyer</label>
+                    <div class="buyer-search-wrapper">
+                        <input type="text" id="buyerSearchInput" class="form-control"
+                               placeholder="Search buyer..." autocomplete="off"
+                               th:value="${sale.buyer != null ? sale.buyer.fullName : ''}">
+                        <input type="hidden" name="buyerId" id="buyerIdField"
+                               th:value="${sale.buyer != null ? sale.buyer.id : ''}">
+                        <div class="buyer-dropdown" id="buyerDropdown"></div>
+                    </div>
+                    <div id="selectedBuyerChip">
+                        <div th:if="${sale.buyer != null}" class="selected-buyer-chip">
+                            <i class="bi bi-person"></i>
+                            <span th:text="${sale.buyer.fullName}"></span>
+                            <span th:if="${sale.buyer.phone != null}" style="color:#15803d;font-weight:400;">
+                                (<span th:text="${sale.buyer.phone}"></span>)
+                            </span>
+                            <span class="remove" onclick="clearBuyer()">×</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-select" th:field="*{paymentMethod}" id="paymentMethodSelect">
+                        <option value="">Select...</option>
+                        <option value="CASH">Cash</option>
+                        <option value="BANK_TRANSFER">Bank Transfer</option>
+                        <option value="MOBILE_MONEY">Mobile Money</option>
+                        <option value="CHEQUE">Cheque</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Payment Reference</label>
+                    <input type="text" class="form-control" th:field="*{paymentReference}" placeholder="Txn ID / Ref #">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Payment Status (Auto)</label>
+                    <input type="text" class="form-control readonly-field"
+                           th:value="${sale.paymentStatusLabel}" readonly>
+                    <div class="form-hint">🔒 Auto-calculated from amount paid</div>
+                </div>
+            </div>
+
+            <!-- ===== NOTES ===== -->
+            <div class="section-title"><i class="bi bi-clipboard"></i> Notes</div>
+            <div class="row">
+                <div class="col-12 mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" th:field="*{notes}" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+
+            <!-- ===== BUTTONS ===== -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+                <div>
+                    <a href="/livestock/sales" class="btn btn-secondary">Cancel</a>
+                </div>
+                <div class="d-flex gap-2">
+                    <button th:if="${sale.editable}" type="submit" class="btn btn-warning">
+                        <i class="bi bi-save"></i> Update Sale
+                    </button>
+                    <span th:if="${!sale.editable}" class="text-danger align-self-center">
+                        <i class="bi bi-lock-fill"></i> This sale cannot be edited
+                    </span>
+                </div>
             </div>
         </form>
+
+        <!-- ==================== NEW BUYER FORM ==================== -->
+        <div id="newBuyerFields">
+            <h6 class="text-success mb-3 mt-3"><i class="bi bi-person-plus"></i> Add New Buyer</h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">First Name *</label>
+                    <input type="text" class="form-control" id="newBuyerFirstName" placeholder="First name">
+                    <div class="field-error" id="err-newBuyerFirstName">At least 2 characters required.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Last Name *</label>
+                    <input type="text" class="form-control" id="newBuyerLastName" placeholder="Last name">
+                    <div class="field-error" id="err-newBuyerLastName">At least 2 characters required.</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Phone *</label>
+                    <input type="tel" class="form-control" id="newBuyerPhone" placeholder="07XXXXXXXX" maxlength="10">
+                    <div class="field-error" id="err-newBuyerPhone">Valid Rwandan number (07XXXXXXXX).</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">National ID</label>
+                    <input type="text" class="form-control" id="newBuyerNationalId" placeholder="16 digits" maxlength="16">
+                    <div class="field-error" id="err-newBuyerNationalId">Must be exactly 16 digits.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-control" id="newBuyerAddress" placeholder="Address">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="newBuyerEmail" placeholder="email@example.com">
+                    <div class="field-error" id="err-newBuyerEmail">Enter a valid email address.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type</label>
+                    <select class="form-select" id="newBuyerType">
+                        <option value="">Select...</option>
+                        <option value="INDIVIDUAL">Individual</option>
+                        <option value="COMPANY">Company</option>
+                        <option value="COOPERATIVE">Cooperative</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" id="newBuyerNotes" rows="2" placeholder="Optional notes..."></textarea>
+                </div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+                <button type="button" class="btn btn-success btn-sm" id="saveNewBuyerBtn">
+                    <i class="bi bi-check-circle"></i> Save Buyer
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="cancelNewBuyerBtn">Cancel</button>
+            </div>
+        </div>
+
     </div>
-</div></div></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function() {
+        'use strict';
+
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+
+        const animalSearch = document.getElementById('animalSearchInput');
+        const animalDropdown = document.getElementById('animalDropdown');
+        const animalIdField = document.getElementById('animalIdField');
+        const animalChip = document.getElementById('selectedAnimalChip');
+        const animalStatusHint = document.getElementById('animalStatusHint');
+        const categoryDisplay = document.getElementById('categoryDisplay');
+        const acquisitionCostDisplay = document.getElementById('acquisitionCostDisplay');
+        const acquisitionCostHidden = document.getElementById('acquisitionCostHidden');
+
+        const buyerSearch = document.getElementById('buyerSearchInput');
+        const buyerDropdown = document.getElementById('buyerDropdown');
+        const buyerIdField = document.getElementById('buyerIdField');
+        const buyerChip = document.getElementById('selectedBuyerChip');
+
+        const priceInput = document.getElementById('salePriceInput');
+        const paidInput = document.getElementById('amountPaidInput');
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const profitDisplay = document.getElementById('profitDisplay');
+        const amountPaidError = document.getElementById('amountPaidError');
+        const statusBalance = document.getElementById('statusBalance');
+        const editSaleForm = document.getElementById('editSaleForm');
+
+        let animalTimeout, buyerTimeout;
+        let selectedAnimal = null;
+        let selectedBuyer = null;
+
+        function formatRWF(n) {
+            return Math.round(Number(n) || 0).toLocaleString() + ' RWF';
+        }
+
+        function getRawCost() {
+            return parseFloat(acquisitionCostDisplay?.dataset?.rawValue) || 0;
+        }
+
+        function calculateDerivedFields() {
+            const price = parseFloat(priceInput?.value) || 0;
+            const paid = parseFloat(paidInput?.value) || 0;
+            const cost = getRawCost();
+
+            const balance = Math.max(price - paid, 0);
+            if (balanceDisplay) {
+                balanceDisplay.value = formatRWF(balance);
+                balanceDisplay.style.color = balance === 0 ? '#059669' : '#d97706';
+            }
+            if (statusBalance) {
+                statusBalance.textContent = formatRWF(balance);
+            }
+
+            const profit = price - cost;
+            if (profitDisplay) {
+                const label = profit >= 0 ? '🟢 Profit: ' : '🔴 Loss: ';
+                profitDisplay.value = label + formatRWF(Math.abs(profit));
+                profitDisplay.style.color = profit >= 0 ? '#059669' : '#dc2626';
+            }
+
+            if (paid > price && price > 0) {
+                paidInput.classList.add('is-invalid');
+                amountPaidError.style.display = 'block';
+            } else {
+                paidInput.classList.remove('is-invalid');
+                amountPaidError.style.display = 'none';
+            }
+        }
+
+        animalSearch?.addEventListener('input', function() {
+            const query = this.value.trim();
+            clearTimeout(animalTimeout);
+            if (query.length < 2) {
+                animalDropdown.classList.remove('show');
+                return;
+            }
+            animalDropdown.innerHTML = '<div class="p-3 text-center text-muted"><i class="bi bi-arrow-clockwise"></i> Searching...</div>';
+            animalDropdown.classList.add('show');
+
+            animalTimeout = setTimeout(() => {
+                fetch('/livestock/animals/search?q=' + encodeURIComponent(query))
+                    .then(r => r.json())
+                    .then(animals => displayAnimalResults(animals))
+                    .catch(() => {
+                        animalDropdown.innerHTML = '<div class="p-3 text-center text-muted">Error searching</div>';
+                    });
+            }, 300);
+        });
+
+        function displayAnimalResults(animals) {
+            animalDropdown.innerHTML = '';
+            if (animals.length === 0) {
+                animalDropdown.innerHTML = '<div class="p-3 text-center text-muted">No eligible animals found</div>';
+            } else {
+                animals.forEach(a => {
+                    const item = document.createElement('div');
+                    item.className = 'animal-dropdown-item';
+                    item.innerHTML = `
+                        <div>
+                            <span class="tag">${a.tagNumber}</span>
+                            ${a.category ? `<span class="category">(${a.category})</span>` : ''}
+                        </div>
+                        <span class="cost">${formatRWF(a.acquisitionCost)}</span>
+                    `;
+                    item.addEventListener('click', () => selectAnimal(a));
+                    animalDropdown.appendChild(item);
+                });
+            }
+            animalDropdown.classList.add('show');
+        }
+
+        function selectAnimal(a) {
+            selectedAnimal = a;
+            animalIdField.value = a.id;
+            animalSearch.value = a.tagNumber + (a.category ? ' (' + a.category + ')' : '');
+            animalDropdown.classList.remove('show');
+
+            animalChip.innerHTML = `
+                <div class="selected-animal-chip">
+                    <i class="bi bi-tag-fill"></i> ${a.tagNumber}
+                    ${a.category ? `<span style="color:#63b3ed;font-weight:400;">(${a.category})</span>` : ''}
+                    <span class="remove" onclick="clearAnimal()">×</span>
+                </div>
+            `;
+
+            categoryDisplay.value = a.category || '—';
+            acquisitionCostDisplay.value = formatRWF(a.acquisitionCost || 0);
+            acquisitionCostDisplay.dataset.rawValue = a.acquisitionCost || 0;
+            acquisitionCostHidden.value = a.acquisitionCost || 0;
+            animalStatusHint.textContent = '';
+            calculateDerivedFields();
+
+            fetch('/livestock/' + a.id + '/sale-info')
+                .then(r => r.json())
+                .then(info => {
+                    if (info.hasActiveSale) {
+                        animalStatusHint.innerHTML = '<span class="text-danger">⚠️ This animal already has an active sale.</span>';
+                    }
+                })
+                .catch(() => {});
+        }
+
+        window.clearAnimal = function() {
+            selectedAnimal = null;
+            animalIdField.value = '';
+            animalSearch.value = '';
+            animalChip.innerHTML = '';
+            categoryDisplay.value = '—';
+            acquisitionCostDisplay.value = '0 RWF';
+            acquisitionCostDisplay.dataset.rawValue = '0';
+            acquisitionCostHidden.value = '0';
+            animalStatusHint.textContent = '';
+            calculateDerivedFields();
+        };
+
+        buyerSearch?.addEventListener('input', function() {
+            const query = this.value.trim();
+            clearTimeout(buyerTimeout);
+            if (query.length < 2) {
+                buyerDropdown.classList.remove('show');
+                return;
+            }
+            buyerDropdown.innerHTML = '<div class="p-3 text-center text-muted"><i class="bi bi-arrow-clockwise"></i> Searching...</div>';
+            buyerDropdown.classList.add('show');
+
+            buyerTimeout = setTimeout(() => {
+                fetch('/livestock/buyers/search?q=' + encodeURIComponent(query))
+                    .then(r => r.json())
+                    .then(buyers => displayBuyerResults(buyers))
+                    .catch(() => {
+                        buyerDropdown.innerHTML = '<div class="p-3 text-center text-muted">Error searching</div>';
+                    });
+            }, 300);
+        });
+
+        function displayBuyerResults(buyers) {
+            buyerDropdown.innerHTML = '';
+            if (buyers.length === 0) {
+                buyerDropdown.innerHTML = '<div class="p-3 text-center text-muted">No buyers found</div>';
+            } else {
+                buyers.forEach(b => {
+                    const item = document.createElement('div');
+                    item.className = 'buyer-dropdown-item';
+                    item.innerHTML = `
+                        <div class="name">${b.name}</div>
+                        <div class="details">
+                            ${b.phone ? `<i class="bi bi-telephone"></i> ${b.phone}` : ''}
+                            ${b.nationalId ? ` | <i class="bi bi-card-text"></i> ${b.nationalId}` : ''}
+                        </div>
+                    `;
+                    item.addEventListener('click', () => selectBuyer(b));
+                    buyerDropdown.appendChild(item);
+                });
+            }
+
+            const addNew = document.createElement('div');
+            addNew.className = 'buyer-dropdown-item add-new';
+            addNew.innerHTML = '<i class="bi bi-plus-circle"></i> Add New Buyer';
+            addNew.addEventListener('click', () => {
+                buyerDropdown.classList.remove('show');
+                document.getElementById('newBuyerFields').style.display = 'block';
+                document.getElementById('newBuyerFirstName')?.focus();
+            });
+            buyerDropdown.appendChild(addNew);
+            buyerDropdown.classList.add('show');
+        }
+
+        function selectBuyer(b) {
+            selectedBuyer = b;
+            buyerIdField.value = b.id;
+            buyerSearch.value = b.name;
+            buyerDropdown.classList.remove('show');
+
+            buyerChip.innerHTML = `
+                <div class="selected-buyer-chip">
+                    <i class="bi bi-person"></i> ${b.name}
+                    ${b.phone ? `<span style="color:#15803d;font-weight:400;">(${b.phone})</span>` : ''}
+                    <span class="remove" onclick="clearBuyer()">×</span>
+                </div>
+            `;
+        }
+
+        window.clearBuyer = function() {
+            selectedBuyer = null;
+            buyerIdField.value = '';
+            buyerSearch.value = '';
+            buyerChip.innerHTML = '';
+            document.getElementById('newBuyerFields').style.display = 'none';
+        };
+
+        const newBuyerFields = document.getElementById('newBuyerFields');
+        const saveNewBtn = document.getElementById('saveNewBuyerBtn');
+        const cancelNewBtn = document.getElementById('cancelNewBuyerBtn');
+        const newBuyerIds = ['newBuyerFirstName','newBuyerLastName','newBuyerPhone',
+                             'newBuyerNationalId','newBuyerAddress','newBuyerEmail',
+                             'newBuyerType','newBuyerNotes'];
+
+        function clearBuyerErrors() {
+            newBuyerIds.forEach(id => {
+                document.getElementById(id)?.classList.remove('is-invalid');
+                document.getElementById('err-' + id)?.classList.remove('show');
+            });
+        }
+
+        function showBuyerError(id) {
+            document.getElementById(id)?.classList.add('is-invalid');
+            document.getElementById('err-' + id)?.classList.add('show');
+        }
+
+        function validateNewBuyer(p) {
+            clearBuyerErrors();
+            let valid = true;
+            if (!p.firstName || p.firstName.length < 2) { showBuyerError('newBuyerFirstName'); valid = false; }
+            if (!p.lastName || p.lastName.length < 2) { showBuyerError('newBuyerLastName'); valid = false; }
+            if (!/^07[0-9]{8}$/.test(p.phone || '')) { showBuyerError('newBuyerPhone'); valid = false; }
+            if (p.nationalId && !/^[0-9]{16}$/.test(p.nationalId)) { showBuyerError('newBuyerNationalId'); valid = false; }
+            if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)) { showBuyerError('newBuyerEmail'); valid = false; }
+            return valid;
+        }
+
+        saveNewBtn?.addEventListener('click', function(e) {
+            e.preventDefault();
+            const payload = {
+                firstName: document.getElementById('newBuyerFirstName')?.value.trim() || '',
+                lastName: document.getElementById('newBuyerLastName')?.value.trim() || '',
+                phone: document.getElementById('newBuyerPhone')?.value.trim() || '',
+                address: document.getElementById('newBuyerAddress')?.value.trim() || '',
+                nationalId: document.getElementById('newBuyerNationalId')?.value.trim() || '',
+                email: document.getElementById('newBuyerEmail')?.value.trim() || '',
+                buyerType: document.getElementById('newBuyerType')?.value || '',
+                notes: document.getElementById('newBuyerNotes')?.value.trim() || ''
+            };
+
+            if (!validateNewBuyer(payload)) return;
+
+            saveNewBtn.disabled = true;
+            saveNewBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Saving...';
+
+            const headers = { 'Content-Type': 'application/json' };
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            fetch('/livestock/buyers/quick-add', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify(payload)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    selectBuyer(data.buyer);
+                    clearBuyerErrors();
+                    newBuyerIds.forEach(id => document.getElementById(id) ? document.getElementById(id).value = '' : null);
+                    newBuyerFields.style.display = 'none';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => alert('Error: ' + err.message))
+            .finally(() => {
+                saveNewBtn.disabled = false;
+                saveNewBtn.innerHTML = '<i class="bi bi-check-circle"></i> Save Buyer';
+            });
+        });
+
+        cancelNewBtn?.addEventListener('click', function() {
+            newBuyerFields.style.display = 'none';
+            clearBuyerErrors();
+            newBuyerIds.forEach(id => document.getElementById(id) ? document.getElementById(id).value = '' : null);
+        });
+
+        ['newBuyerPhone', 'newBuyerNationalId'].forEach(id => {
+            document.getElementById(id)?.addEventListener('input', function() {
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        priceInput?.addEventListener('input', calculateDerivedFields);
+        paidInput?.addEventListener('input', calculateDerivedFields);
+        calculateDerivedFields();
+
+        editSaleForm?.addEventListener('submit', function(e) {
+            const price = parseFloat(priceInput?.value) || 0;
+            const paid = parseFloat(paidInput?.value) || 0;
+            if (paid > price) {
+                e.preventDefault();
+                alert('Amount paid cannot exceed the sale price of ' + formatRWF(price) + '.');
+                paidInput.focus();
+            }
+            if (!animalIdField.value) {
+                e.preventDefault();
+                alert('Please select an animal.');
+                animalSearch.focus();
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.animal-search-wrapper')) {
+                animalDropdown?.classList.remove('show');
+            }
+            if (!e.target.closest('.buyer-search-wrapper')) {
+                buyerDropdown?.classList.remove('show');
+            }
+        });
+
+        const dateInput = document.querySelector('input[name="saleDate"]');
+        if (dateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('max', today);
+        }
+
+    })();
+</script>
 </body>
 </html>

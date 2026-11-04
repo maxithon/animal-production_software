@@ -1,41 +1,30 @@
 package rw.animalproduct.animal.production.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.LivestockSick;
+import rw.animalproduct.animal.production.entity.LivestockSickHistory;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
 import rw.animalproduct.animal.production.services.LivestockSickService;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
- * ✅ THIS FILE IS WHAT WAS MISSING (or broken) and causing:
- *   "No static resource livestock/sick" — a 404, not a compile error.
+ * Controller for Livestock Sick records.
  *
- * That specific error means Spring received GET /livestock/sick, found no
- * @Controller method mapped to that exact path, and fell back to trying to
- * serve it as a static file (like /images/logo.png), which obviously doesn't
- * exist either. The fix is this controller existing, correctly annotated,
- * and correctly mapped — not a change to the entity, repository, service, or
- * HTML files, which is why fixing those didn't help.
+ * Handles the sick list, create, edit, update, delete, mark-as-recovered,
+ * and the period-based report page.
  *
- * Every endpoint below is reconstructed directly from the th:action / href
- * values actually used in livestock-sick-list.html and livestock-sick-edit.html:
- *   GET  /livestock/sick               → list page
- *   POST /livestock/sick/new           → create
- *   GET  /livestock/sick/edit/{id}     → edit form
- *   POST /livestock/sick/update/{id}   → update
- *   POST /livestock/sick/delete/{id}   → soft-delete
- *
- * If your original controller had additional endpoints (e.g. a history page,
- * a report page, quick-status-update buttons) that aren't referenced by
- * these two templates, they won't be here — paste the original file (or
- * whatever additional templates reference other /livestock/sick/* paths)
- * and I'll fold them back in.
+ * @author HABANABAKIZE & NDAYIZEYE
+ * @version 1.0.0
  */
 @Controller
 @RequestMapping("/livestock/sick")
@@ -50,19 +39,20 @@ public class LivestockSickController {
         this.livestockRepository = livestockRepository;
     }
 
-    // ── LIST ─────────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════
+    // LIST
+    // ═════════════════════════════════════════════════════════════════
     @GetMapping
     public String list(Model model) {
         model.addAttribute("sickRecords", sickService.getAllActive());
         model.addAttribute("sickRecord", new LivestockSick());
-        // Kept for backward compatibility in case any other fragment still
-        // references it; the list/edit forms no longer need it since they
-        // use the /livestock/search live-search widget instead.
         model.addAttribute("livestockList", livestockRepository.findAll());
         return "livestock-sick-list";
     }
 
-    // ── CREATE ───────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════
+    // CREATE
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/new")
     public String create(@Valid @ModelAttribute("sickRecord") LivestockSick sickRecord,
                          BindingResult result,
@@ -72,18 +62,18 @@ public class LivestockSickController {
             redirectAttributes.addFlashAttribute("error", "Please fix the errors in the form.");
             return "redirect:/livestock/sick";
         }
-
         try {
             sickService.addNew(sickRecord);
             redirectAttributes.addFlashAttribute("success", "Sick record added successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error adding sick record: " + e.getMessage());
         }
-
         return "redirect:/livestock/sick";
     }
 
-    // ── EDIT FORM ────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════
+    // EDIT FORM
+    // ═════════════════════════════════════════════════════════════════
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
         return sickService.getById(id)
@@ -98,7 +88,9 @@ public class LivestockSickController {
                 });
     }
 
-    // ── UPDATE ───────────────────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════
+    // UPDATE
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute("sickRecord") LivestockSick sickRecord,
@@ -109,18 +101,18 @@ public class LivestockSickController {
             redirectAttributes.addFlashAttribute("error", "Please fix the errors in the form.");
             return "redirect:/livestock/sick/edit/" + id;
         }
-
         try {
             sickService.update(id, sickRecord);
             redirectAttributes.addFlashAttribute("success", "Sick record updated successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error updating sick record: " + e.getMessage());
         }
-
         return "redirect:/livestock/sick";
     }
 
-    // ── DELETE (soft-delete) ─────────────────────────────────────────
+    // ═════════════════════════════════════════════════════════════════
+    // DELETE (soft-delete)
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
@@ -130,5 +122,83 @@ public class LivestockSickController {
             redirectAttributes.addFlashAttribute("error", "Error deleting sick record: " + e.getMessage());
         }
         return "redirect:/livestock/sick";
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // MARK AS RECOVERED
+    // ═════════════════════════════════════════════════════════════════
+    @PostMapping("/recover/{id}")
+    public String markAsRecovered(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+        try {
+            sickService.markAsRecovered(id);
+            redirectAttributes.addFlashAttribute("success", "Animal marked as recovered.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error marking as recovered: " + e.getMessage());
+        }
+        return "redirect:/livestock/sick";
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // REPORT
+    // ═════════════════════════════════════════════════════════════════
+    @GetMapping("/report")
+    public String report(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Model model) {
+
+        // Resolve defaults into final variables so the lambdas below
+        // can capture them (lambdas require effectively-final variables).
+        final LocalDate fromDate = (from != null) ? from : LocalDate.now().withDayOfMonth(1);
+        final LocalDate toDate   = (to   != null) ? to   : LocalDate.now();
+
+        // Convert to LocalDateTime for the history repository
+        LocalDateTime fromDT = fromDate.atStartOfDay();
+        LocalDateTime toDT   = toDate.plusDays(1).atStartOfDay(); // inclusive end-of-day
+
+        // ── All history events in range (status changes) ─────────────
+        List<LivestockSickHistory> allHistory = sickService.getHistoryInRange(fromDT, toDT);
+
+        // ── Filtered subsets for KPI strip ───────────────────────────
+        List<LivestockSickHistory> sickCases      = sickService.getSickCasesInRange(fromDT, toDT);
+        List<LivestockSickHistory> criticalCases  = sickService.getCriticalCasesInRange(fromDT, toDT);
+        List<LivestockSickHistory> recoveredCases = sickService.getRecoveredCasesInRange(fromDT, toDT);
+
+        // "Recovering" — derive from allHistory
+        List<LivestockSickHistory> recoveringCases = allHistory.stream()
+                .filter(h -> h.getStatus() != null
+                        && h.getStatus().name().equals("RECOVERING"))
+                .toList();
+
+        // ── Full episodes (used by the per-animal journey cards) ─────
+        // Filter by reportedDate within [fromDate, toDate].
+        List<LivestockSick> sickRecords = sickService.getAllActive().stream()
+                .filter(s -> s.getReportedDate() != null
+                        && !s.getReportedDate().isBefore(fromDate)
+                        && !s.getReportedDate().isAfter(toDate))
+                .toList();
+
+        // ── Year totals for the bar chart ────────────────────────────
+        int currentYear = LocalDate.now().getYear();
+        long yearSick      = sickService.countSickByYear(currentYear);
+        long yearCritical  = sickService.countCriticalByYear(currentYear);
+        long yearRecovered = sickService.countRecoveredByYear(currentYear);
+
+        // ── Push everything to the view ──────────────────────────────
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        model.addAttribute("allHistory", allHistory);
+        model.addAttribute("sickCases", sickCases);
+        model.addAttribute("criticalCases", criticalCases);
+        model.addAttribute("recoveringCases", recoveringCases);
+        model.addAttribute("recoveredCases", recoveredCases);
+        model.addAttribute("sickRecords", sickRecords);
+        model.addAttribute("yearSick", yearSick);
+        model.addAttribute("yearCritical", yearCritical);
+        model.addAttribute("yearRecovered", yearRecovered);
+
+        return "livestock-sick-report";
     }
 }

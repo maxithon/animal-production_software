@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Offspring Production Report</title>
+    <!--
+      openhtmltopdf only supports a basic CSS subset (no flexbox/grid, no
+      external stylesheets/CDNs, no JS). Keep this template plain and
+      table-based — do NOT reuse the on-screen Bootstrap markup here.
+    -->
+    <style>
+        @page { size: A4 landscape; margin: 18mm 12mm; }
+        body { font-family: Helvetica, Arial, sans-serif; color: #1b2420; font-size: 9.5pt; }
+        h1 { font-size: 16pt; margin: 0 0 2px; color: #234f3b; }
+        .subtitle { color: #6b7a72; font-size: 9pt; margin: 0 0 14px; }
+        .meta { color: #6b7a72; font-size: 8.5pt; margin-bottom: 14px; }
+
+        .kpi-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .kpi-table td {
+            border: 1px solid #e4e8e5; padding: 8px 10px; width: 20%;
+            vertical-align: top; background: #f6f8f6;
+        }
+        .kpi-value { font-size: 13pt; font-weight: bold; color: #1b2420; }
+        .kpi-label { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .03em; color: #6b7a72; margin-top: 2px; }
+
+        .outcome-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        .outcome-table td { border: 1px solid #e4e8e5; padding: 6px 10px; font-size: 9pt; }
+        .outcome-table .label { color: #6b7a72; }
+        .outcome-table .value { font-weight: bold; text-align: right; }
+
+        table.report { width: 100%; border-collapse: collapse; font-size: 7.5pt; }
+        table.report th {
+            background: #f0f4f1; color: #6b7a72; text-transform: uppercase; font-size: 6.5pt;
+            letter-spacing: .02em; padding: 4px 3px; text-align: left; border-bottom: 1px solid #e4e8e5;
+        }
+        table.report td { padding: 4px 3px; border-bottom: 1px solid #eef1ef; }
+        table.report tr:nth-child(even) td { background: #fbfcfb; }
+        .rank-1 { color: #c98a34; font-weight: bold; }
+        .rank-2 { color: #7c8a83; font-weight: bold; }
+        .rank-3 { color: #a9662f; font-weight: bold; }
+        .footnote { margin-top: 10px; font-size: 7.5pt; color: #6b7a72; }
+        .phone-link { color: #1b2420; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<h1>Offspring Production Report</h1>
+<p class="subtitle">Category: <span th:text="${categoryLabel}">All Categories</span>
+    &nbsp;·&nbsp; Period: <span th:text="${periodLabel}">All Time</span></p>
+<p class="meta">Generated <span th:text="${generatedAt}">—</span>
+    &nbsp;·&nbsp; <span th:text="${totalRows}">0</span> mother(s) shown
+    <span th:if="${truncated}"> (list truncated to the first export limit — refine filters for a smaller set)</span>
+</p>
+
+<table class="kpi-table">
+    <tr>
+        <td>
+            <div class="kpi-value" th:text="${kpis.totalOffspring}">0</div>
+            <div class="kpi-label">Total Offspring</div>
+        </td>
+        <td>
+            <div class="kpi-value" th:text="${kpis.totalBirthEvents}">0</div>
+            <div class="kpi-label">Birth Events</div>
+        </td>
+        <td>
+            <div class="kpi-value" th:text="${kpis.averageOffspringPerBirth}">0</div>
+            <div class="kpi-label">Avg. Offspring / Birth</div>
+        </td>
+        <td>
+            <div class="kpi-value" th:text="${kpis.averageOffspringPerMother}">0</div>
+            <div class="kpi-label">Avg. Offspring / Productive Mother</div>
+        </td>
+        <td>
+            <div class="kpi-value">
+                <span th:if="${kpis.survivalRatePercent != null}" th:text="${kpis.survivalRatePercent} + '%'">0%</span>
+                <span th:if="${kpis.survivalRatePercent == null}">—</span>
+            </div>
+            <div class="kpi-label">Survival Rate</div>
+        </td>
+    </tr>
+</table>
+
+<table class="outcome-table">
+    <tr>
+        <td class="label">Alive</td><td class="value" th:text="${kpis.totalAlive}">0</td>
+        <td class="label">Dead</td><td class="value" th:text="${kpis.totalDied}">0</td>
+        <td class="label">Sold</td><td class="value" th:text="${kpis.totalSold}">0</td>
+        <td class="label">Transferred</td><td class="value" th:text="${kpis.totalTransferred}">0</td>
+        <td class="label">M / F / U</td>
+        <td class="value" th:text="${kpis.totalMale} + ' / ' + ${kpis.totalFemale} + ' / ' + ${kpis.totalUnknown}">—</td>
+    </tr>
+</table>
+
+<table class="report">
+    <thead>
+    <tr>
+        <th>Rank</th>
+        <th>Mother</th>
+        <th>Category</th>
+        <th>Location</th>
+        <th>Beneficiary</th>
+        <th>Phone</th>
+        <th>Births</th>
+        <th>Offspring</th>
+        <th>Avg/Birth</th>
+        <th>First Birth</th>
+        <th>Last Birth</th>
+        <th>Alive</th>
+        <th>Dead</th>
+        <th>Sold</th>
+        <th>Transferred</th>
+        <th>Weaned</th>
+        <th>Survival</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="row : ${rows}">
+        <td th:class="${row.rank == 1} ? 'rank-1' : (${row.rank == 2} ? 'rank-2' : (${row.rank == 3} ? 'rank-3' : ''))"
+            th:text="'#' + ${row.rank}">#1</td>
+        <td th:text="${row.tagNumber}">GOAT-008</td>
+        <td th:text="${row.categoryName}">Goat</td>
+        <td th:text="${row.locationName != null ? row.locationName : 'Unassigned'}">Nyanza Farm</td>
+        <td th:text="${row.beneficiaryName != null ? row.beneficiaryName : 'Unknown'}">Claudette MUKAMANA</td>
+        <td th:text="${row.beneficiaryPhone != null ? row.beneficiaryPhone : '—'}">0789781750</td>
+        <td th:text="${row.numberOfBirths}">0</td>
+        <td th:text="${row.totalOffspring}">0</td>
+        <td th:text="${row.averageOffspringPerBirth}">0</td>
+        <td th:text="${row.firstBirthDate != null ? #temporals.format(row.firstBirthDate, 'dd MMM yy') : '—'}">—</td>
+        <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yy') : '—'}">—</td>
+        <td th:text="${row.aliveCount}">0</td>
+        <td th:text="${row.deathCount}">0</td>
+        <td th:text="${row.soldCount}">0</td>
+        <td th:text="${row.transferredCount}">0</td>
+        <td th:text="${row.weanedCount}">0</td>
+        <td th:text="${row.survivalRate != null ? row.survivalRate + '%' : '—'}">—</td>
+        <td th:text="${row.status}">ACTIVE</td>
+    </tr>
+    </tbody>
+</table>
+
+<p class="footnote">
+    Survival Rate = Alive ÷ Total Offspring × 100. Sold/transferred offspring are excluded from Alive but are not
+    counted as losses. "Avg. Offspring / Productive Mother" = Total Offspring ÷ mothers that have produced offspring
+    in this period (not every mother in the herd).
+</p>
+
+</body>
+</html>

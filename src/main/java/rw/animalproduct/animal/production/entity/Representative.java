@@ -71,20 +71,15 @@ public class Representative {
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
 
-    // NEW: independent from is_deleted. is_deleted = record removed from the system.
-    // status = whether this representative is currently active in the field.
-    // Requires migration: ALTER TABLE representatives ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';
     @Column(name = "status")
     private String status = "ACTIVE";
 
     @Transient
     private String locationIdValue;
 
-    // Constructors
     public Representative() {
     }
 
-    // Getters and Setters
     public UUID getId() {
         return id;
     }

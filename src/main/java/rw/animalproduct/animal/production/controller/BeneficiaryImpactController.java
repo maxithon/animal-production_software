@@ -4,13 +4,28 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import rw.animalproduct.animal.production.dto.BeneficiaryImpactReportDto;
 import rw.animalproduct.animal.production.services.BeneficiaryImpactService;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * REST API for the Beneficiary Impact report.
+ *
+ *   GET /api/beneficiary-impact/summary/{beneficiaryId}
+ *       → returns the program-level report (same DTO the HTML page uses)
+ *
+ *   GET /api/beneficiary-impact/report/{beneficiaryId}?startDate=&endDate=
+ *       → returns the same report scoped to the given date range
+ *         (beneficiaryId kept in the path for backward compatibility with
+ *         existing clients; the current report is program-wide)
+ *
+ *   GET /api/beneficiary-impact/health
+ *       → liveness check
+ */
 @RestController
 @RequestMapping("/api/beneficiary-impact")
 public class BeneficiaryImpactController {
@@ -24,26 +39,20 @@ public class BeneficiaryImpactController {
     @GetMapping("/report/{beneficiaryId}")
     public ResponseEntity<?> getBeneficiaryReport(
             @PathVariable UUID beneficiaryId,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate) {
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         try {
-            if (startDate == null) {
-                Date now = new Date();
-                startDate = new Date(now.getTime() - 365L * 24 * 60 * 60 * 1000);
-            }
-            if (endDate == null) {
-                endDate = new Date();
-            }
-
-            if (startDate.after(endDate)) {
+            if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
                 Map<String, String> error = new HashMap<>();
-                error.put("error", "Start date cannot be after end date");
+                error.put("error", "startDate cannot be after endDate");
                 return ResponseEntity.badRequest().body(error);
             }
 
-            BeneficiaryImpactService.BeneficiaryImpactReport report =
-                    beneficiaryImpactService.getBeneficiaryImpactReport(beneficiaryId, startDate, endDate);
+            BeneficiaryImpactReportDto report =
+                    beneficiaryImpactService.buildReport(startDate, endDate);
 
             return ResponseEntity.ok(report);
         } catch (Exception e) {
@@ -56,12 +65,8 @@ public class BeneficiaryImpactController {
     @GetMapping("/summary/{beneficiaryId}")
     public ResponseEntity<?> getBeneficiarySummary(@PathVariable UUID beneficiaryId) {
         try {
-            Date endDate = new Date();
-            Date startDate = new Date(endDate.getTime() - 365L * 24 * 60 * 60 * 1000);
-
-            BeneficiaryImpactService.BeneficiaryImpactReport report =
-                    beneficiaryImpactService.getBeneficiaryImpactReport(beneficiaryId, startDate, endDate);
-
+            BeneficiaryImpactReportDto report =
+                    beneficiaryImpactService.buildReport(null, null);
             return ResponseEntity.ok(report);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();

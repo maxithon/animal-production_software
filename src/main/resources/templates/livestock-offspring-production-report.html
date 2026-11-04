@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offspring Production Report</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --opr-ink: #1b2420;
+            --opr-muted: #6b7a72;
+            --opr-line: #e4e8e5;
+            --opr-surface: #ffffff;
+            --opr-bg: #f6f8f6;
+            --opr-primary: #2f6b4f;
+            --opr-primary-dark: #234f3b;
+            --opr-accent: #c98a34;
+            --opr-blue: #3b6ea5;
+            --opr-red: #b5482f;
+            --opr-grey: #6b7280;
+            --opr-purple: #7c5cbf;
+            --opr-radius: 10px;
+            --opr-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            --opr-gold: #FFD700;
+            --opr-silver: #C0C0C0;
+            --opr-bronze: #CD7F32;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--opr-bg);
+            color: var(--opr-ink);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        /* ── Header ─────────────────────────────────────────── */
+        .opr-header { margin-bottom: 20px; }
+        .opr-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--opr-ink);
+            margin: 0 0 4px;
+            letter-spacing: -0.01em;
+        }
+        .opr-header p {
+            color: var(--opr-muted);
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        /* ── KPI CARDS ─────────────────────────────────────── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            padding: 16px 18px;
+            box-shadow: var(--opr-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .kpi-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .kpi-icon.bg-green  { background: #d1fae5; color: #065f46; }
+        .kpi-icon.bg-blue   { background: #dbeafe; color: #1e40af; }
+        .kpi-icon.bg-amber  { background: #fef3c7; color: #92400e; }
+        .kpi-icon.bg-teal   { background: #ccfbf1; color: #115e59; }
+        .kpi-icon.bg-red    { background: #fee2e2; color: #991b1b; }
+        .kpi-icon.bg-purple { background: #ede9fe; color: #5b21b6; }
+        .kpi-value {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--opr-ink);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+        }
+        .kpi-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--opr-muted);
+            margin-top: 4px;
+        }
+        .kpi-sub {
+            font-size: 0.72rem;
+            color: var(--opr-muted);
+            margin-top: 4px;
+        }
+        .info-tooltip {
+            font-size: 0.7rem;
+            color: var(--opr-muted);
+            cursor: help;
+            margin-left: 4px;
+        }
+
+        /* ── OUTCOME STRIP ─────────────────────────────────── */
+        .outcome-strip {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            box-shadow: var(--opr-shadow);
+            padding: 12px 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+        .outcome-title {
+            font-weight: 700;
+            color: var(--opr-ink);
+            font-size: 0.85rem;
+        }
+        .outcome-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--opr-muted);
+        }
+        .outcome-item .val {
+            font-weight: 800;
+            color: var(--opr-ink);
+            font-size: 1rem;
+        }
+        .outcome-item .lbl { color: var(--opr-muted); }
+        .outcome-item .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-alive       { background: #10b981; }
+        .dot-dead        { background: #ef4444; }
+        .dot-sold        { background: #3b82f6; }
+        .dot-transferred { background: #f59e0b; }
+        .survival-note {
+            margin-left: auto;
+            font-size: 0.72rem;
+            color: var(--opr-muted);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ── FILTER BAR ────────────────────────────────────── */
+        .filter-bar {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            box-shadow: var(--opr-shadow);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+        }
+        .filter-bar .form-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--opr-muted);
+            margin-bottom: 4px;
+        }
+        .btn-primary-opr {
+            background: var(--opr-primary);
+            border: 1px solid var(--opr-primary);
+            color: #fff;
+            font-weight: 600;
+        }
+        .btn-primary-opr:hover {
+            background: var(--opr-primary-dark);
+            border-color: var(--opr-primary-dark);
+            color: #fff;
+        }
+
+        /* ── TOP PRODUCERS PANEL ───────────────────────────── */
+        .rank-panel {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            box-shadow: var(--opr-shadow);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .rank-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--opr-line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .rank-header h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .badge-count {
+            background: #f1f5f9;
+            color: var(--opr-muted);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 2px 9px;
+            border-radius: 20px;
+        }
+        .rank-table-wrap { overflow-x: auto; }
+        .rank-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .rank-table thead th {
+            background: #f8fafc;
+            color: var(--opr-muted);
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 9px 12px;
+            border-bottom: 2px solid var(--opr-line);
+            text-align: left;
+            white-space: nowrap;
+        }
+        .rank-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--opr-line);
+            vertical-align: middle;
+        }
+        .rank-table tbody tr:hover { background: #f8fafc; }
+        .rank-table tbody tr.rank-1 { background: #fffbeb; }
+        .rank-table tbody tr.rank-2 { background: #f8fafc; }
+        .rank-table tbody tr.rank-3 { background: #fff7ed; }
+
+        .rank-medal { font-size: 1.1rem; }
+        .rank-number { color: var(--opr-muted); font-weight: 700; font-size: 0.8rem; }
+        .rank-tag {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            color: #075985;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .rank-tag:hover { background: #e0f2fe; border-color: #7dd3fc; }
+        .rank-location {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--opr-ink);
+            font-size: 0.76rem;
+        }
+        .rank-location i { color: var(--opr-muted); }
+        .rank-beneficiary {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .ben-name { font-weight: 600; color: var(--opr-ink); font-size: 0.76rem; }
+        .ben-phone a { font-size: 0.7rem; color: var(--opr-muted); text-decoration: none; }
+        .ben-phone a:hover { color: var(--opr-primary); }
+        .rank-stat { text-align: center; }
+        .rank-stat .stat-number {
+            font-weight: 800;
+            color: var(--opr-ink);
+            font-size: 0.95rem;
+            display: block;
+        }
+        .rank-stat .stat-number.high { color: var(--opr-primary); }
+        .rank-stat .stat-label {
+            font-size: 0.62rem;
+            color: var(--opr-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-top: 1px;
+        }
+
+        /* ── STATUS CHIPS ──────────────────────────────────── */
+        .status-chip {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .status-ACTIVE      { background: #d1fae5; color: #065f46; }
+        .status-SOLD        { background: #dbeafe; color: #1e40af; }
+        .status-DEAD        { background: #fee2e2; color: #991b1b; }
+        .status-TRANSFERRED { background: #fef3c7; color: #92400e; }
+        .status-PREGNANT    { background: #fce7f3; color: #9d174d; }
+
+        /* ── CHART PANEL ───────────────────────────────────── */
+        .chart-panel {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            box-shadow: var(--opr-shadow);
+            padding: 18px 22px;
+            margin-bottom: 20px;
+        }
+        .chart-panel h2 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--opr-muted);
+        }
+        .chart-empty i {
+            font-size: 2rem;
+            color: var(--opr-line);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* ── REPORT TABLE ──────────────────────────────────── */
+        .report-table-wrap {
+            background: var(--opr-surface);
+            border: 1px solid var(--opr-line);
+            border-radius: var(--opr-radius);
+            box-shadow: var(--opr-shadow);
+            overflow: hidden;
+        }
+        .table-toolbar {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--opr-line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        .table-toolbar strong { color: var(--opr-ink); }
+        .page-size-select {
+            border: 1px solid var(--opr-line);
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 0.78rem;
+            background: #fff;
+            color: var(--opr-ink);
+        }
+
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+        }
+        .report-table thead th {
+            background: #f8fafc;
+            color: var(--opr-muted);
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 9px 10px;
+            border-bottom: 2px solid var(--opr-line);
+            text-align: left;
+            white-space: nowrap;
+        }
+        .report-table tbody td {
+            padding: 9px 10px;
+            border-bottom: 1px solid var(--opr-line);
+            vertical-align: middle;
+        }
+        .report-table tbody tr:hover { background: #f8fafc; }
+        .report-table tbody tr.row-highlight { background: #fef2f2; }
+        .report-table .rank-cell { font-weight: 700; color: var(--opr-muted); }
+
+        .tag-pill {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            color: #075985;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all .15s ease;
+        }
+        .tag-pill:hover { background: #e0f2fe; border-color: #7dd3fc; }
+
+        .beneficiary-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .beneficiary-cell .ben-name {
+            font-weight: 600;
+            color: var(--opr-ink);
+            font-size: 0.76rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .beneficiary-cell .ben-phone a {
+            font-size: 0.7rem;
+            color: var(--opr-muted);
+            text-decoration: none;
+        }
+
+        .badge-sex {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 0.62rem;
+            font-weight: 700;
+            margin-right: 3px;
+        }
+        .badge-male    { background: #dbeafe; color: #1e40af; }
+        .badge-female  { background: #fce7f3; color: #9d174d; }
+        .badge-unknown { background: #f3f4f6; color: #4b5563; }
+
+        .repro-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .repro-pregnant   { background: #fce7f3; color: #9d174d; }
+        .repro-ready      { background: #d1fae5; color: #065f46; }
+        .repro-lactating  { background: #dbeafe; color: #1e40af; }
+        .repro-open       { background: #f3f4f6; color: #374151; }
+        .repro-resting    { background: #ede9fe; color: #5b21b6; }
+        .repro-other      { background: #f3f4f6; color: #6b7280; }
+
+        .survival-cell {
+            display: inline-flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 55px;
+        }
+        .survival-bar-track {
+            height: 5px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+            display: block;
+        }
+        .survival-bar-fill {
+            display: block;
+            height: 100%;
+            border-radius: 4px;
+            transition: width .3s ease;
+        }
+        .survival-bar-fill.high   { background: #10b981; }
+        .survival-bar-fill.medium { background: #f59e0b; }
+        .survival-bar-fill.low    { background: #ef4444; }
+
+        /* ── PAGINATION ────────────────────────────────────── */
+        .pagination-bar {
+            padding: 14px 20px;
+            border-top: 1px solid var(--opr-line);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .page-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--opr-line);
+            background: #fff;
+            color: var(--opr-ink);
+            font-size: 0.76rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all .15s ease;
+        }
+        .page-btn:hover { background: #f8fafc; border-color: #cbd5e1; color: var(--opr-primary); }
+        .page-btn.disabled {
+            pointer-events: none;
+            opacity: 0.45;
+        }
+        .page-info {
+            font-size: 0.76rem;
+            color: var(--opr-muted);
+        }
+
+        /* ── EMPTY STATE ───────────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 56px 20px;
+            color: var(--opr-muted);
+        }
+        .empty-state i {
+            font-size: 2.25rem;
+            color: var(--opr-line);
+        }
+
+        /* ── RESPONSIVE ────────────────────────────────────── */
+        @media (max-width: 992px) {
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .outcome-strip { gap: 14px; }
+            .survival-note { margin-left: 0; width: 100%; }
+        }
+        @media (max-width: 576px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .opr-header h1 { font-size: 1.2rem; }
+            .filter-bar { padding: 12px 14px; }
+            .col-optional { display: none; }
+        }
+
+        /* ── PRINT ─────────────────────────────────────────── */
+        @media print {
+            .no-print, .btn, .filter-bar, .pagination-bar { display: none !important; }
+            body { background: #fff; }
+            .kpi-card, .rank-panel, .chart-panel, .report-table-wrap { box-shadow: none; border-color: #ddd; }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4 px-4" style="max-width: 1700px;">
+
+    <!-- ── HEADER ── -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 opr-header">
+        <div>
+            <h1><i class="bi bi-stars me-2" style="color: var(--opr-primary);"></i>Offspring Production Report</h1>
+            <p>Reproductive performance per mother — track productivity, survival, and offspring outcomes</p>
+        </div>
+        <div class="d-flex gap-2 no-print">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/offspring-production-report/export(categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                <i class="bi bi-filetype-csv me-1"></i>CSV
+            </a>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/offspring-production-report/export/excel(categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+            </a>
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/offspring-production-report/export/pdf(categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                <i class="bi bi-filetype-pdf me-1"></i>PDF
+            </a>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+
+    <!-- ── KPI CARDS ── -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green"><i class="bi bi-egg-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.totalOffspring}">0</div>
+            <div class="kpi-label">Total Offspring</div>
+            <div class="kpi-sub" th:text="'from ' + ${kpis.totalMothers} + ' mothers'">from 0 mothers</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-blue"><i class="bi bi-bar-chart-line-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.averageOffspringPerBirth}">0</div>
+            <div class="kpi-label">Avg. Offspring / Birth</div>
+            <div class="kpi-sub" th:text="${kpis.totalBirthEvents} + ' birth events'">0 birth events</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-amber"><i class="bi bi-diagram-3-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.averageOffspringPerProductiveMother}">0</div>
+            <div class="kpi-label">Avg. Offspring / Productive Mother</div>
+            <div class="kpi-sub" th:text="${kpis.productiveMothers} + ' productive mothers'">0 productive mothers</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-teal"><i class="bi bi-gender-ambiguous"></i></div>
+            <div class="kpi-value" style="font-size:1.15rem;">
+                <span th:text="${kpis.malePercent} + '% M'">0% M</span>
+                <span style="color:var(--opr-muted);"> · </span>
+                <span th:text="${kpis.femalePercent} + '% F'">0% F</span>
+                <span style="color:var(--opr-muted);"> · </span>
+                <span th:text="${kpis.unknownPercent} + '% U'">0% U</span>
+            </div>
+            <div class="kpi-label">Sex Distribution</div>
+            <div class="kpi-sub" th:text="${kpis.totalMale} + ' M · ' + ${kpis.totalFemale} + ' F · ' + ${kpis.totalUnknown} + ' U'">—</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-red"><i class="bi bi-heart-pulse-fill"></i></div>
+            <div class="kpi-value">
+                <span th:if="${kpis.survivalRate != null}" th:text="${kpis.survivalRate} + '%'">0%</span>
+                <span th:if="${kpis.survivalRate == null}">—</span>
+            </div>
+            <div class="kpi-label">
+                Survival Rate
+                <i class="bi bi-question-circle info-tooltip" title="Survival Rate = Alive ÷ (Total Offspring - Sold - Transferred) × 100. Sold/transferred are excluded from the denominator."></i>
+            </div>
+            <div class="kpi-sub" th:text="${kpis.totalAlive} + ' alive · ' + ${kpis.totalDied} + ' dead'">—</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-purple"><i class="bi bi-trophy-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.productiveRate != null ? kpis.productiveRate + '%' : '—'}">0%</div>
+            <div class="kpi-label">Productive Rate</div>
+            <div class="kpi-sub" th:text="${kpis.productiveMothers} + ' productive of ' + ${kpis.totalMothers} + ' mothers'">—</div>
+        </div>
+    </div>
+
+    <!-- ── OFFSPRING OUTCOME STRIP ── -->
+    <div class="outcome-strip">
+        <span class="outcome-title"><i class="bi bi-bar-chart-fill me-1"></i>Offspring Outcome</span>
+        <div class="outcome-item">
+            <span class="dot dot-alive"></span>
+            <span class="val" th:text="${kpis.totalAlive}">0</span>
+            <span class="lbl">Alive (<span th:text="${kpis.alivePercent} + '%'">0%</span>)</span>
+        </div>
+        <div class="outcome-item">
+            <span class="dot dot-dead"></span>
+            <span class="val" th:text="${kpis.totalDied}">0</span>
+            <span class="lbl">Dead (<span th:text="${kpis.diedPercent} + '%'">0%</span>)</span>
+        </div>
+        <div class="outcome-item">
+            <span class="dot dot-sold"></span>
+            <span class="val" th:text="${kpis.totalSold}">0</span>
+            <span class="lbl">Sold (<span th:text="${kpis.soldPercent} + '%'">0%</span>)</span>
+        </div>
+        <div class="outcome-item">
+            <span class="dot dot-transferred"></span>
+            <span class="val" th:text="${kpis.totalTransferred}">0</span>
+            <span class="lbl">Transferred (<span th:text="${kpis.transferredPercent} + '%'">0%</span>)</span>
+        </div>
+        <span class="survival-note">
+            <i class="bi bi-info-circle"></i>
+            Survival Rate = Alive ÷ (Total Offspring - Sold - Transferred) × 100
+        </span>
+    </div>
+
+    <!-- ── FILTERS ── -->
+    <form class="filter-bar no-print" method="get" th:action="@{/livestock/offspring-production-report}" id="filterForm">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-tag-fill me-1"></i>Category</label>
+                <select name="categoryId" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${cat.id == categoryIdFilter}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-calendar3 me-1"></i>Production Period</label>
+                <select name="period" id="periodSelect" class="form-select form-select-sm" onchange="toggleCustomDates()">
+                    <option th:each="p : ${periods}"
+                            th:value="${p}"
+                            th:text="${#strings.replace(#strings.capitalize(#strings.toLowerCase(p)), '_', ' ')}"
+                            th:selected="${p == periodFilter}"></option>
+                </select>
+            </div>
+            <div class="col-md-2 custom-date-field" style="display:none;">
+                <label class="form-label">From Date</label>
+                <input type="date" name="fromDate" class="form-control form-control-sm" th:value="${fromDateFilter}">
+            </div>
+            <div class="col-md-2 custom-date-field" style="display:none;">
+                <label class="form-label">To Date</label>
+                <input type="date" name="toDate" class="form-control form-control-sm" th:value="${toDateFilter}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-circle-fill me-1"></i>Mother Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option th:each="s : ${statuses}"
+                            th:value="${s}"
+                            th:text="${s}"
+                            th:selected="${s == statusFilter}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label"><i class="bi bi-search me-1"></i>Search</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Tag number..." th:value="${searchFilter}">
+            </div>
+        </div>
+        <div class="row g-3 mt-1">
+            <div class="col-12 d-flex gap-2 justify-content-end">
+                <button type="submit" class="btn btn-primary-opr btn-sm">
+                    <i class="bi bi-funnel-fill me-1"></i>Apply Filters
+                </button>
+                <a th:href="@{/livestock/offspring-production-report}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg me-1"></i>Clear All
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- ── TOP PRODUCING MOTHERS ── -->
+    <div class="rank-panel no-print" th:if="${!#lists.isEmpty(topProducers)}">
+        <div class="rank-header">
+            <h2>
+                <i class="bi bi-trophy-fill" style="color: var(--opr-accent);"></i>
+                Top Producing Mothers
+                <span class="badge-count" th:text="${#lists.size(topProducers)} + ' mothers'">0 mothers</span>
+            </h2>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Showing top <span th:text="${#lists.size(topProducers)}">0</span></span>
+            </div>
+        </div>
+
+        <div class="rank-table-wrap">
+            <table class="rank-table">
+                <thead>
+                <tr>
+                    <th style="width:45px;">Rank</th>
+                    <th style="width:12%;">Mother</th>
+                    <th style="width:9%;">Category</th>
+                    <th style="width:15%;">Location</th>
+                    <th style="width:15%;">Beneficiary</th>
+                    <th style="width:8%;" class="text-center">Births</th>
+                    <th style="width:8%;" class="text-center">Offspring</th>
+                    <th style="width:8%;" class="text-center">Avg/Birth</th>
+                    <th style="width:8%;" class="text-center">Survival</th>
+                    <th style="width:8%;" class="text-center">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${topProducers}" th:classappend="'rank-' + ${row.rank}">
+                    <td>
+                        <span class="rank-medal" th:text="${row.rankMedal}"></span>
+                        <span class="rank-number" th:if="${#strings.isEmpty(row.rankMedal)}" th:text="'#' + ${row.rank}"></span>
+                    </td>
+                    <td>
+                        <button type="button" class="rank-tag" th:attr="onclick='openMotherDetail(\'' + ${row.animalId} + '\')'">
+                            <i class="bi bi-tag-fill"></i><span th:text="${row.tagNumber}">GOAT-008</span>
+                        </button>
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-dark" th:text="${row.categoryName}">Goat</span>
+                    </td>
+                    <td>
+                        <div class="rank-location">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span th:text="${row.locationName}">Location</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="rank-beneficiary">
+                            <span class="ben-name" th:text="${row.beneficiaryName != null ? row.beneficiaryName : 'Unknown'}">Claudette MUKAMANA</span>
+                            <span class="ben-phone" th:if="${row.beneficiaryPhone != null and row.beneficiaryPhone != '—'}">
+                                    <a th:href="'tel:' + ${row.beneficiaryPhone}" th:text="${row.beneficiaryPhone}">0789781750</a>
+                                </span>
+                        </div>
+                    </td>
+                    <td class="rank-stat">
+                        <span class="stat-number" th:text="${row.numberOfBirths}">0</span>
+                        <span class="stat-label">Births</span>
+                    </td>
+                    <td class="rank-stat">
+                        <span class="stat-number high" th:text="${row.totalOffspring}">0</span>
+                        <span class="stat-label">Offspring</span>
+                    </td>
+                    <td class="rank-stat">
+                        <span class="stat-number" th:text="${row.averageOffspringPerBirth}">0</span>
+                        <span class="stat-label">Avg</span>
+                    </td>
+                    <td class="rank-stat">
+                            <span class="stat-number" th:classappend="${row.survivalRate != null and row.survivalRate >= 70} ? 'high' : ''"
+                                  th:text="${row.survivalRate != null ? row.survivalRate + '%' : '—'}">0%</span>
+                        <span class="stat-label">Survival</span>
+                    </td>
+                    <td>
+                        <span class="status-chip" th:classappend="'status-' + ${row.status}" th:text="${row.status}">ACTIVE</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── TREND CHART ── -->
+    <div class="chart-panel">
+        <h2>
+            <i class="bi bi-graph-up" style="color: var(--opr-primary);"></i>
+            Offspring Production Trend
+            <span class="badge bg-light text-dark ms-2" th:text="${#lists.size(trend)} + ' months'">0 months</span>
+        </h2>
+        <canvas id="trendChart" th:if="${!#lists.isEmpty(trend)}"></canvas>
+        <div class="chart-empty" th:if="${#lists.isEmpty(trend)}">
+            <i class="bi bi-graph-up"></i>
+            <p class="mt-2 mb-0">No birth events in the selected period to chart.</p>
+            <p class="text-muted small">Try adjusting your filters or production period.</p>
+        </div>
+    </div>
+
+    <!-- ── REPORT TABLE ── -->
+    <div class="report-table-wrap">
+        <div class="table-toolbar no-print">
+            <div>
+                <strong th:text="${totalItems}">0</strong> mother<span th:if="${totalItems != 1}">s</span> found
+                <span class="text-muted ms-2" th:if="${totalItems > 0}" th:text="'· Showing ' + ${rows != null ? #lists.size(rows) : 0} + ' on this page'"></span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span></span>
+                <div class="d-inline-flex align-items-center gap-2">
+                    <span class="text-muted small">Show</span>
+                    <select class="page-size-select" onchange="window.location.href = this.value">
+                        <option th:value="@{/livestock/offspring-production-report(page=0, size=10, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}" th:selected="${pageSize == 10}">10</option>
+                        <option th:value="@{/livestock/offspring-production-report(page=0, size=25, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}" th:selected="${pageSize == 25}">25</option>
+                        <option th:value="@{/livestock/offspring-production-report(page=0, size=50, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}" th:selected="${pageSize == 50}">50</option>
+                        <option th:value="@{/livestock/offspring-production-report(page=0, size=100, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}" th:selected="${pageSize == 100}">100</option>
+                    </select>
+                    <span class="text-muted small">per page</span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(rows)}" class="empty-state">
+            <i class="bi bi-inboxes"></i>
+            <p class="mt-3 mb-0">No offspring production data matches your filters.</p>
+            <p class="text-muted small">Try adjusting your search criteria or production period.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(rows)}" style="overflow-x:auto;">
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th style="width:3%;">Rank</th>
+                    <th style="width:7%;">Mother</th>
+                    <th style="width:6%;" class="col-optional">Category</th>
+                    <th style="width:12%;">Location</th>
+                    <th style="width:10%;">Beneficiary</th>
+                    <th style="width:5%;">Births</th>
+                    <th style="width:5%;">Offspring</th>
+                    <th style="width:8%;" class="col-optional">Sex</th>
+                    <th style="width:5%;" class="col-optional">Avg/Birth</th>
+                    <th style="width:6%;" class="col-optional">First Birth</th>
+                    <th style="width:6%;">Last Birth</th>
+                    <th style="width:5%;" class="col-optional">Days Since</th>
+                    <th style="width:8%;">Reproductive Status</th>
+                    <th style="width:6%;" class="col-optional">Next Due</th>
+                    <th style="width:4%;">Alive</th>
+                    <th style="width:4%;">Dead</th>
+                    <th style="width:4%;">Sold</th>
+                    <th style="width:7%;">Survival</th>
+                    <th style="width:5%;">Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${rows}" th:classappend="${row.survivalRate != null and row.survivalRate < 50} ? 'row-highlight' : ''">
+                    <td class="rank-cell">
+                        <span th:if="${!#strings.isEmpty(row.rankMedal)}" th:text="${row.rankMedal}"></span>
+                        <span th:if="${#strings.isEmpty(row.rankMedal)}" th:text="'#' + ${row.rank}"></span>
+                    </td>
+                    <td>
+                        <button type="button" class="tag-pill" th:attr="onclick='openMotherDetail(\'' + ${row.animalId} + '\')'">
+                            <i class="bi bi-tag-fill"></i><span th:text="${row.tagNumber}">GOAT-008</span>
+                        </button>
+                    </td>
+                    <td class="col-optional" th:text="${row.categoryName}">Goat</td>
+                    <td>
+                        <div class="rank-location">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span th:text="${row.locationName}">Location</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="beneficiary-cell">
+                            <span class="ben-name" th:text="${row.beneficiaryName != null ? row.beneficiaryName : 'Unknown'}">Claudette MUKAMANA</span>
+                            <span class="ben-phone" th:if="${row.beneficiaryPhone != null and row.beneficiaryPhone != '—'}">
+                                    <a th:href="'tel:' + ${row.beneficiaryPhone}" th:text="${row.beneficiaryPhone}">0789781750</a>
+                                </span>
+                        </div>
+                    </td>
+                    <td th:text="${row.numberOfBirths}">0</td>
+                    <td><strong th:text="${row.totalOffspring}">0</strong></td>
+                    <td class="col-optional">
+                        <span class="badge-sex badge-male" th:text="${row.maleOffspring} + 'M'">0M</span>
+                        <span class="badge-sex badge-female" th:text="${row.femaleOffspring} + 'F'">0F</span>
+                        <span class="badge-sex badge-unknown" th:text="${row.unknownOffspring} + 'U'">0U</span>
+                    </td>
+                    <td class="col-optional" th:text="${row.averageOffspringPerBirth}">0</td>
+                    <td class="col-optional" th:text="${row.firstBirthDate != null ? #temporals.format(row.firstBirthDate, 'dd MMM yy') : '—'}">—</td>
+                    <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yy') : '—'}">—</td>
+                    <td class="col-optional" th:text="${row.daysSinceLastBirthDisplay}">—</td>
+                    <td>
+                            <span th:switch="${row.reproductiveStatus}">
+                                <span th:case="'PREGNANT'" class="repro-status repro-pregnant">🤰 Pregnant</span>
+                                <span th:case="'READY_TO_BREED'" class="repro-status repro-ready">✅ Ready to Breed</span>
+                                <span th:case="'LACTATING'" class="repro-status repro-lactating">🍼 Lactating</span>
+                                <span th:case="'NURSING'" class="repro-status repro-lactating">🍼 Nursing</span>
+                                <span th:case="'OPEN'" class="repro-status repro-open">⭕ Open</span>
+                                <span th:case="'DRY'" class="repro-status repro-other">💧 Dry</span>
+                                <span th:case="'RESTING'" class="repro-status repro-resting">😴 Resting</span>
+                                <span th:case="'INACTIVE'" class="repro-status repro-other">⏸️ Inactive</span>
+                                <span th:case="'NOT_APPLICABLE'" class="repro-status repro-other">N/A</span>
+                                <span th:case="*" class="repro-status repro-other" th:text="${row.reproductiveStatus != null ? row.reproductiveStatus : '—'}">—</span>
+                            </span>
+                    </td>
+                    <td class="col-optional" th:text="${row.expectedDueDate != null ? #temporals.format(row.expectedDueDate, 'dd MMM yy') : '—'}">—</td>
+                    <td th:text="${row.aliveCount}">0</td>
+                    <td th:text="${row.deathCount}">0</td>
+                    <td th:text="${row.soldCount}">0</td>
+                    <td>
+                        <div class="survival-cell">
+                            <span th:if="${row.survivalRate != null}" th:text="${row.survivalRate} + '%'">0%</span>
+                            <span th:if="${row.survivalRate == null}">—</span>
+                            <span class="survival-bar-track" th:if="${row.survivalRate != null}">
+                                    <span class="survival-bar-fill"
+                                          th:classappend="${row.survivalRate < 40} ? 'low' : (${row.survivalRate < 70} ? 'medium' : 'high')"
+                                          th:style="'width:' + ${row.survivalRate} + '%'"></span>
+                                </span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-chip" th:classappend="'status-' + ${row.status}" th:text="${row.status}">ACTIVE</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ── PAGINATION ── -->
+        <div class="pagination-bar no-print" th:if="${totalPages > 1}">
+            <div class="d-flex gap-2">
+                <a class="page-btn"
+                   th:classappend="${currentPage == 0} ? 'disabled'"
+                   th:href="@{/livestock/offspring-production-report(page=0, size=${pageSize}, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                    <i class="bi bi-chevron-double-left"></i> First
+                </a>
+                <a class="page-btn"
+                   th:classappend="${currentPage == 0} ? 'disabled'"
+                   th:href="@{/livestock/offspring-production-report(page=${currentPage - 1}, size=${pageSize}, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </a>
+            </div>
+
+            <span class="page-info">
+                Page <strong th:text="${currentPage + 1}">1</strong> of <strong th:text="${totalPages}">1</strong>
+                <span class="text-muted">·</span>
+                <span th:text="${totalItems}">0</span> total mothers
+            </span>
+
+            <div class="d-flex gap-2">
+                <a class="page-btn"
+                   th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'"
+                   th:href="@{/livestock/offspring-production-report(page=${currentPage + 1}, size=${pageSize}, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+                <a class="page-btn"
+                   th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'"
+                   th:href="@{/livestock/offspring-production-report(page=${totalPages - 1}, size=${pageSize}, categoryId=${categoryIdFilter}, status=${statusFilter}, search=${searchFilter}, period=${periodFilter}, fromDate=${fromDateFilter}, toDate=${toDateFilter})}">
+                    Last <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── MOTHER DETAIL MODAL ── -->
+<div class="modal fade" id="motherDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="motherDetailTitle">Mother Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="motherDetailBody">
+                <div class="text-center text-muted py-4"><i class="bi bi-hourglass-split"></i> Loading…</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ── CHART DATA ── -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const trendData = /*[[${trend}]]*/ [];
+    /*]]>*/
+</script>
+
+<script>
+    // ── Chart.js with multiple datasets ──
+    console.debug('[offspring-trend] data:', trendData);
+
+    const trendCanvas = document.getElementById('trendChart');
+    if (trendCanvas && trendData.length > 0) {
+        const labels = trendData.map(d => d.monthLabel);
+        const offspringData = trendData.map(d => d.offspring);
+        const avgData = trendData.map(d => d.avgOffspringPerBirth);
+
+        new Chart(trendCanvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Offspring',
+                        data: offspringData,
+                        backgroundColor: 'rgba(47, 107, 79, 0.8)',
+                        borderColor: '#2f6b4f',
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        order: 1,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Avg Offspring/Birth',
+                        data: avgData,
+                        type: 'line',
+                        borderColor: '#c98a34',
+                        backgroundColor: 'rgba(201, 138, 52, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#c98a34',
+                        tension: 0.3,
+                        order: 0,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label === 'Offspring') {
+                                    return context.parsed.y + ' offspring born';
+                                }
+                                return 'Avg: ' + context.parsed.y.toFixed(1) + ' offspring/birth';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Offspring Count'
+                        }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        ticks: { precision: 1 },
+                        grid: { display: false },
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Avg Offspring / Birth'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 15
+                        },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Toggle Custom Dates ──
+    function toggleCustomDates() {
+        const isCustom = document.getElementById('periodSelect').value === 'CUSTOM';
+        document.querySelectorAll('.custom-date-field').forEach(el => {
+            el.style.display = isCustom ? '' : 'none';
+        });
+    }
+    toggleCustomDates();
+
+    // ── Mother Detail Modal ──
+    const motherDetailModal = new bootstrap.Modal(document.getElementById('motherDetailModal'));
+
+    async function openMotherDetail(animalId) {
+        document.getElementById('motherDetailTitle').textContent = 'Loading...';
+        document.getElementById('motherDetailBody').innerHTML =
+            '<div class="text-center text-muted py-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading mother details...</p></div>';
+        motherDetailModal.show();
+
+        try {
+            const res = await fetch('/livestock/offspring-production-report/mother/' + animalId);
+            if (!res.ok) throw new Error('Not found');
+            const d = await res.json();
+
+            document.getElementById('motherDetailTitle').innerHTML =
+                '<i class="bi bi-tag-fill me-1"></i>' + d.tagNumber;
+
+            const history = (d.birthHistory || []).map(b =>
+                '<tr><td>' + (b.birthDate || '—') + '</td><td class="text-end fw-semibold">' + b.offspringCount + ' offspring</td></tr>'
+            ).join('') || '<tr><td colspan="2" class="text-muted">No birth events recorded.</td></tr>';
+
+            const survivalRate = d.survivalRate != null ? d.survivalRate : null;
+
+            document.getElementById('motherDetailBody').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase mb-2">Animal Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="text-muted" style="width:40%;">Tag Number</td><td class="fw-semibold">${d.tagNumber}</td></tr>
+                            <tr><td class="text-muted">Category</td><td class="fw-semibold">${d.categoryName}</td></tr>
+                            <tr><td class="text-muted">Age</td><td class="fw-semibold">${d.currentAgeDisplay}</td></tr>
+                            <tr><td class="text-muted">Status</td><td><span class="status-chip status-${d.status}">${d.status}</span></td></tr>
+                            <tr><td class="text-muted">Reproductive Status</td><td class="fw-semibold">${d.reproductiveStatusLabel}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase mb-2">Lifetime Production</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="text-muted" style="width:40%;">Total Births</td><td class="fw-semibold">${d.numberOfBirths}</td></tr>
+                            <tr><td class="text-muted">Total Offspring</td><td class="fw-semibold">${d.totalOffspring}</td></tr>
+                            <tr><td class="text-muted">Avg / Birth</td><td class="fw-semibold">${d.averageOffspringPerBirth}</td></tr>
+                            <tr><td class="text-muted">Survival Rate</td><td class="fw-semibold">${survivalRate != null ? survivalRate + '%' : '—'}</td></tr>
+                            <tr><td class="text-muted">Days Since Last Birth</td><td class="fw-semibold">${d.daysSinceLastBirthDisplay}</td></tr>
+                            <tr><td class="text-muted">Next Expected Due</td><td class="fw-semibold">${d.expectedDueDate != null ? d.expectedDueDate : '—'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase mb-2">Offspring Outcomes</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="text-muted" style="width:40%;">Male</td><td class="fw-semibold">${d.maleOffspring}</td></tr>
+                            <tr><td class="text-muted">Female</td><td class="fw-semibold">${d.femaleOffspring}</td></tr>
+                            <tr><td class="text-muted">Unknown</td><td class="fw-semibold">${d.unknownOffspring}</td></tr>
+                            <tr><td class="text-muted">Alive</td><td class="fw-semibold text-success">${d.aliveCount}</td></tr>
+                            <tr><td class="text-muted">Dead</td><td class="fw-semibold text-danger">${d.deathCount}</td></tr>
+                            <tr><td class="text-muted">Sold</td><td class="fw-semibold text-primary">${d.soldCount}</td></tr>
+                            <tr><td class="text-muted">Transferred</td><td class="fw-semibold text-warning">${d.transferredCount}</td></tr>
+                            <tr><td class="text-muted">Weaned</td><td class="fw-semibold">${d.weanedCount}</td></tr>
+                            <tr><td class="text-muted">Stillborn</td><td class="fw-semibold">${d.stillbornCount}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted small text-uppercase mb-2">Birth History</h6>
+                        <div style="max-height: 250px; overflow-y: auto;">
+                            <table class="table table-sm">
+                                <thead><tr><th>Birth Date</th><th class="text-end">Offspring</th></tr></thead>
+                                <tbody>${history}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            document.getElementById('motherDetailBody').innerHTML = `
+                <div class="text-center text-danger py-4">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    <p class="mt-2">Could not load this mother's production detail.</p>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="openMotherDetail('${animalId}')">Retry</button>
+                </div>
+            `;
+        }
+    }
+</script>
+</body>
+</html>

@@ -14,6 +14,7 @@
         .btn-add:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
         .table-actions { white-space: nowrap; }
         .add-form-section { background: #f0f8ff; border-radius: 10px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #2e8b9e; }
+        .section-label { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em; color: #1a5f7a; font-weight: 600; margin: 14px 0 6px; }
     </style>
 </head>
 <body>
@@ -42,6 +43,8 @@
         <div class="add-form-section">
             <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add New Category</h5>
             <form th:action="@{/livestock/categories/new}" th:object="${category}" method="post">
+
+                <div class="section-label">Basic Info</div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Category Name *</label>
@@ -55,34 +58,56 @@
                                oninput="this.value = this.value.toUpperCase()" required>
                         <div class="form-text">Auto-uppercased</div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Gestation (months)</label>
-                        <input type="number" class="form-control" th:field="*{gestationPeriodMonths}"
-                               placeholder="e.g. 5" min="1" max="24">
-                        <div class="form-text">Pregnancy duration</div>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Min Breeding Age (months)</label>
-                        <input type="number" class="form-control" th:field="*{minBreedingAgeMonths}"
-                               placeholder="e.g. 8" min="1" max="36">
-                        <div class="form-text">Age before first breeding</div>
-                    </div>
-
-                    <!-- FIX: description is a TEXT column (multi-sentence FAO notes,
-                         breed characteristics, husbandry notes, etc.), so it must be
-                         a textarea like the Edit page already has — not a single-line
-                         input that silently truncates the user's intent visually. -->
-                    <div class="col-md-12">
+                    <div class="col-md-6">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" th:field="*{description}" rows="2"
-                                  placeholder="Optional description — breed notes, husbandry standards, FAO classification notes, etc."></textarea>
+                        <input type="text" class="form-control" th:field="*{description}"
+                               placeholder="Optional short description">
                     </div>
+                </div>
 
-                    <div class="col-md-12 d-flex justify-content-end">
-                        <button type="submit" class="btn btn-add">
-                            <i class="bi bi-plus-circle"></i> Add Category
-                        </button>
+                <div class="section-label">Breeding &amp; Gestation (FAO standards)</div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Gestation (days)</label>
+                        <input type="number" class="form-control" id="addGestationDays"
+                               th:field="*{gestationPeriodDays}"
+                               placeholder="e.g. 150" min="1" oninput="updateAddGestationMonths()">
+                        <div class="form-text" id="addGestationMonthsHint">Months auto-calculated</div>
                     </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Min Breeding Age (mo)</label>
+                        <input type="number" class="form-control" th:field="*{minBreedingAgeMonths}"
+                               placeholder="e.g. 8" min="1" max="60">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Max Breeding Age (mo)</label>
+                        <input type="number" class="form-control" th:field="*{maxBreedingAgeMonths}"
+                               placeholder="e.g. 96" min="1">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Recovery (days)</label>
+                        <input type="number" class="form-control" th:field="*{postpartumRecoveryDays}"
+                               placeholder="45" min="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Weaning (days)</label>
+                        <input type="number" class="form-control" th:field="*{weaningPeriodDays}"
+                               placeholder="90" min="0">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Litter</label>
+                        <input type="number" class="form-control" th:field="*{typicalLitterSize}"
+                               placeholder="1" min="1">
+                    </div>
+                </div>
+
+                <!-- FIX: this Save/Add button and the closing </form> tag were missing entirely,
+                     which is why no save button appeared and the form silently swallowed the
+                     reports links, search bar, and table below it. -->
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="submit" class="btn btn-add">
+                        <i class="bi bi-plus-circle"></i> Add Category
+                    </button>
                 </div>
             </form>
         </div>
@@ -121,15 +146,17 @@
                     <th>#</th>
                     <th>Category Name</th>
                     <th>Code</th>
-                    <th>Gestation (months)</th>
-                    <th>Min Breeding Age (months)</th>
+                    <th>Gestation</th>
+                    <th>Breeding Age</th>
+                    <th>Weaning</th>
+                    <th>Litter Size</th>
                     <th>Description</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${categories == null or categories.empty}">
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="9" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-1"></i>
                         <p class="mt-2">No categories yet. Add your first category above.</p>
                     </td>
@@ -139,19 +166,23 @@
                     <td><strong th:text="${cat.name}">Cattle</strong></td>
                     <td><span class="badge bg-primary" th:text="${cat.code}">CTL</span></td>
                     <td>
-                        <span th:if="${cat.gestationPeriodMonths != null}"
+                        <span th:if="${cat.gestationPeriodDays != null}"
                               class="badge bg-info text-dark"
-                              th:text="${cat.gestationPeriodMonths + ' months'}"></span>
-                        <span th:if="${cat.gestationPeriodMonths == null}"
+                              th:text="${cat.gestationPeriodDays + ' days (' + cat.gestationPeriodMonths + ' mo)'}"></span>
+                        <span th:if="${cat.gestationPeriodDays == null}"
                               class="text-muted small">—</span>
                     </td>
                     <td>
                         <span th:if="${cat.minBreedingAgeMonths != null}"
                               class="badge bg-success"
-                              th:text="${cat.minBreedingAgeMonths + ' months'}"></span>
+                              th:text="${cat.minBreedingAgeMonths + '–' + (cat.maxBreedingAgeMonths != null ? cat.maxBreedingAgeMonths : '?') + ' mo'}"></span>
                         <span th:if="${cat.minBreedingAgeMonths == null}"
                               class="text-muted small">—</span>
                     </td>
+                    <td>
+                        <span class="badge bg-secondary" th:text="${cat.weaningPeriodDays + ' days'}"></span>
+                    </td>
+                    <td th:text="${cat.typicalLitterSize}">1</td>
                     <td>
                         <span th:if="${cat.description != null and !cat.description.isEmpty()}"
                               class="small" th:text="${cat.description}"></span>
@@ -181,7 +212,7 @@
                                     <div class="modal-body">
                                         Are you sure you want to delete category
                                         <strong th:text="${cat.name}">this category</strong>?
-                                        <br><small class="text-danger">This will fail if livestock are assigned to this category.</small>
+                                        <br><small class="text-muted">This is a soft delete — the category is hidden but preserved for existing livestock records and history.</small>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -210,6 +241,14 @@
             row.style.display = row.textContent.toLowerCase().includes(v) ? '' : 'none';
         });
     });
+
+    function updateAddGestationMonths() {
+        const days = parseFloat(document.getElementById('addGestationDays').value);
+        const hint = document.getElementById('addGestationMonthsHint');
+        hint.textContent = days > 0
+            ? '≈ ' + Math.round(days / 30.44) + ' months (auto-calculated on save)'
+            : 'Months auto-calculated';
+    }
 </script>
 </body>
 </html>

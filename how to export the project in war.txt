@@ -1,6 +1,0 @@
-readiness:
---923:YES
---938:YES
---935:YES
---937:YES
---939:NO

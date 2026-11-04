@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ready to Breed Report</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!--
+      NOTE: replace with your app's actual layout include, e.g.
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}"
+      and the sidebar with th:replace="~{fragments/sidebar :: sidebar}".
+
+      IMPORTANT (see history of this file): row markup below is written
+      DIRECTLY inline inside each th:block th:each, once for the READY
+      section and once for the ALMOST_READY section — it is intentionally
+      NOT factored out into a separate th:replace="~{... :: rowContent(...)}"
+      fragment call. Thymeleaf processes th:insert/th:replace with HIGHER
+      precedence than th:each on the same element, which can evaluate the
+      fragment's parameter expression before th:each has bound the loop
+      variable, throwing "cannot be found on null" — this bit us twice.
+      Keeping the markup inline (a little duplication) sidesteps that whole
+      class of bug. If you want to de-duplicate later, do it with a real
+      templating include mechanism outside Thymeleaf (e.g. a build step),
+      not with th:replace inside th:each.
+    -->
+    <style>
+        :root {
+            --rtb-ink: #1b2420; --rtb-muted: #6b7a72; --rtb-line: #e4e8e5;
+            --rtb-surface: #ffffff; --rtb-bg: #f6f8f6;
+            --rtb-purple: #7c3aed; --rtb-purple-bg: #ede9fe; --rtb-purple-line: #c4b5fd;
+            --rtb-amber: #b45309; --rtb-amber-bg: #fef3c7; --rtb-amber-line: #fcd34d;
+            --rtb-red: #b5482f; --rtb-red-bg: #fee2e2; --rtb-red-line: #fca5a5;
+            --rtb-green: #16a34a; --rtb-green-bg: #d1fae5; --rtb-green-line: #a7f3d0;
+            --rtb-blue: #0369a1; --rtb-blue-bg: #e0f2fe; --rtb-blue-line: #bae6fd;
+            --rtb-radius: 12px;
+        }
+        body { background: var(--rtb-bg); color: var(--rtb-ink); font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+        .rtb-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .rtb-header p { color: var(--rtb-muted); margin: 2px 0 0; font-size: .9rem; max-width: 680px; }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin: 18px 0 22px; }
+        @media (max-width: 1500px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card { background: var(--rtb-surface); border: 1px solid var(--rtb-line); border-radius: var(--rtb-radius); padding: 12px 14px; }
+        .kpi-card .kpi-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .9rem; margin-bottom: 6px; }
+        .kpi-card .kpi-value { font-size: 1.3rem; font-weight: 700; line-height: 1; }
+        .kpi-card .kpi-label { color: var(--rtb-muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 5px; }
+        .kpi-icon.bg-purple { background: rgba(124,58,237,.12); color: var(--rtb-purple); }
+        .kpi-icon.bg-green  { background: rgba(22,163,74,.12);  color: var(--rtb-green); }
+        .kpi-icon.bg-amber  { background: rgba(180,83,9,.12);   color: var(--rtb-amber); }
+        .kpi-icon.bg-red    { background: rgba(181,72,47,.12);  color: var(--rtb-red); }
+
+        .filter-bar { background: var(--rtb-surface); border: 1px solid var(--rtb-line); border-radius: var(--rtb-radius); padding: 14px 16px; margin-bottom: 18px; }
+        .filter-bar .form-label { font-size: .78rem; color: var(--rtb-muted); margin-bottom: 4px; }
+        .btn-primary-rtb { background: var(--rtb-purple); border-color: var(--rtb-purple); }
+        .btn-primary-rtb:hover { background: #6425c9; border-color: #6425c9; }
+
+        .report-table-wrap { background: var(--rtb-surface); border: 1px solid var(--rtb-line); border-radius: var(--rtb-radius); overflow: hidden; }
+        .table-scroll { overflow-x: auto; }
+        .report-table { width: 100%; min-width: 1500px; border-collapse: collapse; font-size: .8rem; }
+        .report-table thead th { background: #f5f3ff; color: var(--rtb-muted); text-transform: uppercase; font-size: .62rem; letter-spacing: .02em; font-weight: 700; padding: 9px 8px; text-align: left; white-space: nowrap; position: sticky; top: 0; }
+        .report-table tbody td { padding: 10px 8px; border-top: 1px solid var(--rtb-line); vertical-align: top; }
+        .report-table tbody tr.row-overdue  { background: #fef2f0; }
+        .report-table tbody tr.row-awaiting { background: #fffbeb; }
+        .report-table tbody tr.row-almost   { background: #fefcf5; }
+        .report-table tbody tr:hover { filter: brightness(0.98); }
+
+        .section-row td { background: #f5f3ff !important; padding: 8px 12px !important; font-weight: 700; font-size: .78rem; color: var(--rtb-purple); border-top: 2px solid var(--rtb-purple-line) !important; }
+        .section-row.almost td { background: #fffbeb !important; color: var(--rtb-amber); border-top: 2px solid var(--rtb-amber-line) !important; }
+
+        .tag-pill { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #1b2420; white-space: nowrap; text-decoration: none; }
+        .cat-badge { display: inline-block; background: var(--rtb-blue-bg); color: var(--rtb-blue); border: 1px solid var(--rtb-blue-line); border-radius: 10px; padding: 1px 8px; font-size: .68rem; font-weight: 700; white-space: nowrap; }
+        .gender-icon.MALE { color: #0369a1; } .gender-icon.FEMALE { color: #be185d; }
+        .status-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 10px; font-size: .72rem; font-weight: 700; white-space: nowrap; }
+        .status-notified { background: var(--rtb-green-bg); color: #065f46; border: 1px solid var(--rtb-green-line); }
+        .status-awaiting { background: var(--rtb-amber-bg); color: var(--rtb-amber); border: 1px solid var(--rtb-amber-line); }
+        .status-overdue  { background: var(--rtb-red-bg);   color: var(--rtb-red);   border: 1px solid var(--rtb-red-line); }
+
+        .reason-checklist { display: flex; flex-direction: column; gap: 3px; min-width: 190px; }
+        .reason-checklist .reason-item { display: flex; align-items: center; gap: 5px; font-size: .72rem; line-height: 1.2; }
+        .reason-checklist .reason-item.met { color: #065f46; }
+        .reason-checklist .reason-item.unmet { color: var(--rtb-red); }
+        .reason-checklist .reason-item i { font-size: .8rem; flex-shrink: 0; }
+
+        .location-primary { display: flex; align-items: center; gap: 5px; font-weight: 600; font-size: .78rem; max-width: 210px; }
+        .location-primary i { color: var(--rtb-muted); font-size: .74rem; flex-shrink: 0; }
+        .location-primary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .location-secondary { color: var(--rtb-muted); font-size: .68rem; margin-top: 2px; padding-left: 18px; max-width: 210px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .beneficiary-name { font-weight: 600; }
+        .beneficiary-phone { color: var(--rtb-muted); font-size: .72rem; }
+
+        .days-ready-badge { font-weight: 700; }
+        .days-until-badge { color: var(--rtb-amber); font-weight: 600; font-size: .78rem; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--rtb-muted); }
+        .empty-state i { font-size: 2.2rem; opacity: .5; }
+        .table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--rtb-line); flex-wrap: wrap; gap: 6px; }
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-size: .85rem; color: var(--rtb-muted); }
+        .perf-muted { color: var(--rtb-muted); font-size: .72rem; }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4 px-4" style="max-width: 1650px;">
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 rtb-header">
+        <div>
+            <h1><i class="bi bi-heart-arrow me-2" style="color: var(--rtb-purple);"></i>Ready to Breed Report</h1>
+            <p>Which animals can be bred now, and why they're ready — full reason checklist, ready-since and
+                recommended breeding dates, and who to notify. Animals missing any requirement show under
+                "Almost Ready" rather than mixed into the ready list. Retirement info lives in the Breeding
+                Eligibility &amp; Reproductive Performance Report.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/ready-to-breed-report/export(categoryId=${categoryIdFilter}, search=${searchFilter}, notifyStatus=${notifyStatusFilter}, readiness=${readinessFilter})}">
+                <i class="bi bi-filetype-csv me-1"></i>CSV
+            </a>
+            <a class="btn btn-outline-primary btn-sm"
+               th:href="@{/livestock/ready-to-breed-report/export/pdf(categoryId=${categoryIdFilter}, search=${searchFilter}, notifyStatus=${notifyStatusFilter}, readiness=${readinessFilter})}">
+                <i class="bi bi-filetype-pdf me-1"></i>Download PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green"><i class="bi bi-heart-arrow"></i></div>
+            <div class="kpi-value" th:text="${kpis.totalReadyToBreed}">0</div>
+            <div class="kpi-label">🟢 Ready (4/4)</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-amber"><i class="bi bi-hourglass-split"></i></div>
+            <div class="kpi-value" th:text="${kpis.almostReady}">0</div>
+            <div class="kpi-label">🟡 Almost Ready</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green"><i class="bi bi-bell-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.notified}">0</div>
+            <div class="kpi-label">Notified</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-amber"><i class="bi bi-clock-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.awaitingNotification}">0</div>
+            <div class="kpi-label">Awaiting Notification</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-red"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.notificationOverdue}">0</div>
+            <div class="kpi-label">Notification Overdue</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-purple"><i class="bi bi-stars"></i></div>
+            <div class="kpi-value" th:text="${kpis.firstTimeBreeders}">0</div>
+            <div class="kpi-label">First-Time Breeders</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green"><i class="bi bi-graph-up"></i></div>
+            <div class="kpi-value" th:text="${kpis.averageDaysReady}">0</div>
+            <div class="kpi-label">Avg. Days Ready</div>
+        </div>
+    </div>
+
+    <!-- FILTERS -->
+    <form class="filter-bar" method="get" th:action="@{/livestock/ready-to-breed-report}">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label">Readiness</label>
+                <select name="readiness" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="READY" th:selected="${readinessFilter == 'READY'}">🟢 Ready (4/4)</option>
+                    <option value="ALMOST_READY" th:selected="${readinessFilter == 'ALMOST_READY'}">🟡 Almost Ready</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <select name="categoryId" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}" th:text="${cat.name}"
+                            th:selected="${cat.id == categoryIdFilter}"></option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Notification Status</label>
+                <select name="notifyStatus" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="NOTIFIED" th:selected="${notifyStatusFilter == 'NOTIFIED'}">🟢 Notified</option>
+                    <option value="AWAITING" th:selected="${notifyStatusFilter == 'AWAITING'}">🟡 Awaiting Notification</option>
+                    <option value="OVERDUE" th:selected="${notifyStatusFilter == 'OVERDUE'}">🔴 Notification Overdue</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Search Tag</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="e.g. GOAT-005" th:value="${searchFilter}">
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-rtb btn-sm text-white flex-grow-1">
+                    <i class="bi bi-funnel-fill me-1"></i>Apply
+                </button>
+                <a th:href="@{/livestock/ready-to-breed-report}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- TABLE -->
+    <div class="report-table-wrap">
+        <div class="table-toolbar">
+            <div><strong th:text="${totalItems}">0</strong> animal<span th:if="${totalItems != 1}">s</span> matching filters
+                <span class="perf-muted ms-2"><i class="bi bi-info-circle"></i> sorted Ready first, then Almost Ready</span>
+            </div>
+            <div class="text-muted small">Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span></div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(rows)}" class="empty-state">
+            <i class="bi bi-heart"></i>
+            <p class="mt-3 mb-0">No animals match the current filters.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(rows)}" class="table-scroll">
+            <table class="report-table">
+                <thead>
+                <tr>
+                    <th>Tag</th><th>Category</th><th>Gender</th><th>Age</th>
+                    <th>Last Birth Date</th><th>Last Breeding Date</th>
+                    <th>Ready Since</th><th>Recommended Breeding Date</th><th>Days Ready</th>
+                    <th>Beneficiary</th><th>Location</th><th>Reason Checklist</th>
+                    <th>Notification Status</th><th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <!-- ================= READY section ================= -->
+                <tr class="section-row" th:if="${!#lists.isEmpty(rows.?[readinessStatus == 'READY'])}">
+                    <td colspan="14">🟢 Ready to Breed — 4/4 requirements met</td>
+                </tr>
+                <th:block th:each="row : ${rows.?[readinessStatus == 'READY']}">
+                    <tr th:classappend="${row.notificationStatus == 'OVERDUE'} ? 'row-overdue' : (${row.notificationStatus == 'AWAITING'} ? 'row-awaiting' : '')">
+                        <td>
+                            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="tag-pill">
+                                <i class="bi bi-tag-fill" style="color: var(--rtb-purple);"></i><span th:text="${row.tagNumber}">GOAT-005</span>
+                            </a>
+                        </td>
+                        <td><span class="cat-badge" th:text="${row.categoryName}">Goat</span></td>
+                        <td><i th:class="'bi gender-icon ' + ${row.gender} + ' ' + (${row.gender == 'MALE'} ? 'bi-gender-male' : 'bi-gender-female')"></i></td>
+                        <td th:text="${row.ageDisplay}">1y 6m</td>
+                        <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yyyy') : 'No births yet'}">—</td>
+                        <td th:text="${row.lastBreedingDate != null ? #temporals.format(row.lastBreedingDate, 'dd MMM yyyy') : 'Never bred'}">—</td>
+                        <td th:text="${row.readySince != null ? #temporals.format(row.readySince, 'dd MMM yyyy') : '—'}">—</td>
+                        <td th:text="${row.recommendedBreedingDate != null ? #temporals.format(row.recommendedBreedingDate, 'dd MMM yyyy') : '—'}">—</td>
+                        <td><span class="days-ready-badge" th:text="${row.daysReadyForBreeding} + 'd ready'">0d ready</span></td>
+                        <td>
+                            <div class="beneficiary-name" th:text="${row.beneficiaryName != null ? row.beneficiaryName : '—'}">—</div>
+                            <div class="beneficiary-phone" th:if="${row.beneficiaryPhone != null}" th:text="${row.beneficiaryPhone}"></div>
+                        </td>
+                        <td>
+                            <div class="location-primary" th:title="${row.animalLocationBreadcrumb}">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span th:text="${row.animalLocationPrimary}">Village</span>
+                            </div>
+                            <div class="location-secondary" th:if="${!#strings.isEmpty(row.animalLocationSecondary)}"
+                                 th:text="${row.animalLocationSecondary}" th:title="${row.animalLocationBreadcrumb}">District › Province</div>
+                        </td>
+                        <td>
+                            <div class="reason-checklist">
+                                <div class="reason-item" th:each="item : ${row.reasonChecklist}"
+                                     th:classappend="${item.met} ? 'met' : 'unmet'">
+                                    <i class="bi" th:classappend="${item.met} ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                                    <span th:text="${item.label}"></span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                        <span class="status-pill"
+                              th:classappend="'status-' + ${#strings.toLowerCase(row.notificationStatus)}"
+                              th:text="${row.notificationStatusLabel}">🟢 Notified</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="btn btn-sm btn-info" title="View Animal"><i class="bi bi-eye"></i></a>
+                            <form th:if="${!row.notified}" style="display:inline"
+                                  th:action="@{/livestock/ready-to-breed-report/{id}/notify(id=${row.livestockId})}" method="post">
+                                <input type="hidden" name="categoryId" th:value="${categoryIdFilter}">
+                                <input type="hidden" name="search" th:value="${searchFilter}">
+                                <input type="hidden" name="notifyStatus" th:value="${notifyStatusFilter}">
+                                <input type="hidden" name="readiness" th:value="${readinessFilter}">
+                                <input type="hidden" name="page" th:value="${currentPage}">
+                                <button type="submit" class="btn btn-sm btn-warning" title="Mark Notified"><i class="bi bi-bell-fill"></i></button>
+                            </form>
+                            <a th:href="@{/livestock/breeding/management}" class="btn btn-sm btn-success" title="Start Breeding"><i class="bi bi-heart-fill"></i></a>
+                        </td>
+                    </tr>
+                </th:block>
+
+                <!-- ================= ALMOST READY section ================= -->
+                <tr class="section-row almost" th:if="${!#lists.isEmpty(rows.?[readinessStatus == 'ALMOST_READY'])}">
+                    <td colspan="14">🟡 Almost Ready — pending requirements</td>
+                </tr>
+                <th:block th:each="row : ${rows.?[readinessStatus == 'ALMOST_READY']}">
+                    <tr class="row-almost">
+                        <td>
+                            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="tag-pill">
+                                <i class="bi bi-tag-fill" style="color: var(--rtb-purple);"></i><span th:text="${row.tagNumber}">GOAT-005</span>
+                            </a>
+                        </td>
+                        <td><span class="cat-badge" th:text="${row.categoryName}">Goat</span></td>
+                        <td><i th:class="'bi gender-icon ' + ${row.gender} + ' ' + (${row.gender == 'MALE'} ? 'bi-gender-male' : 'bi-gender-female')"></i></td>
+                        <td th:text="${row.ageDisplay}">1y 6m</td>
+                        <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yyyy') : 'No births yet'}">—</td>
+                        <td th:text="${row.lastBreedingDate != null ? #temporals.format(row.lastBreedingDate, 'dd MMM yyyy') : 'Never bred'}">—</td>
+                        <td th:text="${row.readySince != null ? #temporals.format(row.readySince, 'dd MMM yyyy') : '—'}">—</td>
+                        <td th:text="${row.recommendedBreedingDate != null ? #temporals.format(row.recommendedBreedingDate, 'dd MMM yyyy') : '—'}">—</td>
+                        <td><span class="days-until-badge" th:text="'in ' + ${row.daysUntilReady} + 'd'">in 0d</span></td>
+                        <td>
+                            <div class="beneficiary-name" th:text="${row.beneficiaryName != null ? row.beneficiaryName : '—'}">—</div>
+                            <div class="beneficiary-phone" th:if="${row.beneficiaryPhone != null}" th:text="${row.beneficiaryPhone}"></div>
+                        </td>
+                        <td>
+                            <div class="location-primary" th:title="${row.animalLocationBreadcrumb}">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span th:text="${row.animalLocationPrimary}">Village</span>
+                            </div>
+                            <div class="location-secondary" th:if="${!#strings.isEmpty(row.animalLocationSecondary)}"
+                                 th:text="${row.animalLocationSecondary}" th:title="${row.animalLocationBreadcrumb}">District › Province</div>
+                        </td>
+                        <td>
+                            <div class="reason-checklist">
+                                <div class="reason-item" th:each="item : ${row.reasonChecklist}"
+                                     th:classappend="${item.met} ? 'met' : 'unmet'">
+                                    <i class="bi" th:classappend="${item.met} ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                                    <span th:text="${item.label}"></span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                        <span class="status-pill"
+                              th:classappend="'status-' + ${#strings.toLowerCase(row.notificationStatus)}"
+                              th:text="${row.notificationStatusLabel}">🟡 Awaiting Notification</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="btn btn-sm btn-info" title="View Animal"><i class="bi bi-eye"></i></a>
+                        </td>
+                    </tr>
+                </th:block>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar" th:if="${totalPages > 1}">
+            <div th:text="'Showing page ' + (${currentPage} + 1) + ' of ' + ${totalPages} + ' · ' + ${pageSize} + ' rows/page'"></div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-outline-secondary" th:classappend="${currentPage == 0} ? 'disabled'"
+                   th:href="@{/livestock/ready-to-breed-report(page=${currentPage - 1}, size=${pageSize}, categoryId=${categoryIdFilter}, search=${searchFilter}, notifyStatus=${notifyStatusFilter}, readiness=${readinessFilter})}">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'"
+                   th:href="@{/livestock/ready-to-breed-report(page=${currentPage + 1}, size=${pageSize}, categoryId=${categoryIdFilter}, search=${searchFilter}, notifyStatus=${notifyStatusFilter}, readiness=${readinessFilter})}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Livestock Deaths Report</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink:#1a2535; --muted:#64748b; --line:#e2e8f0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background:#f0f2f5;
+            font-family:'Inter', system-ui, -apple-system, sans-serif;
+            padding:0; margin:0; color:var(--ink);
+            font-feature-settings: 'cv11', 'ss01';
+        }
+
+        /* ─── COMPACT HEADER ─── */
+        .report-banner {
+            background:linear-gradient(135deg,#1a2535 0%,#7f1d1d 60%,#dc2626 100%);
+            padding:12px 24px; color:white;
+        }
+        .report-banner .banner-row {
+            display:flex; align-items:center; justify-content:space-between;
+            gap:16px; flex-wrap:wrap; max-width:1600px; margin:0 auto;
+        }
+        .report-banner .banner-title {
+            display:flex; align-items:baseline; gap:12px;
+            flex-wrap:wrap; min-width:0;
+        }
+        .report-banner h2 {
+            font-size:1.05rem; font-weight:700; margin:0;
+            letter-spacing:-0.01em; white-space:nowrap;
+        }
+        .report-banner h2 i { font-size:1rem; margin-right:6px; opacity:.9; }
+        .report-banner .sub {
+            font-size:.75rem; opacity:.75; font-weight:500; white-space:nowrap;
+        }
+        .report-banner .sub strong { color:#fff; opacity:1; font-weight:600; }
+        .report-banner .sub .sep { opacity:.5; margin:0 6px; }
+        .report-banner .meta {
+            font-family:'Inter', monospace; font-size:.68rem;
+            opacity:.6; font-weight:500; white-space:nowrap;
+        }
+        .print-btn {
+            background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.28);
+            color:white; border-radius:6px;
+            padding:5px 12px; font-size:.75rem; font-weight:600;
+            cursor:pointer; text-decoration:none;
+            display:inline-flex; align-items:center; gap:5px;
+            transition:background .15s ease;
+        }
+        .print-btn:hover { background:rgba(255,255,255,.24); color:white; }
+
+        .report-body { padding:20px 24px; max-width:1600px; margin:0 auto; }
+
+        /* ─── FILTER CARD ─── */
+        .filter-card {
+            background:white; border-radius:10px; padding:14px 18px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05); margin-bottom:18px;
+            border:1px solid var(--line);
+        }
+
+        /* ─── SECTION HEADER ─── */
+        .sec-head { display:flex; align-items:center; gap:8px; margin:20px 0 12px; }
+        .sec-head .sec-icon {
+            width:30px; height:30px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.85rem; flex-shrink:0;
+        }
+        .sec-head h5 { font-size:.88rem; font-weight:700; margin:0; letter-spacing:-0.005em; }
+        .sec-head .sec-count {
+            background:#f1f5f9; border:1px solid var(--line); border-radius:20px;
+            padding:2px 9px; font-size:.68rem; font-weight:600; color:#475569;
+        }
+
+        /* ─── KPI STRIP ─── */
+        .kpi-strip {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:10px; margin-bottom:18px;
+        }
+        .kpi {
+            background:white; border-radius:10px; padding:12px 14px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+            border-top:3px solid transparent;
+            border-left:1px solid var(--line);
+            border-right:1px solid var(--line);
+            border-bottom:1px solid var(--line);
+        }
+        .kpi.k-total    { border-top-color:#dc2626; }
+        .kpi.k-month    { border-top-color:#ea580c; }
+        .kpi.k-animals  { border-top-color:#8b5cf6; }
+        .kpi.k-cause    { border-top-color:#0ea5e9; }
+        .kpi .kpi-num {
+            font-size:1.5rem; font-weight:700; line-height:1.1;
+            letter-spacing:-0.02em;
+        }
+        .kpi .kpi-lbl {
+            font-size:.65rem; font-weight:600; color:var(--muted);
+            margin-top:4px; text-transform:uppercase; letter-spacing:.04em;
+        }
+        .kpi .kpi-icon { font-size:1.05rem; margin-bottom:4px; }
+        .kpi .kpi-sub { font-size:.66rem; color:#94a3b8; margin-top:2px; font-weight:500; }
+
+        /* ─── CHART CARDS ─── */
+        .chart-card {
+            background:white; border-radius:10px; padding:14px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+            border:1px solid var(--line);
+        }
+        .chart-card h6 {
+            font-weight:600; font-size:.72rem; text-transform:uppercase;
+            letter-spacing:.05em; color:var(--muted); margin-bottom:10px;
+        }
+        .chart-wrapper { position:relative; height:210px; width:100%; }
+
+        /* ─── TABLE ─── */
+        .table-wrapper {
+            border:1px solid var(--line); border-radius:10px;
+            overflow:hidden; margin-bottom:18px;
+        }
+        .table {
+            font-size:.72rem; margin-bottom:0; width:100%;
+            table-layout:fixed;
+        }
+        .table thead th {
+            font-size:.6rem; text-transform:uppercase;
+            letter-spacing:.03em; color:#475569; font-weight:700;
+            padding:9px 6px; background:#f8fafc;
+            border-bottom:2px solid var(--line); white-space:nowrap;
+            vertical-align:middle; overflow:hidden; text-overflow:ellipsis;
+        }
+        .table td {
+            padding:8px 6px; vertical-align:middle;
+            border-bottom:1px solid #f1f5f9; font-size:.72rem;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .table tbody tr:nth-child(even) { background:#fafbfc; }
+        .table tbody tr:hover { background:#fef2f2; }
+        .text-end { text-align:right; }
+
+        /* Column widths */
+        .col-num    { width:2.5%; }
+        .col-animal { width:8%; }
+        .col-benef  { width:12%; }
+        .col-vet    { width:12%; }
+        .col-loc    { width:13%; }
+        .col-date   { width:8%; }
+        .col-cause  { width:22%; }
+        .col-notes  { width:22%; }
+
+        .cell-name {
+            font-weight:600; color:var(--ink); display:block;
+            line-height:1.2; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .cell-sub {
+            font-size:.6rem; color:#94a3b8; display:block;
+            margin-top:1px; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .cell-sub i { font-size:.55rem; margin-right:2px; }
+
+        .cell-location {
+            font-size:.62rem; color:#475569;
+            line-height:1.3; display:block;
+        }
+        .cell-location .loc-level { display:inline; }
+        .cell-location .loc-level::after { content:' › '; color:#cbd5e1; }
+        .cell-location .loc-level:last-child::after { content:''; }
+
+        .cause-chip {
+            display:inline-flex; align-items:center; gap:4px;
+            background:#fef2f2; border:1px solid #fecaca;
+            color:#991b1b; border-radius:20px;
+            padding:2px 8px; font-size:.62rem; font-weight:600;
+        }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state { text-align:center; padding:36px 20px; color:#94a3b8; }
+        .empty-state i {
+            font-size:2rem; display:block;
+            margin-bottom:8px; color:#cbd5e1;
+        }
+        .empty-state p { margin:0; font-size:.85rem; }
+
+        /* ─── FOOTER ─── */
+        .report-footer {
+            margin-top:24px; padding-top:14px;
+            border-top:1px dashed #cbd5e1;
+            display:grid; grid-template-columns:1fr auto 1fr;
+            gap:20px; align-items:end;
+            font-size:.68rem; color:#94a3b8;
+        }
+        .report-footer .sig-line {
+            border-bottom:1px solid #cbd5e1;
+            height:24px; margin-bottom:4px;
+        }
+        .report-footer .sig-lbl {
+            font-size:.62rem; text-transform:uppercase;
+            letter-spacing:.05em; font-weight:600; color:#94a3b8;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            .kpi-strip { grid-template-columns:1fr 1fr; }
+            .report-banner .banner-title { font-size:.95rem; }
+        }
+
+        /* ─── PRINT ─── */
+        @page { size: A4 landscape; margin: 8mm; }
+
+        @media print {
+            .no-print { display:none !important; }
+            html, body {
+                background:white !important;
+                margin:0 !important; padding:0 !important;
+                font-size:7pt !important; color:#000 !important;
+                width:100% !important; overflow:visible !important;
+            }
+            .report-banner {
+                background:#7f1d1d !important;
+                -webkit-print-color-adjust:exact;
+                print-color-adjust:exact;
+                padding:8px 14px !important;
+            }
+            .report-banner h2 { font-size:11pt !important; }
+            .report-banner .sub, .report-banner .meta { font-size:6.5pt !important; }
+            .filter-card, .print-btn { display:none !important; }
+
+            .kpi-strip { grid-template-columns:repeat(4, 1fr) !important; gap:5px !important; }
+            .kpi { padding:5px 6px !important; border:1px solid #999 !important; }
+            .kpi .kpi-num { font-size:11pt !important; }
+            .kpi .kpi-lbl { font-size:4.5pt !important; }
+            .kpi .kpi-icon { font-size:8pt !important; margin-bottom:1px !important; }
+            .kpi .kpi-sub { display:none !important; }
+
+            .chart-wrapper { height:130px !important; }
+            .chart-card { padding:6px !important; border:1px solid #ccc !important; }
+
+            .table-wrapper { border:1px solid #999 !important; border-radius:0 !important; overflow:visible !important; width:100% !important; page-break-inside:auto !important; }
+            .table-responsive { overflow:visible !important; width:100% !important; }
+            .table { font-size:5.5pt !important; width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; }
+            .table thead { display:table-header-group !important; }
+            .table thead th {
+                background:#e5e7eb !important; color:#000 !important;
+                font-size:4.5pt !important; padding:2px 1.5px !important;
+                border:1px solid #666 !important;
+                white-space:normal !important; line-height:1.1 !important;
+                text-align:center !important;
+            }
+            .table tbody tr { page-break-inside:avoid !important; }
+            .table tbody tr:nth-child(even) { background:#f8f8f8 !important; }
+            .table td {
+                padding:2px 1.5px !important;
+                border:1px solid #ddd !important;
+                font-size:5.5pt !important;
+                line-height:1.15 !important;
+            }
+            .cell-name { font-size:5.5pt !important; font-weight:700 !important; color:#000 !important; }
+            .cell-sub { font-size:5pt !important; color:#333 !important; }
+            .cell-location { font-size:5pt !important; color:#333 !important; }
+
+            .cause-chip {
+                border:1px solid #666 !important;
+                background:white !important;
+                color:#000 !important;
+                font-size:4.5pt !important;
+                padding:0 3px !important;
+            }
+
+            .report-footer { page-break-inside:avoid !important; }
+            .report-footer .sig-line { height:22px !important; border-bottom:1px solid #000 !important; }
+            .report-footer .sig-lbl { font-size:6pt !important; color:#000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COMPACT HEADER
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="report-banner">
+    <div class="banner-row">
+        <div class="banner-title">
+            <h2><i class="bi bi-x-circle-fill"></i>Livestock Deaths Report</h2>
+            <div class="sub">
+                <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong>
+                <span class="sep">→</span>
+                <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
+                <span class="sep">·</span>
+                <span th:text="${totalDeaths} + ' deaths'"></span>
+            </div>
+            <div class="meta">
+                ID: DTH-<span th:text="${#temporals.format(#temporals.createNow(),'yyyyMMdd-HHmm')}"></span>
+                <span class="sep">·</span>
+                <span th:text="${#temporals.format(#temporals.createNow(),'dd MMM yyyy HH:mm')}"></span>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="/livestock/deaths" class="print-btn"><i class="bi bi-arrow-left"></i> Back</a>
+            <button class="print-btn" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+</div>
+
+<div class="report-body">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FILTERS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="filter-card no-print">
+        <form method="get" action="/livestock/deaths-report" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">From Date</label>
+                <input type="date" name="from" class="form-control form-control-sm"
+                       th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold small mb-1">To Date</label>
+                <input type="date" name="to" class="form-control form-control-sm"
+                       th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger btn-sm text-white fw-bold w-100">
+                    <i class="bi bi-funnel me-1"></i> Apply
+                </button>
+            </div>
+            <div class="col-md-4 d-flex gap-2 flex-wrap">
+                <a th:href="@{/livestock/deaths-report(from=${#temporals.format(#temporals.createToday().withDayOfMonth(1),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday(),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-month me-1"></i>This Month</a>
+                <a th:href="@{/livestock/deaths-report(from=${#temporals.format(#temporals.createToday().withDayOfYear(1),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday(),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-year me-1"></i>This Year</a>
+                <a th:href="@{/livestock/deaths-report(from=${#temporals.format(#temporals.createToday().minusMonths(12),'yyyy-MM-dd')},to=${#temporals.format(#temporals.createToday().plusMonths(12),'yyyy-MM-dd')})}"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-range me-1"></i>±12 Months</a>
+                <a href="/livestock/deaths-report"
+                   class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle me-1"></i>Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         KPI STRIP
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="kpi-strip">
+        <div class="kpi k-total">
+            <div class="kpi-icon text-danger"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="kpi-num text-danger" th:text="${totalDeaths}">0</div>
+            <div class="kpi-lbl">Total Deaths</div>
+            <div class="kpi-sub">in selected period</div>
+        </div>
+        <div class="kpi k-month">
+            <div class="kpi-icon" style="color:#ea580c"><i class="bi bi-calendar-event"></i></div>
+            <div class="kpi-num" style="color:#ea580c" th:text="${thisMonthCount}">0</div>
+            <div class="kpi-lbl">This Month</div>
+            <div class="kpi-sub">current month</div>
+        </div>
+        <div class="kpi k-animals">
+            <div class="kpi-icon" style="color:#8b5cf6"><i class="bi bi-tag-fill"></i></div>
+            <div class="kpi-num" style="color:#8b5cf6" th:text="${distinctAnimals}">0</div>
+            <div class="kpi-lbl">Animals Deceased</div>
+            <div class="kpi-sub">distinct animals</div>
+        </div>
+        <div class="kpi k-cause">
+            <div class="kpi-icon" style="color:#0ea5e9"><i class="bi bi-clipboard2-pulse"></i></div>
+            <div class="kpi-num" style="color:#0ea5e9" th:text="${withCauseCount}">0</div>
+            <div class="kpi-lbl">Cause Recorded</div>
+            <div class="kpi-sub">diagnosed deaths</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         CHARTS ROW
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="chart-card h-100">
+                <h6><i class="bi bi-pie-chart-fill me-2 text-danger"></i>Causes of Death</h6>
+                <div class="chart-wrapper">
+                    <canvas id="causeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card h-100">
+                <h6><i class="bi bi-tag me-2 text-primary"></i>Deaths by Category</h6>
+                <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="chart-card h-100">
+                <h6><i class="bi bi-graph-up me-2 text-success"></i>12-Month Trend</h6>
+                <div class="chart-wrapper">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         DEATH RECORDS TABLE
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec-head">
+        <div class="sec-icon" style="background:#fee2e2;color:#991b1b;"><i class="bi bi-list-ul"></i></div>
+        <h5>Death Records</h5>
+        <span class="sec-count" th:text="${totalDeaths} + ' events'">0 events</span>
+    </div>
+
+    <div class="table-wrapper">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-animal">Animal</th>
+                    <th class="col-benef">Beneficiary</th>
+                    <th class="col-vet">Veterinarian</th>
+                    <th class="col-loc">Location</th>
+                    <th class="col-date">Death Date</th>
+                    <th class="col-cause">Cause of Death</th>
+                    <th class="col-notes">Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${deaths == null or deaths.empty}">
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No death records found in this period</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="d, i : ${deaths}">
+                    <td class="text-muted" th:text="${i.count}">1</td>
+
+                    <!-- Animal -->
+                    <td>
+                        <span class="cell-name"
+                              th:text="${d.livestock != null ? d.livestock.tagNumber : 'N/A'}">GOAT-001</span>
+                        <span class="cell-sub"
+                              th:if="${d.livestock?.livestockCategory != null}"
+                              th:text="${d.livestock.livestockCategory.name}">Goat</span>
+                    </td>
+
+                    <!-- Beneficiary -->
+                    <td>
+                        <th:block th:if="${d.livestock?.beneficiary != null}">
+                            <span class="cell-name" th:text="${d.livestock.beneficiary.fullName}">—</span>
+                            <span class="cell-sub" th:if="${d.livestock.beneficiary.phoneNumber != null}">
+                                <i class="bi bi-telephone-fill"></i>
+                                <span th:text="${d.livestock.beneficiary.phoneNumber}">—</span>
+                            </span>
+                        </th:block>
+                        <span th:if="${d.livestock?.beneficiary == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Veterinarian -->
+                    <td>
+                        <th:block th:if="${d.veterinarian != null}">
+                            <span class="cell-name" th:text="${d.veterinarian.fullName}">—</span>
+                            <span class="cell-sub" th:if="${d.veterinarian.phone != null}">
+                                <i class="bi bi-telephone-fill"></i>
+                                <span th:text="${d.veterinarian.phone}">—</span>
+                            </span>
+                        </th:block>
+                        <span th:if="${d.veterinarian == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Location -->
+                    <td>
+                        <th:block th:if="${d.livestock?.location != null}">
+                            <span class="cell-location">
+                                <th:block th:with="loc=${d.livestock.location}">
+                                    <span class="loc-level" th:text="${loc.name}">Village</span>
+                                    <th:block th:if="${loc.parent != null}">
+                                        <span class="loc-level" th:text="${loc.parent.name}">Cell</span>
+                                        <th:block th:if="${loc.parent.parent != null}">
+                                            <span class="loc-level" th:text="${loc.parent.parent.name}">Sector</span>
+                                            <th:block th:if="${loc.parent.parent.parent != null}">
+                                                <span class="loc-level" th:text="${loc.parent.parent.parent.name}">District</span>
+                                                <th:block th:if="${loc.parent.parent.parent.parent != null}">
+                                                    <span class="loc-level" th:text="${loc.parent.parent.parent.parent.name}">Province</span>
+                                                </th:block>
+                                            </th:block>
+                                        </th:block>
+                                    </th:block>
+                                </th:block>
+                            </span>
+                        </th:block>
+                        <span th:if="${d.livestock?.location == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Death Date -->
+                    <td th:text="${d.deathDate != null ? #temporals.format(d.deathDate,'dd MMM yyyy') : '—'}">10 Sep 2026</td>
+
+                    <!-- Cause of Death -->
+                    <td>
+                        <span th:if="${d.causeOfDeath != null and !d.causeOfDeath.isBlank()}" class="cause-chip">
+                            <i class="bi bi-clipboard2-pulse"></i>
+                            <span th:text="${d.causeOfDeath}"></span>
+                        </span>
+                        <span th:if="${d.causeOfDeath == null or d.causeOfDeath.isBlank()}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Notes -->
+                    <td class="text-muted"
+                        th:text="${d.notes != null and !d.notes.isBlank() ? d.notes : '—'}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FOOTER
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="report-footer">
+        <div>
+            <div class="sig-line"></div>
+            <div class="sig-lbl">Prepared By</div>
+        </div>
+        <div class="text-center" style="font-size:.64rem;">
+            <i class="bi bi-shield-check me-1 text-success"></i>
+            Confidential — for internal use<br>
+            Generated on <span th:text="${#temporals.format(#temporals.createNow(),'dd MMM yyyy HH:mm')}"></span>
+        </div>
+        <div class="text-end">
+            <div class="sig-line"></div>
+            <div class="sig-lbl">Reviewed By (Vet)</div>
+        </div>
+    </div>
+
+</div><!-- /report-body -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+
+        // Cause breakdown
+        var causeLabels = [];
+        var causeValues = [];
+        /*[# th:each="e : ${causeBreakdown}"]*/
+        causeLabels.push(/*[[${e.key}]]*/ '');
+        causeValues.push(/*[[${e.value}]]*/ 0);
+        /*[/]*/
+
+        // Category breakdown
+        var catLabels = [];
+        var catValues = [];
+        /*[# th:each="e : ${categoryBreakdown}"]*/
+        catLabels.push(/*[[${e.key}]]*/ '');
+        catValues.push(/*[[${e.value}]]*/ 0);
+        /*[/]*/
+
+        // Monthly trend
+        var trendLabels = [];
+        var trendValues = [];
+        /*[# th:each="e : ${monthlyTrend}"]*/
+        trendLabels.push(/*[[${e.key}]]*/ '');
+        trendValues.push(/*[[${e.value}]]*/ 0);
+        /*[/]*/
+
+        Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+        Chart.defaults.color       = '#64748b';
+
+        // Cause of Death doughnut
+        (function() {
+            var ctx = document.getElementById('causeChart');
+            if (!ctx) return;
+            var total = causeValues.reduce((a,b) => a + b, 0);
+            var data, labels, colors;
+            if (total === 0) {
+                data = [1]; labels = ['No data']; colors = ['#e2e8f0'];
+            } else {
+                data = causeValues;
+                labels = causeLabels;
+                colors = ['#dc2626', '#f59e0b', '#0ea5e9', '#8b5cf6', '#10b981', '#ea580c', '#6366f1', '#64748b'];
+            }
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{
+                    data: data,
+                    backgroundColor: colors.slice(0, data.length),
+                    borderColor: '#ffffff', borderWidth: 3
+                }]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { font: { size: 10 }, padding: 8, usePointStyle: true, boxWidth: 8 }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(c) {
+                                    if (total === 0) return ' No data in selected period';
+                                    return ' ' + c.label + ': ' + c.parsed;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        })();
+
+        // Category bar
+        (function() {
+            var ctx = document.getElementById('categoryChart');
+            if (!ctx) return;
+            var total = catValues.reduce((a,b) => a + b, 0);
+            if (total === 0) { catLabels = ['No data']; catValues = [0]; }
+            new Chart(ctx, {
+                type: 'bar',
+                data: { labels: catLabels, datasets: [{
+                    label: 'Deaths', data: catValues,
+                    backgroundColor: '#3b82f6', borderRadius: 6
+                }]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+                        x: { ticks: { font: { size: 10 }, maxRotation: 45 }, grid: { display: false } }
+                    }
+                }
+            });
+        })();
+
+        // Monthly trend line
+        (function() {
+            var ctx = document.getElementById('trendChart');
+            if (!ctx) return;
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Deaths',
+                        data: trendValues,
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220,38,38,0.1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#dc2626',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+                        x: { ticks: { font: { size: 9 }, maxRotation: 45 }, grid: { display: false } }
+                    }
+                }
+            });
+        })();
+
+    /*]]>*/
+</script>
+</body>
+</html>

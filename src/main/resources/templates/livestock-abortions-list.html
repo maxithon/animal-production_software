@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Livestock Abortions</title>
-    <!-- CSRF meta tags - required for Spring Security -->
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
@@ -12,7 +11,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ===== Base / compact typography ===== */
         body {
             background: #f8f9fa;
             padding: 20px;
@@ -31,21 +29,14 @@
         .btn { font-size: 0.8rem; }
         .btn-sm { font-size: 0.75rem; }
 
-        /* ===== Summary stats (new) ===== */
         .summary-stats { margin-bottom: 20px; }
         .stat-card {
-            background: #fff;
-            border: 1px solid #edf0f3;
-            border-radius: 10px;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            height: 100%;
+            background: #fff; border: 1px solid #edf0f3;
+            border-radius: 10px; padding: 14px 16px;
+            display: flex; align-items: center; gap: 12px; height: 100%;
         }
         .stat-icon {
-            width: 36px; height: 36px;
-            border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
             font-size: 1rem; flex-shrink: 0;
         }
@@ -59,14 +50,78 @@
             text-transform: uppercase; letter-spacing: 0.04em;
         }
 
-        /* -- Add form -- */
         .add-form-section {
             background: #fff5f5; border-left: 4px solid #dc3545;
             border-radius: 10px; padding: 18px; margin-bottom: 22px;
         }
         .add-form-section h5 { font-size: 0.95rem; font-weight: 700; }
 
-        /* -- Table -- */
+        .ls-wrapper { position: relative; }
+        .ls-input {
+            width: 100%;
+            padding: 0.45rem 2rem 0.45rem 0.65rem;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .ls-input:focus {
+            outline: none;
+            border-color: #dc3545;
+            box-shadow: 0 0 0 3px rgba(220,53,69,.12);
+        }
+        .ls-clear {
+            position: absolute; right: 8px; top: 50%;
+            transform: translateY(-50%);
+            border: none; background: transparent; cursor: pointer;
+            color: #adb5bd; font-size: 1rem; padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .ls-clear:hover { color: #dc3545; background: #fef2f2; }
+
+        .ls-dropdown {
+            position: absolute;
+            top: calc(100% + 4px); left: 0; right: 0;
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.10);
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+        }
+        .ls-dropdown.open { display: block; }
+        .ls-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f3f5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .ls-item:last-child { border-bottom: none; }
+        .ls-item:hover,
+        .ls-item.highlighted { background: #fef2f2; }
+        .ls-item-tag {
+            font-weight: 700; color: #dc3545; font-size: 0.85rem;
+            min-width: 80px;
+        }
+        .ls-item-meta { color: #6c757d; font-size: 0.75rem; }
+        .ls-item-due  { margin-left: auto; font-size: 0.7rem; color: #2563eb; font-weight: 600; }
+        .ls-empty {
+            padding: 14px; text-align: center; color: #94a3b8;
+            font-size: 0.8rem;
+        }
+        .ls-empty i { font-size: 1.4rem; display: block; margin-bottom: 4px; color: #dee2e6; }
+
+        .autofill-hint {
+            font-size: 0.72rem; color: #0d6efd;
+            margin-top: 4px; display: none;
+        }
+        .autofill-hint.show { display: block; }
+
         .table { font-size: 0.82rem; }
         .table thead th {
             font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
@@ -74,6 +129,14 @@
         }
         .table td, .table th { padding: 0.55rem 0.65rem; vertical-align: middle; }
         .badge { font-size: 0.7rem; }
+
+        .preg-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f5f3ff; color: #7c3aed;
+            border: 1px solid #ddd6fe;
+            font-size: 0.68rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -96,9 +159,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- -- Quick Summary (new) ------------------------------------------ -->
-        <!-- Computed directly from the 'abortions' list already passed to this view,
-             so no controller change is required. -->
+        <!-- Quick Summary -->
         <div class="row g-2 summary-stats"
              th:with="totalCount=${abortions == null ? 0 : abortions.size()},
                        thisMonthCount=${abortions == null ? 0 : abortions.?[abortionDate != null
@@ -143,46 +204,99 @@
                 </div>
             </div>
         </div>
-        <!-- -- End Quick Summary --------------------------------------------- -->
 
-        <!-- Add Form -->
+        <!-- ============ ADD FORM ============ -->
         <div class="add-form-section">
-            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record New Abortion</h5>
-            <form th:action="@{/livestock/abortions/new}" method="post">
+            <h5 class="mb-3">
+                <i class="bi bi-plus-circle"></i> Record New Abortion
+                <span class="preg-badge ms-2">
+                    <i class="bi bi-heart-pulse"></i>
+                    <span th:text="${pregnantLivestock == null ? 0 : pregnantLivestock.size()}">0</span>
+                    pregnant animal(s)
+                </span>
+            </h5>
+
+            <form th:action="@{/livestock/abortions/new}" method="post" id="abortionForm" autocomplete="off">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <input type="hidden" name="livestockId" id="livestockIdInput" required>
+
                 <div class="row g-3">
+
                     <div class="col-md-3">
-                        <label class="form-label">Animal (Tag) *</label>
-                        <select class="form-select" name="livestockId" required>
-                            <option value="">Select animal...</option>
-                            <option th:each="ls : ${livestockList}"
-                                    th:value="${ls.id}"
-                                    th:text="${ls.tagNumber + (ls.livestockCategory != null ? ' – ' + ls.livestockCategory.name : '')}">
-                            </option>
-                        </select>
+                        <label class="form-label">
+                            Animal (Tag) *
+                            <i class="bi bi-info-circle text-muted ms-1"
+                               title="Only animals with a confirmed pregnancy are listed"></i>
+                        </label>
+                        <div class="ls-wrapper">
+                            <input type="text"
+                                   id="livestockSearch"
+                                   class="ls-input"
+                                   placeholder="Type tag or category…"
+                                   autocomplete="off">
+                            <button type="button" class="ls-clear" id="lsClear" title="Clear">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </button>
+                            <div class="ls-dropdown" id="lsDropdown"></div>
+                        </div>
                     </div>
+
                     <div class="col-md-3">
                         <label class="form-label">Abortion Date *</label>
-                        <input type="date" class="form-control" name="abortionDate" required>
+                        <input type="date" class="form-control" name="abortionDate" id="abortionDate" required>
                     </div>
+
                     <div class="col-md-2">
-                        <label class="form-label">Pregnancy # </label>
-                        <input type="number" class="form-control" name="pregnancyNumber" min="1">
+                        <label class="form-label">
+                            Pregnancy #
+                            <i class="bi bi-magic text-primary ms-1"
+                               title="Auto-filled from breeding record"></i>
+                        </label>
+                        <input type="number" class="form-control" name="pregnancyNumber"
+                               id="pregnancyNumber" min="1" placeholder="auto">
                     </div>
+
                     <div class="col-md-3">
-                        <label class="form-label">Expected Birth Date</label>
-                        <input type="date" class="form-control" name="expectedBirthDate">
+                        <label class="form-label">
+                            Expected Birth Date
+                            <i class="bi bi-magic text-primary ms-1"
+                               title="Auto-filled from breeding record"></i>
+                        </label>
+                        <input type="date" class="form-control" name="expectedBirthDate"
+                               id="expectedBirthDate">
+                        <div class="autofill-hint" id="dueDateHint">
+                            <i class="bi bi-check-circle-fill"></i>
+                            Auto-filled from breeding record
+                        </div>
                     </div>
+
                     <div class="col-md-1 d-flex align-items-end">
-                        <button type="submit" class="btn btn-danger w-100">
+                        <button type="submit" class="btn btn-danger w-100" id="submitBtn" disabled>
                             <i class="bi bi-plus-circle"></i> Add
                         </button>
+                    </div>
+
+                    <div class="col-md-12" id="stageRow" style="display:none;">
+                        <div class="alert alert-light border py-2 px-3 mb-0" style="font-size:0.8rem;">
+                            <i class="bi bi-clipboard2-pulse text-primary"></i>
+                            Auto-computed stage:
+                            <strong id="stageValue" class="text-primary">—</strong>
+                            <span class="text-muted ms-2">
+                                (based on today vs expected birth date)
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label">Abortion Reason</label>
+                        <input type="text" class="form-control" name="abortionReason"
+                               placeholder="e.g. Disease / infection, trauma, unknown…">
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Table -->
+        <!-- ============ TABLE ============ -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-light">
@@ -193,12 +307,13 @@
                     <th>Abortion Date</th>
                     <th>Pregnancy #</th>
                     <th>Expected Birth</th>
+                    <th>Stage</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${abortions == null or abortions.empty}">
-                    <td colspan="7" class="text-center text-muted py-4">
+                    <td colspan="8" class="text-center text-muted py-4">
                         <i class="bi bi-inbox fs-2"></i><p class="mt-2">No abortion records yet</p>
                     </td>
                 </tr>
@@ -215,6 +330,11 @@
                     <td>
                         <span th:if="${a.expectedBirthDate != null}" th:text="${#temporals.format(a.expectedBirthDate, 'dd-MM-yyyy')}"></span>
                         <span th:if="${a.expectedBirthDate == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${a.stageOfPregnancy != null}" class="badge bg-secondary"
+                              th:text="${a.stageOfPregnancy}">—</span>
+                        <span th:if="${a.stageOfPregnancy == null}" class="text-muted">—</span>
                     </td>
                     <td>
                         <a th:href="@{/livestock/abortions/edit/{id}(id=${a.id})}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
@@ -240,6 +360,229 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    // ★ Server sends a JSON STRING — parse it into a real JS array
+    window.PREGNANT_JSON = /*[[${pregnantLivestockJson}]]*/ '[]';
+    /*]]>*/
+</script>
+
+<script>
+    (function(){
+        'use strict';
+
+        // ★ Parse the JSON string from the server
+        let PREGNANT = [];
+        try {
+            const raw = window.PREGNANT_JSON;
+            PREGNANT = typeof raw === 'string' ? JSON.parse(raw) : (raw || []);
+        } catch (e) {
+            console.warn('[abortion] Failed to parse pregnant livestock JSON:', e);
+            PREGNANT = [];
+        }
+        console.log('[abortion] pregnant animals loaded:', PREGNANT.length, PREGNANT);
+
+        const searchInput   = document.getElementById('livestockSearch');
+        const dropdown      = document.getElementById('lsDropdown');
+        const clearBtn      = document.getElementById('lsClear');
+        const idInput       = document.getElementById('livestockIdInput');
+        const dueInput      = document.getElementById('expectedBirthDate');
+        const pregInput     = document.getElementById('pregnancyNumber');
+        const dueHint       = document.getElementById('dueDateHint');
+        const submitBtn     = document.getElementById('submitBtn');
+        const stageRow      = document.getElementById('stageRow');
+        const stageValue    = document.getElementById('stageValue');
+
+        document.getElementById('abortionDate').valueAsDate = new Date();
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            try {
+                const d = new Date(iso);
+                const dd = String(d.getDate()).padStart(2,'0');
+                const mm = String(d.getMonth()+1).padStart(2,'0');
+                return dd + '-' + mm + '-' + d.getFullYear();
+            } catch (e) { return iso; }
+        }
+
+        // ★ Filter now uses the flat JSON shape (.category, not .livestockCategory.name)
+        function filterPregnant(query) {
+            const q = (query || '').toLowerCase().trim();
+            if (!q) return PREGNANT;
+            return PREGNANT.filter(function(ls) {
+                const tag = (ls.tagNumber || '').toLowerCase();
+                const cat = (ls.category || '').toLowerCase();
+                return tag.includes(q) || cat.includes(q);
+            });
+        }
+
+        function renderDropdown(items, query) {
+            dropdown.innerHTML = '';
+            if (!items || items.length === 0) {
+                dropdown.innerHTML =
+                    '<div class="ls-empty">' +
+                    '<i class="bi bi-search"></i>' +
+                    (query
+                        ? 'No pregnant animal matches "<strong>' + escapeHtml(query) + '</strong>"'
+                        : 'No pregnant animals available to record an abortion') +
+                    '</div>';
+                dropdown.classList.add('open');
+                return;
+            }
+            items.forEach(function(it, idx) {
+                const row = document.createElement('div');
+                row.className = 'ls-item';
+                row.dataset.id = it.id;
+                row.dataset.index = idx;
+                row.innerHTML =
+                    '<span class="ls-item-tag">' + escapeHtml(it.tagNumber || '—') + '</span>' +
+                    '<span class="ls-item-meta">' + escapeHtml(it.category || 'Uncategorized') + '</span>' +
+                    (it.expectedDueDate
+                        ? '<span class="ls-item-due"><i class="bi bi-calendar-event"></i> ' +
+                          formatDate(it.expectedDueDate) + '</span>'
+                        : '');
+                row.addEventListener('click', function() { pick(it); });
+                row.addEventListener('mouseenter', function() { highlight(idx); });
+                dropdown.appendChild(row);
+            });
+            dropdown.classList.add('open');
+        }
+
+        searchInput.addEventListener('focus', function() {
+            renderDropdown(filterPregnant(searchInput.value), searchInput.value);
+        });
+        searchInput.addEventListener('input', function() {
+            if (idInput.value) {
+                idInput.value = '';
+                submitBtn.disabled = true;
+                dueHint.classList.remove('show');
+                stageRow.style.display = 'none';
+            }
+            renderDropdown(filterPregnant(searchInput.value), searchInput.value);
+        });
+
+        let highlighted = -1;
+        searchInput.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('.ls-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlighted = Math.min(highlighted + 1, items.length - 1);
+                highlight(highlighted);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlighted = Math.max(highlighted - 1, 0);
+                highlight(highlighted);
+            } else if (e.key === 'Enter') {
+                if (highlighted >= 0 && items[highlighted]) {
+                    e.preventDefault();
+                    items[highlighted].click();
+                }
+            } else if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+            }
+        });
+
+        function highlight(idx) {
+            const items = dropdown.querySelectorAll('.ls-item');
+            items.forEach(function(el, i) {
+                el.classList.toggle('highlighted', i === idx);
+            });
+            highlighted = idx;
+            if (items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.ls-wrapper')) dropdown.classList.remove('open');
+        });
+
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            idInput.value = '';
+            pregInput.value = '';
+            dueInput.value = '';
+            dueHint.classList.remove('show');
+            stageRow.style.display = 'none';
+            submitBtn.disabled = true;
+            dropdown.classList.remove('open');
+            searchInput.focus();
+        });
+
+        function pick(it) {
+            searchInput.value = it.tagNumber + (it.category ? ' – ' + it.category : '');
+            idInput.value = it.id;
+            submitBtn.disabled = false;
+
+            if (it.expectedDueDate) {
+                dueInput.value = it.expectedDueDate;
+                dueHint.classList.add('show');
+                updateStage(it.expectedDueDate);
+            } else {
+                fetchLookup(it.id);
+            }
+
+            if (it.pregnancyNumber != null) {
+                pregInput.value = it.pregnancyNumber;
+            } else {
+                pregInput.value = '';
+            }
+
+            dropdown.classList.remove('open');
+            highlighted = -1;
+        }
+
+        function fetchLookup(animalId) {
+            fetch('/livestock/abortions/api/lookup/' + animalId, {
+                headers: { 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (!data) return;
+                if (data.expectedDueDate) {
+                    dueInput.value = data.expectedDueDate;
+                    dueHint.classList.add('show');
+                    updateStage(data.expectedDueDate);
+                }
+                if (data.pregnancyNumber != null) pregInput.value = data.pregnancyNumber;
+            })
+            .catch(function() { /* silent */ });
+        }
+
+        function updateStage(dueDateIso) {
+            if (!dueDateIso) {
+                stageRow.style.display = 'none';
+                return;
+            }
+            const today = new Date();
+            const due = new Date(dueDateIso);
+            const days = Math.round((due - today) / (1000 * 60 * 60 * 24));
+            let stage = 'Early';
+            if (days < 0)         stage = 'Post-term';
+            else if (days <= 30)  stage = 'Late';
+            else if (days <= 60)  stage = 'Mid';
+            stageValue.textContent = stage;
+            stageRow.style.display = 'block';
+        }
+
+        dueInput.addEventListener('change', function() {
+            if (dueInput.value) {
+                updateStage(dueInput.value);
+                dueHint.classList.remove('show');
+            } else {
+                stageRow.style.display = 'none';
+            }
+        });
+    })();
+</script>
 </body>
 </html>

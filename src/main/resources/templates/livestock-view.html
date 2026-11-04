@@ -3,216 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${livestock.tagNumber != null ? 'Animal ' + livestock.tagNumber : 'Animal Detail'}">Animal Detail</title>
+    <title>Livestock Detail</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            background: #f0f4f8;
-            padding: 20px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 0.875rem;
-            color: #1e293b;
-        }
-        .view-container { max-width: 1100px; margin: 0 auto; }
-
-        /* ── Header card ── */
-        .header-card {
-            background: #fff; border-radius: 14px; padding: 22px 26px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.07); margin-bottom: 18px;
-            display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-        }
-        .animal-photo-lg { width: 84px; height: 84px; border-radius: 14px; object-fit: cover; border: 2px solid #e2e8f0; flex-shrink: 0; }
-        .animal-photo-lg-placeholder {
-            width: 84px; height: 84px; border-radius: 14px; flex-shrink: 0;
-            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 2.1rem;
-        }
-        .header-main { flex: 1 1 260px; min-width: 0; }
-        .tag-num-lg { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin: 0; }
-        .header-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-        .header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .header-actions .btn { font-size: 0.8rem; }
-
-        /* ── Status / lifecycle badges ── */
-        .status-badge, .lifecycle-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 11px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
-        }
-        .status-ACTIVE   { background: #d1fae5; color: #065f46; }
-        .status-SOLD     { background: #fee2e2; color: #991b1b; }
-        .status-DEAD     { background: #f3f4f6; color: #374151; }
-        .status-SICK     { background: #fef9c3; color: #854d0e; }
-        .status-PREGNANT { background: #ede9fe; color: #5b21b6; }
-
-        .lc-NEWBORN        { background: #fef3c7; color: #d97706; }
-        .lc-YOUNG          { background: #dbeafe; color: #2563eb; }
-        .lc-READY_TO_BREED { background: #ede9fe; color: #7c3aed; }
-        .lc-BREEDING_MALE  { background: #dbeafe; color: #1d4ed8; }
-        .lc-PREGNANT       { background: #fce7f3; color: #be185d; }
-        .lc-MATURE         { background: #d1fae5; color: #059669; }
-        .lc-UNKNOWN        { background: #f3f4f6; color: #6b7280; }
-
-        /* NEW: the READY TO BREED badge is now a real link to the
-           Ready-to-Breed page, so it needs link-friendly affordances
-           (no underline by default, pointer cursor, a subtle hover state)
-           on top of the existing pill styling above. */
-        a.lifecycle-badge {
-            text-decoration: none;
-            cursor: pointer;
-            transition: transform 0.12s ease, box-shadow 0.12s ease;
-        }
-        a.lifecycle-badge:hover {
-            text-decoration: none;
-            box-shadow: 0 2px 6px rgba(124, 58, 237, 0.35);
-            transform: translateY(-1px);
-        }
-
-        /* ── Section cards ── */
-        .section-card {
-            background: #fff; border-radius: 12px; padding: 20px 22px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 16px;
-            scroll-margin-top: 20px; /* so #valuation-history lands nicely, not flush to the viewport edge */
-        }
-        .section-title {
-            font-size: 0.85rem; font-weight: 700; color: #1e293b;
-            display: flex; align-items: center; gap: 7px; margin-bottom: 14px;
-            padding-bottom: 10px; border-bottom: 1px solid #f1f5f9;
-        }
-
-        /* ── Info grid ── */
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
-        .info-item { display: flex; flex-direction: column; gap: 2px; }
-        .info-label { font-size: 0.66rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-        .info-value { font-size: 0.88rem; font-weight: 600; color: #1e293b; }
-        .info-value.muted { color: #94a3b8; font-weight: 400; font-style: italic; }
-        .info-value.price { color: #059669; }
-
-        /* ── Breadcrumb ── */
-        .loc-breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; font-size: 0.8rem; }
-        .loc-breadcrumb .seg { color: #475569; }
-        .loc-breadcrumb .sep { color: #cbd5e0; }
-        .loc-breadcrumb .seg:last-child { font-weight: 700; color: #0f172a; }
-
-        /* ── Pregnancy progress ── */
-        .gestation-bar { height: 10px; border-radius: 6px; background: #f1f5f9; overflow: hidden; margin: 8px 0; }
-        .gestation-bar-fill { height: 100%; background: linear-gradient(90deg, #c4b5fd, #7c3aed); border-radius: 6px; }
-
-        /* ── Lineage list ── */
-        .lineage-row {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 10px; border: 1px solid #f1f5f9; border-radius: 8px; margin-bottom: 6px;
-            font-size: 0.82rem;
-        }
-        .lineage-row a { text-decoration: none; color: #1a5f7a; font-weight: 600; }
-        .lineage-row a:hover { text-decoration: underline; }
-        .lineage-empty { color: #94a3b8; font-style: italic; font-size: 0.82rem; }
-
-        .badge { font-size: 0.7rem; }
-
-        /* ── FAO VALUATION HISTORY ────────────────────────────────── */
-        .valuation-latest-strip {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px;
-            padding: 12px 16px; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
-        }
-        .valuation-latest-value { font-size: 1.05rem; font-weight: 800; color: #166534; }
-        .valuation-latest-meta { font-size: 0.75rem; color: #65a374; }
-        .valuation-delta { font-size: 0.78rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
-        .valuation-delta.up   { background: #d1fae5; color: #065f46; }
-        .valuation-delta.down { background: #fee2e2; color: #991b1b; }
-        .valuation-delta.flat { background: #f1f5f9; color: #64748b; }
-
-        .valuation-table { font-size: 0.8rem; }
-        .valuation-table thead th {
-            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
-            color: #94a3b8; font-weight: 700; border-bottom: 2px solid #f1f5f9;
-        }
-        .valuation-table tbody td { vertical-align: middle; }
+        body { background: #f0f4f8; font-family: 'DM Sans', sans-serif; }
+        .page-header { background: linear-gradient(135deg, #1a5f7a, #2e8b9e); color: white; padding: 24px 32px; margin-bottom: 24px; }
+        .card-panel { background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.07); padding: 24px; margin-bottom: 20px; scroll-margin-top: 20px; }
+        .info-label { font-size: .78rem; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+        .info-value { font-size: .95rem; font-weight: 500; color: #1f2937; margin-top: 2px; }
+        .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 5px 14px; border-radius: 20px; font-size: .82rem; font-weight: 700; }
+        .status-ACTIVE      { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status-SOLD        { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .status-DEAD        { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+        .status-TRANSFERRED { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+        .metric-box { background: #f8fafc; border-radius: 10px; padding: 14px 16px; text-align: center; }
+        .metric-num { font-size: 1.6rem; font-weight: 800; }
+        .action-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: .82rem; font-weight: 600; text-decoration: none; border: 1.5px solid; transition: all .2s; }
+        .action-btn:hover { opacity: .85; color: white; }
+        .action-btn.primary   { background: #1a5f7a; color: white; border-color: #1a5f7a; }
+        .action-btn.warning   { background: #f59e0b; color: white; border-color: #f59e0b; }
+        .action-btn.success   { background: #059669; color: white; border-color: #059669; }
+        .action-btn.info      { background: #0ea5e9; color: white; border-color: #0ea5e9; }
+        .action-btn.secondary { background: #64748b; color: white; border-color: #64748b; }
+        .action-btn.danger    { background: #dc2626; color: white; border-color: #dc2626; }
+        .section-head { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: #94a3b8; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1.5px solid #f1f5f9; }
+        .breed-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700; }
+        .breed-capable   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .breed-too-young { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .breed-unknown   { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+        .valuation-table { font-size: .82rem; }
+        .valuation-table thead th { font-size: .68rem; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 700; border-bottom: 2px solid #f1f5f9; }
         .valuation-table tr.latest-row { background: #f0fdf4; }
-        .valuation-method-badge {
-            font-size: 0.68rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
-            background: #ede9fe; color: #5b21b6; white-space: nowrap;
+        #valuation-history.highlight { animation: flashHighlight 1.6s ease; }
+        @keyframes flashHighlight {
+            0%   { box-shadow: 0 0 0 3px #6ee7b7; }
+            100% { box-shadow: 0 2px 10px rgba(0,0,0,.07); }
         }
-
-        /* Brief highlight flash when arriving via a #valuation-history link,
-           so it's obvious the page jumped to the right place. */
-        @keyframes highlightFlash {
-            0%   { box-shadow: 0 0 0 3px rgba(16,185,129,0.45); }
-            100% { box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        @media (max-width: 767.98px) {
+            .page-header { padding: 16px; }
+            .page-header .d-flex { flex-direction: column; gap: 12px; }
         }
-        .section-card.jump-highlight { animation: highlightFlash 1.6s ease-out; }
-
-        /* FAO Standard notice as an actual text box (readonly textarea) on
-           the valuation form, instead of a plain alert banner. */
-        .fao-standard-box {
-            background: #f0fdf4 !important;
-            border: 1px solid #a7f3d0 !important;
-            color: #166534 !important;
-            font-size: 0.78rem !important;
-            resize: none;
-            cursor: default;
-        }
-        .fao-standard-box:focus { box-shadow: none; border-color: #6ee7b7 !important; }
     </style>
 </head>
 <body>
-<div class="view-container">
 
-    <!-- ── Header ── -->
-    <div class="header-card">
-        <img th:if="${livestock.photo != null and !livestock.photo.isEmpty()}"
-             th:src="${livestock.photo}" class="animal-photo-lg" alt="">
-        <div th:if="${livestock.photo == null or livestock.photo.isEmpty()}" class="animal-photo-lg-placeholder">
-            <i class="bi bi-box2-heart"></i>
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1">
+                <i class="bi bi-box2-heart me-2"></i>
+                Livestock Detail — <span th:text="${animal.tagNumber}">TAG</span>
+            </h4>
+            <small style="opacity:.85">
+                <span th:if="${animal.livestockCategory != null}" th:text="${animal.livestockCategory.name}"></span>
+                <span th:if="${animal.gender != null}"> · <span th:text="${animal.gender}"></span></span>
+            </small>
         </div>
-
-        <div class="header-main">
-            <h1 class="tag-num-lg" th:text="${livestock.tagNumber != null ? livestock.tagNumber : 'Unnamed Animal'}">TAG</h1>
-            <div class="header-badges">
-                <span th:if="${livestock.status != null}" class="status-badge"
-                      th:classappend="'status-' + ${livestock.status}" th:text="${livestock.status}">Status</span>
-
-                <!-- ══ CHANGED ══════════════════════════════════════════════
-                     The lifecycle badge is now a LINK when the animal's stage
-                     is READY_TO_BREED, taking the user straight to the Ready
-                     to Breed page (grouped by category) so a breeding record
-                     can be registered right after this animal was added.
-                     All other lifecycle stages keep the original plain badge
-                     (they have nowhere useful to link to).
-                ══════════════════════════════════════════════════════════ -->
-                <a th:if="${lifecycleStage == 'READY_TO_BREED'}"
-                   th:href="@{/livestock/lifecycle/ready-to-breed}"
-                   class="lifecycle-badge lc-READY_TO_BREED"
-                   title="Go to Ready to Breed page to register a breeding">
-                    <i class="bi bi-heart-arrow"></i> READY TO BREED
-                </a>
-                <span th:if="${lifecycleStage != null and lifecycleStage != 'READY_TO_BREED'}" class="lifecycle-badge"
-                      th:classappend="'lc-' + ${lifecycleStage}"
-                      th:text="${#strings.replace(lifecycleStage, '_', ' ')}">Stage</span>
-
-                <span th:if="${livestock.isDraft}" class="badge bg-warning text-dark">
-                    <i class="bi bi-exclamation-triangle"></i> Draft — not fully registered
-                </span>
-            </div>
-        </div>
-
-        <div class="header-actions">
-            <a th:href="@{/livestock/edit/{id}(id=${livestock.id})}" class="btn btn-warning btn-sm">
-                <i class="bi bi-pencil"></i> Edit
-            </a>
-            <a th:href="@{/livestock/qr/eartag/{id}(id=${livestock.id})}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-qr-code"></i> QR Code
-            </a>
-            <a th:href="@{/livestock/list}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left"></i> Back to List
-            </a>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="javascript:history.back()" class="btn btn-light btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+            <a th:href="@{/livestock/edit/{id}(id=${animal.id})}" class="btn btn-warning btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+            <a href="/livestock/list" class="btn btn-outline-light btn-sm"><i class="bi bi-grid me-1"></i>All Livestock</a>
         </div>
     </div>
+</div>
 
-    <!-- ── Alerts ── -->
+<div class="container-fluid px-4 pb-5">
+
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
         <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -222,330 +80,309 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- ── Basic Info ── -->
-    <div class="section-card">
-        <div class="section-title"><i class="bi bi-info-circle text-primary"></i> Basic Information</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Category</span>
-                <span th:if="${livestock.livestockCategory != null}" class="info-value"
-                      th:text="${livestock.livestockCategory.name}">—</span>
-                <span th:if="${livestock.livestockCategory == null}" class="info-value muted">Not set</span>
+    <div class="row g-4">
+
+        <!-- LEFT COLUMN -->
+        <div class="col-lg-4">
+            <div class="card-panel text-center">
+                <img th:if="${animal.photo != null and !animal.photo.isEmpty()}"
+                     th:src="${animal.photo}"
+                     style="width:120px;height:120px;border-radius:12px;object-fit:cover;border:3px solid #e2e8f0;"
+                     class="mb-3">
+                <div th:unless="${animal.photo != null and !animal.photo.isEmpty()}"
+                     style="width:90px;height:90px;border-radius:12px;
+                            background:linear-gradient(135deg,#1a5f7a,#2e8b9e);
+                            display:inline-flex;align-items:center;justify-content:center;
+                            color:white;font-size:2.5rem;margin-bottom:16px;">
+                    <i class="bi bi-box2-heart"></i>
+                </div>
+                <div class="mb-3">
+                    <span class="status-pill" th:classappend="'status-' + ${animal.status}"
+                          th:text="${animal.status != null ? animal.status : 'UNKNOWN'}">ACTIVE</span>
+                </div>
+                <div style="font-size:1.4rem;font-weight:800;color:#1e293b;" th:text="${animal.tagNumber}">TAG</div>
+                <div class="text-muted small" th:if="${animal.livestockCategory != null}"
+                     th:text="${animal.livestockCategory.name}"></div>
             </div>
-            <div class="info-item">
-                <span class="info-label">Gender</span>
-                <span th:if="${livestock.gender != null}" class="info-value" th:text="${livestock.gender}">—</span>
-                <span th:if="${livestock.gender == null}" class="info-value muted">Not set</span>
+
+            <!-- Key Metrics -->
+            <div class="card-panel">
+                <div class="section-head">Key Metrics</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-primary" th:text="${ageDays != null ? ageDays : '—'}">—</div>
+                            <div class="small text-muted">Days Old</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="metric-box">
+                            <div class="metric-num text-success" th:text="${ageMonths != null ? ageMonths : '—'}">—</div>
+                            <div class="small text-muted">Months Old</div>
+                        </div>
+                    </div>
+                    <div class="col-12 mt-2" th:if="${ageYears != null}">
+                        <div class="metric-box">
+                            <div class="metric-num text-info" style="font-size:1.1rem;">
+                                <span th:text="${ageYears}"></span>y
+                                <span th:text="${ageRemainderMonths}"></span>mo
+                            </div>
+                            <div class="small text-muted">Age</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="info-item">
-                <span class="info-label">Age</span>
-                <span th:if="${ageYears != null}" class="info-value">
-                    <span th:if="${ageYears > 0}" th:text="${ageYears + 'y ' + ageRemainderMonths + 'mo'}"></span>
-                    <span th:if="${ageYears == 0}" th:text="${ageMonths + ' mo (' + ageDays + ' days)'}"></span>
-                </span>
-                <span th:if="${ageYears == null}" class="info-value muted">Birth date unknown</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Birth Date</span>
-                <span th:if="${livestock.birthDate != null}" class="info-value"
-                      th:text="${#temporals.format(livestock.birthDate, 'dd MMM yyyy')}">—</span>
-                <span th:if="${livestock.birthDate == null}" class="info-value muted">Not recorded</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Current Value</span>
-                <span th:if="${livestock.currentValue != null}" class="info-value price"
-                      th:text="${#numbers.formatDecimal(livestock.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</span>
-                <span th:if="${livestock.currentValue == null}" class="info-value muted">Not yet valued</span>
-                <!-- Same destination link as the Value column on the list page —
-                     jumps straight to the Valuation History section below. -->
-                <a href="#valuation-history" style="font-size:0.7rem;font-weight:600;text-decoration:none;color:#1a5f7a;">
-                    <i class="bi bi-clock-history"></i> View history
-                </a>
-            </div>
-            <div class="info-item" th:if="${livestock.status == 'SOLD' and livestock.soldPrice != null}">
-                <span class="info-label">Sold Price</span>
-                <span class="info-value price"
-                      th:text="${#numbers.formatDecimal(livestock.soldPrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Beneficiary</span>
-                <span th:if="${livestock.beneficiary != null}" class="info-value"
-                      th:text="${livestock.beneficiary.firstName + ' ' + livestock.beneficiary.lastName}">—</span>
-                <span th:if="${livestock.beneficiary == null}" class="info-value muted">Not assigned</span>
-            </div>
-            <div class="info-item" style="grid-column: span 2;">
-                <span class="info-label">Location</span>
-                <div th:if="${locationBreadcrumb != null and !locationBreadcrumb.empty}" class="loc-breadcrumb">
-                    <span th:each="loc, iStat : ${locationBreadcrumb}">
-                        <span class="seg" th:text="${loc.name}">Loc</span>
-                        <span th:if="${!iStat.last}" class="sep">›</span>
+
+            <!-- Breeding capability -->
+            <div class="card-panel">
+                <div class="section-head">Breeding Capability</div>
+                <div th:if="${breedingCapable != null and breedingCapable}">
+                    <span class="breed-pill breed-capable">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span th:if="${animal.gender == 'FEMALE'}">Can Conceive</span>
+                        <span th:if="${animal.gender == 'MALE'}">Can Sire</span>
                     </span>
                 </div>
-                <span th:if="${locationBreadcrumb == null or locationBreadcrumb.empty}" class="info-value muted">Not set</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════
-         FAO-STANDARD VALUATION HISTORY
-         Value is append-only. This section shows the full ledger and lets
-         the user record a new valuation event — it never edits a value in
-         place. See LivestockValuationService.recordValuation(...).
-
-         id="valuation-history" is the anchor targeted by "View History"
-         links on the list page and the "View history" link above.
-    ══════════════════════════════════════════════════════════════════ -->
-    <div class="section-card" id="valuation-history">
-        <div class="section-title d-flex justify-content-between align-items-center" style="border-bottom:none; margin-bottom:10px; padding-bottom:0;">
-            <span><i class="bi bi-graph-up-arrow text-success"></i> Valuation History</span>
-            <button type="button" class="btn btn-sm btn-outline-success"
-                    data-bs-toggle="modal" data-bs-target="#addValuationModal">
-                <i class="bi bi-plus-circle"></i> Record New Valuation
-            </button>
-        </div>
-
-        <!-- Latest valuation summary strip -->
-        <div class="valuation-latest-strip" th:if="${latestValuation != null}">
-            <div>
-                <div class="valuation-latest-value"
-                     th:text="${#numbers.formatDecimal(latestValuation.value, 1, 'COMMA', 0, 'POINT') + ' RWF'}">—</div>
-                <div class="valuation-latest-meta">
-                    As of <strong th:text="${#temporals.format(latestValuation.valuationDate, 'dd MMM yyyy')}"></strong>
-                    &middot; <span th:text="${latestValuation.methodLabel()}"></span>
+                <div th:if="${breedingCapable != null and !breedingCapable}">
+                    <span class="breed-pill breed-too-young"><i class="bi bi-hourglass-split"></i> Too Young</span>
                 </div>
-            </div>
-            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() > 0}"
-                  class="valuation-delta up">
-                <i class="bi bi-arrow-up-short"></i>
-                +<span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
-            </span>
-            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() < 0}"
-                  class="valuation-delta down">
-                <i class="bi bi-arrow-down-short"></i>
-                <span th:text="${#numbers.formatDecimal(valuationChangeSincePrevious, 1, 'COMMA', 0, 'POINT')}"></span> RWF since last valuation
-            </span>
-            <span th:if="${valuationChangeSincePrevious != null and valuationChangeSincePrevious.signum() == 0}"
-                  class="valuation-delta flat">
-                <i class="bi bi-dash"></i> No change since last valuation
-            </span>
-        </div>
-
-        <div th:if="${valuationHistory == null or valuationHistory.empty}" class="lineage-empty">
-            No valuation history yet. Use "Record New Valuation" to start tracking this animal's value over time.
-        </div>
-
-        <div class="table-responsive" th:if="${valuationHistory != null and !valuationHistory.empty}">
-            <table class="table table-sm valuation-table">
-                <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Value (RWF)</th>
-                    <th>Method</th>
-                    <th>Notes</th>
-                    <th>Recorded By</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:each="v, iter : ${valuationHistory}" th:classappend="${iter.first} ? 'latest-row' : ''">
-                    <td th:text="${#temporals.format(v.valuationDate, 'dd MMM yyyy')}">—</td>
-                    <td class="fw-semibold" th:text="${#numbers.formatDecimal(v.value, 1, 'COMMA', 0, 'POINT')}">—</td>
-                    <td><span class="valuation-method-badge" th:text="${v.methodLabel()}"></span></td>
-                    <td th:text="${v.notes != null and !v.notes.isEmpty() ? v.notes : '—'}">—</td>
-                    <td class="text-muted" th:text="${v.recordedBy != null ? v.recordedBy : '—'}">—</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- ── Origin ── -->
-    <div class="section-card">
-        <div class="section-title"><i class="bi bi-box-arrow-in-down text-info"></i> Origin</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Acquisition Method</span>
-                <span class="info-value" th:text="${livestock.acquisitionMethod != null ? livestock.acquisitionMethod : 'Not set'}">—</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Source</span>
-                <span class="info-value" th:text="${livestock.resolvedAcquisitionSource()}">—</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Date Received</span>
-                <span th:if="${livestock.dateReceived != null}" class="info-value"
-                      th:text="${#temporals.format(livestock.dateReceived, 'dd MMM yyyy')}">—</span>
-                <span th:if="${livestock.dateReceived == null}" class="info-value muted">Not recorded</span>
-            </div>
-            <div class="info-item" th:if="${livestock.mother != null}">
-                <span class="info-label">Mother</span>
-                <a class="info-value" th:href="@{/livestock/view/{id}(id=${livestock.mother.id})}"
-                   th:text="${livestock.mother.tagNumber}" style="text-decoration:none;color:#1a5f7a;">—</a>
-            </div>
-        </div>
-
-        <div th:if="${birthRecord != null}" class="mt-3 pt-3" style="border-top:1px dashed #e2e8f0;">
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Birth Event Date</span>
-                    <span class="info-value" th:text="${#temporals.format(birthRecord.birthDate, 'dd MMM yyyy')}">—</span>
+                <div th:if="${breedingCapable == null}">
+                    <span class="breed-pill breed-unknown"><i class="bi bi-question-circle"></i> Unknown</span>
                 </div>
-                <div class="info-item" th:if="${birthRecord.offspringCount != null}">
-                    <span class="info-label">Offspring in This Litter</span>
-                    <span class="info-value" th:text="${birthRecord.offspringCount}">—</span>
+                <div class="mt-2" th:if="${lifecycleStage != null}">
+                    <span class="badge bg-secondary" th:text="${lifecycleStage}"></span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ── Breeding / Reproduction (females) ── -->
-    <div class="section-card" th:if="${livestock.gender == 'FEMALE'}">
-        <div class="section-title"><i class="bi bi-heart-pulse text-danger"></i> Breeding &amp; Reproduction</div>
-        <div class="info-grid">
-            <div class="info-item">
-                <span class="info-label">Breeding Capable</span>
-                <span th:if="${breedingCapable != null and breedingCapable}" class="badge bg-success">
-                    <i class="bi bi-check-circle-fill"></i> Yes
-                </span>
-                <span th:if="${breedingCapable != null and !breedingCapable}" class="badge bg-warning text-dark">
-                    <i class="bi bi-hourglass-split"></i> Too Young
-                </span>
-                <span th:if="${breedingCapable == null}" class="badge bg-secondary">Unknown</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Pregnant</span>
-                <span th:if="${livestock.isPregnant}" class="badge" style="background:#ede9fe;color:#5b21b6;">
-                    <i class="bi bi-heart-fill"></i> Yes
-                </span>
-                <span th:if="${!livestock.isPregnant}" class="badge bg-light text-muted">No</span>
-            </div>
-            <div class="info-item" th:if="${livestock.lastBreedingDate != null}">
-                <span class="info-label">Last Breeding Date</span>
-                <span class="info-value" th:text="${#temporals.format(livestock.lastBreedingDate, 'dd MMM yyyy')}">—</span>
-            </div>
-            <div class="info-item" th:if="${livestock.inseminationMethod != null}">
-                <span class="info-label">Insemination Method</span>
-                <span class="info-value" th:text="${livestock.inseminationMethodLabel()}">—</span>
-            </div>
-            <div class="info-item" th:if="${livestock.offspringCount != null}">
-                <span class="info-label">Lifetime Offspring</span>
-                <span class="info-value" th:text="${livestock.offspringCount}">—</span>
-            </div>
-        </div>
+        <!-- RIGHT COLUMN -->
+        <div class="col-lg-8">
 
-        <div th:if="${livestock.isPregnant and livestock.conceptionDate != null}" class="mt-3 pt-3" style="border-top:1px dashed #e2e8f0;">
-            <div class="d-flex justify-content-between mb-1" style="font-size:0.78rem;">
-                <span><strong th:text="${livestock.gestationStageLabel()}">Stage</strong> &middot;
-                      <span th:text="${livestock.weeksPregnant}">0</span> weeks pregnant</span>
-                <span th:text="${livestock.daysRemaining + ' days remaining'}">—</span>
+            <!-- Animal Details -->
+            <div class="card-panel">
+                <div class="section-head">Animal Details</div>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Tag Number</div>
+                        <div class="info-value" th:text="${animal.tagNumber}">—</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Category</div>
+                        <div class="info-value"
+                             th:text="${animal.livestockCategory != null ? animal.livestockCategory.name : '—'}">—</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Gender</div>
+                        <div class="mt-1">
+                            <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-danger">&#9792; Female</span>
+                            <span th:if="${animal.gender == 'MALE'}"   class="badge bg-primary">&#9794; Male</span>
+                            <span th:if="${animal.gender == null}"     class="text-muted">—</span>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Birth Date</div>
+                        <div class="info-value"
+                             th:text="${animal.birthDate != null ? #temporals.format(animal.birthDate,'dd MMM yyyy') : '—'}">—</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Current Value</div>
+                        <div class="info-value"
+                             th:text="${animal.currentValue != null ? #numbers.formatDecimal(animal.currentValue,1,'COMMA',0,'POINT') + ' RWF' : '—'}">—</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Beneficiary</div>
+                        <div class="info-value"
+                             th:text="${animal.beneficiary != null ? animal.beneficiary.firstName + ' ' + animal.beneficiary.lastName : '—'}">—</div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Location</div>
+                        <div class="info-value">
+                            <span th:if="${locationBreadcrumb == null or locationBreadcrumb.empty}">—</span>
+                            <span th:each="loc, iter : ${locationBreadcrumb}">
+                                <span th:text="${loc.name}"></span><span th:if="${!iter.last}"> › </span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="gestation-bar">
-                <div class="gestation-bar-fill" th:style="'width:' + ${livestock.gestationProgressPercent} + '%'"></div>
-            </div>
-            <div style="font-size:0.76rem;color:#64748b;">
-                Expected due date:
-                <strong th:text="${livestock.resolvedDueDate() != null ? #temporals.format(livestock.resolvedDueDate(), 'dd MMM yyyy') : '—'}">—</strong>
-            </div>
-        </div>
-    </div>
 
-    <!-- ── Lineage: children ── -->
-    <div class="section-card">
-        <div class="section-title"><i class="bi bi-diagram-3 text-success"></i> Offspring</div>
-        <div th:if="${children == null or children.empty}" class="lineage-empty">
-            No offspring recorded for this animal yet.
-        </div>
-        <div th:each="child : ${children}" class="lineage-row">
-            <div>
-                <a th:href="@{/livestock/view/{id}(id=${child.id})}" th:text="${child.tagNumber}">TAG</a>
-                <span th:if="${child.livestockCategory != null}" class="badge bg-info text-dark ms-1"
-                      th:text="${child.livestockCategory.name}"></span>
+            <!-- Birth Record (only fields confirmed to exist: birthDate) -->
+            <div class="card-panel" th:if="${birthRecord != null}">
+                <div class="section-head">Birth Record</div>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="info-label">Birth Date</div>
+                        <div class="info-value"
+                             th:text="${birthRecord.birthDate != null ? #temporals.format(birthRecord.birthDate,'dd MMM yyyy') : '—'}">—</div>
+                    </div>
+                </div>
             </div>
-            <div>
-                <span th:if="${child.birthDate != null}" class="text-muted"
-                      th:text="${#temporals.format(child.birthDate, 'dd MMM yyyy')}"></span>
-                <span th:if="${child.isDraft}" class="badge bg-warning text-dark ms-1">Draft</span>
-            </div>
-        </div>
-    </div>
 
-</div>
-
-<!-- ══════════════════════════════════════════════════════════════════════
-     MODAL: Record New Valuation (FAO STANDARD — appends, never overwrites)
-══════════════════════════════════════════════════════════════════════ -->
-<div class="modal fade" id="addValuationModal" tabindex="-1">
-    <div class="modal-dialog">
-        <form th:action="@{/livestock/{id}/valuation(id=${livestock.id})}" method="post" class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-graph-up-arrow text-success"></i> Record New Valuation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">
-                        <i class="bi bi-info-circle-fill text-success me-1"></i>FAO Standard
-                    </label>
-                    <textarea class="form-control fao-standard-box" rows="2" readonly>FAO Standard: this adds a new valuation entry to the history — it never overwrites the previous value.</textarea>
+            <!-- ═══════════════════════════════════════
+                 VALUATION HISTORY — this is the anchor
+                 target for "View History" links
+                 ═══════════════════════════════════════ -->
+            <div class="card-panel" id="valuation-history">
+                <div class="section-head d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-graph-up-arrow me-1"></i> Valuation History</span>
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#valuationModal">
+                        <i class="bi bi-plus-circle"></i> Record Valuation
+                    </button>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Valuation Date</label>
-                    <input type="date" class="form-control" name="valuationDate"
-                           th:value="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"
-                           th:max="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"
-                           required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">New Value (RWF)</label>
-                    <input type="number" step="0.01" min="0" class="form-control" name="value" required>
-                    <div class="form-text" th:if="${livestock.currentValue != null}">
-                        Current recorded value:
-                        <strong th:text="${#numbers.formatDecimal(livestock.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></strong>
-                        <span th:if="${latestValuation != null}">
-                            &middot; last valued on
-                            <strong th:text="${#temporals.format(latestValuation.valuationDate, 'dd MMM yyyy')}"></strong>
+                <!-- Latest value summary -->
+                <div th:if="${latestValuation != null}"
+                     class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 p-3"
+                     style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;">
+                    <div>
+                        <div class="info-label">Current Value</div>
+                        <div class="fw-bold" style="font-size:1.1rem;color:#166534;"
+                             th:text="${#numbers.formatDecimal(latestValuation.value,1,'COMMA',0,'POINT')} + ' RWF'">—</div>
+                        <div class="small text-muted">
+                            As of
+                            <span th:text="${latestValuation.valuationDate != null ? #temporals.format(latestValuation.valuationDate,'dd MMM yyyy') : '—'}"></span>
+                            · <span th:text="${latestValuation.methodLabel()}"></span>
+                        </div>
+                    </div>
+                    <div th:if="${valuationChangeSincePrevious != null}">
+                        <span th:if="${valuationChangeSincePrevious.signum() > 0}" class="badge bg-success">
+                            <i class="bi bi-arrow-up-short"></i>
+                            +<span th:text="${valuationChangeSincePrevious}"></span> RWF since last
+                        </span>
+                        <span th:if="${valuationChangeSincePrevious.signum() < 0}" class="badge bg-danger">
+                            <i class="bi bi-arrow-down-short"></i>
+                            <span th:text="${valuationChangeSincePrevious}"></span> RWF since last
+                        </span>
+                        <span th:if="${valuationChangeSincePrevious.signum() == 0}" class="badge bg-secondary">
+                            No change since last
                         </span>
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Valuation Method</label>
-                    <select class="form-select" name="valuationMethod" required>
-                        <option value="MARKET_REVALUATION">Market Revaluation</option>
-                        <option value="GROWTH_ADJUSTMENT">Growth Adjustment</option>
-                        <option value="APPRAISAL">Appraisal</option>
-                        <option value="MANUAL_ADJUSTMENT">Manual Adjustment</option>
-                    </select>
+                <!-- No valuation yet -->
+                <div th:if="${latestValuation == null}" class="text-muted small mb-2">
+                    <i class="bi bi-info-circle me-1"></i>No valuation recorded yet.
                 </div>
 
-                <div class="mb-1">
-                    <label class="form-label">Notes (optional)</label>
-                    <textarea class="form-control" name="notes" rows="2"
-                              placeholder="e.g. Reweighed at 6 months, local market price update..."></textarea>
+                <!-- Full history table -->
+                <div class="table-responsive" th:if="${valuationHistory != null and !valuationHistory.empty}">
+                    <table class="table table-sm valuation-table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Value (RWF)</th>
+                            <th>Method</th>
+                            <th>Notes</th>
+                            <th>Recorded By</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="v, iter : ${valuationHistory}"
+                            th:classappend="${iter.first} ? 'latest-row' : ''">
+                            <td th:text="${v.valuationDate != null ? #temporals.format(v.valuationDate,'dd MMM yyyy') : '—'}">—</td>
+                            <td class="fw-semibold" th:text="${#numbers.formatDecimal(v.value,1,'COMMA',0,'POINT')}">—</td>
+                            <td><span class="badge bg-secondary" th:text="${v.methodLabel()}"></span></td>
+                            <td th:text="${v.notes != null and !v.notes.isEmpty() ? v.notes : '—'}">—</td>
+                            <td class="text-muted" th:text="${v.valuedBy != null ? v.valuedBy : '—'}">—</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Edge case: history empty but latestValuation somehow set -->
+                <div th:if="${valuationHistory != null and valuationHistory.empty and latestValuation != null}"
+                     class="text-muted small">
+                    <i class="bi bi-exclamation-triangle me-1"></i>No detailed history rows found.
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle"></i> Save Valuation
-                </button>
+
+            <!-- Record Valuation Modal -->
+            <div class="modal fade" id="valuationModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form th:action="@{/livestock/{id}/valuation(id=${animal.id})}"
+                          method="post" class="modal-content border-0 shadow">
+                        <input type="hidden" name="returnTo" value="view"/>
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fw-bold" style="font-size:14px;">
+                                <i class="bi bi-graph-up-arrow text-success me-1"></i>
+                                Record Valuation — <span th:text="${animal.tagNumber}"></span>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" style="font-size:13px;">
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size:12px;font-weight:600;">Valuation Date</label>
+                                <input type="date" class="form-control form-control-sm" name="valuationDate" required
+                                       th:value="${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')}"
+                                       th:max="${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size:12px;font-weight:600;">New Value (RWF)</label>
+                                <input type="number" step="0.01" min="0"
+                                       class="form-control form-control-sm" name="value" required>
+                                <div class="form-text" style="font-size:11px;" th:if="${animal.currentValue != null}">
+                                    Current: <strong th:text="${#numbers.formatDecimal(animal.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></strong>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" style="font-size:12px;font-weight:600;">Method</label>
+                                <select class="form-select form-select-sm" name="valuationMethod" required>
+                                    <option value="MARKET_REVALUATION">Market Revaluation</option>
+                                    <option value="GROWTH_ADJUSTMENT">Growth Adjustment</option>
+                                    <option value="APPRAISAL">Appraisal</option>
+                                    <option value="MANUAL_ADJUSTMENT">Manual Adjustment</option>
+                                </select>
+                            </div>
+                            <div class="mb-1">
+                                <label class="form-label" style="font-size:12px;font-weight:600;">Notes (optional)</label>
+                                <textarea class="form-control form-control-sm" name="notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-success">
+                                <i class="bi bi-check-circle"></i> Save Valuation
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+
+            <!-- Quick Actions -->
+            <div class="card-panel">
+                <div class="section-head">Quick Actions</div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/livestock/edit/{id}(id=${animal.id})}" class="action-btn warning">
+                        <i class="bi bi-pencil"></i> Edit Animal
+                    </a>
+                    <a th:href="@{/livestock/breeding/register}" class="action-btn danger">
+                        <i class="bi bi-heart-fill"></i> Record Breeding
+                    </a>
+                    <a th:href="@{/livestock/births/register}" class="action-btn success">
+                        <i class="bi bi-stars"></i> Record Birth
+                    </a>
+                    <a href="/livestock/list" class="action-btn primary">
+                        <i class="bi bi-grid"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Give a brief highlight flash when arriving via #valuation-history
-    // (from the list page's "View History" link) so it's obvious the page
-    // scrolled to the right section.
-    (function highlightOnHashArrival() {
+    window.addEventListener('load', function () {
         if (window.location.hash === '#valuation-history') {
             var el = document.getElementById('valuation-history');
-            if (el) el.classList.add('jump-highlight');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                el.classList.add('highlight');
+                setTimeout(function () { el.classList.remove('highlight'); }, 1600);
+            }
         }
-    }());
+    });
 </script>
 </body>
 </html>

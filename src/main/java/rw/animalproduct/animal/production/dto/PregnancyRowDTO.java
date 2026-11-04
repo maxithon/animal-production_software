@@ -4,28 +4,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
-/**
- * DTO for one row in the Pregnancy Tracking table.
- *
- * FAO-standard day-counting rules:
- * ─────────────────────────────────────────────────────────────────────────────
- *   daysPregnant  = today − conceptionDate          (always ≥ 0)
- *   daysUntilDue  = expectedDueDate − today
- *                   > 0  → days remaining
- *                   = 0  → due TODAY  (NOT overdue — this is a critical fix)
- *                   < 0  → overdue by |daysUntilDue| days
- *
- *   critical      = daysUntilDue < 0  (strictly negative — overdue)
- *                   daysUntilDue == 0 is "due today", NOT critical
- *
- *   dueSoon       = daysUntilDue in [1, 14]  (positive, within 14 days)
- *
- * Gestation progress %:
- *   totalGestationDays = conceptionDate → expectedDueDate distance
- *                      = daysPregnant + max(0, daysUntilDue)
- *   pct = min(100, daysPregnant * 100 / totalGestationDays)
- * ─────────────────────────────────────────────────────────────────────────────
- */
 public class PregnancyRowDTO {
 
     private UUID      livestockId;
@@ -36,23 +14,18 @@ public class PregnancyRowDTO {
     private LocalDate expectedDueDate;
     private String    inseminationMethod;
 
-    // ── Derived / computed ────────────────────────────────────────────────
+    // NEW: IDs used by the controller to look up beneficiary + location
+    private UUID beneficiaryId;
+    private UUID locationId;
+
     private Integer daysPregnant;
     private Integer daysUntilDue;
-    private boolean critical;   // strictly overdue  (daysUntilDue < 0)
-    private boolean dueSoon;    // 1–14 days left     (0 < daysUntilDue ≤ 14)
-    private boolean dueToday;   // due today          (daysUntilDue == 0)
-
-    // ─────────────────────────────────────────────────────────────────────
-    // CONSTRUCTORS
-    // ─────────────────────────────────────────────────────────────────────
+    private boolean critical;
+    private boolean dueSoon;
+    private boolean dueToday;
 
     public PregnancyRowDTO() {}
 
-    /**
-     * Full constructor — call this from your service/controller.
-     * All day-count fields are computed here; call site only provides dates.
-     */
     public PregnancyRowDTO(UUID      livestockId,
                            String    tagNumber,
                            String    categoryName,
@@ -71,18 +44,9 @@ public class PregnancyRowDTO {
         recalculate();
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // FAO CALCULATION
-    // ─────────────────────────────────────────────────────────────────────
-
-    /**
-     * Recomputes all derived fields from conceptionDate and expectedDueDate.
-     * Safe to call any time either date changes.
-     */
     public void recalculate() {
         LocalDate today = LocalDate.now();
 
-        // ── Days Pregnant ──────────────────────────────────────────────────
         if (conceptionDate != null) {
             long dp = ChronoUnit.DAYS.between(conceptionDate, today);
             this.daysPregnant = (int) Math.max(0, dp);
@@ -90,20 +54,12 @@ public class PregnancyRowDTO {
             this.daysPregnant = null;
         }
 
-        // ── Days Until Due ─────────────────────────────────────────────────
         if (expectedDueDate != null) {
-            // Positive  → days remaining
-            // Zero      → due today
-            // Negative  → overdue
             this.daysUntilDue = (int) ChronoUnit.DAYS.between(today, expectedDueDate);
         } else {
             this.daysUntilDue = null;
         }
 
-        // ── FAO flags ─────────────────────────────────────────────────────
-        // critical = strictly overdue (daysUntilDue < 0)
-        // dueToday = on the due date  (daysUntilDue == 0) — NOT critical
-        // dueSoon  = 1–14 days left   (0 < daysUntilDue <= 14)
         if (this.daysUntilDue != null) {
             this.critical  = this.daysUntilDue < 0;
             this.dueToday  = this.daysUntilDue == 0;
@@ -115,11 +71,6 @@ public class PregnancyRowDTO {
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────
-    // LABEL HELPERS (safe to call from Thymeleaf)
-    // ─────────────────────────────────────────────────────────────────────
-
-    /** Human-readable label for insemination method. */
     public String getInseminationMethodLabel() {
         if (inseminationMethod == null || inseminationMethod.isBlank()
                 || "UNKNOWN".equals(inseminationMethod)) return "Not recorded";
@@ -131,10 +82,6 @@ public class PregnancyRowDTO {
         };
     }
 
-    /**
-     * Gestation progress as a percentage (0–100).
-     * Uses the planned gestation length (conception → due date) as denominator.
-     */
     public int getGestationProgressPercent() {
         if (daysPregnant == null) return 0;
         int total = daysPregnant + (daysUntilDue != null && daysUntilDue > 0 ? daysUntilDue : 0);
@@ -142,7 +89,6 @@ public class PregnancyRowDTO {
         return Math.min(100, daysPregnant * 100 / total);
     }
 
-    /** Stage label derived from gestation progress percent. */
     public String getGestationStageLabel() {
         int pct = getGestationProgressPercent();
         if (pct < 33)  return "Early";
@@ -151,10 +97,6 @@ public class PregnancyRowDTO {
         if (pct < 100) return "Near Term";
         return "Full Term";
     }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // GETTERS & SETTERS
-    // ─────────────────────────────────────────────────────────────────────
 
     public UUID getLivestockId()  { return livestockId; }
     public void setLivestockId(UUID livestockId)  { this.livestockId = livestockId; }
@@ -183,13 +125,19 @@ public class PregnancyRowDTO {
     public String getInseminationMethod()  { return inseminationMethod; }
     public void setInseminationMethod(String inseminationMethod) { this.inseminationMethod = inseminationMethod; }
 
+    // NEW
+    public UUID getBeneficiaryId() { return beneficiaryId; }
+    public void setBeneficiaryId(UUID beneficiaryId) { this.beneficiaryId = beneficiaryId; }
+
+    public UUID getLocationId() { return locationId; }
+    public void setLocationId(UUID locationId) { this.locationId = locationId; }
+
     public Integer getDaysPregnant()  { return daysPregnant; }
     public Integer getDaysUntilDue()  { return daysUntilDue; }
     public boolean isCritical()       { return critical; }
     public boolean isDueSoon()        { return dueSoon; }
     public boolean isDueToday()       { return dueToday; }
 
-    // Thymeleaf-friendly aliases (th:if="${row.critical}" works with getters)
     public boolean getCritical()  { return critical; }
     public boolean getDueSoon()   { return dueSoon; }
     public boolean getDueToday()  { return dueToday; }

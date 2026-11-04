@@ -13,7 +13,7 @@ import org.thymeleaf.context.Context;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.scheduler.LifecycleNotificationScheduler;
 import rw.animalproduct.animal.production.services.LifecycleEmailService;
-import rw.animalproduct.animal.production.services.LivestockLifecycleService;
+import rw.animalproduct.animal.production.notification.LivestockLifecycleService;
 
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
@@ -29,6 +29,14 @@ import java.util.Map;
  *   3. POST /email-diagnostic/send-test-email  → sends a real email to the recipient
  *   4. POST /email-diagnostic/run-scheduler    → manually fires all scheduled jobs
  *   5. GET  /email-diagnostic/config           → shows current configuration
+ *
+ * ⚠️ This controller is NOT restricted by @Profile, so it is available in every
+ * environment. If you deploy to production, either remove this file or add
+ * @Profile("dev") to the class. See SchedulerTriggerController for the
+ * dev-only alternative.
+ *
+ * @author HABANABAKIZE & NDAYIZEYE
+ * @version 1.1.0
  */
 @RestController
 @RequestMapping("/email-diagnostic")
@@ -42,22 +50,22 @@ public class EmailDiagnosticController {
     private final LivestockLifecycleService      lifecycleService;
     private final LifecycleNotificationScheduler scheduler;
 
-    @Value("${app.notification.email.to}")
-    private String emailTo;
+    @Value("${app.notifications.recipients:}")
+    private String recipientsCsv;
 
-    @Value("${app.notification.email.from:${spring.mail.username}}")
+    @Value("${app.notifications.from:${spring.mail.username:no-reply@animalproduction.rw}}")
     private String emailFrom;
 
-    @Value("${app.notification.email.enabled:true}")
+    @Value("${app.notifications.enabled:true}")
     private boolean emailEnabled;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String smtpUsername;
 
-    @Value("${spring.mail.host}")
+    @Value("${spring.mail.host:}")
     private String smtpHost;
 
-    @Value("${spring.mail.port}")
+    @Value("${spring.mail.port:587}")
     private int smtpPort;
 
     public EmailDiagnosticController(JavaMailSender mailSender,
@@ -72,17 +80,24 @@ public class EmailDiagnosticController {
         this.scheduler        = scheduler;
     }
 
+    /** First configured recipient — used wherever a single "send to" address is needed */
+    private String primaryRecipient() {
+        List<String> recipients = recipients();
+        return recipients.isEmpty() ? "(no recipients configured)" : recipients.get(0);
+    }
+
+    private List<String> recipients() {
+        if (recipientsCsv == null || recipientsCsv.isBlank()) return List.of();
+        return java.util.Arrays.stream(recipientsCsv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
+    }
+
     // =========================================================================
     // STEP 1 — SMTP connection test (no template, no service)
     // =========================================================================
 
-    /**
-     * Sends a plain-text email directly via JavaMailSender.
-     * If this fails: your App Password is wrong or Gmail is blocking it.
-     * If this succeeds but HTML emails fail: the problem is in the template.
-     *
-     * GET /email-diagnostic/smtp-test
-     */
     @GetMapping("/smtp-test")
     public Map<String, Object> smtpTest() {
         Map<String, Object> result = new LinkedHashMap<>();
@@ -90,7 +105,16 @@ public class EmailDiagnosticController {
         result.put("smtpHost", smtpHost);
         result.put("smtpPort", smtpPort);
         result.put("smtpUsername", smtpUsername);
+
+        String emailTo = primaryRecipient();
         result.put("sendingTo", emailTo);
+
+        if (recipients().isEmpty()) {
+            result.put("status", "FAILED");
+            result.put("error", "No recipients configured");
+            result.put("hint", "Set app.notifications.recipients in application.properties");
+            return result;
+        }
 
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -102,7 +126,7 @@ public class EmailDiagnosticController {
                     "This is a plain-text SMTP test from your Livestock Management System.\n\n" +
                             "If you received this email, your Gmail App Password and SMTP settings are correct.\n\n" +
                             "Sent: " + LocalDate.now(),
-                    false // plain text, not HTML
+                    false
             );
             mailSender.send(message);
 
@@ -127,19 +151,9 @@ public class EmailDiagnosticController {
     // STEP 2 — Template rendering test (no email sent)
     // =========================================================================
 
-    /**
-     * Tests that Thymeleaf can find and render a lifecycle stage template.
-     * If this returns HTML: the template path is correct.
-     * If this throws an error: your templates are not in the right folder.
-     *
-     * Templates must be in: src/main/resources/templates/emails/
-     *
-     * GET /email-diagnostic/template-test
-     */
     @GetMapping(value = "/template-test", produces = "text/html")
     public String templateTest() {
         try {
-            // Build a dummy context matching what the template expects
             Context ctx = new Context();
             ctx.setVariable("emoji",     "🐄🍼");
             ctx.setVariable("title",     "TEMPLATE TEST — Newborn Registered");
@@ -181,25 +195,18 @@ public class EmailDiagnosticController {
     // STEP 3 — Send a full HTML test email
     // =========================================================================
 
-    /**
-     * Sends a full HTML test email using the lifecycle stage template.
-     * Uses the same code path as real notifications.
-     *
-     * POST /email-diagnostic/send-test-email
-     */
     @PostMapping("/send-test-email")
     public Map<String, Object> sendTestEmail() {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("step", "3 - Full HTML email test");
 
-        // Build a fake Livestock object for the test
         Livestock fakeAnimal = new Livestock();
         fakeAnimal.setTagNumber("TEST-ANIMAL-001");
 
         try {
             emailService.sendNewbornNotification(fakeAnimal);
             result.put("status", "SUCCESS");
-            result.put("message", "HTML test email sent to: " + emailTo);
+            result.put("message", "HTML test email sent to: " + primaryRecipient());
             result.put("note", "If SMTP test (step 1) worked but this fails, the issue is in the template path.");
             log.info("✅ HTML test email sent");
 
@@ -217,8 +224,8 @@ public class EmailDiagnosticController {
     // =========================================================================
 
     /**
-     * Forces all scheduler jobs to run immediately (doesn't wait for cron time).
-     * POST /email-diagnostic/run-scheduler
+     * Forces all weekly reminder jobs to run immediately.
+     * Uses the manual trigger methods in LifecycleNotificationScheduler.
      */
     @PostMapping("/run-scheduler")
     public Map<String, Object> runScheduler() {
@@ -227,20 +234,7 @@ public class EmailDiagnosticController {
 
         Map<String, Object> jobResults = new LinkedHashMap<>();
 
-        try {
-            scheduler.notifyYoungStage();
-            jobResults.put("notifyYoungStage", "executed");
-        } catch (Exception e) {
-            jobResults.put("notifyYoungStage", "ERROR: " + e.getMessage());
-        }
-
-        try {
-            scheduler.notifyPreBreedingStage();
-            jobResults.put("notifyPreBreedingStage", "executed");
-        } catch (Exception e) {
-            jobResults.put("notifyPreBreedingStage", "ERROR: " + e.getMessage());
-        }
-
+        // Job 1: Ready to breed (was previously part of notifyLifecycleStages)
         try {
             scheduler.notifyReadyToBreed();
             jobResults.put("notifyReadyToBreed", "executed");
@@ -248,18 +242,20 @@ public class EmailDiagnosticController {
             jobResults.put("notifyReadyToBreed", "ERROR: " + e.getMessage());
         }
 
+        // Job 2: Pregnancy timelines (DUE_SOON + OVERDUE)
         try {
-            scheduler.notifyDueSoon();
-            jobResults.put("notifyDueSoon", "executed");
+            scheduler.notifyPregnancyTimelines();
+            jobResults.put("notifyPregnancyTimelines", "executed");
         } catch (Exception e) {
-            jobResults.put("notifyDueSoon", "ERROR: " + e.getMessage());
+            jobResults.put("notifyPregnancyTimelines", "ERROR: " + e.getMessage());
         }
 
+        // Job 3: Awaiting pregnancy confirmation
         try {
-            scheduler.notifyOverdue();
-            jobResults.put("notifyOverdue", "executed");
+            scheduler.notifyAwaitingPregnancyConfirmation();
+            jobResults.put("notifyAwaitingPregnancyConfirmation", "executed");
         } catch (Exception e) {
-            jobResults.put("notifyOverdue", "ERROR: " + e.getMessage());
+            jobResults.put("notifyAwaitingPregnancyConfirmation", "ERROR: " + e.getMessage());
         }
 
         result.put("status", "completed");
@@ -269,13 +265,10 @@ public class EmailDiagnosticController {
         return result;
     }
 
-    /**
-     * Same as run-scheduler but also sends a forced newborn notification
-     * for the first animal it finds, regardless of age — useful when you have
-     * no animals in the exact right age range.
-     *
-     * POST /email-diagnostic/force-email-now
-     */
+    // =========================================================================
+    // STEP 4b — Force email for first available animal
+    // =========================================================================
+
     @PostMapping("/force-email-now")
     public Map<String, Object> forceEmailNow() {
         Map<String, Object> result = new LinkedHashMap<>();
@@ -291,11 +284,11 @@ public class EmailDiagnosticController {
         Livestock animal = allAnimals.get(0);
         try {
             String stage = lifecycleService.getCurrentStage(animal);
-            emailService.sendNewbornNotification(animal); // always send newborn for testing
+            emailService.sendNewbornNotification(animal);
             result.put("status", "SUCCESS");
             result.put("animal", animal.getTagNumber());
             result.put("stage", stage);
-            result.put("emailSentTo", emailTo);
+            result.put("emailSentTo", primaryRecipient());
             result.put("note", "Sent newborn notification for testing regardless of actual stage.");
             log.info("✅ Force email sent for animal: {} (stage: {})", animal.getTagNumber(), stage);
         } catch (Exception e) {
@@ -311,10 +304,6 @@ public class EmailDiagnosticController {
     // STEP 5 — Configuration status
     // =========================================================================
 
-    /**
-     * Shows current email configuration (no passwords shown).
-     * GET /email-diagnostic/config
-     */
     @GetMapping("/config")
     public Map<String, Object> config() {
         Map<String, Object> cfg = new LinkedHashMap<>();
@@ -322,7 +311,7 @@ public class EmailDiagnosticController {
         cfg.put("smtpPort",      smtpPort);
         cfg.put("smtpUsername",  smtpUsername);
         cfg.put("emailFrom",     emailFrom);
-        cfg.put("emailTo",       emailTo);
+        cfg.put("emailRecipients", recipients());
         cfg.put("emailEnabled",  emailEnabled);
         cfg.put("schedulingEnabled", true);
         cfg.put("templateBasePath", "classpath:/templates/emails/");
@@ -335,11 +324,9 @@ public class EmailDiagnosticController {
                 "emails/email-offspring-born.html"
         ));
         cfg.put("scheduledJobs", Map.of(
-                "notifyYoungStage",      "Daily at 07:00 — animals turning 31 days old",
-                "notifyPreBreedingStage","Daily at 07:05 — animals turning 181 days old",
-                "notifyReadyToBreed",    "Daily at 07:10 — animals turning 366 days old",
-                "notifyDueSoon",         "Daily at 07:30 — pregnant animals due within 14 days",
-                "notifyOverdue",         "Daily at 08:00 — overdue pregnant animals"
+                "checkReadyToBreed",                  "Weekly Monday 08:00 (Africa/Kigali) — females that reached breeding age",
+                "checkPregnancyTimelines",            "Weekly Monday 08:00 (Africa/Kigali) — DUE_SOON and OVERDUE pregnancies",
+                "checkAwaitingPregnancyConfirmation", "Weekly Monday 08:00 (Africa/Kigali) — bred ≥21 days ago, awaiting confirmation"
         ));
         return cfg;
     }

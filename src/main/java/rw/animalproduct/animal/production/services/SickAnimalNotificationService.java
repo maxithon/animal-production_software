@@ -1,106 +1,137 @@
 package rw.animalproduct.animal.production.services;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.spring6.SpringTemplateEngine;
+import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockSick;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * Sends the "sick animal recorded" notification email.
- *
- * IMPORTANT — WHY @Async MATTERS HERE:
- * Without it, the HTTP request that saves the sick record blocks on the SMTP
- * round-trip to Gmail before it can redirect back to the list page — that is
- * almost certainly why the form feels slow to respond right now. With @Async
- * the record is saved and the browser gets its redirect immediately, while
- * the email goes out in the background a moment later.
- *
- * To enable it, add @EnableAsync to any one @Configuration class in the app
- * (or directly on your main @SpringBootApplication class):
- *
- *   @SpringBootApplication
- *   @EnableAsync
- *   public class AnimalProductionApplication { ... }
- *
- * If you already have a general-purpose EmailService/NotificationService in
- * the project (the fact that email-animal-registered.html works implies you
- * do), the cleanest move is to add sendSickRecordedEmail(...) as a method on
- * that existing class instead of introducing a second one — copy the method
- * body below into it and skip creating this file.
- */
 @Service
 public class SickAnimalNotificationService {
 
-    private final JavaMailSender mailSender;
-    private final SpringTemplateEngine templateEngine;
+    private static final Logger log = LoggerFactory.getLogger(SickAnimalNotificationService.class);
+    private static final DateTimeFormatter DISPLAY_DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
-    @Value("${app.notification.email.from}")
+    private final JavaMailSender mailSender;
+    private final TemplateEngine templateEngine;
+
+    @Value("${app.notifications.recipients:}")
+    private String recipientsCsv;
+
+    @Value("${app.notifications.from:no-reply@animalproduction.rw}")
     private String fromAddress;
 
-    @Value("${app.notification.email.to}")
-    private String toAddress;
+    @Value("${app.notifications.enabled:true}")
+    private boolean notificationEnabled;
 
-    @Value("${app.notification.email.enabled:true}")
-    private boolean enabled;
-
-    public SickAnimalNotificationService(JavaMailSender mailSender,
-                                          SpringTemplateEngine templateEngine) {
+    public SickAnimalNotificationService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
+        log.info("✅ SickAnimalNotificationService initialized");
     }
 
-    @Async
+    @Async("notificationExecutor")
     public void sendSickRecordedEmail(LivestockSick sick) {
-        if (!enabled || sick == null || sick.getLivestock() == null) {
+        if (sick == null) return;
+        if (!notificationEnabled) {
+            log.info("⛔ Notifications disabled — skipping sick email");
+            return;
+        }
+
+        List<String> recipients = getRecipients();
+        if (recipients.isEmpty()) {
+            log.error("❌ No recipients configured — skipping sick email");
             return;
         }
 
         try {
-            Context ctx = new Context(LocaleContextHolder.getLocale());
+            Livestock animal = sick.getLivestock();
+
+            Context ctx = new Context();
             ctx.setVariable("title", "Sick Animal Recorded");
             ctx.setVariable("emoji", "🐄🩺");
-            ctx.setVariable("tagNumber", sick.getLivestock().getTagNumber());
-            ctx.setVariable("category", sick.getLivestock().getLivestockCategory() != null
-                    ? sick.getLivestock().getLivestockCategory().getName() : "—");
+            ctx.setVariable("subtitle", "Automatic animal health notification");
+
+            ctx.setVariable("tagNumber",    animal != null ? animal.getTagNumber() : "N/A");
+            ctx.setVariable("category",     (animal != null && animal.getLivestockCategory() != null)
+                    ? animal.getLivestockCategory().getName() : "—");
+            ctx.setVariable("gender",       animal != null ? animal.getGender() : "—");
+            ctx.setVariable("healthStatus", animal != null ? animal.healthStatusLabel() : "—");
+
+            if (animal != null && animal.getBeneficiary() != null) {
+                ctx.setVariable("beneficiaryName",  animal.getBeneficiary().getFullName());
+                ctx.setVariable("beneficiaryPhone", animal.getBeneficiary().getPhoneNumber());
+            } else {
+                ctx.setVariable("beneficiaryName",  "Not assigned");
+                ctx.setVariable("beneficiaryPhone", "—");
+            }
+
+            ctx.setVariable("locationPath", buildLocationPath(animal));
+
             ctx.setVariable("reportedDate", sick.getReportedDate() != null
-                    ? sick.getReportedDate().format(DateTimeFormatter.ofPattern("dd MMM yyyy")) : "—");
-            ctx.setVariable("status", sick.getStatus() != null ? sick.getStatus().name() : "—");
-            ctx.setVariable("severity", sick.getSeverityLevel() != null
-                    ? sick.getSeverityLevel().name() : "Not specified");
-            ctx.setVariable("symptoms", sick.getSymptoms() != null && !sick.getSymptoms().isBlank()
+                    ? sick.getReportedDate().format(DISPLAY_DATE_FMT) : "—");
+            ctx.setVariable("status",       sick.getStatus() != null ? sick.getStatus().name() : "—");
+            ctx.setVariable("severity",     sick.getSeverityLevel() != null
+                    ? sick.getSeverityLevel().name() : "—");
+            ctx.setVariable("temperature",  sick.getTemperature() != null
+                    ? sick.getTemperature() + " °C" : "—");
+            ctx.setVariable("symptoms",     sick.getSymptoms() != null && !sick.getSymptoms().isBlank()
                     ? sick.getSymptoms() : "Not recorded");
-            ctx.setVariable("temperature", sick.getTemperature() != null
-                    ? sick.getTemperature() + "°C" : "Not recorded");
-            ctx.setVariable("vetName", sick.getVeterinarian() != null
+            ctx.setVariable("diagnosis",    sick.getDiagnosis() != null && !sick.getDiagnosis().isBlank()
+                    ? sick.getDiagnosis() : "Pending");
+            ctx.setVariable("vetName",      sick.getVeterinarian() != null
                     ? sick.getVeterinarian().getFullName() : "Not assigned");
-            ctx.setVariable("today", LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+
+            ctx.setVariable("today", LocalDate.now().format(DISPLAY_DATE_FMT));
 
             String html = templateEngine.process("email-sick-recorded", ctx);
 
             MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
             helper.setFrom(fromAddress);
-            helper.setTo(toAddress);
-            helper.setSubject("🩺 Sick Animal Recorded — " + sick.getLivestock().getTagNumber());
+            helper.setTo(recipients.toArray(new String[0]));
+            helper.setSubject("🐄🩺 Sick Animal Recorded — " +
+                    (animal != null ? animal.getTagNumber() : "Unknown"));
             helper.setText(html, true);
 
             mailSender.send(message);
+            log.info("✅ Sick email sent to {} recipient(s)", recipients.size());
 
-        } catch (MessagingException e) {
-            // An email hiccup must never roll back or fail the sick-record save.
-            System.err.println("Failed to send sick-animal email: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Unexpected error sending sick-animal email: " + e.getMessage());
+            log.error("❌ Failed to send sick email: {}", e.getMessage(), e);
         }
+    }
+
+    private String buildLocationPath(Livestock animal) {
+        if (animal == null || animal.getLocation() == null) return "—";
+        List<String> parts = new ArrayList<>();
+        rw.animalproduct.animal.production.entity.Location loc = animal.getLocation();
+        while (loc != null) {
+            parts.add(loc.getName());
+            loc = loc.getParent();
+        }
+        Collections.reverse(parts);
+        return String.join(" › ", parts);
+    }
+
+    private List<String> getRecipients() {
+        if (recipientsCsv == null || recipientsCsv.isBlank()) return List.of();
+        return java.util.Arrays.stream(recipientsCsv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isBlank())
+                .toList();
     }
 }

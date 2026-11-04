@@ -177,7 +177,8 @@ public class LivestockEventsController {
                 treatment.setLivestock(sick.getLivestock());
             });
 
-            treatmentService.addNew(treatment);
+            // FIXED: Use create() instead of addNew()
+            treatmentService.create(treatment);
             redirectAttributes.addFlashAttribute("success", "Treatment added successfully.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error adding treatment: " + e.getMessage());

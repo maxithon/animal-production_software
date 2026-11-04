@@ -1,52 +1,100 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Financial Summary Report 🔥</title>
+    <meta charset="UTF-8">
+    <title>Financial Summary Report</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Chart.js Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         body { background: #f8fafc; font-family: system-ui, -apple-system, sans-serif; }
+
+        .section-title {
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin: 34px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::after { content: ""; flex: 1; height: 1px; background: #e2e8f0; }
+
+        .period-badge {
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .period-pill { border-radius: 20px; padding: 6px 16px; font-weight: 600; font-size: 0.85rem; }
+
         .hero-stat {
             background: linear-gradient(135deg, #0ea5e9, #06b6d4);
             color: white;
             border-radius: 16px;
-            padding: 40px;
+            padding: 36px;
             text-align: center;
             box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
-            margin-bottom: 30px;
         }
-        .hero-stat.bg-danger {
-            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        .hero-stat.bg-danger { background: linear-gradient(135deg, #ef4444, #dc2626) !important; }
+        .hero-value { font-size: 3.4rem; font-weight: 900; margin: 14px 0; }
+        .hero-label { font-size: 1.1rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 2px; }
+
+        .kpi-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            height: 100%;
         }
-        .hero-value { font-size: 4rem; font-weight: 900; margin: 20px 0; }
-        .hero-label { font-size: 1.2rem; opacity: 0.9; text-transform: uppercase; letter-spacing: 2px; }
+        .kpi-label { font-size: 0.78rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.55rem; font-weight: 800; margin: 6px 0 8px; }
+        .kpi-delta { font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .kpi-delta.up { color: #059669; }
+        .kpi-delta.down { color: #dc2626; }
+
         .stat-card { background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 100%; }
-        .stat-value { font-size: 2.2rem; font-weight: 800; }
+        .stat-value { font-size: 2rem; font-weight: 800; }
         .stat-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
         .income-card { border-left: 4px solid #10b981; }
         .expense-card { border-left: 4px solid #ef4444; }
-        .chart-container { position: relative; height: 350px; }
-        .metric-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .asset-card { border-left: 4px solid #8b5cf6; }
+        .cashflow-card { border-left: 4px solid #0ea5e9; }
+
+        .chart-container { position: relative; height: 340px; }
+        .metric-row { display: flex; justify-content: space-between; padding: 13px 0; border-bottom: 1px solid #e2e8f0; }
         .metric-row:last-child { border-bottom: none; }
-        .profit-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
+        .metric-row.total-row { font-weight: 800; border-top: 2px solid #cbd5e1; margin-top: 4px; padding-top: 14px; }
+        .metric-row .metric-label { color: #475569; }
+        .metric-row .metric-label i { width: 18px; }
+
+        .profit-badge { display: inline-block; padding: 8px 20px; border-radius: 20px; font-weight: 700; font-size: 1.05rem; }
         .bg-success { background-color: #10b981 !important; color: white; }
         .bg-warning { background-color: #f59e0b !important; color: white; }
         .bg-danger { background-color: #ef4444 !important; color: white; }
+
+        .disclaimer-note {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body>
 <div class="container-fluid p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-graph-up-arrow text-primary"></i> Financial Summary Report 🔥</h2>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
+        <h2 class="mb-0"><i class="bi bi-graph-up-arrow text-primary"></i> Financial Summary Report</h2>
         <div>
             <button onclick="window.print()" class="btn btn-outline-primary me-2">
                 <i class="bi bi-printer"></i> Print
@@ -60,21 +108,55 @@
         </div>
     </div>
 
-    <!-- Date Filter -->
-    <div class="card mb-4">
+    <!-- 🟡 Reporting period — always explicit, never silently defaults to Dec 31 -->
+    <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+        <span class="period-badge">
+            <i class="bi bi-calendar-range"></i>
+            <span th:text="${#temporals.format(fromDate, 'dd MMM yyyy')}">01 Jan 2026</span>
+            &ndash;
+            <span th:text="${#temporals.format(toDate, 'dd MMM yyyy')}">31 Aug 2026</span>
+        </span>
+        <span class="text-muted small" th:if="${selectedPeriod == 'ytd'}">Year-to-Date</span>
+        <span class="text-muted small" th:if="${selectedPeriod == 'full_year'}">Full Year</span>
+        <span class="text-muted small" th:if="${selectedPeriod == 'this_month'}">This Month</span>
+        <span class="text-muted small" th:if="${selectedPeriod == 'last_month'}">Last Month</span>
+        <span class="text-muted small" th:if="${selectedPeriod == 'custom'}">Custom Range</span>
+        <span class="text-muted small ms-2">
+            vs previous period
+            <strong th:text="${#temporals.format(prevFromDate, 'dd MMM yyyy')}">01 Jan 2025</strong> &ndash;
+            <strong th:text="${#temporals.format(prevToDate, 'dd MMM yyyy')}">31 Aug 2025</strong>
+        </span>
+    </div>
+
+    <!-- Period selector -->
+    <div class="card mb-4 no-print">
         <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <a href="/livestock/financial-summary?period=ytd"
+                   class="btn btn-sm period-pill"
+                   th:classappend="${selectedPeriod == 'ytd'} ? 'btn-primary' : 'btn-outline-primary'">Year-to-Date</a>
+                <a href="/livestock/financial-summary?period=this_month"
+                   class="btn btn-sm period-pill"
+                   th:classappend="${selectedPeriod == 'this_month'} ? 'btn-primary' : 'btn-outline-primary'">This Month</a>
+                <a href="/livestock/financial-summary?period=last_month"
+                   class="btn btn-sm period-pill"
+                   th:classappend="${selectedPeriod == 'last_month'} ? 'btn-primary' : 'btn-outline-primary'">Last Month</a>
+                <a href="/livestock/financial-summary?period=full_year"
+                   class="btn btn-sm period-pill"
+                   th:classappend="${selectedPeriod == 'full_year'} ? 'btn-primary' : 'btn-outline-primary'">Full Year</a>
+            </div>
             <form method="get" action="/livestock/financial-summary" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">From Date</label>
+                    <label class="form-label fw-bold small">Custom From Date</label>
                     <input type="date" name="from" class="form-control" th:value="${fromDate}">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-bold">To Date</label>
+                    <label class="form-label fw-bold small">Custom To Date</label>
                     <input type="date" name="to" class="form-control" th:value="${toDate}">
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-calendar-range"></i> Update Period
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-funnel"></i> Apply Custom Range
                     </button>
                 </div>
             </form>
@@ -82,7 +164,7 @@
     </div>
 
     <!-- Hero Net Profit/Loss -->
-    <div class="hero-stat" th:classappend="${profitStatus == 'PROFIT'} ? '' : 'bg-danger'">
+    <div class="hero-stat mb-4" th:classappend="${profitStatus == 'PROFIT'} ? '' : 'bg-danger'">
         <div class="hero-label">
             <i class="bi" th:classappend="${profitStatus == 'PROFIT'} ? 'bi-arrow-up-circle' : 'bi-arrow-down-circle'"></i>
             NET <span th:text="${profitStatus}">PROFIT</span>
@@ -92,154 +174,338 @@
             <span th:text="${#numbers.formatDecimal(netProfit != null ? netProfit.abs() : 0, 0, 'COMMA', 0, 'POINT')}">0</span> RWF
         </div>
         <p style="font-size: 1rem; opacity: 0.9; margin: 0;">
-                <span th:if="${profitStatus == 'PROFIT'}">
-                    ✓ Your livestock business is profitable — revenue exceeds all costs
-                </span>
-            <span th:if="${profitStatus == 'LOSS'}">
-                    ✗ Operating at a loss — costs exceed revenue, review spending
-                </span>
+            <span th:if="${profitStatus == 'PROFIT'}">✓ Revenue exceeds total costs for this period</span>
+            <span th:if="${profitStatus == 'LOSS'}">✗ Costs exceed revenue for this period — review spending</span>
         </p>
-        <div class="mt-3">
-                <span class="profit-badge"
-                      th:classappend="${profitMargin >= 20} ? 'bg-success' : (${profitMargin >= 0} ? 'bg-warning' : 'bg-danger')"
-                      th:text="'Profit Margin: ' + ${#numbers.formatDecimal(profitMargin != null ? profitMargin : 0, 1, 'POINT', 1, 'POINT')} + '%'">
-                    Profit Margin: 0%
-                </span>
+        <div class="mt-3 d-flex justify-content-center gap-2 flex-wrap">
+            <span class="profit-badge"
+                  th:classappend="${profitMargin >= 20} ? 'bg-success' : (${profitMargin >= 0} ? 'bg-warning' : 'bg-danger')"
+                  th:text="'Profit Margin: ' + ${#numbers.formatDecimal(profitMargin != null ? profitMargin : 0, 1, 'POINT', 1, 'POINT')} + '%'">
+                Profit Margin: 0%
+            </span>
+            <span class="profit-badge" style="background: rgba(255,255,255,0.25); color: #fff;"
+                  th:classappend="${comparisons['netProfit']['isIncrease']} ? '' : ''"
+                  th:text="'vs prior period: ' + (${comparisons['netProfit']['isIncrease']} ? '+' : '') + ${#numbers.formatDecimal(comparisons['netProfit']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">
+                vs prior period: +0%
+            </span>
         </div>
     </div>
 
-    <!-- Income vs Expenses -->
-    <div class="row g-4 mb-4">
+    <!-- ══════════════════ FINANCIAL KPIs ══════════════════ -->
+    <div class="section-title"><i class="bi bi-speedometer2"></i> Financial KPIs</div>
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Revenue</div>
+                <div class="kpi-value text-success" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
+                <span class="kpi-delta" th:classappend="${comparisons['revenue']['isIncrease']} ? 'up' : 'down'">
+                    <i class="bi" th:classappend="${comparisons['revenue']['isIncrease']} ? 'bi-arrow-up-short' : 'bi-arrow-down-short'"></i>
+                    <span th:text="${#numbers.formatDecimal(comparisons['revenue']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                </span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Expenses</div>
+                <div class="kpi-value text-danger" th:text="${#numbers.formatDecimal(totalExpenses, 0, 'COMMA', 0, 'POINT')}">0</div>
+                <span class="kpi-delta" th:classappend="${comparisons['expenses']['isIncrease']} ? 'down' : 'up'">
+                    <i class="bi" th:classappend="${comparisons['expenses']['isIncrease']} ? 'bi-arrow-up-short' : 'bi-arrow-down-short'"></i>
+                    <span th:text="${#numbers.formatDecimal(comparisons['expenses']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                </span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Net Profit/Loss</div>
+                <div class="kpi-value" th:classappend="${profitStatus == 'PROFIT'} ? 'text-success' : 'text-danger'"
+                     th:text="(${profitStatus == 'PROFIT'} ? '+' : '-') + ${#numbers.formatDecimal(netProfit != null ? netProfit.abs() : 0, 0, 'COMMA', 0, 'POINT')}">0</div>
+                <span class="kpi-delta" th:classappend="${comparisons['netProfit']['isIncrease']} ? 'up' : 'down'">
+                    <i class="bi" th:classappend="${comparisons['netProfit']['isIncrease']} ? 'bi-arrow-up-short' : 'bi-arrow-down-short'"></i>
+                    <span th:text="${#numbers.formatDecimal(comparisons['netProfit']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                </span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Profit Margin</div>
+                <div class="kpi-value" th:classappend="${profitMargin >= 0} ? 'text-success' : 'text-danger'"
+                     th:text="${#numbers.formatDecimal(profitMargin != null ? profitMargin : 0, 1, 'POINT', 1, 'POINT')} + '%'">0%</div>
+                <span class="text-muted small">of Total Revenue</span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Net Cash Flow</div>
+                <div class="kpi-value" th:classappend="${netCashFlow != null and netCashFlow.signum() >= 0} ? 'text-success' : 'text-danger'"
+                     th:text="${#numbers.formatDecimal(netCashFlow != null ? netCashFlow : 0, 0, 'COMMA', 0, 'POINT')}">0</div>
+                <span class="kpi-delta" th:classappend="${comparisons['cashFlow']['isIncrease']} ? 'up' : 'down'">
+                    <i class="bi" th:classappend="${comparisons['cashFlow']['isIncrease']} ? 'bi-arrow-up-short' : 'bi-arrow-down-short'"></i>
+                    <span th:text="${#numbers.formatDecimal(comparisons['cashFlow']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                </span>
+            </div>
+        </div>
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="kpi-card">
+                <div class="kpi-label">Livestock Assets</div>
+                <div class="kpi-value text-primary" th:text="${#numbers.formatDecimal(currentLivestockValue, 0, 'COMMA', 0, 'POINT')}">0</div>
+                <span class="kpi-delta" th:classappend="${comparisons['livestockValue']['isIncrease']} ? 'up' : 'down'">
+                    <i class="bi" th:classappend="${comparisons['livestockValue']['isIncrease']} ? 'bi-arrow-up-short' : 'bi-arrow-down-short'"></i>
+                    <span th:text="${#numbers.formatDecimal(comparisons['livestockValue']['changePercent'], 1, 'POINT', 1, 'POINT')} + '%'">0%</span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <p class="disclaimer-note mb-4">
+        <i class="bi bi-info-circle"></i>
+        Revenue, Expenses, Cash Flow and Livestock Assets are four different figures and are never added together —
+        Livestock Assets is a point-in-time stock valuation, not income earned this period.
+    </p>
+
+    <!-- ══════════════════ INCOME / REVENUE ══════════════════ -->
+    <div class="section-title"><i class="bi bi-cash-stack"></i> Income / Revenue</div>
+    <div class="row g-4 mb-2">
         <div class="col-md-6">
             <div class="stat-card income-card">
-                <div class="stat-label"><i class="bi bi-arrow-down-circle text-success"></i> TOTAL INCOME</div>
-                <div class="stat-value text-success" th:text="${#numbers.formatDecimal(totalIncome != null ? totalIncome : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <div class="stat-label"><i class="bi bi-arrow-down-circle text-success"></i> Total Revenue</div>
+                <div class="stat-value text-success" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
                 <hr>
                 <div class="metric-row">
-                    <span><i class="bi bi-cash-coin"></i> Sales Revenue</span>
+                    <span class="metric-label"><i class="bi bi-cash-coin"></i> Livestock Sales</span>
                     <strong th:text="${#numbers.formatDecimal(salesRevenue != null ? salesRevenue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
                 </div>
                 <div class="metric-row">
-                    <span><i class="bi bi-box-seam"></i> Current Livestock Value</span>
-                    <strong th:text="${#numbers.formatDecimal(currentLivestockValue != null ? currentLivestockValue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                    <span class="metric-label"><i class="bi bi-egg-fried"></i> Production Sales</span>
+                    <strong th:text="${#numbers.formatDecimal(productionSales != null ? productionSales : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
                 </div>
                 <div class="metric-row">
-                    <span><i class="bi bi-stars"></i> Born Animals Value</span>
-                    <strong th:text="${#numbers.formatDecimal(bornAnimalsValue != null ? bornAnimalsValue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                    <span class="metric-label"><i class="bi bi-plus-circle"></i> Other Income</span>
+                    <strong th:text="${#numbers.formatDecimal(otherIncome != null ? otherIncome : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                </div>
+                <div class="metric-row total-row">
+                    <span>Total Revenue</span>
+                    <strong th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
                 </div>
             </div>
         </div>
 
+        <!-- ══════════════════ EXPENSES ══════════════════ -->
         <div class="col-md-6">
             <div class="stat-card expense-card">
-                <div class="stat-label"><i class="bi bi-arrow-up-circle text-danger"></i> TOTAL EXPENSES</div>
-                <div class="stat-value text-danger" th:text="${#numbers.formatDecimal(totalExpenses != null ? totalExpenses : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
+                <div class="stat-label"><i class="bi bi-arrow-up-circle text-danger"></i> Total Expenses</div>
+                <div class="stat-value text-danger" th:text="${#numbers.formatDecimal(totalExpenses, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</div>
                 <hr>
-                <div class="metric-row">
-                    <span><i class="bi bi-capsule"></i> Treatment Costs</span>
-                    <strong th:text="${#numbers.formatDecimal(treatmentCosts != null ? treatmentCosts : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                <div class="metric-row" th:each="entry : ${expenseBreakdown}">
+                    <span class="metric-label" th:text="${entry.key}">Category</span>
+                    <strong th:text="${#numbers.formatDecimal(entry.value != null ? entry.value : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
                 </div>
-                <div class="metric-row">
-                    <span><i class="bi bi-heart-pulse"></i> Sick Care Costs</span>
-                    <strong th:text="${#numbers.formatDecimal(sickCareCosts != null ? sickCareCosts : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
-                </div>
-                <div class="metric-row">
-                    <span><i class="bi bi-cart-plus"></i> Purchase Costs</span>
-                    <strong th:text="${#numbers.formatDecimal(purchaseCosts != null ? purchaseCosts : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
-                </div>
-                <div class="metric-row">
-                    <span><i class="bi bi-x-circle"></i> Loss from Deaths</span>
-                    <strong th:text="${#numbers.formatDecimal(deathLoss != null ? deathLoss : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
+                <div class="metric-row total-row">
+                    <span>Total Expenses</span>
+                    <strong th:text="${#numbers.formatDecimal(totalExpenses, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0 RWF</strong>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Income Breakdown</h5>
+    <!-- ══════════════════ LIVESTOCK ASSET POSITION ══════════════════ -->
+    <div class="section-title"><i class="bi bi-box-seam"></i> Livestock Asset Position</div>
+    <div class="row g-4 mb-2">
+        <div class="col-md-7">
+            <div class="stat-card asset-card">
+                <div class="metric-row">
+                    <span class="metric-label">Opening Livestock Value</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['openingValue'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
                 </div>
-                <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="incomeChart"></canvas>
-                    </div>
+                <div class="metric-row">
+                    <span class="metric-label">+ Animal Purchases</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['purchases'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
                 </div>
+                <div class="metric-row">
+                    <span class="metric-label">+ Born Animals Value</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['bornAnimalsValue'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">&minus; Death Losses</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['deathLosses'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">&minus; Sales</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['salesValue'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">&plusmn; Value Adjustments</span>
+                    <strong th:text="${#numbers.formatDecimal(assetPosition['valueAdjustments'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                </div>
+                <div class="metric-row total-row">
+                    <span>Closing / Current Livestock Value</span>
+                    <strong class="text-primary" th:text="${#numbers.formatDecimal(assetPosition['closingValue'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                </div>
+                <p class="disclaimer-note mt-3 mb-0">
+                    <i class="bi bi-exclamation-circle"></i>
+                    Opening Value is estimated by working backward from today's valuation (no dated valuation
+                    history is stored yet); Sales reflects all sold-status animals rather than only this period's.
+                </p>
             </div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card">
+        <div class="col-md-5">
+            <div class="card h-100">
                 <div class="card-header bg-light">
-                    <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Expense Breakdown</h5>
+                    <h6 class="mb-0"><i class="bi bi-bar-chart-steps"></i> Livestock Asset Movement</h6>
                 </div>
                 <div class="card-body">
-                    <div class="chart-container">
-                        <canvas id="expenseChart"></canvas>
+                    <div class="chart-container" style="height: 280px;">
+                        <canvas id="assetMovementChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Profitability Analysis -->
-    <div class="card mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Profitability Analysis</h5>
+    <!-- ══════════════════ CASH FLOW ══════════════════ -->
+    <div class="section-title"><i class="bi bi-arrow-left-right"></i> Cash Flow</div>
+    <div class="row g-4 mb-2">
+        <div class="col-md-12">
+            <div class="stat-card cashflow-card">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="metric-row" style="border:none;">
+                            <span class="metric-label">Cash Inflows</span>
+                            <strong class="text-success" th:text="${#numbers.formatDecimal(cashFlow['cashInflows'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-row" style="border:none;">
+                            <span class="metric-label">Cash Outflows</span>
+                            <strong class="text-danger" th:text="${#numbers.formatDecimal(cashFlow['cashOutflows'], 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="metric-row" style="border:none;">
+                            <span class="metric-label">Net Cash Flow</span>
+                            <strong th:classappend="${netCashFlow != null and netCashFlow.signum() >= 0} ? 'text-success' : 'text-danger'"
+                                    th:text="${#numbers.formatDecimal(netCashFlow != null ? netCashFlow : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF'">0</strong>
+                        </div>
+                    </div>
+                </div>
+                <p class="disclaimer-note mb-0">
+                    <i class="bi bi-info-circle"></i> Death/Mortality Losses are excluded from Cash Outflows — no cash actually leaves the business when an animal dies, so Net Cash Flow differs from Net Profit/Loss.
+                </p>
+            </div>
         </div>
+    </div>
+
+    <!-- ══════════════════ CHARTS ══════════════════ -->
+    <div class="section-title"><i class="bi bi-pie-chart"></i> Charts</div>
+    <div class="row g-4 mb-2">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-bar-chart"></i> Revenue vs Expenses</h5></div>
+                <div class="card-body">
+                    <div class="chart-container"><canvas id="revenueExpenseChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-light"><h5 class="mb-0"><i class="bi bi-pie-chart"></i> Expense Breakdown</h5></div>
+                <div class="card-body">
+                    <div class="chart-container"><canvas id="expenseChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════ PROFITABILITY ANALYSIS ══════════════════ -->
+    <div class="section-title"><i class="bi bi-bar-chart-line"></i> Profitability Analysis</div>
+    <div class="card mb-2">
         <div class="card-body">
-            <div class="chart-container" style="height: 250px;">
-                <canvas id="profitChart"></canvas>
+            <div class="row g-3">
+                <div class="col-6 col-md-3">
+                    <div class="kpi-label">Gross Profit</div>
+                    <div class="kpi-value" th:classappend="${profitability['grossProfit'] != null and profitability['grossProfit'].signum() >= 0} ? 'text-success' : 'text-danger'"
+                         th:text="${#numbers.formatDecimal(profitability['grossProfit'], 0, 'COMMA', 0, 'POINT')}">0</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-label">Operating Profit</div>
+                    <div class="kpi-value" th:classappend="${profitability['operatingProfit'] != null and profitability['operatingProfit'].signum() >= 0} ? 'text-success' : 'text-danger'"
+                         th:text="${#numbers.formatDecimal(profitability['operatingProfit'], 0, 'COMMA', 0, 'POINT')}">0</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-label">Net Profit/Loss</div>
+                    <div class="kpi-value" th:classappend="${profitStatus == 'PROFIT'} ? 'text-success' : 'text-danger'"
+                         th:text="${#numbers.formatDecimal(profitability['netProfit'], 0, 'COMMA', 0, 'POINT')}">0</div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="kpi-label">Cost-to-Revenue Ratio</div>
+                    <div class="kpi-value" th:text="${#numbers.formatDecimal(profitability['costToRevenueRatio'], 1, 'POINT', 1, 'POINT')} + '%'">0%</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Key Insights -->
-    <div class="card">
-        <div class="card-header bg-light">
-            <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Financial Insights</h5>
-        </div>
+    <!-- ══════════════════ FINANCIAL INSIGHTS ══════════════════ -->
+    <div class="section-title"><i class="bi bi-lightbulb"></i> Financial Insights</div>
+    <div class="card mb-4">
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="alert" th:classappend="${profitStatus == 'PROFIT'} ? 'alert-success' : 'alert-danger'">
                         <h6 class="alert-heading">
                             <i class="bi" th:classappend="${profitStatus == 'PROFIT'} ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
-                            Business Status
+                            Profitability Status
                         </h6>
                         <p class="mb-0" th:text="${profitStatus == 'PROFIT'} ?
-                                'Your business is generating profit. Keep monitoring costs to maintain profitability.' :
-                                'Your business is operating at a loss. Review and reduce expenses, or increase sales revenue.'">
+                                'The business generated a profit this period, with revenue exceeding total costs. Keep monitoring expenses to sustain this.' :
+                                'The business operated at a loss this period — total expenses exceeded revenue. Review the highest-cost categories below.'">
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="alert alert-warning" th:if="${highestExpenseLabel != null}">
+                        <h6 class="alert-heading"><i class="bi bi-shield-exclamation"></i> Highest Expense</h6>
+                        <p class="mb-0"
+                           th:text="${highestExpenseLabel} + ' is the largest expense category at ' +
+                                    ${#numbers.formatDecimal(highestExpenseValue, 0, 'COMMA', 0, 'POINT')} + ' RWF (' +
+                                    ${#numbers.formatDecimal(highestExpensePercent, 1, 'POINT', 1, 'POINT')} + '% of total expenses).'">
                         </p>
                     </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="alert alert-info">
-                        <h6 class="alert-heading"><i class="bi bi-graph-up"></i> Growth Opportunity</h6>
-                        <p class="mb-0" th:text="'Current livestock value: ' + ${#numbers.formatDecimal(currentLivestockValue != null ? currentLivestockValue : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF. This represents your farm assets that can generate future income.'"></p>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="alert alert-warning">
-                        <h6 class="alert-heading"><i class="bi bi-shield-exclamation"></i> Cost Control</h6>
-                        <p class="mb-0" th:text="'Total health-related costs (treatment + sick care): ' +
-                            ${#numbers.formatDecimal(((treatmentCosts != null ? treatmentCosts : 0) + (sickCareCosts != null ? sickCareCosts : 0)), 0, 'COMMA', 0, 'POINT')} + ' RWF. Focus on preventive care to reduce these costs.'">
+                        <h6 class="alert-heading"><i class="bi bi-heart-pulse"></i> Mortality Impact</h6>
+                        <p class="mb-0"
+                           th:text="'Death/mortality losses account for ' +
+                                    ${#numbers.formatDecimal(deathLoss != null ? deathLoss : 0, 0, 'COMMA', 0, 'POINT')} + ' RWF (' +
+                                    ${#numbers.formatDecimal(mortalityPercentOfExpenses, 1, 'POINT', 1, 'POINT')} +
+                                    '% of total expenses) this period. Reducing preventable losses directly protects both expenses and livestock assets.'">
                         </p>
                     </div>
                 </div>
 
                 <div class="col-md-6">
-                    <div class="alert alert-secondary">
-                        <h6 class="alert-heading"><i class="bi bi-calendar-check"></i> Period Summary</h6>
-                        <p class="mb-0">
-                            Reporting period:
-                            <strong th:text="${#temporals.format(fromDate, 'MMM dd, yyyy')}">Jan 01, 2024</strong> to
-                            <strong th:text="${#temporals.format(toDate, 'MMM dd, yyyy')}">Dec 31, 2024</strong>
+                    <div class="alert" th:classappend="${comparisons['livestockValue']['isIncrease']} ? 'alert-success' : 'alert-secondary'">
+                        <h6 class="alert-heading"><i class="bi bi-graph-up"></i> Asset Growth</h6>
+                        <p class="mb-0"
+                           th:text="'Livestock asset value is ' +
+                                    (${comparisons['livestockValue']['isIncrease']} ? 'up' : 'down') + ' ' +
+                                    ${#numbers.formatDecimal(comparisons['livestockValue']['changePercent'], 1, 'POINT', 1, 'POINT')} +
+                                    '% versus the previous period, now valued at ' +
+                                    ${#numbers.formatDecimal(currentLivestockValue, 0, 'COMMA', 0, 'POINT')} + ' RWF.'">
                         </p>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="alert alert-secondary mb-0">
+                        <h6 class="alert-heading"><i class="bi bi-clipboard-check"></i> Recommendations</h6>
+                        <ul class="mb-0">
+                            <li th:if="${profitStatus == 'LOSS'}">Costs currently exceed revenue — prioritize reducing the highest expense category or increasing livestock/production sales.</li>
+                            <li th:if="${profitability['costToRevenueRatio'] != null and profitability['costToRevenueRatio'] >= 80}">Cost-to-Revenue Ratio is high — expenses are consuming most of the revenue generated; review pricing and cost control together.</li>
+                            <li th:if="${mortalityPercentOfExpenses != null and mortalityPercentOfExpenses >= 15}">Mortality losses are a significant share of expenses — investigate causes of death and strengthen preventive health measures.</li>
+                            <li th:if="${comparisons['revenue']['isIncrease'] == false}">Revenue declined versus the previous period — review sales volume and pricing.</li>
+                            <li th:if="${profitStatus == 'PROFIT' and profitability['costToRevenueRatio'] != null and profitability['costToRevenueRatio'] < 80}">Performance is healthy this period — consider reinvesting part of the profit into herd growth or preventive care.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -250,85 +516,64 @@
 <script th:inline="javascript">
     /*<![CDATA[*/
 
-    // Register the datalabels plugin
     Chart.register(ChartDataLabels);
 
-    // Helper function to format numbers as RWF
     function formatRWF(value) {
-        return value.toLocaleString() + ' RWF';
+        return Math.round(value).toLocaleString() + ' RWF';
     }
 
-    // Income Chart with data labels
-    const incomeData = [
-        /*[[${salesRevenue != null ? salesRevenue : 0}]]*/,
-        /*[[${currentLivestockValue != null ? currentLivestockValue : 0}]]*/,
-        /*[[${bornAnimalsValue != null ? bornAnimalsValue : 0}]]*/
-    ];
+    // ── Revenue vs Expenses (current vs previous period) ──────────────────
+    const totalRevenueValue = /*[[${totalRevenue != null ? totalRevenue : 0}]]*/ 0;
+    const totalExpensesValue = /*[[${totalExpenses != null ? totalExpenses : 0}]]*/ 0;
+    const prevRevenueValue = /*[[${comparisons['revenue']['previous']}]]*/ 0;
+    const prevExpensesValue = /*[[${comparisons['expenses']['previous']}]]*/ 0;
 
-    const incomeLabels = ['Sales Revenue', 'Current Stock Value', 'Born Animals Value'];
-
-    new Chart(document.getElementById('incomeChart'), {
-        type: 'doughnut',
+    new Chart(document.getElementById('revenueExpenseChart'), {
+        type: 'bar',
         data: {
-            labels: incomeLabels,
-            datasets: [{
-                data: incomeData,
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.7)',
-                    'rgba(14, 165, 233, 0.7)',
-                    'rgba(139, 92, 246, 0.7)'
-                ],
-                hoverBackgroundColor: [
-                    'rgba(16, 185, 129, 0.9)',
-                    'rgba(14, 165, 233, 0.9)',
-                    'rgba(139, 92, 246, 0.9)'
-                ],
-                borderColor: '#fff',
-                borderWidth: 3
-            }]
+            labels: ['Revenue', 'Expenses'],
+            datasets: [
+                {
+                    label: 'Previous Period',
+                    data: [prevRevenueValue, prevExpensesValue],
+                    backgroundColor: 'rgba(148, 163, 184, 0.5)',
+                    borderColor: 'rgb(148, 163, 184)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Current Period',
+                    data: [totalRevenueValue, totalExpensesValue],
+                    backgroundColor: ['rgba(16, 185, 129, 0.75)', 'rgba(239, 68, 68, 0.75)'],
+                    borderColor: ['rgb(16, 185, 129)', 'rgb(239, 68, 68)'],
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: { position: 'bottom' },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return `${context.label}: ${formatRWF(context.parsed)} (${percentage}%)`;
-                        }
-                    }
-                },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${formatRWF(ctx.parsed.y)}` } },
                 datalabels: {
-                    color: '#fff',
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-                    borderRadius: 4,
-                    padding: { left: 6, right: 6, top: 4, bottom: 4 },
-                    font: { weight: 'bold', size: 11 },
-                    formatter: function(value, context) {
-                        if (value === 0) return '';
-                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                        if (total === 0) return '';
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${percentage}%\n${formatRWF(value)}`;
-                    },
-                    textAlign: 'center'
+                    anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 },
+                    formatter: (value) => value === 0 ? '' : formatRWF(value)
                 }
-            }
+            },
+            scales: { y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() } } }
         }
     });
 
-    // Expense Chart with data labels
-    const expenseData = [
-        /*[[${treatmentCosts != null ? treatmentCosts : 0}]]*/,
-        /*[[${sickCareCosts != null ? sickCareCosts : 0}]]*/,
-        /*[[${purchaseCosts != null ? purchaseCosts : 0}]]*/,
-        /*[[${deathLoss != null ? deathLoss : 0}]]*/
+    // ── Expense Breakdown ───────────────────────────────────────────────
+    const expenseLabels = /*[[${expenseBreakdown.keySet()}]]*/ [];
+    const expenseData = /*[[${expenseBreakdown.values()}]]*/ [];
+    const expenseColors = [
+        'rgba(99, 102, 241, 0.75)', 'rgba(34, 197, 94, 0.75)', 'rgba(139, 92, 246, 0.75)',
+        'rgba(245, 158, 11, 0.75)', 'rgba(236, 72, 153, 0.75)', 'rgba(14, 165, 233, 0.75)',
+        'rgba(107, 114, 128, 0.75)', 'rgba(168, 85, 247, 0.75)', 'rgba(239, 68, 68, 0.75)'
     ];
-
-    const expenseLabels = ['Treatment Costs', 'Sick Care', 'Purchases', 'Death Loss'];
 
     new Chart(document.getElementById('expenseChart'), {
         type: 'doughnut',
@@ -336,18 +581,7 @@
             labels: expenseLabels,
             datasets: [{
                 data: expenseData,
-                backgroundColor: [
-                    'rgba(139, 92, 246, 0.7)',
-                    'rgba(245, 158, 11, 0.7)',
-                    'rgba(99, 102, 241, 0.7)',
-                    'rgba(239, 68, 68, 0.7)'
-                ],
-                hoverBackgroundColor: [
-                    'rgba(139, 92, 246, 0.9)',
-                    'rgba(245, 158, 11, 0.9)',
-                    'rgba(99, 102, 241, 0.9)',
-                    'rgba(239, 68, 68, 0.9)'
-                ],
+                backgroundColor: expenseColors.slice(0, expenseLabels.length),
                 borderColor: '#fff',
                 borderWidth: 3
             }]
@@ -361,8 +595,8 @@
                     callbacks: {
                         label: function(context) {
                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = ((context.parsed / total) * 100).toFixed(1);
-                            return `${context.label}: ${formatRWF(context.parsed)} (${percentage}%)`;
+                            const pct = total === 0 ? 0 : ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ${formatRWF(context.parsed)} (${pct}%)`;
                         }
                     }
                 },
@@ -371,50 +605,64 @@
                     backgroundColor: 'rgba(0, 0, 0, 0.6)',
                     borderRadius: 4,
                     padding: { left: 6, right: 6, top: 4, bottom: 4 },
-                    font: { weight: 'bold', size: 11 },
+                    font: { weight: 'bold', size: 10 },
                     formatter: function(value, context) {
-                        if (value === 0) return '';
+                        if (!value) return '';
                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                         if (total === 0) return '';
-                        const percentage = ((value / total) * 100).toFixed(1);
-                        return `${percentage}%\n${formatRWF(value)}`;
-                    },
-                    textAlign: 'center'
+                        const pct = ((value / total) * 100).toFixed(1);
+                        return `${pct}%`;
+                    }
                 }
             }
         }
     });
 
-    // Profit Chart (Bar chart) with data labels
-    const totalIncomeValue = /*[[${totalIncome != null ? totalIncome : 0}]]*/;
-    const totalExpensesValue = /*[[${totalExpenses != null ? totalExpenses : 0}]]*/;
-    const netProfitValue = /*[[${netProfit != null ? netProfit : 0}]]*/;
-    const isProfit = netProfitValue >= 0;
+    // ── Livestock Asset Movement (waterfall) ───────────────────────────
+    const openingValue = /*[[${assetPosition['openingValue']}]]*/ 0;
+    const purchases = /*[[${assetPosition['purchases']}]]*/ 0;
+    const bornValue = /*[[${assetPosition['bornAnimalsValue']}]]*/ 0;
+    const deathLosses = /*[[${assetPosition['deathLosses']}]]*/ 0;
+    const salesValue = /*[[${assetPosition['salesValue']}]]*/ 0;
+    const adjustments = /*[[${assetPosition['valueAdjustments']}]]*/ 0;
+    const closingValue = /*[[${assetPosition['closingValue']}]]*/ 0;
 
-    new Chart(document.getElementById('profitChart'), {
+    let running = openingValue;
+    const steps = [
+        { label: 'Opening', delta: openingValue, isTotal: true },
+        { label: '+ Purchases', delta: purchases },
+        { label: '+ Born Animals', delta: bornValue },
+        { label: '\u2212 Deaths', delta: -deathLosses },
+        { label: '\u2212 Sales', delta: -salesValue },
+        { label: '\u00b1 Adjustments', delta: adjustments },
+        { label: 'Closing', delta: closingValue, isTotal: true }
+    ];
+
+    const waterfallRanges = [];
+    const waterfallColors = [];
+    running = 0;
+    steps.forEach((step) => {
+        if (step.isTotal) {
+            waterfallRanges.push([0, step.delta]);
+            waterfallColors.push('rgba(14, 165, 233, 0.8)');
+            running = step.delta;
+        } else {
+            const start = running;
+            const end = running + step.delta;
+            waterfallRanges.push([Math.min(start, end), Math.max(start, end)]);
+            waterfallColors.push(step.delta >= 0 ? 'rgba(16, 185, 129, 0.75)' : 'rgba(239, 68, 68, 0.75)');
+            running = end;
+        }
+    });
+
+    new Chart(document.getElementById('assetMovementChart'), {
         type: 'bar',
         data: {
-            labels: ['Income', 'Expenses', 'Net Profit/Loss'],
+            labels: steps.map(s => s.label),
             datasets: [{
-                label: 'Amount (RWF)',
-                data: [totalIncomeValue, totalExpensesValue, Math.abs(netProfitValue)],
-                backgroundColor: [
-                    'rgba(16, 185, 129, 0.6)',
-                    'rgba(239, 68, 68, 0.6)',
-                    isProfit ? 'rgba(14, 165, 233, 0.6)' : 'rgba(239, 68, 68, 0.6)'
-                ],
-                hoverBackgroundColor: [
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                    isProfit ? 'rgba(14, 165, 233, 0.8)' : 'rgba(239, 68, 68, 0.8)'
-                ],
-                borderColor: [
-                    'rgb(16, 185, 129)',
-                    'rgb(239, 68, 68)',
-                    isProfit ? 'rgb(14, 165, 233)' : 'rgb(239, 68, 68)'
-                ],
-                borderWidth: 2,
-                borderRadius: 8
+                data: waterfallRanges,
+                backgroundColor: waterfallColors,
+                borderRadius: 4
             }]
         },
         options: {
@@ -425,61 +673,22 @@
                 tooltip: {
                     callbacks: {
                         label: function(context) {
-                            let label = context.dataset.label || '';
-                            let value = context.parsed.y;
-                            if (context.dataIndex === 2) {
-                                return `${label}: ${isProfit ? '+' : '-'} ${formatRWF(value)}`;
-                            }
-                            return `${label}: ${formatRWF(value)}`;
+                            const step = steps[context.dataIndex];
+                            return `${step.label}: ${formatRWF(Math.abs(step.delta))}`;
                         }
                     }
                 },
                 datalabels: {
-                    anchor: 'end',
-                    align: 'top',
-                    offset: 4,
-                    color: function(context) {
-                        const value = context.dataset.data[context.dataIndex];
-                        const label = context.chart.data.labels[context.dataIndex];
-                        if (label === 'Net Profit/Loss') {
-                            return isProfit ? '#059669' : '#dc2626';
-                        }
-                        if (label === 'Income') return '#059669';
-                        if (label === 'Expenses') return '#dc2626';
-                        return '#374151';
-                    },
-                    font: { weight: 'bold', size: 11 },
+                    anchor: 'end', align: 'top', font: { weight: 'bold', size: 9 },
                     formatter: function(value, context) {
-                        if (value === 0) return '';
-                        const label = context.chart.data.labels[context.dataIndex];
-                        if (label === 'Net Profit/Loss') {
-                            return `${isProfit ? '+' : '-'} ${formatRWF(value)}`;
-                        }
-                        return formatRWF(value);
+                        const step = steps[context.dataIndex];
+                        return formatRWF(Math.abs(step.delta));
                     }
                 }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Amount (RWF)',
-                        font: { size: 12 }
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value.toLocaleString() + ' RWF';
-                        }
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Category',
-                        font: { size: 12 }
-                    }
-                }
+                y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() } },
+                x: { ticks: { font: { size: 9 } } }
             }
         }
     });

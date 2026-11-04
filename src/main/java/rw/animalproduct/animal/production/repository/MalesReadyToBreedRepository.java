@@ -27,7 +27,9 @@ public interface MalesReadyToBreedRepository extends JpaRepository<Livestock, UU
                 status,
                 gender,
                 current_value,
-                acquisition_method
+                acquisition_method,
+                natural_breedings,
+                natural_successful
             FROM v_males_ready_to_breed
             ORDER BY total_breedings DESC, date_received
             """, nativeQuery = true)
@@ -48,7 +50,9 @@ public interface MalesReadyToBreedRepository extends JpaRepository<Livestock, UU
                 status,
                 gender,
                 current_value,
-                acquisition_method
+                acquisition_method,
+                natural_breedings,
+                natural_successful
             FROM v_males_ready_to_breed
             WHERE LOWER(tag_number)    LIKE LOWER(CONCAT('%', :search, '%'))
                OR LOWER(category_name) LIKE LOWER(CONCAT('%', :search, '%'))

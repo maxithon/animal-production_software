@@ -51,6 +51,10 @@ public class SupervisorReportController {
     private final LivestockSickRepository       sickRepository;
     private final LivestockTreatmentRepository  treatmentRepository;
     private final RepresentativeService     supervisorService;
+    // FIX: livestock has no soldPrice column — sale price lives on
+    // livestock_sale only (LivestockSale.getSalePrice()). Needed to replace
+    // every Livestock.getSoldPrice() call below with a lookup against sales.
+    private final LivestockSaleService          saleService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
@@ -59,13 +63,15 @@ public class SupervisorReportController {
             LivestockRepository           livestockRepository,
             LivestockSickRepository       sickRepository,
             LivestockTreatmentRepository  treatmentRepository,
-            RepresentativeService     supervisorService) {
+            RepresentativeService     supervisorService,
+            LivestockSaleService          saleService) {
 
         this.benRepository       = benRepository;
         this.livestockRepository = livestockRepository;
         this.sickRepository      = sickRepository;
         this.treatmentRepository = treatmentRepository;
         this.supervisorService   = supervisorService;
+        this.saleService         = saleService;
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -119,6 +125,45 @@ public class SupervisorReportController {
         }
     }
 
+    private List<LivestockSick> fetchSickByAnimalIds(List<UUID> animalIds) {
+        try {
+            return sickRepository.findByLivestockIds(animalIds);
+        } catch (Exception e) {
+            return sickRepository.findAll().stream()
+                    .filter(s -> s.getLivestock() != null && animalIds.contains(s.getLivestock().getId()))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    private List<LivestockTreatment> fetchTreatmentsByAnimalIds(List<UUID> animalIds) {
+        try {
+            // ✅ FIXED: Use the direct livestock relationship
+            return treatmentRepository.findByLivestock_IdIn(animalIds);
+        } catch (Exception e) {
+            return treatmentRepository.findAll().stream()
+                    .filter(t -> t.getLivestock() != null
+                            && animalIds.contains(t.getLivestock().getId()))
+                    .collect(Collectors.toList());
+        }
+    }
+
+    /** Sale records (not soft-deleted) for a set of animal ids. */
+    private List<LivestockSale> fetchSalesByAnimalIds(List<UUID> animalIds) {
+        return saleService.getAll().stream()
+                .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
+                .filter(s -> s.getLivestock() != null && animalIds.contains(s.getLivestock().getId()))
+                .collect(Collectors.toList());
+    }
+
+    /** Map of animalId -> total sale price (sums multiple sale records for the same animal, if any). */
+    private Map<UUID, BigDecimal> buildSalePricePerAnimal(List<UUID> animalIds) {
+        if (animalIds.isEmpty()) return Collections.emptyMap();
+        return fetchSalesByAnimalIds(animalIds).stream()
+                .filter(s -> s.getLivestock() != null && s.getSalePrice() != null)
+                .collect(Collectors.groupingBy(s -> s.getLivestock().getId(),
+                        Collectors.reducing(BigDecimal.ZERO, LivestockSale::getSalePrice, BigDecimal::add)));
+    }
+
     private List<BeneficiaryStat> buildBenStats(List<Beneficiary> beneficiaries) {
         List<BeneficiaryStat> stats = new ArrayList<>();
         for (Beneficiary ben : beneficiaries) {
@@ -137,10 +182,9 @@ public class SupervisorReportController {
                     .map(Livestock::getCurrentValue)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            // Calculate sold amount (sum of sold prices)
-            BigDecimal soldAmount = animals.stream()
-                    .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus()) && l.getSoldPrice() != null)
-                    .map(Livestock::getSoldPrice)
+            // Calculate sold amount (sum of sale prices from LivestockSale records)
+            Map<UUID, BigDecimal> salePricePerAnimal = buildSalePricePerAnimal(animalIds);
+            BigDecimal soldAmount = salePricePerAnimal.values().stream()
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             // Sick stats
@@ -167,28 +211,6 @@ public class SupervisorReportController {
                     treatCount, treatCost, totalCost));
         }
         return stats;
-    }
-
-    private List<LivestockSick> fetchSickByAnimalIds(List<UUID> animalIds) {
-        try {
-            return sickRepository.findByLivestockIds(animalIds);
-        } catch (Exception e) {
-            return sickRepository.findAll().stream()
-                    .filter(s -> s.getLivestock() != null && animalIds.contains(s.getLivestock().getId()))
-                    .collect(Collectors.toList());
-        }
-    }
-
-    private List<LivestockTreatment> fetchTreatmentsByAnimalIds(List<UUID> animalIds) {
-        try {
-            // ✅ FIXED: Use the direct livestock relationship
-            return treatmentRepository.findByLivestock_IdIn(animalIds);
-        } catch (Exception e) {
-            return treatmentRepository.findAll().stream()
-                    .filter(t -> t.getLivestock() != null
-                            && animalIds.contains(t.getLivestock().getId()))
-                    .collect(Collectors.toList());
-        }
     }
 
     // ═════════════════════════════════════════════════════════════════════════
@@ -305,9 +327,8 @@ public class SupervisorReportController {
                 .map(Livestock::getCurrentValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal soldAmount = animals.stream()
-                .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus()) && l.getSoldPrice() != null)
-                .map(Livestock::getSoldPrice)
+        Map<UUID, BigDecimal> salePricePerAnimal = buildSalePricePerAnimal(animalIds);
+        BigDecimal soldAmount = salePricePerAnimal.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Sick
@@ -532,9 +553,8 @@ public class SupervisorReportController {
                 .map(Livestock::getCurrentValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal soldAmount = animals.stream()
-                .filter(l -> Livestock.STATUS_SOLD.equals(l.getStatus()) && l.getSoldPrice() != null)
-                .map(Livestock::getSoldPrice)
+        Map<UUID, BigDecimal> salePricePerAnimal = buildSalePricePerAnimal(animalIds);
+        BigDecimal soldAmount = salePricePerAnimal.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal treatCost = treatments.stream().filter(t -> t.getTreatmentCost() != null)

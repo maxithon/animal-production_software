@@ -1,336 +1,471 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Beneficiary Impact Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
-        body {
-            background: #f0f2f5;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            padding: 0;
-            margin: 0;
-            color: #1f2937;
+        :root { --ink:#0f172a; --muted:#64748b; --line:#eef1f5; --bg:#f6f8fa; --primary:#0e7490; --green:#16a34a; }
+        * { box-sizing:border-box; }
+        body { background:var(--bg); font-family:'Inter',sans-serif; margin:0; color:var(--ink); }
+
+        .report-shell { max-width:1500px; margin:0 auto; padding:24px; display:flex; flex-direction:column; gap:18px; }
+        .card { background:#fff; border-radius:14px; box-shadow:0 2px 12px rgba(15,23,42,.06); border:1px solid var(--line); }
+        .pad { padding:24px 28px; }
+
+        /* Masthead */
+        .masthead { background:linear-gradient(135deg,#14532d 0%,#16a34a 60%,#4ade80 100%); color:#fff; padding:28px 32px 24px; position:relative; overflow:hidden; border-radius:14px; }
+        .masthead::after { content:''; position:absolute; right:-60px; top:-60px; width:220px; height:220px; border-radius:50%; background:rgba(255,255,255,.08); }
+        .eyebrow { font-size:.68rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.78; margin-bottom:8px; }
+        .masthead h1 { font-size:1.35rem; font-weight:600; margin:0 0 6px; letter-spacing:-.01em; }
+        .masthead .sub { font-size:.85rem; opacity:.85; }
+        .meta-strip { display:flex; gap:26px; flex-wrap:wrap; margin-top:20px; }
+        .meta-item { font-size:.72rem; opacity:.85; }
+        .meta-item strong { display:block; font-size:.92rem; font-weight:700; opacity:1; margin-top:2px; }
+
+        /* Section title */
+        .section-title { font-size:.76rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .section-title i { color:var(--primary); }
+
+        /* KPI grid */
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+        .kpi-card { border-radius:12px; padding:16px 18px; color:#fff; position:relative; overflow:hidden; }
+        .kpi-card::after { content:''; position:absolute; top:-18px; right:-18px; width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.12); }
+        .kpi-card.reach    { background:linear-gradient(145deg,#16a34a,#22c55e); }
+        .kpi-card.asset    { background:linear-gradient(145deg,#0891b2,#06b6d4); }
+        .kpi-card.retention{ background:linear-gradient(145deg,#7c3aed,#8b5cf6); }
+        .kpi-card.income   { background:linear-gradient(145deg,#ea580c,#f97316); }
+        .kpi-card.compliance{ background:linear-gradient(145deg,#0f766e,#14b8a6); }
+        .kpi-card.alert    { background:linear-gradient(145deg,#b91c1c,#dc2626); }
+        .kpi-icon { font-size:1.1rem; opacity:.9; margin-bottom:8px; display:block; }
+        .kpi-val { font-size:1.15rem; font-weight:800; line-height:1.15; margin-bottom:4px; letter-spacing:-.01em; word-break:break-word; }
+        .kpi-lbl { font-size:.63rem; font-weight:700; opacity:.92; text-transform:uppercase; letter-spacing:.06em; }
+        .kpi-sub { font-size:.65rem; opacity:.82; margin-top:5px; }
+
+        /* ================= Table ================= */
+        /* ✅ No horizontal scroll — table fits its container at 100% width */
+        .table-wrap { width:100%; overflow:visible; }
+        .rpt-table {
+            width:100%; border-collapse:collapse; font-size:.78rem;
+            table-layout:fixed;
+            /* ✅ min-width removed so the table never exceeds the card width */
+        }
+        .rpt-table thead th {
+            background:var(--bg); padding:10px 6px; font-size:.6rem; font-weight:700;
+            text-transform:uppercase; letter-spacing:.04em; color:var(--muted);
+            border-bottom:2px solid #e2e8f0; text-align:right;
+            white-space:normal; word-break:break-word; vertical-align:bottom;
+        }
+        .rpt-table thead th.left { text-align:left; }
+        .rpt-table tbody td {
+            padding:9px 6px; border-bottom:1px solid var(--line);
+            text-align:right; vertical-align:top; font-size:.74rem;
+            white-space:nowrap;                 /* keep numbers on one line */
+        }
+        .rpt-table tbody td.left { text-align:left; white-space:normal; }
+        .rpt-table tbody tr:hover { background:#f8fbff; }
+        .rpt-table tfoot td { padding:10px 6px; font-weight:800; background:#f0f9ff; border-top:2px solid #bae6fd; text-align:right; white-space:nowrap; }
+        .rpt-table tfoot td.left { text-align:left; }
+
+        /* Household cell — name + phone, stacked */
+        .cell-household { max-width:100%; }
+        .cell-household .name { font-weight:700; display:block; line-height:1.2; color:#0f172a; }
+        .cell-household .phone {
+            display:inline-flex; align-items:center; gap:4px;
+            color:#0e7490; font-weight:600; font-size:.7rem;
+            text-decoration:none; margin-top:3px;
+        }
+        .cell-household .phone:hover { text-decoration:underline; }
+        .cell-household .phone.muted { color:#94a3b8; font-style:italic; font-weight:500; }
+        .cell-household .inactive {
+            font-size:.6rem; color:#991b1b; font-weight:700;
+            background:#fee2e2; padding:1px 6px; border-radius:20px;
+            display:inline-block; margin-top:3px;
         }
 
-        /* ── Banner ── */
-        .report-banner {
-            background: linear-gradient(135deg, #14532d 0%, #16a34a 60%, #4ade80 100%);
-            padding: 22px 40px 18px;
-            color: white;
-        }
-        .report-banner h2 {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 700;
-            letter-spacing: .01em;
-            margin: 0 0 4px;
-            display: flex;
-            align-items: center;
-        }
-        .report-banner h2 i { font-size: .95rem; }
-        .report-banner .sub {
-            font-family: 'Inter', sans-serif;
-            font-weight: 400;
-            font-size: .78rem;
-            opacity: .85;
-        }
-        .print-btn {
-            background: rgba(255,255,255,.15);
-            border: 1.5px solid rgba(255,255,255,.35);
-            color: white;
-            border-radius: 8px;
-            padding: 6px 16px;
-            font-size: .78rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            font-family: 'Inter', sans-serif;
-            display: inline-flex;
-            align-items: center;
-        }
-        .print-btn:hover { background: rgba(255,255,255,.25); color: white; }
-
-        .report-body { padding: 24px 32px; max-width: 1300px; margin: 0 auto; }
-
-        /* ── KPI strip ── */
-        .kpi-strip {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 14px;
-            margin-bottom: 26px;
-        }
-        .kpi {
-            background: white;
-            border-radius: 12px;
-            padding: 16px 18px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.06);
-            border-top: 4px solid #16a34a;
-        }
-        .kpi .kpi-num {
-            font-family: 'Inter', sans-serif;
-            font-size: 1.55rem;
-            font-weight: 800;
-            letter-spacing: -.01em;
-            color: #15803d;
-            line-height: 1.1;
-        }
-        .kpi .kpi-lbl {
-            font-family: 'Inter', sans-serif;
-            font-size: .68rem;
-            font-weight: 600;
-            color: #64748b;
-            margin-top: 5px;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-        }
-        .kpi .kpi-sub {
-            font-family: 'Inter', sans-serif;
-            font-size: .68rem;
-            color: #94a3b8;
-            margin-top: 3px;
+        /* Full-location cell — wraps freely */
+        .cell-location .loc {
+            display:block; color:#334155; font-size:.7rem;
+            line-height:1.35; word-break:break-word;
         }
 
-        /* ── Section / card-table ── */
-        section { margin-bottom: 22px; }
-        .card-table {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.06);
-            overflow: hidden;
-        }
-        .card-table .card-title {
-            font-family: 'Inter', sans-serif;
-            font-weight: 700;
-            font-size: .85rem;
-            padding: 12px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #1f2937;
-        }
-        .card-title i { color: #16a34a; font-size: .85rem; }
+        /* Breakdown cards — 3-column grid (Representative card removed) */
+        .breakdown-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        @media (max-width:1100px) { .breakdown-grid { grid-template-columns:repeat(2,1fr); } }
+        @media (max-width:700px)  { .breakdown-grid { grid-template-columns:1fr; } }
 
-        table.br { width: 100%; border-collapse: collapse; }
-        table.br th {
-            font-family: 'Inter', sans-serif;
-            font-size: .7rem;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748b;
-            font-weight: 700;
-            background: #fafcfa;
-            padding: 10px 20px;
-            text-align: left;
-            border-bottom: 2px solid #e2e8f0;
-        }
-        table.br td {
-            font-family: 'Inter', sans-serif;
-            font-size: .85rem;
-            padding: 10px 20px;
-            border-bottom: 1px solid #f0f2f5;
-            color: #374151;
-            vertical-align: middle;
-        }
-        table.br tbody tr:last-child td { border-bottom: none; }
-        table.br tbody tr:hover { background: #f0fdf4; }
-        table.br td.num { text-align: right; font-weight: 700; color: #1f2937; }
+        .breakdown-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:.8rem; }
+        .breakdown-item:last-child { border-bottom:none; }
+        .breakdown-item .lbl { color:#374151; font-weight:600; word-break:break-word; }
+        .breakdown-item .val { font-weight:700; color:var(--ink); }
+        .breakdown-bar { background:#eef2f0; border-radius:4px; height:5px; margin-top:4px; overflow:hidden; }
+        .breakdown-bar > span { display:block; height:100%; background:linear-gradient(90deg,#16a34a,#4ade80); border-radius:4px; }
+        .breakdown-pct { font-size:.7rem; color:var(--muted); font-weight:600; margin-left:6px; }
 
-        /* Share-of-total mini bar next to counts */
-        .share-wrap { display: flex; align-items: center; gap: 10px; justify-content: flex-end; }
-        .share-bar {
-            width: 90px;
-            height: 6px;
-            border-radius: 4px;
-            background: #eef2f0;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        .share-bar > span {
-            display: block;
-            height: 100%;
-            background: linear-gradient(90deg, #16a34a, #4ade80);
-            border-radius: 4px;
-        }
-        .share-pct {
-            font-size: .72rem;
-            color: #64748b;
-            font-weight: 600;
-            width: 34px;
-            text-align: right;
-        }
+        /* Exception rows */
+        .exc-row { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:8px; margin-bottom:8px; }
+        .exc-row.warn  { background:#fffbeb; border-left:3px solid #f59e0b; }
+        .exc-row.error { background:#fef2f2; border-left:3px solid #dc2626; }
+        .exc-sev { font-size:.65rem; font-weight:800; padding:3px 8px; border-radius:20px; flex-shrink:0; }
+        .exc-row.warn  .exc-sev { background:#fef3c7; color:#92400e; }
+        .exc-row.error .exc-sev { background:#fee2e2; color:#991b1b; }
+        .exc-body { font-size:.82rem; line-height:1.4; }
+        .exc-body strong { font-weight:700; }
+        .exc-body .loc { color:var(--muted); font-size:.72rem; }
+        .exc-body .ph { color:#0e7490; font-size:.72rem; font-weight:600; margin-left:6px; }
 
-        .empty-row {
-            text-align: center;
-            color: #94a3b8;
-            font-family: 'Inter', sans-serif;
-            font-size: .85rem;
-            padding: 26px 20px;
-        }
+        /* Growth badges */
+        .badge-doubled { background:#d1fae5; color:#065f46; padding:2px 9px; border-radius:20px; font-size:.66rem; font-weight:700; }
+        .badge-ok      { background:#e0f2fe; color:#075985; padding:2px 9px; border-radius:20px; font-size:.66rem; font-weight:700; }
+        .badge-warn    { background:#fef3c7; color:#92400e; padding:2px 9px; border-radius:20px; font-size:.66rem; font-weight:700; }
+        .badge-bad     { background:#fee2e2; color:#991b1b; padding:2px 9px; border-radius:20px; font-size:.66rem; font-weight:700; }
 
+        /* Action bar */
+        .action-bar { display:flex; justify-content:space-between; align-items:center; max-width:1500px; margin:0 auto 18px; gap:10px; flex-wrap:wrap; }
+        .btn-back { background:#fff; border:1px solid #e2e8f0; color:#475569; padding:8px 16px; border-radius:8px; font-size:.83rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
+        .btn-back:hover { background:#f1f5f9; color:#0f172a; }
+        .btn-print { background:linear-gradient(135deg,#16a34a,#4ade80); color:#fff; border:none; padding:8px 20px; border-radius:8px; font-size:.83rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(22,163,74,.25); }
+        .btn-print:hover { opacity:.92; }
+
+        /* Print */
         @media print {
-            .no-print { display: none !important; }
-            body { background: white; }
-            .card-table { box-shadow: none; border: 1px solid #e2e8f0; }
-            section { page-break-inside: avoid; }
-        }
-
-        @media (max-width: 640px) {
-            .report-body { padding: 18px 16px; }
-            .report-banner { padding: 18px 20px 14px; }
+            .action-bar, .no-print { display:none !important; }
+            body { background:#fff; padding:0; }
+            .card { box-shadow:none; border:none; break-inside:avoid; }
+            .masthead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+            .kpi-card { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+            .table-wrap { overflow:visible !important; }
+            .rpt-table { font-size:.7rem; }
         }
     </style>
 </head>
 <body>
 
-<div class="report-banner">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3"
-         style="max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
-        <div>
-            <h2><i class="bi bi-people-fill me-2"></i>Beneficiary Impact Report</h2>
-            <div class="sub">
-                Program reach &amp; contract performance · Generated on
-                <strong th:text="${#dates.format(generatedDate, 'dd MMM yyyy, HH:mm')}">date</strong>
-            </div>
-        </div>
-        <div class="d-flex gap-2" style="display:flex;gap:8px;">
-            <a href="/admin/dashboard" class="print-btn no-print"><i class="bi bi-arrow-left me-1"></i> Back</a>
-            <button class="print-btn no-print" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print</button>
-        </div>
+<!-- ── Action bar ── -->
+<div class="action-bar no-print">
+    <a href="/admin/dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Dashboard</a>
+    <div style="display:flex;gap:8px;">
+        <form method="get" action="/livestock/beneficiary-impact-report"
+              style="display:flex;gap:6px;align-items:center;">
+            <input type="date" name="from" class="form-control form-control-sm"
+                   style="width:150px;" th:value="${fromDate != null ? fromDate : ''}">
+            <input type="date" name="to" class="form-control form-control-sm"
+                   style="width:150px;" th:value="${toDate != null ? toDate : ''}">
+            <button type="submit" class="btn-back" style="background:#0e7490;color:#fff;border-color:#0e7490;">
+                <i class="bi bi-funnel"></i> Apply
+            </button>
+            <a href="/livestock/beneficiary-impact-report" class="btn-back">Clear</a>
+        </form>
+        <button class="btn-print" onclick="window.print()">
+            <i class="bi bi-printer-fill"></i> Print
+        </button>
     </div>
 </div>
 
-<div class="report-body">
+<div class="report-shell">
 
-    <!-- ── KPI Strip ── -->
-    <div class="kpi-strip">
-        <div class="kpi">
-            <div class="kpi-num" th:text="${totalBeneficiaries}">0</div>
-            <div class="kpi-lbl">Total Beneficiaries</div>
+    <!-- ══ MASTHEAD ══ -->
+    <div class="card masthead">
+        <div class="eyebrow"><i class="bi bi-people-fill me-1"></i> Beneficiary Impact</div>
+        <h1>Household Impact Report</h1>
+        <div class="sub">
+            What the program delivered to the households who take care of the animals
         </div>
-        <div class="kpi">
-            <div class="kpi-num" th:text="${activeLocations} + ' / ' + ${totalLocations}">0</div>
-            <div class="kpi-lbl">Locations Reached</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-num" th:text="${withContract}">0</div>
-            <div class="kpi-lbl">Signed Contracts</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-num" th:text="${contractCompletionRate} + '%'">0%</div>
-            <div class="kpi-lbl">Contract Completion Rate</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-num" th:text="${recentRegistrations}">0</div>
-            <div class="kpi-lbl">New in Last 30 Days</div>
+        <div class="meta-strip">
+            <div class="meta-item">
+                <span>Period</span>
+                <strong th:text="${report.periodLabel}">All time</strong>
+            </div>
+            <div class="meta-item">
+                <span>Households served</span>
+                <strong th:text="${report.totalBeneficiaries} + ' households'">0</strong>
+            </div>
+            <div class="meta-item">
+                <span>Animals under care</span>
+                <strong th:text="${report.totalCurrentAnimals} + ' animals'">0</strong>
+            </div>
+            <div class="meta-item">
+                <span>Herd value</span>
+                <strong th:text="'RWF ' + ${#numbers.formatDecimal(report.totalCurrentValue, 1, 'COMMA', 0, 'POINT')}">RWF 0</strong>
+            </div>
         </div>
     </div>
 
-    <!-- ── Beneficiaries by Location ── -->
-    <section>
-        <div class="card-table">
-            <div class="card-title"><i class="bi bi-geo-alt-fill"></i> Beneficiaries by Location</div>
-            <table class="br">
+    <!-- ══ KPI STRIP ══ -->
+    <div class="card pad">
+        <div class="section-title"><i class="bi bi-lightning-charge-fill"></i> Program Reach &amp; Outcomes</div>
+        <div class="kpi-grid">
+
+            <div class="kpi-card reach">
+                <span class="kpi-icon"><i class="bi bi-house-heart-fill"></i></span>
+                <div class="kpi-val" th:text="${report.totalBeneficiaries}">0</div>
+                <div class="kpi-lbl">Households Served</div>
+                <div class="kpi-sub" th:text="${report.activeBeneficiaries} + ' active · ' + ${report.inactiveBeneficiaries} + ' inactive'">0 active</div>
+            </div>
+
+            <div class="kpi-card asset">
+                <span class="kpi-icon"><i class="bi bi-box2-heart-fill"></i></span>
+                <div class="kpi-val" th:text="${report.totalAnimalsDistributed}">0</div>
+                <div class="kpi-lbl">Animals Distributed</div>
+                <div class="kpi-sub" th:text="'RWF ' + ${#numbers.formatDecimal(report.totalOriginalValue, 1, 'COMMA', 0, 'POINT')} + ' original value'">—</div>
+            </div>
+
+            <div class="kpi-card retention">
+                <span class="kpi-icon"><i class="bi bi-shield-check"></i></span>
+                <div class="kpi-val" th:text="${report.survivalRatePercent} + '%'">0%</div>
+                <div class="kpi-lbl">Survival Rate</div>
+                <div class="kpi-sub" th:text="${report.totalDeadAnimals} + ' deaths recorded'">0 deaths</div>
+            </div>
+
+            <div class="kpi-card income">
+                <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+                <div class="kpi-val" th:text="'RWF ' + ${#numbers.formatDecimal(report.totalSaleRevenue, 1, 'COMMA', 0, 'POINT')}">RWF 0</div>
+                <div class="kpi-lbl">Household Income</div>
+                <div class="kpi-sub" th:text="'Avg RWF ' + ${#numbers.formatDecimal(report.averageRevenuePerBeneficiary, 1, 'COMMA', 0, 'POINT')} + ' / household'">—</div>
+            </div>
+
+            <div class="kpi-card"
+                 th:classappend="${report.assetGrowthRatePercent >= 0 ? 'reach' : 'alert'}">
+                <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                <div class="kpi-val"
+                     th:text="${(report.assetGrowthRatePercent >= 0 ? '+' : '') + report.assetGrowthRatePercent} + '%'">0%</div>
+                <div class="kpi-lbl">Asset Growth</div>
+                <div class="kpi-sub" th:text="${report.householdsDoubled} + ' households doubled'">0 doubled</div>
+            </div>
+
+            <div class="kpi-card compliance">
+                <span class="kpi-icon"><i class="bi bi-file-earmark-check"></i></span>
+                <div class="kpi-val" th:text="${report.contractCompletionRatePercent} + '%'">0%</div>
+                <div class="kpi-lbl">Contract Compliance</div>
+                <div class="kpi-sub" th:text="${report.withContract} + ' of ' + ${report.totalBeneficiaries} + ' signed'">—</div>
+            </div>
+
+            <div class="kpi-card"
+                 th:classappend="${report.householdsWithNoAnimals > 0 ? 'alert' : 'retention'}">
+                <span class="kpi-icon"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                <div class="kpi-val" th:text="${report.householdsWithNoAnimals}">0</div>
+                <div class="kpi-lbl">Households w/ 0 Animals</div>
+                <div class="kpi-sub">Needs follow-up</div>
+            </div>
+
+            <div class="kpi-card retention">
+                <span class="kpi-icon"><i class="bi bi-stars"></i></span>
+                <div class="kpi-val" th:text="${report.totalBornAnimals}">0</div>
+                <div class="kpi-lbl">Offspring Born</div>
+                <div class="kpi-sub" th:text="${report.birthRatePercent} + '% birth rate'">0%</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ══ EXCEPTIONS ══ -->
+    <div class="card pad" th:if="${report.hasExceptions()}">
+        <div class="section-title">
+            <i class="bi bi-bell-fill"></i> Households Needing Attention
+            <span style="margin-left:auto;font-size:.7rem;background:#fef2f2;color:#991b1b;padding:3px 10px;border-radius:20px;font-weight:700;"
+                  th:text="${report.exceptions.size()} + ' flagged'">0 flagged</span>
+        </div>
+        <div class="exc-row" th:each="e : ${report.exceptions}"
+             th:classappend="${e.severity == 'ERROR'} ? 'error' : 'warn'">
+            <span class="exc-sev" th:text="${e.severity}">WARN</span>
+            <div class="exc-body">
+                <div>
+                    <strong th:text="${e.beneficiaryName}">Name</strong>
+                    <span class="loc" th:text="' · ' + ${e.locationName}"> — location</span>
+                </div>
+                <div th:text="${e.message}">Message</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ BREAKDOWNS — 3 cards (no Representative) ══ -->
+    <div class="breakdown-grid">
+        <div class="card pad">
+            <div class="section-title"><i class="bi bi-geo-alt-fill"></i> Households by Location</div>
+            <div class="breakdown-item" th:each="b : ${report.byLocation}">
+                <div style="flex:1;min-width:0;">
+                    <div class="lbl" th:text="${b.label}">Location</div>
+                    <div class="breakdown-bar">
+                        <span th:style="'width:' + ${b.percent} + '%'"></span>
+                    </div>
+                </div>
+                <div style="text-align:right;min-width:70px;">
+                    <span class="val" th:text="${b.count}">0</span>
+                    <span class="breakdown-pct" th:text="'(' + ${b.percent} + '%)'">(0%)</span>
+                </div>
+            </div>
+            <div th:if="${report.byLocation.isEmpty()}" style="text-align:center;padding:20px;color:#94a3b8;font-size:.82rem;">
+                No location data.
+            </div>
+        </div>
+
+        <div class="card pad">
+            <div class="section-title"><i class="bi bi-gender-ambiguous"></i> Household Heads by Gender</div>
+            <div class="breakdown-item" th:each="b : ${report.byGender}">
+                <div style="flex:1;min-width:0;">
+                    <div class="lbl" th:text="${b.label}">Gender</div>
+                    <div class="breakdown-bar">
+                        <span th:style="'width:' + ${b.percent} + '%'"></span>
+                    </div>
+                </div>
+                <div style="text-align:right;min-width:70px;">
+                    <span class="val" th:text="${b.count}">0</span>
+                    <span class="breakdown-pct" th:text="'(' + ${b.percent} + '%)'">(0%)</span>
+                </div>
+            </div>
+            <div th:if="${report.byGender.isEmpty()}" style="text-align:center;padding:20px;color:#94a3b8;font-size:.82rem;">
+                No gender data.
+            </div>
+        </div>
+
+        <div class="card pad">
+            <div class="section-title"><i class="bi bi-heart-fill"></i> Household Heads by Marital Status</div>
+            <div class="breakdown-item" th:each="b : ${report.byMaritalStatus}">
+                <div style="flex:1;min-width:0;">
+                    <div class="lbl" th:text="${b.label}">Status</div>
+                    <div class="breakdown-bar">
+                        <span th:style="'width:' + ${b.percent} + '%'"></span>
+                    </div>
+                </div>
+                <div style="text-align:right;min-width:70px;">
+                    <span class="val" th:text="${b.count}">0</span>
+                    <span class="breakdown-pct" th:text="'(' + ${b.percent} + '%)'">(0%)</span>
+                </div>
+            </div>
+            <div th:if="${report.byMaritalStatus.isEmpty()}" style="text-align:center;padding:20px;color:#94a3b8;font-size:.82rem;">
+                No marital status data.
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ PER-BENEFICIARY TABLE ══ -->
+    <div class="card pad">
+        <div class="section-title"><i class="bi bi-table"></i> Per-Household Detail</div>
+        <div class="table-wrap">
+            <table class="rpt-table">
+                <colgroup>
+                    <col style="width:16%;">   <!-- Household (Name & Phone) -->
+                    <col style="width:20%;">   <!-- Full Location -->
+                    <col style="width:5%;">    <!-- Received -->
+                    <col style="width:4.5%;">  <!-- Alive -->
+                    <col style="width:4.5%;">  <!-- Sold -->
+                    <col style="width:4.5%;">  <!-- Died -->
+                    <col style="width:5%;">    <!-- Births -->
+                    <col style="width:8%;">    <!-- Original Value -->
+                    <col style="width:8%;">    <!-- Current Value -->
+                    <col style="width:8%;">    <!-- Revenue -->
+                    <col style="width:8.5%;">  <!-- Growth -->
+                    <col style="width:8%;">    <!-- Survival -->
+                </colgroup>
                 <thead>
-                <tr><th>Location</th><th style="text-align:right;">Beneficiaries</th></tr>
+                <tr>
+                    <th class="left">Household<br><span style="font-weight:500;text-transform:none;letter-spacing:0;">Name &amp; Phone</span></th>
+                    <th class="left">Full Location<br><span style="font-weight:500;text-transform:none;letter-spacing:0;">Province › District › Sector › Cell › Village</span></th>
+                    <th>Received</th>
+                    <th>Alive</th>
+                    <th>Sold</th>
+                    <th>Died</th>
+                    <th>Births</th>
+                    <th>Original Value</th>
+                    <th>Current Value</th>
+                    <th>Revenue</th>
+                    <th>Growth</th>
+                    <th>Survival</th>
+                </tr>
                 </thead>
                 <tbody>
-                <tr th:each="entry : ${locationDistribution}">
-                    <td th:text="${entry.key}">Location</td>
-                    <td class="num">
-                        <div class="share-wrap">
-                            <div class="share-bar">
-                                <span th:style="'width:' + (${totalBeneficiaries} > 0 ? (${entry.value} * 100 / ${totalBeneficiaries}) : 0) + '%'"></span>
-                            </div>
-                            <span th:text="${entry.value}">0</span>
-                        </div>
+                <tr th:each="row : ${report.rows}">
+                    <!-- Household: Name + Phone -->
+                    <td class="left cell-household">
+                        <span class="name" th:text="${row.fullName}">Beneficiary Name</span>
+
+                        <a th:if="${row.phone != null and !row.phone.isEmpty()}"
+                           class="phone"
+                           th:href="'tel:' + ${row.phone}">
+                            <i class="bi bi-telephone-fill"></i>
+                            <span th:text="${row.phone}">078…</span>
+                        </a>
+
+                        <span th:if="${row.phone == null or row.phone.isEmpty()}"
+                              class="phone muted">
+                            <i class="bi bi-telephone-x"></i> No phone
+                        </span>
+
+                        <span th:if="${row.status == 'INACTIVE'}"
+                              class="inactive">INACTIVE</span>
+                    </td>
+
+                    <!-- Full Location breadcrumb -->
+                    <td class="left cell-location">
+                        <span class="loc"
+                              th:title="${row.fullLocation}"
+                              th:text="${row.fullLocation}">Province › District › Sector › Cell › Village</span>
+                    </td>
+
+                    <td th:text="${row.animalsReceived}">0</td>
+                    <td th:text="${row.animalsNow}">0</td>
+                    <td th:text="${row.sold}">0</td>
+                    <td th:text="${row.deaths}">0</td>
+                    <td th:text="${row.births}">0</td>
+                    <td th:text="${#numbers.formatDecimal(row.originalValue, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td th:text="${#numbers.formatDecimal(row.currentValue, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td th:text="${#numbers.formatDecimal(row.saleRevenue, 1, 'COMMA', 0, 'POINT')}">0</td>
+
+                    <td>
+                        <span th:if="${row.hasDoubled()}" class="badge-doubled"
+                              th:text="'+' + ${row.assetGrowthRatePercent} + '%'">+100%</span>
+                        <span th:if="${!row.hasDoubled() and row.assetGrowthRatePercent >= 0}"
+                              class="badge-ok"
+                              th:text="'+' + ${row.assetGrowthRatePercent} + '%'">+20%</span>
+                        <span th:if="${row.assetGrowthRatePercent < 0}"
+                              class="badge-bad"
+                              th:text="${row.assetGrowthRatePercent} + '%'">-10%</span>
+                    </td>
+
+                    <td>
+                        <span th:if="${row.survivalRatePercent >= 80}" class="badge-ok"
+                              th:text="${row.survivalRatePercent} + '%'">100%</span>
+                        <span th:if="${row.survivalRatePercent >= 50 and row.survivalRatePercent < 80}"
+                              class="badge-warn"
+                              th:text="${row.survivalRatePercent} + '%'">60%</span>
+                        <span th:if="${row.survivalRatePercent < 50}" class="badge-bad"
+                              th:text="${row.survivalRatePercent} + '%'">30%</span>
                     </td>
                 </tr>
-                <tr th:if="${locationDistribution == null or locationDistribution.isEmpty()}">
-                    <td colspan="2" class="empty-row">No location data available.</td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
 
-    <!-- ── Beneficiaries by Representative ── -->
-    <section>
-        <div class="card-table">
-            <div class="card-title"><i class="bi bi-person-badge-fill"></i> Beneficiaries by Representative</div>
-            <table class="br">
-                <thead>
-                <tr><th>Representative</th><th style="text-align:right;">Beneficiaries</th></tr>
-                </thead>
-                <tbody>
-                <tr th:each="entry : ${representativeDistribution}">
-                    <td th:text="${entry.key}">Representative</td>
-                    <td class="num">
-                        <div class="share-wrap">
-                            <div class="share-bar">
-                                <span th:style="'width:' + (${totalBeneficiaries} > 0 ? (${entry.value} * 100 / ${totalBeneficiaries}) : 0) + '%'"></span>
-                            </div>
-                            <span th:text="${entry.value}">0</span>
-                        </div>
+                <tr th:if="${report.rows.isEmpty()}">
+                    <td colspan="12" style="text-align:center;color:#94a3b8;padding:30px;">
+                        No beneficiaries registered yet.
                     </td>
                 </tr>
-                <tr th:if="${representativeDistribution == null or representativeDistribution.isEmpty()}">
-                    <td colspan="2" class="empty-row">No representative data available.</td>
-                </tr>
                 </tbody>
+                <tfoot>
+                <tr>
+                    <td class="left">Program Total</td>
+                    <td></td>
+                    <td th:text="${report.totalAnimalsDistributed}">0</td>
+                    <td th:text="${report.totalCurrentAnimals}">0</td>
+                    <td th:text="${report.totalSoldAnimals}">0</td>
+                    <td th:text="${report.totalDeadAnimals}">0</td>
+                    <td th:text="${report.totalBornAnimals}">0</td>
+                    <td th:text="${#numbers.formatDecimal(report.totalOriginalValue, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td th:text="${#numbers.formatDecimal(report.totalCurrentValue, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td th:text="${#numbers.formatDecimal(report.totalSaleRevenue, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td th:text="${(report.assetGrowthRatePercent >= 0 ? '+' : '') + report.assetGrowthRatePercent} + '%'">0%</td>
+                    <td th:text="${report.survivalRatePercent} + '%'">0%</td>
+                </tr>
+                </tfoot>
             </table>
         </div>
-    </section>
+    </div>
 
-    <div class="row g-3" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
-        <!-- ── Gender Distribution ── -->
-        <section style="margin-bottom:0;">
-            <div class="card-table" style="height:100%;">
-                <div class="card-title"><i class="bi bi-gender-ambiguous"></i> Gender Distribution</div>
-                <table class="br">
-                    <thead>
-                    <tr><th>Gender</th><th style="text-align:right;">Count</th></tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="entry : ${genderDistribution}">
-                        <td th:text="${entry.key}">Gender</td>
-                        <td class="num" th:text="${entry.value}">0</td>
-                    </tr>
-                    <tr th:if="${genderDistribution == null or genderDistribution.isEmpty()}">
-                        <td colspan="2" class="empty-row">No gender data available.</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ── Marital Status Distribution ── -->
-        <section style="margin-bottom:0;">
-            <div class="card-table" style="height:100%;">
-                <div class="card-title"><i class="bi bi-heart-fill"></i> Marital Status Distribution</div>
-                <table class="br">
-                    <thead>
-                    <tr><th>Status</th><th style="text-align:right;">Count</th></tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="entry : ${maritalStatusDistribution}">
-                        <td th:text="${entry.key}">Status</td>
-                        <td class="num" th:text="${entry.value}">0</td>
-                    </tr>
-                    <tr th:if="${maritalStatusDistribution == null or maritalStatusDistribution.isEmpty()}">
-                        <td colspan="2" class="empty-row">No marital status data available.</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
+    <!-- ── Footer ── -->
+    <div class="card" style="padding:18px 30px;font-size:.74rem;color:#94a3b8;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span><i class="bi bi-shield-check" style="color:#16a34a;"></i> Animal Production System — Confidential</span>
+        <span th:text="'Generated ' + ${#temporals.format(generatedAt, 'dd MMM yyyy, HH:mm')}">—</span>
     </div>
 
 </div>

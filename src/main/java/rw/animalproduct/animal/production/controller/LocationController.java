@@ -15,14 +15,11 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/locations")
 public class LocationController {
-
     private final LocationService locationService;
-
     @Autowired
     public LocationController(LocationService locationService) {
         this.locationService = locationService;
     }
-
     /**
      * Get all provinces
      */
@@ -31,7 +28,6 @@ public class LocationController {
         List<Location> provinces = locationService.getLocationsByType("PROVINCE");
         return ResponseEntity.ok(convertToMap(provinces));
     }
-
     /**
      * Get districts by province ID
      */
@@ -40,7 +36,6 @@ public class LocationController {
         List<Location> districts = locationService.getChildLocations(provinceId);
         return ResponseEntity.ok(convertToMap(districts));
     }
-
     /**
      * Get sectors by district ID
      */
@@ -49,7 +44,6 @@ public class LocationController {
         List<Location> sectors = locationService.getChildLocations(districtId);
         return ResponseEntity.ok(convertToMap(sectors));
     }
-
     /**
      * Get cells by sector ID
      */
@@ -58,7 +52,6 @@ public class LocationController {
         List<Location> cells = locationService.getChildLocations(sectorId);
         return ResponseEntity.ok(convertToMap(cells));
     }
-
     /**
      * Get villages by cell ID
      */
@@ -67,7 +60,6 @@ public class LocationController {
         List<Location> villages = locationService.getChildLocations(cellId);
         return ResponseEntity.ok(convertToMap(villages));
     }
-
     /**
      * Get location details by ID
      */
@@ -89,7 +81,6 @@ public class LocationController {
         }
         return ResponseEntity.notFound().build();
     }
-
     /**
      * Helper method to convert Location list to Map
      */

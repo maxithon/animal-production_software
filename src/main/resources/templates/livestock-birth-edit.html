@@ -10,6 +10,13 @@
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
         .form-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; margin: 0 24px 24px; }
         .section-divider { border-top: 1px dashed #dee2e6; margin: 20px 0; }
+        input[readonly] { background-color: #f0fdf4; cursor: not-allowed; }
+        #vetSearchResults { border: 1px solid #ced4da; border-radius: 6px; background: #fff; }
+        #vetSearchResults .list-group-item { border: none; border-bottom: 1px solid #f1f3f5; }
+        #vetSearchResults .list-group-item:last-child { border-bottom: none; }
+        #vetSelectedInfo { font-size: 0.8rem; }
+        /* ✅ NEW — quick-add veterinarian panel */
+        #vetQuickAddPanel { font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -33,7 +40,6 @@
 
     <form th:action="@{/livestock/births/update/{id}(id=${birth.id})}" th:object="${birth}" method="post">
 
-        <!-- Always a farm birth on edit -->
         <input type="hidden" name="isExternalBirth" value="false">
 
         <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
@@ -41,7 +47,6 @@
             <div><strong>Farm Birth</strong> — born on this farm with a known mother.</div>
         </div>
 
-        <!-- Mother -->
         <div class="mb-4">
             <label class="form-label fw-semibold">
                 Mother Animal <span class="text-danger">*</span>
@@ -67,17 +72,19 @@
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Number of Offspring</label>
-                <input type="number" class="form-control" th:field="*{offspringCount}" min="1">
+                <label class="form-label">Number of Offspring <span class="text-muted fw-normal">(calculated)</span></label>
+                <input type="text" class="form-control" th:value="${birth.offspringCount}" readonly>
+                <input type="hidden" th:field="*{offspringCount}">
+                <div class="form-text">
+                    <a th:href="@{/livestock/births/{id}/children(id=${birth.id})}">Manage linked offspring →</a>
+                </div>
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Offspring Gender</label>
-                <select class="form-select" th:field="*{offspringGender}">
-                    <option value="">-- Mixed / Unknown --</option>
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                </select>
+                <label class="form-label">Offspring Gender Breakdown <span class="text-muted fw-normal">(calculated)</span></label>
+                <input type="text" class="form-control"
+                       th:value="${birth.offspringGender != null and !birth.offspringGender.isEmpty() ? birth.offspringGender : '—'}"
+                       readonly>
             </div>
 
             <div class="col-md-4">
@@ -86,11 +93,95 @@
             </div>
 
             <div class="col-md-4">
-                <label class="form-label">Next Breeding Date (Mother)</label>
+                <label class="form-label">Next Breeding Date (Suggested)</label>
                 <input type="date" class="form-control" th:field="*{nextBreedingDate}">
+                <div class="form-text">
+                    Management/planning suggestion — not an FAO-required field.
+                </div>
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label class="form-label">Birth Type</label>
+                <select class="form-select" th:field="*{birthType}">
+                    <option value="">-- Not recorded --</option>
+                    <option value="NORMAL">Normal</option>
+                    <option value="DIFFICULT">Difficult</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label d-block">Assistance Required</label>
+                <div class="form-check form-switch mt-2">
+                    <input class="form-check-input" type="checkbox" th:field="*{assistanceRequired}" id="assistanceRequiredEdit">
+                    <label class="form-check-label" for="assistanceRequiredEdit">Yes</label>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Number Born Alive</label>
+                <input type="number" class="form-control" th:field="*{numberBornAlive}" min="0">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Number Stillborn</label>
+                <input type="number" class="form-control" th:field="*{numberStillborn}" min="0">
+            </div>
+
+            <!-- ✅ Veterinarian live-search + quick-add -->
+            <div class="col-md-6">
+                <label class="form-label">Veterinarian <span class="text-muted fw-normal">(search registered vets)</span></label>
+                <div class="position-relative">
+                    <input type="text" class="form-control" id="vetSearchInput" autocomplete="off"
+                           th:value="${selectedVeterinarianLabel}"
+                           placeholder="Type a name, license #, or clinic to search...">
+                    <input type="hidden" th:field="*{veterinarianIdValue}" id="veterinarianIdValue">
+                    <div id="vetSearchResults" class="list-group position-absolute w-100 shadow-sm"
+                         style="z-index:1050; max-height:260px; overflow-y:auto; display:none;"></div>
+                </div>
+                <div class="form-text" id="vetSelectedInfo" style="display:none;">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    <span id="vetSelectedLabel"></span>
+                    <a href="#" class="ms-2 text-danger" onclick="clearVetSelection(); return false;">Clear</a>
+                </div>
+
+                <!-- ✅ NEW — inline quick-add panel -->
+                <div id="vetQuickAddPanel" class="border rounded p-3 mt-2 bg-light" style="display:none;">
+                    <div class="fw-semibold small mb-2">
+                        <i class="bi bi-person-plus-fill me-1"></i>Add new veterinarian
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" id="vetQuickFirstName" placeholder="First name">
+                        </div>
+                        <div class="col-6">
+                            <input type="text" class="form-control form-control-sm" id="vetQuickLastName" placeholder="Last name">
+                        </div>
+                        <div class="col-12">
+                            <input type="text" class="form-control form-control-sm" id="vetQuickPhone" placeholder="Phone (optional)">
+                        </div>
+                    </div>
+                    <div id="vetQuickAddError" class="text-danger small mt-2" style="display:none;"></div>
+                    <div id="vetQuickAddWarning" class="text-warning small mt-2" style="display:none;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        A veterinarian with this exact name already exists — double check before saving a duplicate.
+                    </div>
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="button" class="btn btn-success btn-sm" onclick="submitQuickAddVet()">
+                            <i class="bi bi-check-lg me-1"></i>Save veterinarian
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeQuickAddVet()">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Attendant Name <span class="text-muted fw-normal">(fallback)</span></label>
+                <input type="text" class="form-control" th:field="*{attendantName}">
+            </div>
+
+            <div class="col-md-3">
                 <label class="form-label">Source Location / Notes on Origin</label>
                 <input type="text" class="form-control" th:field="*{sourceLocation}"
                        placeholder="e.g. Born in Barn 2">
@@ -114,5 +205,169 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── Veterinarian live search ────────────────────────────────────────
+    const vetSearchInput   = document.getElementById('vetSearchInput');
+    const vetIdField       = document.getElementById('veterinarianIdValue');
+    const vetResultsBox    = document.getElementById('vetSearchResults');
+    const vetSelectedInfo  = document.getElementById('vetSelectedInfo');
+    const vetSelectedLabel = document.getElementById('vetSelectedLabel');
+
+    let vetSearchTimer = null;
+
+    vetSearchInput.addEventListener('input', function () {
+        const q = this.value.trim();
+        vetIdField.value = '';
+        vetSelectedInfo.style.display = 'none';
+
+        clearTimeout(vetSearchTimer);
+        if (q.length < 2) {
+            vetResultsBox.style.display = 'none';
+            return;
+        }
+        vetSearchTimer = setTimeout(() => runVetSearch(q), 250);
+    });
+
+    vetSearchInput.addEventListener('focus', function () {
+        if (this.value.trim().length >= 2 && vetResultsBox.innerHTML) {
+            vetResultsBox.style.display = 'block';
+        }
+    });
+
+    async function runVetSearch(q) {
+        try {
+            const resp = await fetch(`/livestock/births/api/veterinarians/search?q=${encodeURIComponent(q)}`);
+            const results = resp.ok ? await resp.json() : [];
+            renderVetResults(results, q);
+        } catch (e) {
+            console.error('Veterinarian search failed:', e);
+            vetResultsBox.style.display = 'none';
+        }
+    }
+
+    function renderVetResults(results, query) {
+        if (!results.length) {
+            vetResultsBox.innerHTML = `
+                <div class="list-group-item text-muted small">No matching veterinarians found for "${escapeHtml(query)}".</div>
+                <button type="button" class="list-group-item list-group-item-action py-2 text-success fw-semibold"
+                        onclick="openQuickAddVet('${escapeHtml(query).replace(/'/g, "\\'")}')">
+                    <i class="bi bi-plus-circle-fill me-1"></i>
+                    Add "${escapeHtml(query)}" as new veterinarian
+                </button>`;
+            vetResultsBox.style.display = 'block';
+            return;
+        }
+        const rowsHtml = results.map(v => `
+            <button type="button" class="list-group-item list-group-item-action py-2"
+                    data-vet-id="${v.id}" data-vet-label="${escapeHtml(v.displayName)}">
+                <div class="fw-semibold">${escapeHtml(v.displayName)}</div>
+                <div class="text-muted small">${escapeHtml(v.clinicName || '')}${v.phone ? ' · ' + escapeHtml(v.phone) : ''}</div>
+            </button>
+        `).join('');
+        const addRow = `
+            <button type="button" class="list-group-item list-group-item-action py-2 text-success fw-semibold"
+                    onclick="openQuickAddVet('${escapeHtml(query).replace(/'/g, "\\'")}')">
+                <i class="bi bi-plus-circle-fill me-1"></i>
+                Not listed? Add "${escapeHtml(query)}" as new veterinarian
+            </button>`;
+        vetResultsBox.innerHTML = rowsHtml + addRow;
+        vetResultsBox.querySelectorAll('button[data-vet-id]').forEach(btn => {
+            btn.addEventListener('click', () => selectVet(btn.dataset.vetId, btn.dataset.vetLabel));
+        });
+        vetResultsBox.style.display = 'block';
+    }
+
+    function selectVet(id, label) {
+        vetIdField.value = id;
+        vetSearchInput.value = label;
+        vetSelectedLabel.textContent = label;
+        vetSelectedInfo.style.display = 'block';
+        vetResultsBox.style.display = 'none';
+    }
+
+    function clearVetSelection() {
+        vetIdField.value = '';
+        vetSearchInput.value = '';
+        vetSelectedInfo.style.display = 'none';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!vetResultsBox.contains(e.target) && e.target !== vetSearchInput) {
+            vetResultsBox.style.display = 'none';
+        }
+    });
+
+    // If a veterinarian was preloaded on page load, show the "selected" chip.
+    window.addEventListener('DOMContentLoaded', () => {
+        if (vetIdField.value && vetSearchInput.value) {
+            vetSelectedLabel.textContent = vetSearchInput.value;
+            vetSelectedInfo.style.display = 'block';
+        }
+    });
+
+    // ── ✅ NEW: Veterinarian quick-add ──────────────────────────────────
+    function openQuickAddVet(typedText) {
+        vetResultsBox.style.display = 'none';
+
+        const parts = typedText.trim().split(/\s+/);
+        document.getElementById('vetQuickFirstName').value = parts[0] || '';
+        document.getElementById('vetQuickLastName').value = parts.length > 1 ? parts.slice(1).join(' ') : '';
+        document.getElementById('vetQuickPhone').value = '';
+        document.getElementById('vetQuickAddError').style.display = 'none';
+        document.getElementById('vetQuickAddWarning').style.display = 'none';
+
+        document.getElementById('vetQuickAddPanel').style.display = 'block';
+    }
+
+    function closeQuickAddVet() {
+        document.getElementById('vetQuickAddPanel').style.display = 'none';
+    }
+
+    async function submitQuickAddVet() {
+        const firstName = document.getElementById('vetQuickFirstName').value.trim();
+        const lastName  = document.getElementById('vetQuickLastName').value.trim();
+        const phone     = document.getElementById('vetQuickPhone').value.trim();
+        const errorBox  = document.getElementById('vetQuickAddError');
+
+        errorBox.style.display = 'none';
+
+        if (!firstName || !lastName) {
+            errorBox.textContent = 'First name and last name are both required.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ firstName, lastName });
+            if (phone) params.append('phone', phone);
+
+            const resp = await fetch('/livestock/births/api/veterinarians/quick-add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                errorBox.textContent = data.error || 'Could not create veterinarian.';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            selectVet(data.id, data.displayName);
+            closeQuickAddVet();
+        } catch (e) {
+            errorBox.textContent = 'Network error — please try again.';
+            errorBox.style.display = 'block';
+        }
+    }
+</script>
 </body>
 </html>

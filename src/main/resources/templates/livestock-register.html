@@ -28,99 +28,47 @@
             margin-bottom: 16px; margin-top: 24px;
         }
 
-        /* Info banners */
         .info-banner-blue {
             background: #e0f2fe; border-left: 4px solid #0369a1;
             border-radius: 0 8px 8px 0; padding: 10px 16px;
             font-size: 0.85rem; color: #0369a1; margin-bottom: 12px;
         }
-        .info-banner-sky {
-            background: #f0f9ff; border: 1px solid #bae6fd;
-            border-left: 4px solid #0369a1; border-radius: 0 8px 8px 0;
-            padding: 10px 16px; font-size: 0.83rem; color: #075985; margin-bottom: 12px;
-        }
-        .info-banner-green {
-            background: #f0fdf4; border: 1px solid #bbf7d0;
-            border-left: 4px solid #16a34a; border-radius: 0 8px 8px 0;
-            padding: 10px 16px; font-size: 0.83rem; color: #166534; margin-bottom: 12px;
-        }
 
-        /* Pregnancy toggle box */
-        .pregnancy-toggle-box {
-            background: #f8fafc; border: 1.5px solid #e2e8f0;
-            border-radius: 10px; padding: 14px 18px; margin-bottom: 12px;
-            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        /* ── Health / Reproductive status pickers ─────────────────────────── */
+        .status-picker-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+        .status-picker-col { flex: 1 1 260px; min-width: 220px; }
+        .status-chip-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-chip {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b; cursor: pointer;
+            transition: all 0.15s;
         }
-        .pregnancy-toggle-hint { font-size: 0.8rem; color: #64748b; }
+        .status-chip:hover { border-color: #94a3b8; }
+        .status-chip.active.health-HEALTHY         { background:#d1fae5; color:#065f46; border-color:#a7f3d0; }
+        .status-chip.active.health-SICK             { background:#fee2e2; color:#991b1b; border-color:#fca5a5; }
+        .status-chip.active.health-UNDER_TREATMENT  { background:#fef9c3; color:#854d0e; border-color:#fde047; }
+        .status-chip.active.repro-READY_TO_BREED    { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+        .status-chip.active.repro-BRED               { background:#dbeafe; color:#1d4ed8; border-color:#93c5fd; }
+        .status-chip.active.repro-PREGNANT           { background:#fce7f3; color:#be185d; border-color:#fbcfe8; }
+        .status-chip.active.repro-OPEN               { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
+        .status-chip.active.repro-NOT_APPLICABLE     { background:#f3f4f6; color:#6b7280; border-color:#d1d5db; }
+        .status-picker-hint { font-size: 0.76rem; color: #94a3b8; margin-top: 6px; }
 
-        /* Pregnancy details panel */
-        .pregnancy-panel {
-            background: #fdf4ff; border: 1.5px solid #e9d8fd;
-            border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;
-        }
-        .pregnancy-panel .panel-title {
-            font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .06em; color: #6b21a8; margin-bottom: 14px;
-            display: flex; align-items: center; gap: 7px;
-        }
-
-        /* FAO standard callout inside pregnancy panel */
-        .fao-info-box {
-            background: #fff; border: 1px solid #e9d8fd;
-            border-left: 4px solid #7c3aed; border-radius: 0 8px 8px 0;
-            padding: 10px 16px; font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px;
-        }
-        .fao-info-box ul { margin: 6px 0 0 0; padding-left: 18px; }
-        .fao-info-box li { margin-bottom: 3px; }
-
-        /* Computed-field display badge */
-        .computed-field {
-            background: #f1f5f9; border: 1.5px solid #cbd5e1;
-            border-radius: 8px; padding: 10px 14px;
-            font-size: 0.85rem; color: #334155; min-height: 42px;
-        }
-        .computed-field .computed-value {
-            font-weight: 700; color: #1a5f7a; font-size: 0.95rem;
-        }
-        .computed-field .computed-label {
-            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 0.05em; color: #94a3b8;
-        }
-        .computed-empty { font-style: italic; color: #94a3b8; font-size: 0.82rem; }
-
-        /* Progress bar (pregnancy gestation) */
-        .gestation-bar-wrap { margin-top: 8px; }
-        .gestation-bar-bg {
-            background: #e2e8f0; border-radius: 20px; height: 10px; overflow: hidden;
-        }
-        .gestation-bar-fill {
-            height: 100%; border-radius: 20px;
-            background: linear-gradient(90deg, #7c3aed, #a855f7);
-            transition: width 0.4s ease;
-        }
-        .gestation-bar-label { font-size: 0.72rem; color: #6b7280; margin-top: 3px; }
-
-        /* Method badge preview */
-        .method-preview {
-            display: none; align-items: center; gap: 7px;
-            margin-top: 8px; padding: 5px 14px; border-radius: 20px;
-            font-size: 0.82rem; font-weight: 600;
-        }
-        .method-preview.natural { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .method-preview.ai      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-        .method-preview.et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
-        .method-preview.unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
-
-        /* Tag-lookup loading state */
-        .tag-lookup-spinner {
+        /* ── Breeding Eligibility — read-only estimate, not a form field ───── */
+        .eligibility-badge {
             display: inline-flex; align-items: center; gap: 6px;
-            font-size: 0.78rem; color: #64748b; margin-top: 6px;
+            padding: 6px 13px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b;
         }
-        .tag-lookup-spinner .spinner-border-sm { width: 0.75rem; height: 0.75rem; }
+        .eligibility-badge.elig-ready     { background:#ede9fe; color:#5b21b6; border-color:#c4b5fd; }
+        .eligibility-badge.elig-not-ready { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+        .eligibility-badge.elig-unknown   { background:#f1f5f9; color:#64748b; border-color:#e2e8f0; }
+        .eligibility-note { font-size: 0.72rem; color: #94a3b8; margin-top: 6px; font-style: italic; }
 
-        /* ═══════════════════════════════════════════════════════════════
-           NEW — PROFESSIONAL UX ENHANCEMENTS
-        ═══════════════════════════════════════════════════════════════ */
+        /* Required field marker */
+        .req-star { color: #dc2626; font-weight: 800; margin-left: 2px; }
+        .required-note { font-size: 0.78rem; color: #64748b; margin-bottom: 16px; }
 
         /* Sticky progress bar + section quick-nav */
         .form-nav-sticky {
@@ -146,11 +94,6 @@
         .nav-pill-mini.pill-complete { border-color: #16a34a; color: #16a34a; background: #f0fdf4; }
         .nav-pill-mini.active.pill-complete { background: #16a34a; color: #fff; border-color: #16a34a; }
 
-        /* Required field marker + legend */
-        .req-star { color: #dc2626; font-weight: 800; margin-left: 2px; }
-        .required-note { font-size: 0.78rem; color: #64748b; margin-bottom: 16px; }
-
-        /* Draft recovery banner + toast */
         .draft-banner {
             display: flex; align-items: center; justify-content: space-between; gap: 12px;
             background: linear-gradient(135deg,#1a5f7a,#2e8b9e); color: #fff;
@@ -167,20 +110,19 @@
         }
         .draft-toast.visible { opacity: 1; transform: translateY(0); }
 
-        /* Drag & drop photo */
         .photo-preview.drag-over { border-color: #1a5f7a; background: #eef7fb; }
         .photo-dropzone-hint { font-size: 0.72rem; color: #94a3b8; margin-top: 6px; }
-
-        /* Currency preview */
         .currency-preview { font-size: 0.78rem; color: #059669; font-weight: 600; margin-top: 4px; min-height: 1.1em; }
-
-        /* Anchor offset so sections don't land under the sticky nav */
         .form-section { scroll-margin-top: 92px; }
-
-        /* Bootstrap validation feedback */
         .was-validated .form-select:invalid,
         .was-validated .form-control:invalid { border-color: #dc2626; }
         .invalid-feedback { font-size: 0.78rem; }
+
+        .tag-lookup-spinner {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.78rem; color: #64748b; margin-top: 6px;
+        }
+        .tag-lookup-spinner .spinner-border-sm { width: 0.75rem; height: 0.75rem; }
     </style>
 </head>
 <body>
@@ -196,7 +138,6 @@
                     </a>
                 </div>
 
-                <!-- ══ Sticky progress bar + section quick-nav ══ -->
                 <div class="form-nav-sticky">
                     <div class="progress-track">
                         <div class="progress-fill" id="progressFill"></div>
@@ -206,14 +147,13 @@
                             <a href="#sec-photo" data-target="sec-photo" class="nav-pill-mini"><i class="bi bi-camera"></i> Photo</a>
                             <a href="#sec-assignment" data-target="sec-assignment" class="nav-pill-mini"><i class="bi bi-tag"></i> Assignment</a>
                             <a href="#sec-basic" data-target="sec-basic" class="nav-pill-mini"><i class="bi bi-info-circle"></i> Basic Info</a>
-                            <a href="#sec-breeding" data-target="sec-breeding" class="nav-pill-mini"><i class="bi bi-diagram-2"></i> Breeding</a>
+                            <a href="#sec-status" data-target="sec-status" class="nav-pill-mini"><i class="bi bi-heart-pulse"></i> Health &amp; Breeding</a>
                             <a href="#sec-location" data-target="sec-location" class="nav-pill-mini"><i class="bi bi-geo-alt"></i> Location</a>
                         </div>
                         <span class="progress-label" id="progressLabel">0% complete</span>
                     </div>
                 </div>
 
-                <!-- ══ Draft recovery banner (shown by JS if a saved draft is found) ══ -->
                 <div id="draftBanner" class="draft-banner" style="display:none">
                     <div><i class="bi bi-clock-history me-1"></i>
                         We found unsaved details from a previous session on this form.
@@ -236,20 +176,12 @@
 
                 <p class="required-note"><span class="req-star">*</span> indicates a required field</p>
 
-                <!--
-                ════════════════════════════════════════════════════════════
-                FIX: form used to post to /livestock/register/new, which has
-                no matching @PostMapping — every submit 404'd. The controller
-                only maps POST /livestock/register, so that's what we target.
-                ════════════════════════════════════════════════════════════
-                -->
                 <form th:action="@{/livestock/register}" th:object="${livestock}"
                       method="post" id="registerForm" novalidate>
 
-                    <input type="hidden" th:field="*{pregnancyStatus}"
-                           th:value="${livestock.pregnancyStatus != null
-                                       ? livestock.pregnancyStatus : 'NOT_PREGNANT'}"
-                           id="pregnancyStatusHidden">
+                    <!-- Hidden fields carrying the chip-picker values -->
+                    <input type="hidden" th:field="*{healthStatus}" id="healthStatusHidden" value="HEALTHY">
+                    <input type="hidden" th:field="*{reproductiveStatus}" id="reproductiveStatusHidden" value="OPEN">
 
                     <!-- ══ PHOTO ══════════════════════════════════════════════ -->
                     <section id="sec-photo" class="form-section">
@@ -285,13 +217,13 @@
                                 <label class="form-label">Livestock Category <span class="req-star">*</span></label>
                                 <select class="form-select" id="livestockCategoryIdValue"
                                         th:field="*{livestockCategoryIdValue}"
-                                        onchange="fetchTagSuggestion(this.value); onCategoryChange();"
+                                        onchange="fetchTagSuggestion(this.value); updateEligibilityEstimate();"
                                         autofocus
                                         required>
                                     <option value="">Select category...</option>
                                     <option th:each="cat : ${categories}"
                                             th:value="${cat.id}"
-                                            th:attr="data-gestation=${cat.gestationPeriodMonths}"
+                                            th:attr="data-min-age=${cat.minBreedingAgeMonths}"
                                             th:text="${cat.name + ' (' + cat.code + ')'}">
                                     </option>
                                 </select>
@@ -299,18 +231,6 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Beneficiary (Abaragizwa) <span class="req-star">*</span></label>
-                                <!--
-                                ════════════════════════════════════════════════════
-                                FIX: this loop previously read ${beneficiariesList},
-                                which the controller never populated (it only set
-                                "beneficiaries") — so the dropdown always rendered
-                                with zero options. The controller now sets BOTH
-                                "beneficiaries" and "beneficiariesList" to the same
-                                list, so this works whichever name you standardize
-                                on. Left as beneficiariesList here to match what
-                                was already written into this template.
-                                ════════════════════════════════════════════════════
-                                -->
                                 <select class="form-select" id="beneficiaryIdValue"
                                         th:field="*{beneficiaryIdValue}" required>
                                     <option value="">Select beneficiary...</option>
@@ -341,7 +261,6 @@
                                        th:placeholder="${suggestedTag != null ? suggestedTag : 'Select a category first...'}"
                                        required>
 
-                                <!-- Loading indicator while the suggestion lookup is in flight -->
                                 <div id="tagLookupSpinner" class="tag-lookup-spinner" style="display:none">
                                     <span class="spinner-border spinner-border-sm text-secondary" role="status"></span>
                                     Checking existing tags in this category…
@@ -386,10 +305,13 @@
 
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Status</label>
-                                <select class="form-select" id="status" th:field="*{status}">
-                                    <option value="ACTIVE">Active</option>
-                                    <option value="SICK">Sick</option>
-                                </select>
+                                <!-- Lifecycle status only: chk_livestock_status allows
+                                     ACTIVE / SOLD / DEAD / TRANSFERRED. New animals are
+                                     always registered ACTIVE — health goes in the
+                                     Health & Breeding section below, not here. -->
+                                <input type="text" class="form-control" value="ACTIVE" disabled>
+                                <input type="hidden" th:field="*{status}" value="ACTIVE">
+                                <div class="form-text">New animals always start as Active.</div>
                             </div>
                         </div>
 
@@ -424,183 +346,107 @@
                         <!-- Birth date row — hidden for BIRTH acquisition -->
                         <div id="birthDateRow" class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Birth Date</label>
+                                <label class="form-label">Birth Date <span class="req-star">*</span></label>
                                 <input type="date" class="form-control" id="birthDate"
-                                       th:field="*{birthDate}">
+                                       th:field="*{birthDate}" onchange="updateEligibilityEstimate()" required>
                                 <div class="form-text text-muted">
                                     The actual date this animal was born (not the arrival date).
                                 </div>
                             </div>
+                            <div class="col-md-8 mb-3" id="externalSourceRow">
+                                <label class="form-label">Source Location</label>
+                                <input type="text" class="form-control" id="sourceLocation"
+                                       th:field="*{sourceLocation}" placeholder="e.g. Musanze Livestock Market">
+                            </div>
                         </div>
 
-                        <!-- Shown only when BIRTH is selected -->
                         <div id="birthMethodInfo" class="info-banner-blue mb-3" style="display:none">
                             <i class="bi bi-info-circle-fill me-2"></i>
                             <strong>Birth date is managed automatically.</strong>
-                            Because this animal was born on the farm, its birth date will be
-                            recorded in the <strong>Births</strong> module — no need to enter it here.
+                            Because this animal was born on the farm, its birth date and mother will be
+                            recorded in the <strong>Births</strong> module — no need to enter them here.
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"> Offspring Count</label>
+                            <input type="number" class="form-control" id="offspringCount"
+                                   th:field="*{offspringCount}" min="0" value="0" style="max-width:200px;">
                         </div>
                     </section>
 
-                    <!-- ══ OFFSPRING / BREEDING HISTORY ══════════════════════ -->
-                    <section id="sec-breeding" class="form-section">
-                        <div class="section-header">
-                            <i class="bi bi-diagram-2 me-1"></i> Offspring &amp; Breeding History
+                    <!-- ══ HEALTH & REPRODUCTIVE STATUS ═══════════════════════
+                         Two REAL, persisted fields (health_status and
+                         reproductive_status — each backed by a DB CHECK
+                         constraint), plus a third, read-only "Breeding
+                         Eligibility" estimate. Eligibility is NOT a form
+                         field and nothing about it is submitted: it's
+                         computed live from birth date + the selected
+                         category's minimum breeding age, the same way
+                         LivestockLifecycleService.getReadyToBreed() and the
+                         Breeding module already determine it. Keeping it
+                         read-only here avoids creating a second, conflicting
+                         source of truth for the same fact. ══════════════════ -->
+                    <section id="sec-status" class="form-section">
+                        <div class="section-header"><i class="bi bi-heart-pulse me-1"></i> Health &amp; Breeding Status</div>
+
+                        <div class="status-picker-row">
+                            <div class="status-picker-col">
+                                <label class="form-label d-block">Health Status</label>
+                                <div class="status-chip-group" id="healthChipGroup">
+                                    <span class="status-chip active health-HEALTHY" data-value="HEALTHY" onclick="pickHealth('HEALTHY', this)">
+                                        <i class="bi bi-shield-check"></i> Healthy
+                                    </span>
+                                    <span class="status-chip health-SICK" data-value="SICK" onclick="pickHealth('SICK', this)">
+                                        <i class="bi bi-thermometer-half"></i> Sick
+                                    </span>
+                                    <span class="status-chip health-UNDER_TREATMENT" data-value="UNDER_TREATMENT" onclick="pickHealth('UNDER_TREATMENT', this)">
+                                        <i class="bi bi-capsule-pill"></i> Under Treatment
+                                    </span>
+                                </div>
+                                <div class="status-picker-hint">New animals default to Healthy.</div>
+                            </div>
+
+                            <div class="status-picker-col" id="reproStatusCol">
+                                <label class="form-label d-block">Reproductive Status</label>
+                                <div class="status-chip-group" id="reproChipGroup">
+                                    <span class="status-chip repro-NOT_APPLICABLE" data-value="NOT_APPLICABLE" onclick="pickRepro('NOT_APPLICABLE', this)">
+                                        <i class="bi bi-dash-circle"></i> N/A
+                                    </span>
+                                    <span class="status-chip active repro-OPEN" data-value="OPEN" onclick="pickRepro('OPEN', this)">
+                                        <i class="bi bi-circle"></i> Open
+                                    </span>
+                                    <span class="status-chip repro-READY_TO_BREED" data-value="READY_TO_BREED" onclick="pickRepro('READY_TO_BREED', this)">
+                                        <i class="bi bi-heart-arrow"></i> Ready to Breed
+                                    </span>
+                                    <span class="status-chip repro-BRED" data-value="BRED" onclick="pickRepro('BRED', this)">
+                                        <i class="bi bi-arrow-repeat"></i> Bred
+                                    </span>
+                                    <span class="status-chip repro-PREGNANT" data-value="PREGNANT" onclick="pickRepro('PREGNANT', this)">
+                                        <i class="bi bi-heart-fill"></i> Pregnant
+                                    </span>
+                                </div>
+                                <div class="status-picker-hint">
+                                    This is the animal's current breeding-cycle state — set it manually
+                                    when you know it. Detailed breeding dates (conception, expected due
+                                    date, insemination method) are tracked in the <strong>Breeding</strong>
+                                    module once this animal is registered.
+                                </div>
+                            </div>
+
+                            <div class="status-picker-col" id="eligibilityColWrap">
+                                <label class="form-label d-block">
+                                    Breeding Eligibility
+                                    <span style="font-weight:400; color:#94a3b8; font-size:0.72rem;">(estimated, not saved)</span>
+                                </label>
+                                <span id="eligibilityBadge" class="eligibility-badge elig-unknown">
+                                    <i class="bi bi-question-circle"></i>
+                                    <span id="eligibilityBadgeText">Not enough info yet</span>
+                                </span>
+                                <div class="eligibility-note" id="eligibilityHint">
+                                    Enter a birth date and pick a category to estimate readiness.
+                                </div>
+                            </div>
                         </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Birth Date</label>
-                                <input type="date" class="form-control" id="lastBirthDate"
-                                       th:field="*{lastBirthDate}">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Offspring Count</label>
-                                <input type="number" class="form-control" id="offspringCount"
-                                       th:field="*{offspringCount}" min="0" value="0">
-                            </div>
-                        </div>
-
-                        <!-- ══ PREGNANCY TOGGLE ═══════════════════════════════════ -->
-                        <div id="pregnancyToggleBox" class="pregnancy-toggle-box" style="display:none">
-                            <div>
-                                <div class="form-check form-switch mb-1">
-                                    <input class="form-check-input" type="checkbox" role="switch"
-                                           id="isPregnant" th:field="*{isPregnant}"
-                                           onchange="onPregnancyToggle(this.checked)">
-                                    <label class="form-check-label fw-semibold fs-6" for="isPregnant">
-                                        <i class="bi bi-heart-fill text-danger me-1"></i>
-                                        Currently Pregnant?
-                                    </label>
-                                </div>
-                                <div class="pregnancy-toggle-hint">
-                                    Check this if the animal arrived already pregnant.
-                                    Enter the conception/breeding date below to start automatic tracking.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Shown only for BIRTH females -->
-                        <div id="birthPregnancyNotice" class="info-banner-sky" style="display:none">
-                            <i class="bi bi-info-circle-fill me-2"></i>
-                            <strong>Pregnancy tracking not applicable here.</strong>
-                            A newborn animal cannot be currently pregnant.
-                            Pregnancy will be tracked through the <strong>Breeding</strong>
-                            module once the animal matures.
-                        </div>
-
-                        <div id="pregnancyDetailsPanel" class="pregnancy-panel" style="display:none">
-                            <div class="panel-title">
-                                <i class="bi bi-heart-fill" style="color:#7c3aed"></i>
-                                Pregnancy Details
-                            </div>
-
-                            <div class="fao-info-box">
-                                <strong><i class="bi bi-info-circle-fill me-1"></i>
-                                    International Standard (FAO):
-                                </strong>
-                                <ul>
-                                    <li><strong>You enter only:</strong> the Conception / Breeding Date.</li>
-                                    <li><strong>System auto-calculates:</strong> Weeks Pregnant, Expected Due Date, Days Remaining, Gestation Progress.</li>
-                                    <li>Weeks Pregnant below is a <em>helper field only</em> — it is not stored.
-                                        Enter it to back-calculate the conception date if you only know how far along the animal is.</li>
-                                </ul>
-                            </div>
-
-                            <div class="row g-3">
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">
-                                        <i class="bi bi-calendar-heart-fill text-danger me-1"></i>
-                                        Conception / Breeding Date
-                                        <span class="badge bg-danger ms-1" style="font-size:0.65rem;">PRIMARY</span>
-                                        <span class="req-star" id="conceptionRequiredStar" style="display:none">*</span>
-                                    </label>
-                                    <input type="date" class="form-control form-control"
-                                           id="conceptionDateInput"
-                                           th:field="*{conceptionDate}"
-                                           oninput="onConceptionDateChange()">
-                                    <div class="invalid-feedback">Conception date is required when marking an animal as pregnant.</div>
-                                    <div class="form-text">
-                                        The date the animal was bred or conceived.
-                                        All pregnancy fields are calculated from this.
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">
-                                        <i class="bi bi-calculator me-1 text-secondary"></i>
-                                        Weeks Pregnant
-                                        <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">HELPER — NOT STORED</span>
-                                    </label>
-                                    <input type="number" class="form-control"
-                                           id="weeksPregnantInput"
-                                           min="0" max="60" placeholder="e.g. 8"
-                                           oninput="weeksToConception()">
-                                    <div class="form-text">
-                                        <i class="bi bi-arrow-left-right me-1"></i>
-                                        Enter weeks to <strong>back-calculate</strong> the conception date above.
-                                        This field is discarded on save.
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">
-                                        <i class="bi bi-calendar-check-fill text-success me-1"></i>
-                                        Expected Due Date
-                                        <span class="badge bg-success ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
-                                    </label>
-                                    <div class="computed-field" id="dueDateDisplay">
-                                        <span class="computed-empty">Will be calculated from conception date</span>
-                                    </div>
-                                    <div class="form-text">
-                                        Calculated by server: conception date + category gestation period.
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">
-                                        <i class="bi bi-activity text-primary me-1"></i>
-                                        Gestation Progress
-                                        <span class="badge bg-primary ms-1" style="font-size:0.65rem;">AUTO-CALCULATED</span>
-                                    </label>
-                                    <div class="computed-field" id="gestationProgressDisplay">
-                                        <span class="computed-empty">Will be shown after conception date is entered</span>
-                                    </div>
-                                    <div class="gestation-bar-wrap" id="gestationBarWrap" style="display:none">
-                                        <div class="gestation-bar-bg">
-                                            <div class="gestation-bar-fill" id="gestationBarFill" style="width:0%"></div>
-                                        </div>
-                                        <div class="gestation-bar-label" id="gestationBarLabel"></div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label fw-semibold">
-                                        <i class="bi bi-arrow-repeat me-1 text-primary"></i>
-                                        How Was This Animal Made Pregnant?
-                                        <span class="text-muted fw-normal">(insemination / breeding method)</span>
-                                    </label>
-                                    <div class="row g-2 align-items-center">
-                                        <div class="col-md-5">
-                                            <select class="form-select" id="inseminationMethod"
-                                                    th:field="*{inseminationMethod}"
-                                                    onchange="updateMethodPreview(this.value)">
-                                                <option value="">-- Select method --</option>
-                                                <option value="NATURAL_MATING">🐄 Natural Mating</option>
-                                                <option value="ARTIFICIAL_INSEMINATION">💉 Artificial Insemination (AI)</option>
-                                                <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer (ET)</option>
-                                                <option value="UNKNOWN">❓ Unknown / Not recorded</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-7 d-flex align-items-center">
-                                            <div id="methodPreview" class="method-preview"></div>
-                                        </div>
-                                    </div>
-                                    <div class="form-text">Shown in Pregnancy Tracking dashboard.</div>
-                                </div>
-
-                            </div><!-- /.row g-3 -->
-                        </div><!-- /#pregnancyDetailsPanel -->
                     </section>
 
                     <!-- ══ LOCATION ════════════════════════════════════════════ -->
@@ -657,208 +503,141 @@
     </div>
 </div>
 
-<!-- Ephemeral "Draft saved" toast -->
 <div id="draftToast" class="draft-toast"><i class="bi bi-check2-circle"></i> Draft saved</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // HELPERS
-    // ═══════════════════════════════════════════════════════════════════════════════
     function show(id)     { var e = document.getElementById(id); if (e) e.style.display = ''; }
     function hide(id)     { var e = document.getElementById(id); if (e) e.style.display = 'none'; }
-    function showFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'flex'; }
-    function showInlineFlex(id) { var e = document.getElementById(id); if (e) e.style.display = 'inline-flex'; }
     function val(id)      { var e = document.getElementById(id); return e ? e.value : ''; }
     function setVal(id,v) { var e = document.getElementById(id); if (e) e.value = v; }
-    function isChecked(id){ var e = document.getElementById(id); return e ? e.checked : false; }
-    function setChecked(id,v){ var e = document.getElementById(id); if (e) e.checked = v; }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // MAIN FORM STATE
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
+    // HEALTH / REPRODUCTIVE STATUS CHIP PICKERS
+    // ═══════════════════════════════════════════════════════════════════
+    function pickHealth(value, el) {
+        document.querySelectorAll('#healthChipGroup .status-chip').forEach(function(c) { c.classList.remove('active'); });
+        el.classList.add('active');
+        setVal('healthStatusHidden', value);
+        markDirty(); scheduleAutosave(); updateProgress();
+    }
+
+    function pickRepro(value, el) {
+        document.querySelectorAll('#reproChipGroup .status-chip').forEach(function(c) { c.classList.remove('active'); });
+        el.classList.add('active');
+        setVal('reproductiveStatusHidden', value);
+        markDirty(); scheduleAutosave(); updateProgress();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BREEDING ELIGIBILITY — read-only estimate, never submitted.
+    // Mirrors the same birth-date + category.minBreedingAgeMonths logic
+    // the Breeding module already uses server-side, purely for the user's
+    // information while filling out the form.
+    // ═══════════════════════════════════════════════════════════════════
+    function updateEligibilityEstimate() {
+        var badge = document.getElementById('eligibilityBadge');
+        var badgeText = document.getElementById('eligibilityBadgeText');
+        var hint = document.getElementById('eligibilityHint');
+        var icon = badge.querySelector('i');
+        if (!badge || !badgeText || !hint) return;
+
+        function setState(cls, iconClass, text, hintText) {
+            badge.className = 'eligibility-badge ' + cls;
+            if (icon) icon.className = iconClass;
+            badgeText.textContent = text;
+            hint.textContent = hintText;
+        }
+
+        var acq = val('acquisitionMethod');
+        if (acq === 'BIRTH') {
+            setState('elig-unknown', 'bi bi-egg', 'Newborn',
+                'Born on the farm — birth date is recorded in the Births module, not here.');
+            return;
+        }
+
+        var birthDateStr = val('birthDate');
+        var categorySelect = document.getElementById('livestockCategoryIdValue');
+        var selectedOption = categorySelect ? categorySelect.options[categorySelect.selectedIndex] : null;
+        var minAgeAttr = selectedOption ? selectedOption.getAttribute('data-min-age') : null;
+
+        if (!birthDateStr || !categorySelect || !categorySelect.value) {
+            setState('elig-unknown', 'bi bi-question-circle', 'Not enough info yet',
+                'Enter a birth date and pick a category to estimate readiness.');
+            return;
+        }
+
+        if (!minAgeAttr || minAgeAttr === 'null' || minAgeAttr === '') {
+            setState('elig-unknown', 'bi bi-question-circle', 'No threshold set',
+                'This category has no minimum breeding age configured yet.');
+            return;
+        }
+
+        var minAgeMonths = parseFloat(minAgeAttr);
+        var birthDate = new Date(birthDateStr);
+        if (isNaN(birthDate.getTime()) || isNaN(minAgeMonths)) {
+            setState('elig-unknown', 'bi bi-question-circle', 'Not enough info yet',
+                'Enter a valid birth date to estimate readiness.');
+            return;
+        }
+
+        var today = new Date();
+        var ageMonths = (today.getFullYear() - birthDate.getFullYear()) * 12
+            + (today.getMonth() - birthDate.getMonth());
+
+        if (ageMonths >= minAgeMonths) {
+            setState('elig-ready', 'bi bi-heart-arrow', 'Likely ready to breed',
+                'Estimated age: ' + ageMonths + ' month(s) — meets this category\'s ' + minAgeMonths + '-month threshold.');
+        } else {
+            var readyDate = new Date(birthDate);
+            readyDate.setMonth(readyDate.getMonth() + Math.ceil(minAgeMonths));
+            setState('elig-not-ready', 'bi bi-hourglass-split', 'Not yet ready',
+                'Estimated age: ' + ageMonths + ' month(s) — likely ready around ' + readyDate.toISOString().slice(0, 10) + '.');
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // MAIN FORM STATE — acquisition method / gender toggles
+    // ═══════════════════════════════════════════════════════════════════
     function onFormChange() {
-        var gender   = val('gender');
-        var acq      = val('acquisitionMethod');
-        var isBirth  = (acq === 'BIRTH');
-        var isFemale = (gender === 'FEMALE');
+        var acq = val('acquisitionMethod');
+        var isBirth = (acq === 'BIRTH');
+        var birthDateInput = document.getElementById('birthDate');
 
         if (isBirth) {
             hide('birthDateRow');
             show('birthMethodInfo');
             setVal('birthDate', '');
-            hide('pregnancyToggleBox');
-            setChecked('isPregnant', false);
-            hide('pregnancyDetailsPanel');
-            clearPregnancyPanel();
-            setVal('status', 'ACTIVE');
-            isFemale ? show('birthPregnancyNotice') : hide('birthPregnancyNotice');
+            setVal('sourceLocation', '');
+            // ✅ FIX: birthDate kept its `required` attribute even while
+            // hidden. On submit, form.checkValidity() still enforces
+            // `required` on display:none fields (only type="hidden"
+            // inputs are exempt from constraint validation — this one is
+            // type="date"). With the field empty, checkValidity() silently
+            // returned false, preventDefault() fired, and the request
+            // never reached the server. Because the invalid field is
+            // invisible, scrollIntoView()/focus() on it produced no
+            // visible feedback either — so submitting looked like it
+            // simply did nothing. Dropping `required` while the field is
+            // hidden lets the form actually submit.
+            if (birthDateInput) birthDateInput.required = false;
+            // A newborn can't have a breeding state yet.
+            var naChip = document.querySelector('#reproChipGroup .status-chip[data-value="NOT_APPLICABLE"]');
+            if (naChip) pickRepro('NOT_APPLICABLE', naChip);
         } else {
             show('birthDateRow');
             hide('birthMethodInfo');
-            hide('birthPregnancyNotice');
-            if (isFemale) {
-                showFlex('pregnancyToggleBox');
-                if (isChecked('isPregnant')) {
-                    show('pregnancyDetailsPanel');
-                } else {
-                    hide('pregnancyDetailsPanel');
-                }
-            } else {
-                hide('pregnancyToggleBox');
-                setChecked('isPregnant', false);
-                hide('pregnancyDetailsPanel');
-                clearPregnancyPanel();
-                setVal('inseminationMethod', '');
-                hide('methodPreview');
-            }
+            // ✅ FIX: restore the constraint for every non-birth method,
+            // where the field is visible again and genuinely required.
+            if (birthDateInput) birthDateInput.required = true;
         }
+        updateEligibilityEstimate();
         updateProgress();
     }
 
-    function onPregnancyToggle(checked) {
-        var conceptionInput = document.getElementById('conceptionDateInput');
-        if (checked) {
-            show('pregnancyDetailsPanel');
-            setVal('status', 'PREGNANT');
-            // Conception date becomes genuinely required once the animal
-            // is flagged as pregnant — both enforced (native required) and
-            // shown (asterisk) so the rule is obvious, not just implied.
-            if (conceptionInput) conceptionInput.required = true;
-            show('conceptionRequiredStar');
-        } else {
-            hide('pregnancyDetailsPanel');
-            clearPregnancyPanel();
-            setVal('status', 'ACTIVE');
-            setVal('inseminationMethod', '');
-            hide('methodPreview');
-            if (conceptionInput) conceptionInput.required = false;
-            hide('conceptionRequiredStar');
-        }
-        updateProgress();
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // FAO CORE: Conception Date is the primary input.
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function onConceptionDateChange() {
-        var conceptionVal = val('conceptionDateInput');
-        setVal('weeksPregnantInput', '');
-        updateComputedDisplays(conceptionVal);
-    }
-
-    function updateComputedDisplays(conceptionVal) {
-        var dueDateEl  = document.getElementById('dueDateDisplay');
-        var progressEl = document.getElementById('gestationProgressDisplay');
-        var barWrap    = document.getElementById('gestationBarWrap');
-        var barFill    = document.getElementById('gestationBarFill');
-        var barLabel   = document.getElementById('gestationBarLabel');
-
-        if (!conceptionVal) {
-            dueDateEl.innerHTML = '<span class="computed-empty">Will be calculated from conception date</span>';
-            progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
-            if (barWrap) barWrap.style.display = 'none';
-            return;
-        }
-
-        var gestMonths = getGestationMonths();
-        var gestDays   = gestMonths > 0 ? Math.round(gestMonths * 30.4375) : 152;
-
-        var conception = new Date(conceptionVal);
-        conception.setHours(0,0,0,0);
-        var today      = new Date(); today.setHours(0,0,0,0);
-
-        var due = new Date(conception);
-        due.setDate(due.getDate() + gestDays);
-        var dueStr = due.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
-        dueDateEl.innerHTML = '<div class="computed-label">Expected Due Date</div>'
-            + '<div class="computed-value">' + dueStr + '</div>';
-
-        var daysElapsed  = Math.max(0, Math.floor((today - conception) / 86400000));
-        var daysRemaining = Math.round((due - today) / 86400000);
-        var weeksPreg    = Math.floor(daysElapsed / 7);
-        var pct          = Math.min(100, Math.round(daysElapsed * 100 / gestDays));
-
-        var stage = pct < 33 ? 'Early' : pct < 66 ? 'Mid' : pct < 90 ? 'Late' : 'Near Term';
-
-        var daysRemainingLabel = daysRemaining >= 0
-            ? daysRemaining + ' days remaining'
-            : Math.abs(daysRemaining) + ' days overdue';
-
-        progressEl.innerHTML =
-            '<div class="computed-label">Gestation Progress</div>'
-            + '<div class="computed-value">' + pct + '% — ' + stage + ' Stage</div>'
-            + '<div style="font-size:0.78rem;color:#64748b;margin-top:2px;">'
-            + weeksPreg + ' weeks pregnant &bull; ' + daysRemainingLabel
-            + '</div>';
-
-        if (barWrap) {
-            barWrap.style.display = '';
-            barFill.style.width = pct + '%';
-            barLabel.textContent = pct + '% of gestation complete'
-                + (gestMonths > 0 ? ' (' + gestMonths + '-month gestation)' : '');
-        }
-    }
-
-    function onCategoryChange() {
-        var conceptionVal = val('conceptionDateInput');
-        if (conceptionVal) updateComputedDisplays(conceptionVal);
-    }
-
-    function getGestationMonths() {
-        var catSel = document.getElementById('livestockCategoryIdValue');
-        if (!catSel || !catSel.selectedOptions[0]) return 0;
-        return parseInt(catSel.selectedOptions[0].getAttribute('data-gestation') || '0', 10);
-    }
-
-    function weeksToConception() {
-        var weeks = parseInt(val('weeksPregnantInput'), 10);
-        if (isNaN(weeks) || weeks < 0) return;
-
-        var conceived = new Date();
-        conceived.setDate(conceived.getDate() - (weeks * 7));
-        var isoDate = conceived.toISOString().split('T')[0];
-        setVal('conceptionDateInput', isoDate);
-
-        var input = document.getElementById('conceptionDateInput');
-        if (input) {
-            input.dispatchEvent(new Event('input'));
-        }
-    }
-
-    function clearPregnancyPanel() {
-        setVal('conceptionDateInput',  '');
-        setVal('weeksPregnantInput',   '');
-        var dueDateEl  = document.getElementById('dueDateDisplay');
-        var progressEl = document.getElementById('gestationProgressDisplay');
-        var barWrap    = document.getElementById('gestationBarWrap');
-        if (dueDateEl)  dueDateEl.innerHTML  = '<span class="computed-empty">Will be calculated from conception date</span>';
-        if (progressEl) progressEl.innerHTML = '<span class="computed-empty">Will be shown after conception date is entered</span>';
-        if (barWrap)    barWrap.style.display = 'none';
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // METHOD BADGE PREVIEW
-    // ═══════════════════════════════════════════════════════════════════════════════
-    function updateMethodPreview(value) {
-        var preview = document.getElementById('methodPreview');
-        if (!preview) return;
-        var config = {
-            'NATURAL_MATING':          { cls:'natural', icon:'bi-heart-fill',         text:'Natural Mating' },
-            'ARTIFICIAL_INSEMINATION': { cls:'ai',      icon:'bi-syringe',            text:'Artificial Insemination (AI)' },
-            'EMBRYO_TRANSFER':         { cls:'et',      icon:'bi-stars',              text:'Embryo Transfer (ET)' },
-            'UNKNOWN':                 { cls:'unknown', icon:'bi-question-circle-fill',text:'Unknown / Not recorded' }
-        };
-        if (!value || !config[value]) { preview.style.display = 'none'; return; }
-        var c = config[value];
-        preview.className    = 'method-preview ' + c.cls;
-        preview.style.display = 'inline-flex';
-        preview.innerHTML    = '<i class="bi ' + c.icon + '"></i> ' + c.text;
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // PHOTO UPLOAD (click + drag & drop share the same handler)
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
+    // PHOTO UPLOAD (click + drag & drop)
+    // ═══════════════════════════════════════════════════════════════════
     function uploadPhoto() {
         var file = document.getElementById('photoFile').files[0];
         if (!file) return;
@@ -878,9 +657,7 @@
                 if (data.success) {
                     preview.innerHTML = '<img src="' + data.url + '" alt="Photo">';
                     setVal('photoUrl', data.url);
-                    markDirty();
-                    scheduleAutosave();
-                    updateProgress();
+                    markDirty(); scheduleAutosave(); updateProgress();
                 } else {
                     alert('Upload failed: ' + data.message);
                     preview.innerHTML = '<div class="text-center text-muted"><i class="bi bi-box2-heart" style="font-size:3rem"></i></div>';
@@ -896,16 +673,10 @@
         var zone = document.getElementById('photoPreview');
         if (!zone) return;
         ['dragenter', 'dragover'].forEach(function(evt) {
-            zone.addEventListener(evt, function(e) {
-                e.preventDefault(); e.stopPropagation();
-                zone.classList.add('drag-over');
-            });
+            zone.addEventListener(evt, function(e) { e.preventDefault(); e.stopPropagation(); zone.classList.add('drag-over'); });
         });
         ['dragleave', 'drop'].forEach(function(evt) {
-            zone.addEventListener(evt, function(e) {
-                e.preventDefault(); e.stopPropagation();
-                zone.classList.remove('drag-over');
-            });
+            zone.addEventListener(evt, function(e) { e.preventDefault(); e.stopPropagation(); zone.classList.remove('drag-over'); });
         });
         zone.addEventListener('drop', function(e) {
             var file = e.dataTransfer.files && e.dataTransfer.files[0];
@@ -913,118 +684,84 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     // TAG NUMBER SUGGESTION
-    // Calls /livestock/api/suggest-tag, with a visible loading state and an
-    // explicit error state instead of silent failure.
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     function fetchTagSuggestion(categoryId) {
-        hide('suggestedTagPill');
-        hide('lastTagInfo');
-        hide('noTagsYet');
-        hide('tagLookupError');
-
-        if (!categoryId) {
-            document.getElementById('tagNumber').placeholder = 'Select a category first...';
-            return;
-        }
-
+        hide('suggestedTagPill'); hide('lastTagInfo'); hide('noTagsYet'); hide('tagLookupError');
+        if (!categoryId) { document.getElementById('tagNumber').placeholder = 'Select a category first...'; return; }
         show('tagLookupSpinner');
         document.getElementById('tagNumber').placeholder = 'Checking existing tags…';
-
         fetch('/livestock/api/suggest-tag?categoryId=' + categoryId)
-            .then(function(r) {
-                if (!r.ok) throw new Error('Request failed: ' + r.status);
-                return r.json();
-            })
+            .then(function(r) { if (!r.ok) throw new Error('Request failed: ' + r.status); return r.json(); })
             .then(function(data) {
                 hide('tagLookupSpinner');
-
-                if (data.lastTag) {
-                    document.getElementById('lastTagValue').textContent = data.lastTag;
-                    show('lastTagInfo');
-                } else {
-                    show('noTagsYet');
-                }
-
+                if (data.lastTag) { document.getElementById('lastTagValue').textContent = data.lastTag; show('lastTagInfo'); }
+                else { show('noTagsYet'); }
                 if (data.suggestedTag) {
                     document.getElementById('suggestedTagValue').textContent = data.suggestedTag;
                     document.getElementById('suggestedTagPill').setAttribute('data-tag', data.suggestedTag);
-                    showInlineFlex('suggestedTagPill');
+                    document.getElementById('suggestedTagPill').style.display = 'inline-flex';
                     document.getElementById('tagNumber').placeholder = data.suggestedTag;
                 } else {
                     document.getElementById('tagNumber').placeholder = 'Enter first tag for this category...';
                 }
             })
             .catch(function() {
-                hide('tagLookupSpinner');
-                show('tagLookupError');
+                hide('tagLookupSpinner'); show('tagLookupError');
                 document.getElementById('tagNumber').placeholder = 'Enter tag number...';
             });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     // CASCADING LOCATION DROPDOWNS
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════
     function loadProvinces() {
-        fetch('/api/locations/provinces')
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var s = document.getElementById('province');
-                s.innerHTML = '<option value="">Select province...</option>';
-                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
-            });
+        fetch('/api/locations/provinces').then(function(r) { return r.json(); }).then(function(data) {
+            var s = document.getElementById('province');
+            s.innerHTML = '<option value="">Select province...</option>';
+            data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
+        });
     }
     function loadDistricts() {
         var id = val('province');
         if (!id) { resetSelects(['district','sector','cell','village']); return; }
-        fetch('/api/locations/districts/' + id)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var s = document.getElementById('district');
-                s.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
-                s.disabled = false;
-                resetSelects(['sector','cell','village']);
-            });
+        fetch('/api/locations/districts/' + id).then(function(r) { return r.json(); }).then(function(data) {
+            var s = document.getElementById('district');
+            s.innerHTML = '<option value="">Select district...</option>';
+            data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
+            s.disabled = false; resetSelects(['sector','cell','village']);
+        });
     }
     function loadSectors() {
         var id = val('district');
         if (!id) { resetSelects(['sector','cell','village']); return; }
-        fetch('/api/locations/sectors/' + id)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var s = document.getElementById('sector');
-                s.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
-                s.disabled = false;
-                resetSelects(['cell','village']);
-            });
+        fetch('/api/locations/sectors/' + id).then(function(r) { return r.json(); }).then(function(data) {
+            var s = document.getElementById('sector');
+            s.innerHTML = '<option value="">Select sector...</option>';
+            data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
+            s.disabled = false; resetSelects(['cell','village']);
+        });
     }
     function loadCells() {
         var id = val('sector');
         if (!id) { resetSelects(['cell','village']); return; }
-        fetch('/api/locations/cells/' + id)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var s = document.getElementById('cell');
-                s.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
-                s.disabled = false;
-                resetSelects(['village']);
-            });
+        fetch('/api/locations/cells/' + id).then(function(r) { return r.json(); }).then(function(data) {
+            var s = document.getElementById('cell');
+            s.innerHTML = '<option value="">Select cell...</option>';
+            data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
+            s.disabled = false; resetSelects(['village']);
+        });
     }
     function loadVillages() {
         var id = val('cell');
         if (!id) { resetSelects(['village']); return; }
-        fetch('/api/locations/villages/' + id)
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                var s = document.getElementById('village');
-                s.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
-                s.disabled = false;
-            });
+        fetch('/api/locations/villages/' + id).then(function(r) { return r.json(); }).then(function(data) {
+            var s = document.getElementById('village');
+            s.innerHTML = '<option value="">Select village...</option>';
+            data.forEach(function(i) { s.innerHTML += '<option value="' + i.id + '">' + i.name + '</option>'; });
+            s.disabled = false;
+        });
     }
     function resetSelects(ids) {
         ids.forEach(function(id) {
@@ -1034,34 +771,24 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // NEW — PROFESSIONAL UX ENHANCEMENTS
-    // ═══════════════════════════════════════════════════════════════════════════════
-
+    // ═══════════════════════════════════════════════════════════════════
+    // UX ENHANCEMENTS — progress, autosave/draft, dirty guard, currency
+    // ═══════════════════════════════════════════════════════════════════
     var formDirty = false;
     var isSubmitting = false;
     var autosaveTimer = null;
-    var DRAFT_KEY = 'livestockRegisterDraft_v1';
+    var DRAFT_KEY = 'livestockRegisterDraft_v2';
 
     function markDirty() { formDirty = true; }
+    function isVisible(el) { return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length); }
 
-    function isVisible(el) {
-        return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
-    }
-
-    // ── Sticky progress bar + per-section completion ──
     function updateProgress() {
-        var requiredEls = Array.prototype.filter.call(
-            document.querySelectorAll('#registerForm [required]'), isVisible);
-        var filled = requiredEls.filter(function(el) {
-            if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
-            return el.value !== null && el.value !== '';
-        });
+        var requiredEls = Array.prototype.filter.call(document.querySelectorAll('#registerForm [required]'), isVisible);
+        var filled = requiredEls.filter(function(el) { return el.value !== null && el.value !== ''; });
         var pct = requiredEls.length ? Math.round(filled.length * 100 / requiredEls.length) : 100;
-
-        var fill  = document.getElementById('progressFill');
+        var fill = document.getElementById('progressFill');
         var label = document.getElementById('progressLabel');
-        if (fill)  fill.style.width = pct + '%';
+        if (fill) fill.style.width = pct + '%';
         if (label) label.textContent = pct + '% complete';
 
         document.querySelectorAll('.form-section').forEach(function(sec) {
@@ -1069,10 +796,7 @@
             if (!pill) return;
             var secRequired = Array.prototype.filter.call(sec.querySelectorAll('[required]'), isVisible);
             if (secRequired.length === 0) { pill.classList.remove('pill-complete'); return; }
-            var secComplete = secRequired.every(function(el) {
-                if (el.type === 'checkbox' || el.type === 'radio') return el.checked;
-                return el.value !== null && el.value !== '';
-            });
+            var secComplete = secRequired.every(function(el) { return el.value !== null && el.value !== ''; });
             pill.classList.toggle('pill-complete', secComplete);
         });
     }
@@ -1090,11 +814,6 @@
         sections.forEach(function(s) { observer.observe(s); });
     }
 
-    // ── Draft autosave / restore ──
-    // Cascading location selects (province/district/sector/cell/village) are
-    // intentionally excluded: they're populated asynchronously, and safely
-    // restoring a saved selection would require chaining several fetch calls
-    // in sequence. Everything else on the form is captured.
     function getDraftableFields() {
         var excludeIds = ['province', 'district', 'sector', 'cell', 'village'];
         return Array.prototype.filter.call(
@@ -1103,21 +822,15 @@
         );
     }
 
-    function scheduleAutosave() {
-        clearTimeout(autosaveTimer);
-        autosaveTimer = setTimeout(saveDraft, 700);
-    }
+    function scheduleAutosave() { clearTimeout(autosaveTimer); autosaveTimer = setTimeout(saveDraft, 700); }
 
     function saveDraft() {
         try {
             var data = {};
-            getDraftableFields().forEach(function(el) {
-                if (!el.id) return;
-                data[el.id] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
-            });
+            getDraftableFields().forEach(function(el) { if (el.id) data[el.id] = el.value; });
             localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), data: data }));
             showDraftToast();
-        } catch (e) { /* localStorage unavailable — silently skip autosave */ }
+        } catch (e) { /* localStorage unavailable — skip autosave */ }
     }
 
     function showDraftToast() {
@@ -1134,10 +847,8 @@
         if (!raw) return;
         try {
             var parsed = JSON.parse(raw);
-            if (parsed && parsed.data && Object.keys(parsed.data).length) {
-                show('draftBanner');
-            }
-        } catch (e) { /* corrupt draft — ignore */ }
+            if (parsed && parsed.data && Object.keys(parsed.data).length) show('draftBanner');
+        } catch (e) { /* corrupt draft */ }
     }
 
     function restoreDraft() {
@@ -1148,39 +859,32 @@
             var parsed = JSON.parse(raw);
             Object.keys(parsed.data || {}).forEach(function(id) {
                 var el = document.getElementById(id);
-                if (!el) return;
-                if (el.type === 'checkbox' || el.type === 'radio') el.checked = parsed.data[id];
-                else el.value = parsed.data[id];
+                if (el) el.value = parsed.data[id];
             });
             hide('draftBanner');
-
             onFormChange();
-            if (isChecked('isPregnant')) onPregnancyToggle(true);
-            var conception = val('conceptionDateInput');
-            if (conception) updateComputedDisplays(conception);
+
+            var health = val('healthStatusHidden');
+            var healthChip = document.querySelector('#healthChipGroup .status-chip[data-value="' + health + '"]');
+            if (healthChip) pickHealth(health, healthChip);
+
+            var repro = val('reproductiveStatusHidden');
+            var reproChip = document.querySelector('#reproChipGroup .status-chip[data-value="' + repro + '"]');
+            if (reproChip) pickRepro(repro, reproChip);
+
             var catId = val('livestockCategoryIdValue');
             if (catId) fetchTagSuggestion(catId);
-            updateMethodPreview(val('inseminationMethod'));
             updateCurrencyPreview();
+            updateEligibilityEstimate();
             updateProgress();
         } catch (e) { /* ignore corrupt draft */ }
     }
 
-    function discardDraft() {
-        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-        hide('draftBanner');
-    }
+    function discardDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} hide('draftBanner'); }
+    function clearDraftSilently() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
 
-    function clearDraftSilently() {
-        try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
-    }
-
-    // ── Unsaved-changes protection ──
     window.addEventListener('beforeunload', function(e) {
-        if (formDirty && !isSubmitting) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
+        if (formDirty && !isSubmitting) { e.preventDefault(); e.returnValue = ''; }
     });
 
     function confirmLeaveIfDirty(e) {
@@ -1190,9 +894,8 @@
         }
     }
 
-    // ── Currency preview (Current Value field) ──
     function updateCurrencyPreview() {
-        var input   = document.getElementById('currentValue');
+        var input = document.getElementById('currentValue');
         var preview = document.getElementById('currentValuePreview');
         if (!input || !preview) return;
         var num = parseFloat(input.value);
@@ -1200,7 +903,6 @@
         preview.textContent = '≈ ' + num.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' RWF';
     }
 
-    // ── Auto-dismiss alerts ──
     function initAutoDismissAlerts() {
         document.querySelectorAll('.alert.alert-dismissible').forEach(function(el) {
             setTimeout(function() {
@@ -1210,74 +912,37 @@
         });
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // FORM-WIDE LISTENERS (progress tracking, autosave, dirty flag)
-    // ═══════════════════════════════════════════════════════════════════════════════
-    document.getElementById('registerForm').addEventListener('input', function() {
-        markDirty();
-        updateProgress();
-        scheduleAutosave();
-    });
-    document.getElementById('registerForm').addEventListener('change', function() {
-        markDirty();
-        updateProgress();
-        scheduleAutosave();
-    });
+    document.getElementById('registerForm').addEventListener('input', function() { markDirty(); updateProgress(); scheduleAutosave(); });
+    document.getElementById('registerForm').addEventListener('change', function() { markDirty(); updateProgress(); scheduleAutosave(); });
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // FORM VALIDATION + SUBMIT
-    // Bootstrap-style validation: block submit until all required fields are
-    // valid, show inline feedback, and jump to the first problem field.
-    // ═══════════════════════════════════════════════════════════════════════════════
     document.getElementById('registerForm').addEventListener('submit', function(e) {
         var form = this;
         if (!form.checkValidity()) {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             form.classList.add('was-validated');
             var firstInvalid = form.querySelector(':invalid');
-            if (firstInvalid) {
-                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                firstInvalid.focus();
-            }
+            if (firstInvalid) { firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' }); firstInvalid.focus(); }
             return;
         }
-
         isSubmitting = true;
         clearDraftSilently();
-
         var btn = document.getElementById('submitBtn');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Registering…';
-        }
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Registering…'; }
     });
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // PAGE INIT
-    // ═══════════════════════════════════════════════════════════════════════════════
     document.addEventListener('DOMContentLoaded', function() {
         loadProvinces();
         onFormChange();
 
-        if (isChecked('isPregnant')) {
-            onPregnancyToggle(true);
-        }
-
-        var conception = val('conceptionDateInput');
-        if (conception) {
-            updateComputedDisplays(conception);
-        }
-
         var catId = val('livestockCategoryIdValue');
         if (catId) fetchTagSuggestion(catId);
 
-        // Professional UX enhancements
         initSectionScrollSpy();
         initPhotoDropzone();
         initAutoDismissAlerts();
         checkForDraft();
         updateCurrencyPreview();
+        updateEligibilityEstimate();
         updateProgress();
     });
 </script>

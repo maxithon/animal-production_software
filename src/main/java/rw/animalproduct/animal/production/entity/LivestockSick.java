@@ -78,7 +78,7 @@ public class LivestockSick {
 
     // ── Enums ─────────────────────────────────────────────────────────
     public enum SickStatus {
-        SICK, CRITICAL, RECOVERING, RECOVERED
+        SICK, CRITICAL, RECOVERING, RECOVERED, DEAD
     }
 
     public enum SeverityLevel {
@@ -152,8 +152,7 @@ public class LivestockSick {
     public void setVeterinarianIdValue(String veterinarianIdValue) { this.veterinarianIdValue = veterinarianIdValue; }
 
     /**
-     * ✅ FIX: Kept getVetName() for Thymeleaf/JS backward compatibility (reads veterinarian entity).
-     * setVetName() is intentionally a no-op — use setVeterinarian() instead.
+     * Kept for Thymeleaf/JS backward compatibility (reads veterinarian entity).
      */
     @Deprecated
     @Transient
@@ -165,6 +164,5 @@ public class LivestockSick {
     @Transient
     public void setVetName(String vetName) {
         // Intentional no-op — use setVeterinarian(Veterinarian) instead.
-        // Kept only so existing code that calls this doesn't break at compile time.
     }
 }

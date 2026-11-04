@@ -18,53 +18,28 @@
             color: #1e293b;
             line-height: 1.4;
         }
-
         .list-card {
             background: #fff;
             border-radius: 12px;
             padding: 20px 18px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 14px rgba(0,0,0,0.07);
         }
-
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-        .page-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: #0f172a;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+        .page-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+        .page-title { font-size: 17px; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 6px; }
         .page-sub { font-size: 12px; color: #94a3b8; margin: 1px 0 0; }
         .header-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
-        .btn-deleted, .btn-print-all, .btn-register, .btn-valuation-report {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 6px 13px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            white-space: nowrap;
+        .btn-deleted, .btn-print-all, .btn-register, .btn-valuation-report,
+        .btn-bulk-import, .btn-weight {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 6px 13px; border-radius: 6px;
+            font-size: 12px; font-weight: 600;
+            text-decoration: none; white-space: nowrap;
             transition: all 0.15s;
         }
         .btn-deleted  { border: 1px solid #fca5a5; background: #fff5f5; color: #dc2626; }
         .btn-deleted:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
-        .btn-deleted .del-count {
-            background: #fca5a5; color: #7f1d1d; border-radius: 20px;
-            padding: 0 7px; font-size: 11px; font-weight: 800;
-            transition: all 0.15s;
-        }
+        .btn-deleted .del-count { background: #fca5a5; color: #7f1d1d; border-radius: 20px; padding: 0 7px; font-size: 11px; font-weight: 800; transition: all 0.15s; }
         .btn-deleted:hover .del-count { background: rgba(255,255,255,0.25); color: #fff; }
         .btn-print-all { border: 1px solid #0f766e; background: #f0fdfa; color: #0f766e; }
         .btn-print-all:hover { background: #0f766e; color: #fff; }
@@ -73,189 +48,177 @@
         .btn-register  { background: #1a5f7a; color: #fff; border: 1px solid #1a5f7a; }
         .btn-register:hover { background: #154e65; border-color: #154e65; color: #fff; }
 
+        /* ✅ NEW */
+        .btn-bulk-import { border: 1px solid #7c3aed; background: #f5f3ff; color: #7c3aed; }
+        .btn-bulk-import:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+        .btn-weight { border: 1px solid #0891b2; background: #ecfeff; color: #0891b2; }
+        .btn-weight:hover { background: #0891b2; color: #fff; border-color: #0891b2; }
+
         .summary-strip { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-        .sum-pill {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 4px 10px; border-radius: 20px;
-            font-size: 11px; font-weight: 600; border: 1px solid;
-        }
+        .sum-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid; }
         .sum-pill.all        { background: #f1f5f9; color: #1e293b; border-color: #cbd5e0; }
         .sum-pill.active     { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
         .sum-pill.sold       { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
         .sum-pill.sick       { background: #fef9c3; color: #854d0e; border-color: #fde047; }
         .sum-pill.dead       { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
         .sum-pill.born       { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-        .sum-pill.treatments { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
-        .sum-pill.abortions  { background: #fff1f2; color: #be123c; border-color: #fda4af; }
         .sum-pill.valued     { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
         .sum-pill.unvalued   { background: #fef3c7; color: #92400e; border-color: #fde68a; }
 
         .alert { border-radius: 8px; font-size: 11px; padding: 8px 12px; margin-bottom: 10px; }
 
-        .bulk-bar {
-            display: none; align-items: center; gap: 10px;
-            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            border-radius: 8px; padding: 8px 14px; margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
+        .bulk-bar { display: none; align-items: center; gap: 10px; background: linear-gradient(135deg, #1a5f7a, #2e8b9e); border-radius: 8px; padding: 8px 14px; margin-bottom: 10px; flex-wrap: wrap; }
         .bulk-bar.visible { display: flex; }
         .bulk-bar-text  { color: #fff; font-weight: 700; font-size: 12px; }
         .bulk-bar-count { background: rgba(255,255,255,0.2); color: #fff; padding: 1px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .btn-bulk { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; border: none; cursor: pointer; transition: all 0.15s; }
         .btn-bulk.teal  { background: #fff; color: #1a5f7a; }
-        .btn-bulk.teal:hover { background: #f0fdfa; }
         .btn-bulk.clear { background: rgba(255,255,255,0.15); color: #fff; }
-        .btn-bulk.clear:hover { background: rgba(255,255,255,0.25); }
 
         .filter-row { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
         .search-wrap { flex: 1 1 200px; min-width: 0; }
         .search-wrap .input-group-text { background: #f8f9fb; border-right: none; color: #94a3b8; font-size: 13px; padding: 6px 10px; }
         .search-wrap .form-control { border-left: none; font-size: 12px; padding: 6px 10px; }
         .search-wrap .form-control:focus { box-shadow: none; border-color: #1a5f7a; }
+        .select-wrap { position: relative; flex: 0 0 auto; }
+        .select-wrap .select-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 12px; pointer-events: none; }
+        .filter-select {
+            appearance: none;
+            padding: 6px 30px 6px 32px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #f8f9fb;
+            font-size: 12px; font-weight: 600; color: #334155;
+            cursor: pointer; transition: all 0.15s;
+            min-width: 175px;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2364748b' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 12px 9px;
+        }
+        .filter-select:hover { border-color: #1a5f7a; background-color: #fff; }
+        .filter-select:focus { outline: none; border-color: #1a5f7a; box-shadow: 0 0 0 3px rgba(26,95,122,0.1); }
+        .filter-select.filtered { background-color: #e0f2fe; border-color: #0284c7; color: #0369a1; }
+        .select-wrap.has-value .select-icon { color: #0284c7; }
+        .reset-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; text-decoration: none; transition: all 0.15s; white-space: nowrap; }
+        .reset-btn:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
         .filter-pills { display: flex; gap: 4px; flex-wrap: wrap; }
-        .filter-btn {
-            padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 600;
-            border: 1px solid #e2e8f0; cursor: pointer; background: #f8f9fb; color: #475569;
-            transition: all 0.15s;
-        }
-        .filter-btn:hover { border-color: #1a5f7a; color: #1a5f7a; }
+        .filter-btn { padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0; cursor: pointer; background: #f8f9fb; color: #475569; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
         .filter-btn.active { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
+        .filter-btn:hover { border-color: #1a5f7a; color: #1a5f7a; }
+        .filter-btn.active:hover { color: #fff; }
 
-        .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-
-        #dataTable {
-            width: 100%;
-            table-layout: auto;
-            border-collapse: collapse;
-        }
-        #dataTable th {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-            padding: 8px 9px;
-            border-bottom: 1.5px solid #f0f2f5;
-            white-space: nowrap;
-            background: #fafbfc;
-        }
-        #dataTable td {
-            padding: 8px 9px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f0f2f5;
-            font-size: 12px;
-        }
+        .table-wrap { width: 100%; overflow: hidden; }
+        #dataTable { width: 100%; table-layout: fixed; border-collapse: collapse; }
+        #dataTable th { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 8px 6px; border-bottom: 1.5px solid #f0f2f5; white-space: nowrap; background: #fafbfc; text-align: left; overflow: hidden; text-overflow: ellipsis; }
+        #dataTable td { padding: 8px 6px; vertical-align: middle; border-bottom: 1px solid #f0f2f5; font-size: 12px; overflow: hidden; vertical-align: top; }
         #dataTable tbody tr:hover { background: #f8fbff; }
         #dataTable tbody tr:last-child td { border-bottom: none; }
 
-        .col-check   { width: 28px; min-width: 28px; text-align: center; }
-        .col-num     { width: 28px; min-width: 28px; text-align: center; color: #94a3b8; }
-        .col-photo   { width: 44px; min-width: 44px; }
-        .col-tag     { min-width: 100px; }
-        .col-cat     { min-width: 70px; }
-        .col-gender  { min-width: 60px; }
-        .col-breed   { min-width: 110px; }
-        .col-benef   { min-width: 90px; }
-        .col-loc     { min-width: 80px; }
-        .col-status  { min-width: 70px; }
-        .col-value   { min-width: 130px; }
-        .col-bd      { min-width: 120px; }
-        .col-health  { min-width: 130px; }
-        .col-actions { width: 135px; min-width: 135px; white-space: nowrap; }
+        .col-check   { width: 30px;  text-align: center; }
+        .col-num     { width: 26px;  text-align: center; color: #94a3b8; }
+        .col-photo   { width: 44px; }
+        .col-tag     { width: 7%;  }
+        .col-cat     { width: 6.5%; }
+        .col-gender  { width: 5%;  }
+        .col-breed   { width: 8%;  }
+        .col-benef   { width: 11%; }
+        .col-loc     { width: 12%; }
+        .col-status  { width: 6.5%; }
+        .col-value   { width: 9%;  }
+        .col-bd      { width: 8%;  }
+        .col-health  { width: 10%; }
+        .col-actions { width: 170px; }
 
-        .animal-photo { width: 36px; height: 36px; border-radius: 7px; object-fit: cover; border: 1.5px solid #e2e8f0; display: block; }
-        .animal-photo-placeholder {
-            width: 36px; height: 36px; border-radius: 7px;
-            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 15px;
-        }
+        .truncate { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .animal-photo { width: 34px; height: 34px; border-radius: 7px; object-fit: cover; border: 1.5px solid #e2e8f0; display: block; }
+        .animal-photo-placeholder { width: 34px; height: 34px; border-radius: 7px; background: linear-gradient(135deg, #1a5f7a, #2e8b9e); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
 
-        .status-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            padding: 2px 8px; border-radius: 20px;
-            font-size: 11px; font-weight: 700; white-space: nowrap;
-        }
+        .status-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; }
         .status-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .status-sold     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .status-dead     { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-        .status-sick     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
-        .status-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .status-transferred { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
+
+        .health-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+        .health-HEALTHY         { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .health-SICK             { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .health-UNDER_TREATMENT  { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
+        .repro-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+        .repro-READY_TO_BREED { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .repro-BRED           { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+        .repro-PREGNANT       { background: #fce7f3; color: #be185d; border: 1px solid #fbcfe8; }
+        .repro-OPEN           { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .repro-NOT_APPLICABLE { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 
         tr.row-sold td { background: #fff8f8 !important; }
         tr.row-dead td { background: #f9fafb !important; opacity: 0.82; }
 
-        .bd-origin-badge {
-            display: inline-flex; align-items: center; gap: 2px;
-            font-size: 10px; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.04em; padding: 1px 6px; border-radius: 3px; margin-bottom: 3px;
-        }
+        .bd-origin-badge { display: inline-flex; align-items: center; gap: 2px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; padding: 1px 5px; border-radius: 3px; margin-bottom: 2px; }
         .bd-origin-farm     { background: #e0f2fe; color: #0369a1; }
         .bd-origin-purchase { background: #fef9c3; color: #92400e; }
-        .bd-date-line { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-        .bd-date-text { font-size: 12px; font-weight: 600; color: #1e293b; white-space: nowrap; }
+        .bd-date-line { display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+        .bd-date-text { font-size: 11px; font-weight: 600; color: #1e293b; white-space: nowrap; }
         .bd-none { font-size: 11px; color: #94a3b8; font-style: italic; }
 
-        .age-pill {
-            display: inline-block; padding: 1px 6px; border-radius: 20px;
-            font-size: 10px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap;
-        }
+        .age-pill { display: inline-block; padding: 1px 5px; border-radius: 20px; font-size: 9px; font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
         .age-pill.stage-days   { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .age-pill.stage-months { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .age-pill.stage-years  { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .age-pill.stage-senior { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
-        .pregnant-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd;
-            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; white-space: nowrap;
-        }
-        .not-pregnant-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0;
-            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; white-space: nowrap;
-        }
-        .breed-pill {
-            display: inline-flex; align-items: center; gap: 3px;
-            border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700;
-            white-space: nowrap; margin-top: 3px;
-        }
+        .pregnant-badge { display: inline-flex; align-items: center; gap: 3px; background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; border-radius: 20px; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+        .not-pregnant-badge { display: inline-flex; align-items: center; gap: 3px; background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; border-radius: 20px; padding: 2px 7px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+        .breed-pill { display: inline-flex; align-items: center; gap: 3px; border-radius: 20px; padding: 2px 7px; font-size: 10px; font-weight: 700; white-space: nowrap; margin-top: 2px; }
         .breed-capable   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .breed-too-young { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
         .breed-unknown   { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.8; }
 
         .lc-row   { display: flex; align-items: flex-start; gap: 4px; font-size: 11px; margin-bottom: 2px; line-height: 1.3; }
         .lc-icon  { font-size: 12px; flex-shrink: 0; margin-top: 1px; }
-        .lc-label { font-weight: 700; color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-        .lc-value { color: #1e293b; font-weight: 500; font-size: 11px; }
-        .lc-price { color: #059669; font-weight: 700; font-size: 11px; }
         .lc-none  { color: #94a3b8; font-style: italic; font-size: 11px; }
-        .lc-section-head {
-            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
-            padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; display: inline-block;
-        }
+        .lc-section-head { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; display: inline-block; }
         .lc-head-health { background: #fef9c3; color: #854d0e; }
         .lc-head-sale   { background: #d1fae5; color: #065f46; }
-        .divider-dashed { border-top: 1px dashed #e2e8f0; margin: 4px 0; }
+        .divider-dashed { border-top: 1px dashed #e2e8f0; margin: 3px 0; }
 
-        .born-badge, .sold-badge {
-            display: inline-flex; align-items: center; gap: 2px;
-            border-radius: 20px; padding: 1px 7px; font-size: 10px; font-weight: 700; white-space: nowrap;
-        }
+        .born-badge, .sold-badge { display: inline-flex; align-items: center; gap: 2px; border-radius: 20px; padding: 1px 6px; font-size: 9px; font-weight: 700; white-space: nowrap; }
         .born-badge { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .sold-badge { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .tag-badges { display: flex; gap: 3px; margin-top: 2px; flex-wrap: wrap; }
 
-        .badge { font-size: 10px; padding: 2px 7px; font-weight: 700; }
+        .badge { font-size: 10px; padding: 2px 6px; font-weight: 700; }
+        .tag-num { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 12px; font-weight: 700; color: #0f172a; }
 
-        .tag-num { font-size: 13px; font-weight: 700; color: #0f172a; }
+        .beneficiary-cell .name  { font-weight: 600; color: #0f172a; font-size: 11px; line-height: 1.25; }
+        .beneficiary-cell .phone { font-size: 10px; color: #64748b; margin-top: 1px; }
+        .beneficiary-cell .phone i { margin-right: 2px; font-size: 10px; }
 
+        .loc-stack { font-size: 11px; line-height: 1.3; }
+        .loc-stack .village { font-weight: 600; color: #0f172a; }
+        .loc-stack .path { color: #94a3b8; font-size: 10px; margin-top: 1px; }
+
+        .value-text { font-size: 11px; font-weight: 600; color: #0f172a; display: block; }
+        .value-none { font-size: 11px; color: #94a3b8; font-style: italic; }
+
+        .valued-badge, .not-valued-badge { display: inline-flex; align-items: center; gap: 3px; border-radius: 20px; padding: 1px 6px; font-size: 9px; font-weight: 700; white-space: nowrap; margin-top: 2px; }
+        .valued-badge     { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .not-valued-badge { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        .value-history-link { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 700; color: #1a5f7a; text-decoration: none; margin-top: 3px; }
+        .value-history-link:hover { text-decoration: underline; color: #154e65; }
+
+        .fao-standard-box { background: #f0fdf4 !important; border: 1px solid #a7f3d0 !important; color: #166534 !important; font-size: 11px !important; resize: none; cursor: default; }
+        .fao-standard-box:focus { box-shadow: none; border-color: #6ee7b7 !important; }
+
+        .actions-wrap { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
         .action-btn {
             display: inline-flex; align-items: center; justify-content: center;
-            width: 28px; height: 28px; border-radius: 5px;
-            border: 1px solid #e2e8f0; background: #f8f9fb;
-            color: #475569; text-decoration: none; font-size: 13px;
-            transition: all 0.15s; cursor: pointer;
+            width: 26px; height: 26px; border-radius: 5px;
+            border: 1px solid #e2e8f0; background: #f8f9fb; color: #475569;
+            text-decoration: none; font-size: 12px; transition: all 0.15s; cursor: pointer;
+            flex-shrink: 0;
         }
         .action-btn:hover { background: #1a5f7a; color: #fff; border-color: #1a5f7a; }
         .action-btn.view:hover      { background: #0ea5e9; border-color: #0ea5e9; color: #fff; }
@@ -263,50 +226,17 @@
         .action-btn.del:hover       { background: #ef4444; border-color: #ef4444; color: #fff; }
         .action-btn.valuation       { border-color: #a7f3d0; color: #059669; background: #f0fdf4; }
         .action-btn.valuation:hover { background: #059669; border-color: #059669; color: #fff; }
-        .actions-wrap { display: flex; gap: 3px; align-items: center; flex-wrap: wrap; }
+        /* ✅ NEW weight button style */
+        .action-btn.weight          { border-color: #bae6fd; color: #0891b2; background: #ecfeff; }
+        .action-btn.weight:hover    { background: #0891b2; border-color: #0891b2; color: #fff; }
 
         .row-checkbox { width: 13px; height: 13px; cursor: pointer; accent-color: #1a5f7a; }
-
-        .cell-sm { font-size: 12px; color: #334155; }
         .cell-muted { font-size: 11px; color: #94a3b8; }
-
-        .value-text { font-size: 12px; font-weight: 600; color: #0f172a; }
-        .value-none { font-size: 11px; color: #94a3b8; font-style: italic; }
-
-        .valued-badge, .not-valued-badge {
-            display: inline-flex; align-items: center; gap: 3px;
-            border-radius: 20px; padding: 1px 8px; font-size: 10px; font-weight: 700;
-            white-space: nowrap; margin-top: 3px;
-        }
-        .valued-badge     { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .not-valued-badge { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-
-        /* NEW: link under the Value amount that jumps straight to the
-           valuation history section on the animal's detail page. Same idea
-           as the "detail page → history" link already on the Edit page. */
-        .value-history-link {
-            display: inline-flex; align-items: center; gap: 3px;
-            font-size: 10px; font-weight: 700; color: #1a5f7a; text-decoration: none;
-            margin-top: 4px;
-        }
-        .value-history-link:hover { text-decoration: underline; color: #154e65; }
-
-        /* NEW: FAO Standard notice as an actual text box (readonly textarea)
-           on the valuation form, instead of a plain alert banner. */
-        .fao-standard-box {
-            background: #f0fdf4 !important;
-            border: 1px solid #a7f3d0 !important;
-            color: #166534 !important;
-            font-size: 11px !important;
-            resize: none;
-            cursor: default;
-        }
-        .fao-standard-box:focus { box-shadow: none; border-color: #6ee7b7 !important; }
 
         .pagination-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 12px; border-top: 1.5px solid #f0f2f5; margin-top: 4px; }
         .pagination-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .showing-text    { font-size: 12px; color: #64748b; }
-        .page-size-wrap  { display: flex; align-items: center; gap: 5px; }
+        .showing-text { font-size: 12px; color: #64748b; }
+        .page-size-wrap { display: flex; align-items: center; gap: 5px; }
         .page-size-label { font-size: 11px; font-weight: 600; color: #64748b; }
         .page-size-select { padding: 4px 9px; border: 1px solid #e2e8f0; border-radius: 5px; font-size: 11px; cursor: pointer; background: #fafcff; }
         .pagination-list { display: flex; align-items: center; gap: 3px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
@@ -318,44 +248,58 @@
         .empty-row td { padding: 36px 0; text-align: center; color: #94a3b8; }
         .empty-icon { font-size: 2rem; color: #cbd5e0; margin-bottom: 6px; }
 
-        @media (max-width: 767.98px) {
+        @media (max-width: 1199.98px) {
+            .table-wrap { overflow: visible; }
+            #dataTable { display: block; table-layout: auto; }
+            #dataTable colgroup { display: none; }
+            #dataTable thead { display: none; }
+            #dataTable tbody { display: block; }
+            #dataTable tbody tr[data-status] {
+                display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px;
+                border: 1px solid #e2e8f0; border-radius: 10px;
+                margin-bottom: 10px; padding: 12px 14px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05); background: #fff;
+            }
+            #dataTable tbody tr.row-sold { background: #fff8f8 !important; }
+            #dataTable tbody tr.row-dead { background: #f9fafb !important; }
+            #dataTable tbody td {
+                display: flex; align-items: flex-start; gap: 8px;
+                padding: 4px 0 !important; border: none !important;
+                font-size: 11px; overflow: visible; vertical-align: top;
+            }
+            #dataTable tbody td::before {
+                content: attr(data-label);
+                font-weight: 700; font-size: 9px;
+                text-transform: uppercase; letter-spacing: 0.05em;
+                color: #94a3b8; min-width: 82px; flex-shrink: 0; padding-top: 2px;
+            }
+            #dataTable tbody td.col-check,
+            #dataTable tbody td.col-num,
+            #dataTable tbody td.col-photo { display: none; }
+            #dataTable tbody td.col-actions,
+            #dataTable tbody td.col-health { grid-column: 1 / -1; }
+            #dataTable tbody td.col-actions::before,
+            #dataTable tbody td.col-health::before { min-width: 82px; }
+            #dataTable tbody td.col-tag {
+                grid-column: 1 / -1;
+                border-bottom: 1px solid #f1f5f9 !important;
+                padding-bottom: 8px !important; margin-bottom: 4px;
+            }
+            #dataTable tbody td.col-tag::before { display: none; }
+            #dataTable tbody td.col-tag .tag-num { font-size: 14px; }
+        }
+
+        @media (max-width: 575.98px) {
             body { padding: 8px; font-size: 12px; }
             .list-card { padding: 12px 10px; border-radius: 10px; }
-
             .page-header { flex-direction: column; align-items: stretch; }
             .header-actions { justify-content: stretch; }
             .header-actions > * { flex: 1; justify-content: center; }
-
             .filter-row { flex-direction: column; }
             .search-wrap { flex: none; width: 100%; }
-
-            #dataTable thead { display: none; }
-            #dataTable tbody tr[data-status] {
-                display: block;
-                border: 1px solid #e2e8f0;
-                border-radius: 10px;
-                margin-bottom: 10px;
-                padding: 10px 8px 6px;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            }
-            #dataTable tbody tr.row-sold { background: #fff8f8 !important; }
-            #dataTable tbody tr.row-dead { background: #f9fafb !important; opacity: 0.85; }
-            #dataTable tbody td {
-                display: flex; align-items: flex-start; gap: 7px;
-                padding: 4px 0; border: none !important;
-                font-size: 11px;
-                border-bottom: 1px solid #f1f5f9 !important;
-            }
-            #dataTable tbody td:last-child { border-bottom: none !important; }
-            #dataTable tbody td.col-check,
-            #dataTable tbody td.col-num   { display: none; }
-            #dataTable tbody td[data-label]::before {
-                content: attr(data-label);
-                font-weight: 700; font-size: 9px; text-transform: uppercase;
-                letter-spacing: 0.05em; color: #94a3b8;
-                min-width: 78px; flex-shrink: 0; padding-top: 2px;
-            }
-            #dataTable tbody td[data-label="Photo"]::before { display: none; }
+            .select-wrap { width: 100%; }
+            .filter-select { width: 100%; }
+            #dataTable tbody tr[data-status] { grid-template-columns: 1fr; }
             .pagination-wrap { flex-direction: column; align-items: flex-start; }
         }
     </style>
@@ -375,12 +319,14 @@
                     <i class="bi bi-trash2"></i> Deleted
                     <span class="del-count" th:text="${totalDeleted != null ? totalDeleted : 0}">0</span>
                 </a>
-                <!-- CHANGED: now points to a real report page (search + full
-                     history across ALL animals, not just this page's 10/25/50
-                     rows) instead of a client-side filter pill that could only
-                     ever show unvalued animals on the current page. -->
                 <a th:href="@{/livestock/valuation-report}" class="btn-valuation-report">
                     <i class="bi bi-graph-up-arrow"></i> Valuation Report
+                </a>
+                <a th:href="@{/livestock/weight/dashboard}" class="btn-weight">
+                    <i class="bi bi-speedometer2"></i> Weight
+                </a>
+                <a th:href="@{/livestock/bulk-import}" class="btn-bulk-import">
+                    <i class="bi bi-cloud-upload-fill"></i> Bulk Import
                 </a>
                 <a href="/livestock/qr/eartags/print-all" class="btn-print-all" target="_blank">
                     <i class="bi bi-printer-fill"></i> Print All Ear Tags
@@ -409,10 +355,6 @@
             <span class="sum-pill sick">Sick <strong th:text="${totalSick}">0</strong></span>
             <span class="sum-pill dead">Dead <strong th:text="${totalDead}">0</strong></span>
             <span class="sum-pill born">Born on Farm <strong th:text="${totalBornOnFarm}">0</strong></span>
-            <span class="sum-pill treatments">Treatments <strong th:text="${totalTreatments}">0</strong></span>
-            <span class="sum-pill abortions">Abortions <strong th:text="${totalAbortions}">0</strong></span>
-            <!-- These now reflect ALL animals (fixed in the controller), not
-                 just whatever happens to be on the current page. -->
             <span class="sum-pill valued"><i class="bi bi-patch-check-fill me-1"></i>Valued <strong th:text="${totalValued != null ? totalValued : 0}">0</strong></span>
             <span class="sum-pill unvalued"><i class="bi bi-exclamation-triangle-fill me-1"></i>Needs Valuation <strong th:text="${totalUnvalued != null ? totalUnvalued : 0}">0</strong></span>
         </div>
@@ -427,7 +369,7 @@
             <button class="btn-bulk clear" onclick="clearSelection()"><i class="bi bi-x-lg"></i> Clear</button>
         </div>
 
-        <!-- Search & Filters -->
+        <!-- Search + Category + Sort -->
         <div class="filter-row">
             <div class="search-wrap">
                 <div class="input-group">
@@ -435,29 +377,79 @@
                     <input type="text" class="form-control" id="searchInput" placeholder="Search tag, beneficiary, location…">
                 </div>
             </div>
-            <div class="filter-pills" id="filterPills">
-                <button class="filter-btn active" data-filter="ALL" onclick="filterByStatus('ALL',this)">All</button>
-                <button class="filter-btn" data-filter="ACTIVE" onclick="filterByStatus('ACTIVE',this)">Active</button>
-                <button class="filter-btn" data-filter="SOLD" onclick="filterByStatus('SOLD',this)">Sold</button>
-                <button class="filter-btn" data-filter="SICK" onclick="filterByStatus('SICK',this)">Sick</button>
-                <button class="filter-btn" data-filter="DEAD" onclick="filterByStatus('DEAD',this)">Dead</button>
-                <button class="filter-btn" data-filter="BORN" onclick="filterByStatus('BORN',this)">Born on Farm</button>
-                <button class="filter-btn" data-filter="TREATED" onclick="filterByStatus('TREATED',this)">Treated</button>
-                <button class="filter-btn" data-filter="ABORTION" onclick="filterByStatus('ABORTION',this)">Abortions</button>
-                <button class="filter-btn" data-filter="VALUED" onclick="filterByStatus('VALUED',this)"><i class="bi bi-patch-check-fill"></i> Valued</button>
-                <button class="filter-btn" data-filter="UNVALUED" onclick="filterByStatus('UNVALUED',this)"><i class="bi bi-exclamation-triangle-fill"></i> Needs Valuation</button>
+
+            <div class="select-wrap" th:classappend="${selectedCategoryId != null} ? 'has-value'">
+                <i class="bi bi-tags-fill select-icon"></i>
+                <select class="filter-select"
+                        th:classappend="${selectedCategoryId != null} ? 'filtered'"
+                        onchange="applyCategoryFilter(this.value)">
+                    <option value="">All categories</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${selectedCategoryId != null and selectedCategoryId.toString() == cat.id.toString()}"></option>
+                </select>
             </div>
+
+            <div class="select-wrap has-value">
+                <i class="bi bi-sort-down select-icon"></i>
+                <select class="filter-select" onchange="applySort(this.value)">
+                    <option value="createdAt,DESC" th:selected="${sortField == 'createdAt' and sortDir == 'DESC'}">Newest first</option>
+                    <option value="createdAt,ASC"  th:selected="${sortField == 'createdAt' and sortDir == 'ASC'}">Oldest first</option>
+                    <option value="tagNumber,ASC"  th:selected="${sortField == 'tagNumber' and sortDir == 'ASC'}">Tag number (A → Z)</option>
+                    <option value="tagNumber,DESC" th:selected="${sortField == 'tagNumber' and sortDir == 'DESC'}">Tag number (Z → A)</option>
+                    <option value="birthDate,DESC" th:selected="${sortField == 'birthDate' and sortDir == 'DESC'}">Youngest first</option>
+                    <option value="birthDate,ASC"  th:selected="${sortField == 'birthDate' and sortDir == 'ASC'}">Oldest first (birth)</option>
+                    <option value="currentValue,DESC" th:selected="${sortField == 'currentValue' and sortDir == 'DESC'}">Highest value</option>
+                    <option value="updatedAt,DESC" th:selected="${sortField == 'updatedAt' and sortDir == 'DESC'}">Recently modified</option>
+                </select>
+            </div>
+
+            <a th:href="@{/livestock/list}" class="reset-btn" title="Reset all filters">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </a>
         </div>
-        <div class="alert alert-light border small mb-2" style="font-size:11px;" th:if="${initialFilter == 'UNVALUED'}">
-            <i class="bi bi-info-circle-fill text-warning me-1"></i>
-            Showing "Needs Valuation" on this page only. This filter only searches the animals currently
-            loaded on this page — for a complete, all-animal view use the
-            <a th:href="@{/livestock/valuation-report}">Valuation Report</a>.
+
+        <!-- Status pills -->
+        <div class="filter-row">
+            <div class="filter-pills">
+                <a th:href="@{/livestock/list(sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId})}"
+                   class="filter-btn"
+                   th:classappend="${selectedStatus == null or selectedStatus == 'ALL'} ? 'active'">All</a>
+                <a th:href="@{/livestock/list(status='ACTIVE', sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId})}"
+                   class="filter-btn"
+                   th:classappend="${selectedStatus == 'ACTIVE'} ? 'active'">Active</a>
+                <a th:href="@{/livestock/list(status='SOLD', sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId})}"
+                   class="filter-btn"
+                   th:classappend="${selectedStatus == 'SOLD'} ? 'active'">Sold</a>
+                <a th:href="@{/livestock/list(status='DEAD', sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId})}"
+                   class="filter-btn"
+                   th:classappend="${selectedStatus == 'DEAD'} ? 'active'">Dead</a>
+                <a th:href="@{/livestock/list(status='TRANSFERRED', sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId})}"
+                   class="filter-btn"
+                   th:classappend="${selectedStatus == 'TRANSFERRED'} ? 'active'">Transferred</a>
+            </div>
         </div>
 
         <!-- Table -->
         <div class="table-wrap">
             <table id="dataTable">
+                <colgroup>
+                    <col class="col-check">
+                    <col class="col-num">
+                    <col class="col-photo">
+                    <col class="col-tag">
+                    <col class="col-cat">
+                    <col class="col-gender">
+                    <col class="col-breed">
+                    <col class="col-benef">
+                    <col class="col-loc">
+                    <col class="col-status">
+                    <col class="col-value">
+                    <col class="col-bd">
+                    <col class="col-health">
+                    <col class="col-actions">
+                </colgroup>
                 <thead>
                 <tr>
                     <th class="col-check">
@@ -483,7 +475,7 @@
                 <tr th:if="${livestockList == null or livestockList.empty}" class="empty-row">
                     <td colspan="14">
                         <div class="empty-icon"><i class="bi bi-inbox"></i></div>
-                        <div>No livestock registered yet.</div>
+                        <div>No livestock found.</div>
                     </td>
                 </tr>
 
@@ -491,14 +483,11 @@
                     th:classappend="${item.status == 'SOLD'} ? 'row-sold' : (${item.status == 'DEAD'} ? 'row-dead' : '')"
                     th:attr="data-status=${item.status},
                              data-born=${birthMap != null and birthMap.containsKey(item.id)} ? 'true' : 'false',
-                             data-treated=${treatmentMap != null and treatmentMap.containsKey(item.id)} ? 'true' : 'false',
-                             data-abortion=${abortionMap != null and abortionMap.containsKey(item.id)} ? 'true' : 'false',
                              data-valued=${item.currentValue != null} ? 'true' : 'false'">
 
                     <td class="col-check">
                         <input type="checkbox" class="row-checkbox animal-check" th:value="${item.id}" onchange="updateBulkBar()">
                     </td>
-
                     <td class="col-num" data-label="#" th:text="${iterStat.count}"></td>
 
                     <td class="col-photo" data-label="Photo">
@@ -509,7 +498,7 @@
                     </td>
 
                     <td class="col-tag" data-label="Tag #">
-                        <span class="tag-num" th:text="${item.tagNumber}"></span>
+                        <span class="tag-num truncate" th:text="${item.tagNumber}" th:title="${item.tagNumber}"></span>
                         <div class="tag-badges">
                             <span th:if="${birthMap != null and birthMap.containsKey(item.id)}" class="born-badge">
                                 <i class="bi bi-stars"></i> Born
@@ -521,7 +510,7 @@
                     </td>
 
                     <td class="col-cat" data-label="Category">
-                        <span th:if="${item.livestockCategory != null}" class="badge bg-info text-dark" th:text="${item.livestockCategory.name}"></span>
+                        <span th:if="${item.livestockCategory != null}" class="badge bg-info text-dark truncate" th:text="${item.livestockCategory.name}" th:title="${item.livestockCategory.name}"></span>
                         <span th:unless="${item.livestockCategory != null}" class="cell-muted">N/A</span>
                     </td>
 
@@ -534,24 +523,23 @@
                     <td class="col-breed" data-label="Breeding"
                         th:with="capable=${breedingCapableMap != null ? breedingCapableMap[item.id] : null}">
                         <div th:if="${item.gender == 'FEMALE'}" style="margin-bottom:2px;">
-                            <span th:if="${item.isPregnant}"   class="pregnant-badge"><i class="bi bi-heart-fill"></i> Pregnant</span>
-                            <span th:unless="${item.isPregnant}" class="not-pregnant-badge"><i class="bi bi-dash-circle"></i> Not Pregnant</span>
+                            <span th:if="${item.reproductiveStatus == 'PREGNANT'}" class="pregnant-badge">
+                                <i class="bi bi-heart-fill"></i> Pregnant
+                            </span>
+                            <span th:unless="${item.reproductiveStatus == 'PREGNANT'}" class="not-pregnant-badge">
+                                <i class="bi bi-dash-circle"></i> Not Pregnant
+                            </span>
                         </div>
                         <div th:if="${capable != null and capable}">
                             <span class="breed-pill breed-capable">
                                 <i class="bi bi-check-circle-fill"></i>
                                 <span th:if="${item.gender == 'FEMALE'}">Can Conceive</span>
                                 <span th:if="${item.gender == 'MALE'}">Can Sire</span>
-                                <span th:if="${item.gender == null}">Capable</span>
                             </span>
                         </div>
                         <div th:if="${capable != null and !capable}">
                             <span class="breed-pill breed-too-young">
                                 <i class="bi bi-hourglass-split"></i> Too Young
-                                <small th:if="${item.livestockCategory != null and item.livestockCategory.minBreedingAgeMonths != null}"
-                                       style="opacity:0.75;">
-                                    (<span th:text="${item.livestockCategory.minBreedingAgeMonths}"></span>mo min)
-                                </small>
                             </span>
                         </div>
                         <div th:if="${capable == null}">
@@ -559,33 +547,51 @@
                         </div>
                     </td>
 
-                    <td class="col-benef" data-label="Beneficiary">
-                        <span th:if="${item.beneficiary != null}" class="cell-sm"
-                              th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></span>
-                        <span th:unless="${item.beneficiary != null}" class="cell-muted">N/A</span>
+                    <td class="col-benef" data-label="Beneficiary"
+                        th:with="b=${beneficiaryMap != null ? beneficiaryMap.get(item.beneficiary != null ? item.beneficiary.id : null) : null}">
+                        <div th:if="${b != null}">
+                            <div class="beneficiary-cell">
+                                <div class="name truncate" th:text="${b.fullName}" th:title="${b.fullName}">—</div>
+                                <div class="phone" th:if="${b.phone != null}">
+                                    <i class="bi bi-telephone"></i>
+                                    <span th:text="${b.phone}">—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span th:if="${b == null}" class="cell-muted">N/A</span>
                     </td>
 
-                    <td class="col-loc" data-label="Location">
-                        <span class="cell-sm" th:text="${item.location != null ? item.location.name : 'N/A'}"></span>
+                    <td class="col-loc" data-label="Location"
+                        th:with="h=${hierarchyMap != null ? hierarchyMap.get(item.location != null ? item.location.id : null) : null}">
+                        <div class="loc-stack" th:if="${h != null and h.village != null}">
+                            <div class="village truncate" th:text="${h.village}" th:title="${h.village}">—</div>
+                            <div class="path truncate">
+                                <span th:if="${h.sector != null}"   th:text="${h.sector} + ' / '"></span>
+                                <span th:if="${h.district != null}" th:text="${h.district} + ' / '"></span>
+                                <span th:if="${h.province != null}" th:text="${h.province}"></span>
+                            </div>
+                        </div>
+                        <div class="loc-stack" th:if="${h != null and h.village == null}">
+                            <div class="village truncate"
+                                 th:text="${h.sector != null ? h.sector
+                                            : (h.district != null ? h.district
+                                            : (h.province != null ? h.province : '—'))}">—</div>
+                        </div>
+                        <span th:if="${h == null}" class="cell-muted">N/A</span>
                     </td>
 
                     <td class="col-status" data-label="Status">
                         <span th:if="${item.status == 'ACTIVE'}"   class="status-badge status-active">Active</span>
                         <span th:if="${item.status == 'SOLD'}"     class="status-badge status-sold">Sold</span>
                         <span th:if="${item.status == 'DEAD'}"     class="status-badge status-dead">Dead</span>
-                        <span th:if="${item.status == 'SICK'}"     class="status-badge status-sick">Sick</span>
-                        <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
+                        <span th:if="${item.status == 'TRANSFERRED'}" class="status-badge status-transferred">Transferred</span>
                     </td>
 
-                    <!-- ══ VALUE COLUMN — shows FAO valuation coverage status ══
-                         NEW: "View History" link under the amount — same
-                         destination as the link already on the Edit page
-                         (Current Value → detail page → valuation history),
-                         just surfaced here so it's discoverable from the list. -->
                     <td class="col-value" data-label="Value">
                         <div th:if="${item.currentValue != null}">
                             <span class="value-text"
-                                  th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
+                                  th:text="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"
+                                  th:title="${#numbers.formatDecimal(item.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
                             <div th:if="${latestValuationMap != null and latestValuationMap.containsKey(item.id)}"
                                  class="valued-badge">
                                 <i class="bi bi-patch-check-fill"></i>
@@ -633,60 +639,31 @@
                     </td>
 
                     <td class="col-health" data-label="Health &amp; Sale">
-                        <div th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}">
+                        <div>
                             <span class="lc-section-head lc-head-health">Health</span>
                             <div class="lc-row">
-                                <i class="bi bi-capsule-pill lc-icon"></i>
-                                <div>
-                                    <div class="lc-label">Last Treatment</div>
-                                    <div class="lc-value" th:text="${#temporals.format(treatmentMap[item.id].treatmentDate, 'dd MMM yyyy')}"></div>
-                                </div>
+                                <span class="health-badge" th:classappend="'health-' + ${item.healthStatus}"
+                                      th:text="${item.healthStatusLabel()}">Healthy</span>
                             </div>
                         </div>
-                        <div th:if="${abortionMap != null and abortionMap.containsKey(item.id)}">
-                            <div class="divider-dashed" th:if="${treatmentMap != null and treatmentMap.containsKey(item.id)}"></div>
-                            <span class="lc-section-head lc-head-health">Reproductive</span>
+                        <div class="divider-dashed"></div>
+                        <div>
+                            <span class="lc-section-head" style="background:#ede9fe;color:#5b21b6;">Reproductive</span>
                             <div class="lc-row">
-                                <i class="bi bi-heartbreak-fill lc-icon"></i>
-                                <div>
-                                    <div class="lc-label">Last Abortion</div>
-                                    <div class="lc-value" th:text="${#temporals.format(abortionMap[item.id].abortionDate, 'dd MMM yyyy')}"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div th:unless="${(treatmentMap != null and treatmentMap.containsKey(item.id)) or (abortionMap != null and abortionMap.containsKey(item.id))}">
-                            <div class="lc-row">
-                                <i class="bi bi-shield-check lc-icon text-success"></i>
-                                <span class="lc-none">No health events</span>
+                                <span class="repro-badge" th:classappend="'repro-' + ${item.reproductiveStatus}"
+                                      th:text="${item.reproductiveStatusLabel()}">Open</span>
                             </div>
                         </div>
                         <div class="divider-dashed"></div>
                         <span class="lc-section-head lc-head-sale">Exit</span>
-                        <div th:if="${saleMap != null and saleMap.containsKey(item.id)}">
-                            <div class="lc-row">
-                                <i class="bi bi-cash-stack lc-icon text-success"></i>
-                                <div>
-                                    <div class="lc-label">Sold</div>
-                                    <div class="lc-value" th:text="${#temporals.format(saleMap[item.id].saleDate, 'dd MMM yyyy')}"></div>
-                                </div>
-                            </div>
-                            <div class="lc-row" th:if="${saleMap[item.id].salePrice != null}">
-                                <i class="bi bi-currency-dollar lc-icon"></i>
-                                <div>
-                                    <div class="lc-label">Sale Price</div>
-                                    <div class="lc-price" th:text="${#numbers.formatDecimal(saleMap[item.id].salePrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></div>
-                                </div>
-                            </div>
+                        <div th:if="${item.status == 'SOLD'}">
+                            <div class="lc-row"><i class="bi bi-cash-stack lc-icon text-success"></i><span class="lc-none">Sold</span></div>
                         </div>
-                        <div th:unless="${saleMap != null and saleMap.containsKey(item.id)}">
-                            <div class="lc-row" th:if="${item.status == 'DEAD'}">
-                                <i class="bi bi-x-circle-fill lc-icon text-secondary"></i>
-                                <span class="lc-none">Deceased</span>
-                            </div>
-                            <div class="lc-row" th:unless="${item.status == 'DEAD'}">
-                                <i class="bi bi-house-heart lc-icon text-primary"></i>
-                                <span class="lc-none">Still on farm</span>
-                            </div>
+                        <div th:if="${item.status == 'DEAD'}">
+                            <div class="lc-row"><i class="bi bi-x-circle-fill lc-icon text-secondary"></i><span class="lc-none">Deceased</span></div>
+                        </div>
+                        <div th:unless="${item.status == 'SOLD' or item.status == 'DEAD'}">
+                            <div class="lc-row"><i class="bi bi-house-heart lc-icon text-primary"></i><span class="lc-none">Still on farm</span></div>
                         </div>
                     </td>
 
@@ -694,7 +671,13 @@
                         <div class="actions-wrap">
                             <a th:href="@{/livestock/view/{id}(id=${item.id})}"         class="action-btn view"  title="View"><i class="bi bi-eye"></i></a>
                             <a th:href="@{/livestock/edit/{id}(id=${item.id})}"         class="action-btn edit"  title="Edit"><i class="bi bi-pencil"></i></a>
-                            <!-- Quick valuation action, directly from the list -->
+
+                            <!-- ✅ NEW weight history button -->
+                            <a th:href="@{'/livestock/' + ${item.id} + '/weight'}"
+                               class="action-btn weight" title="Weight History">
+                                <i class="bi bi-speedometer2"></i>
+                            </a>
+
                             <button type="button" class="action-btn valuation" title="Record Valuation"
                                     data-bs-toggle="modal"
                                     th:data-bs-target="'#valuationModal' + ${item.id}">
@@ -734,7 +717,7 @@
                             </div>
                         </div>
 
-                        <!-- ══ Record Valuation Modal (FAO STANDARD — append-only) ══ -->
+                        <!-- Record Valuation Modal -->
                         <div class="modal fade" th:id="'valuationModal' + ${item.id}" tabindex="-1">
                             <div class="modal-dialog modal-dialog-centered">
                                 <form th:action="@{/livestock/{id}/valuation(id=${item.id})}" method="post" class="modal-content border-0 shadow">
@@ -753,30 +736,16 @@
                                             </label>
                                             <textarea class="form-control form-control-sm fao-standard-box" rows="2" readonly>FAO Standard: this adds a new valuation entry to the history — it never overwrites the previous value.</textarea>
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label" style="font-size:12px;font-weight:600;">Valuation Date</label>
                                             <input type="date" class="form-control form-control-sm" name="valuationDate" required
                                                    th:value="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}"
                                                    th:max="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}">
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label" style="font-size:12px;font-weight:600;">New Value (RWF)</label>
                                             <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="value" required>
-                                            <!-- NEW: last valuation date shown alongside the current value, so
-                                                 whoever is recording a new valuation can see when it was last
-                                                 updated, not just what the number currently is. -->
-                                            <div class="form-text" style="font-size:11px;" th:if="${item.currentValue != null}">
-                                                Current recorded value:
-                                                <strong th:text="${#numbers.formatDecimal(item.currentValue,1,'COMMA',0,'POINT') + ' RWF'}"></strong>
-                                                <span th:if="${latestValuationMap != null and latestValuationMap.containsKey(item.id)}">
-                                                    &middot; last valued on
-                                                    <strong th:text="${#temporals.format(latestValuationMap[item.id].valuationDate, 'dd MMM yyyy')}"></strong>
-                                                </span>
-                                            </div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label" style="font-size:12px;font-weight:600;">Valuation Method</label>
                                             <select class="form-select form-select-sm" name="valuationMethod" required>
@@ -786,19 +755,9 @@
                                                 <option value="MANUAL_ADJUSTMENT">Manual Adjustment</option>
                                             </select>
                                         </div>
-
                                         <div class="mb-1">
                                             <label class="form-label" style="font-size:12px;font-weight:600;">Notes (optional)</label>
-                                            <textarea class="form-control form-control-sm" name="notes" rows="2"
-                                                      placeholder="e.g. Reweighed, local market price update..."></textarea>
-                                        </div>
-
-                                        <!-- NEW: quick jump to the full history from inside the modal -->
-                                        <div class="text-end" th:if="${item.currentValue != null}">
-                                            <a th:href="${'/livestock/view/' + item.id + '#valuation-history'}"
-                                               style="font-size:11px;font-weight:600;text-decoration:none;color:#1a5f7a;">
-                                                <i class="bi bi-clock-history"></i> View full valuation history
-                                            </a>
+                                            <textarea class="form-control form-control-sm" name="notes" rows="2" placeholder="e.g. Reweighed..."></textarea>
                                         </div>
                                     </div>
                                     <div class="modal-footer border-0 pt-0">
@@ -836,58 +795,68 @@
             </div>
             <ul class="pagination-list">
                 <li th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="pg-btn" th:href="@{/livestock/list(page=${currentPage - 1}, size=${pageSize})}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/list(page=${currentPage - 1}, size=${pageSize}, sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId}, status=${selectedStatus})}">
                         <i class="bi bi-chevron-left"></i> Prev
                     </a>
                 </li>
                 <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                     th:classappend="${i == currentPage} ? 'pg-active'">
-                    <a class="pg-btn" th:href="@{/livestock/list(page=${i}, size=${pageSize})}" th:text="${i + 1}"></a>
+                    <a class="pg-btn"
+                       th:href="@{/livestock/list(page=${i}, size=${pageSize}, sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId}, status=${selectedStatus})}"
+                       th:text="${i + 1}"></a>
                 </li>
                 <li th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="pg-btn" th:href="@{/livestock/list(page=${currentPage + 1}, size=${pageSize})}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/list(page=${currentPage + 1}, size=${pageSize}, sort=${sortField}, dir=${sortDir}, categoryId=${selectedCategoryId}, status=${selectedStatus})}">
                         Next <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
             </ul>
         </div>
-
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     (function renderAgeBrackets() {
-        var today = new Date();
-        today.setHours(0,0,0,0);
+        var today = new Date(); today.setHours(0,0,0,0);
         document.querySelectorAll('.age-pill[data-bd]').forEach(function(el) {
             var raw = el.getAttribute('data-bd');
             if (!raw || !raw.trim()) return;
-            var birth = new Date(raw);
-            birth.setHours(0,0,0,0);
+            var birth = new Date(raw); birth.setHours(0,0,0,0);
             if (isNaN(birth.getTime())) { el.textContent = '(?)'; return; }
             var diffDays = Math.floor((today - birth) / 86400000);
             var label, stage;
-            if (diffDays < 0)        { label = '(future)';    stage = 'stage-days'; }
-            else if (diffDays === 0) { label = '(today)';     stage = 'stage-days'; }
+            if (diffDays < 0)        { label = '(future)'; stage = 'stage-days'; }
+            else if (diffDays === 0) { label = '(today)';  stage = 'stage-days'; }
             else if (diffDays < 30)  { label = '(' + diffDays + 'd)'; stage = 'stage-days'; }
-            else if (diffDays < 365) {
-                var mo = Math.floor(diffDays / 30.4375);
-                label = '(' + mo + 'mo)'; stage = 'stage-months';
-                label = '(' + mo + 'mo)'; stage = 'stage-months';
-            } else {
-                var yrs = Math.floor(diffDays / 365.25);
-                var rem = Math.floor((diffDays - yrs * 365.25) / 30.4375);
-                label = rem > 0 ? '(' + yrs + 'y ' + rem + 'mo)' : '(' + yrs + 'y)';
-                stage = yrs >= 5 ? 'stage-senior' : 'stage-years';
-            }
-            el.textContent = label;
-            el.className   = 'age-pill ' + stage;
+            else if (diffDays < 365) { var mo = Math.floor(diffDays / 30.4375); label = '(' + mo + 'mo)'; stage = 'stage-months'; }
+            else { var yrs = Math.floor(diffDays / 365.25); var rem = Math.floor((diffDays - yrs * 365.25) / 30.4375); label = rem > 0 ? '(' + yrs + 'y ' + rem + 'mo)' : '(' + yrs + 'y)'; stage = yrs >= 5 ? 'stage-senior' : 'stage-years'; }
+            el.textContent = label; el.className = 'age-pill ' + stage;
         });
     }());
 
+    function buildUrl(params) {
+        var url = new URL(window.location.href);
+        var current = new URLSearchParams(url.search);
+        Object.keys(params).forEach(function(k) {
+            if (params[k] === null || params[k] === undefined || params[k] === '') {
+                current.delete(k);
+            } else {
+                current.set(k, params[k]);
+            }
+        });
+        current.set('page', '0');
+        return '/livestock/list?' + current.toString();
+    }
+    function applyCategoryFilter(categoryId) { window.location.href = buildUrl({ categoryId: categoryId || null }); }
+    function applySort(value) { var parts = value.split(','); window.location.href = buildUrl({ sort: parts[0], dir: parts[1] }); }
     function changePageSize(size) {
-        window.location.href = '/livestock/list?page=0&size=' + size;
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', '0');
+        url.searchParams.set('size', size);
+        window.location.href = url.toString();
     }
 
     document.getElementById('searchInput').addEventListener('keyup', function() {
@@ -898,21 +867,6 @@
         updateBulkBar();
     });
 
-    function filterByStatus(status, btn) {
-        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
-        if (btn) btn.classList.add('active');
-        document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(function(row) {
-            if      (status === 'ALL')      row.style.display = '';
-            else if (status === 'BORN')     row.style.display = row.getAttribute('data-born')     === 'true' ? '' : 'none';
-            else if (status === 'TREATED')  row.style.display = row.getAttribute('data-treated')  === 'true' ? '' : 'none';
-            else if (status === 'ABORTION') row.style.display = row.getAttribute('data-abortion') === 'true' ? '' : 'none';
-            else if (status === 'VALUED')   row.style.display = row.getAttribute('data-valued')    === 'true' ? '' : 'none';
-            else if (status === 'UNVALUED') row.style.display = row.getAttribute('data-valued')    === 'false' ? '' : 'none';
-            else                            row.style.display = row.getAttribute('data-status')   === status  ? '' : 'none';
-        });
-        updateBulkBar();
-    }
-
     function toggleSelectAll(masterCb) {
         document.querySelectorAll('#dataTable tbody tr[data-status]').forEach(function(row) {
             if (row.style.display !== 'none') {
@@ -922,46 +876,31 @@
         });
         updateBulkBar();
     }
-
     function updateBulkBar() {
         var checked = document.querySelectorAll('.animal-check:checked');
         document.getElementById('selectedCount').textContent = checked.length;
-        checked.length > 0
-            ? document.getElementById('bulkBar').classList.add('visible')
-            : document.getElementById('bulkBar').classList.remove('visible');
+        checked.length > 0 ? document.getElementById('bulkBar').classList.add('visible')
+                           : document.getElementById('bulkBar').classList.remove('visible');
     }
-
     function clearSelection() {
         document.querySelectorAll('.animal-check').forEach(function(cb) { cb.checked = false; });
         document.getElementById('selectAll').checked = false;
         updateBulkBar();
     }
-
     function getSelectedIds() {
         return Array.from(document.querySelectorAll('.animal-check:checked')).map(function(cb) { return cb.value; });
     }
-
     function printSelected() {
         var ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one animal.'); return; }
         window.open('/livestock/qr/eartags/print?' + ids.map(function(id) { return 'ids=' + id; }).join('&'), '_blank');
     }
-
     function viewQRSelected() {
         var ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one animal.'); return; }
         if (ids.length === 1) window.open('/livestock/qr/eartag/' + ids[0], '_blank');
         else window.open('/livestock/qr/eartags/print?' + ids.map(function(id) { return 'ids=' + id; }).join('&'), '_blank');
     }
-
-    // ── auto-apply a filter pill if the server rendered `initialFilter` ──
-    // (e.g. arriving here via ?filter=UNVALUED)
-    (function applyInitialFilter() {
-        var initial = /*[[${initialFilter}]]*/ null;
-        if (!initial) return;
-        var btn = document.querySelector('.filter-btn[data-filter="' + initial + '"]');
-        if (btn) filterByStatus(initial, btn);
-    }());
 </script>
 </body>
 </html>

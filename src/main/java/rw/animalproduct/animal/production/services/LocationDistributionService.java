@@ -11,6 +11,8 @@ import rw.animalproduct.animal.production.repository.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -24,6 +26,7 @@ public class LocationDistributionService {
     private final LivestockRepository livestockRepository;
     private final BeneficiaryRepository beneficiaryRepository;
     private final RepresentativeRepository representativeRepository;
+    private final LivestockBirthRepository birthRepository;
 
     // Cache for frequently accessed data
     private final Map<String, Object> cache = new ConcurrentHashMap<>();
@@ -69,6 +72,7 @@ public class LocationDistributionService {
         Map<UUID, List<Livestock>> livestockByLocation = getLivestockGroupedByLocation(locationIdsWithLivestock);
         Map<UUID, List<Beneficiary>> beneficiariesByLocation = getBeneficiariesGroupedByLocation(locationIdsWithLivestock);
         Map<UUID, List<Representative>> representativesByLocation = getRepresentativesGroupedByLocation(locationIdsWithLivestock);
+        Map<UUID, List<LivestockBirth>> birthsByLocation = getBirthsGroupedByLocation(locationIdsWithLivestock);
 
         // Build a row for every matching location (unpaginated at this point)
         List<LocationDistributionRow> allRows = new ArrayList<>();
@@ -90,7 +94,8 @@ public class LocationDistributionService {
                     location,
                     livestockByLocation.getOrDefault(location.getId(), Collections.emptyList()),
                     beneficiariesByLocation.getOrDefault(location.getId(), Collections.emptyList()),
-                    representativesByLocation.getOrDefault(location.getId(), Collections.emptyList())
+                    representativesByLocation.getOrDefault(location.getId(), Collections.emptyList()),
+                    birthsByLocation.getOrDefault(location.getId(), Collections.emptyList())
             );
 
             totalAnimals += row.getTotalAnimals();
@@ -282,7 +287,6 @@ public class LocationDistributionService {
             return Collections.emptyMap();
         }
 
-        // This method now exists in RepresentativeRepository
         List<Representative> representatives = representativeRepository.findByLocationIdInAndIsDeletedFalse(locationIds);
 
         return representatives.stream()
@@ -294,13 +298,57 @@ public class LocationDistributionService {
     }
 
     /**
+     * Group births by location through livestock association
+     */
+    private Map<UUID, List<LivestockBirth>> getBirthsGroupedByLocation(List<UUID> locationIds) {
+        if (locationIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // First get all livestock for these locations
+        List<Livestock> livestock = livestockRepository.findByLocationIdIn(locationIds);
+        List<UUID> livestockIds = livestock.stream()
+                .map(Livestock::getId)
+                .collect(Collectors.toList());
+
+        if (livestockIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // Then get all births for these livestock
+        List<LivestockBirth> births = birthRepository.findByLivestockIdInAndIsDeletedFalse(livestockIds);
+
+        // Group births by location (using the livestock's location)
+        Map<UUID, List<LivestockBirth>> birthsByLocation = new HashMap<>();
+
+        // Create a map of livestockId -> locationId for quick lookup
+        Map<UUID, UUID> livestockLocationMap = livestock.stream()
+                .filter(l -> l.getLocation() != null)
+                .collect(Collectors.toMap(
+                        Livestock::getId,
+                        l -> l.getLocation().getId()
+                ));
+
+        for (LivestockBirth birth : births) {
+            UUID livestockId = birth.getLivestockId();
+            UUID locationId = livestockLocationMap.get(livestockId);
+            if (locationId != null) {
+                birthsByLocation.computeIfAbsent(locationId, k -> new ArrayList<>()).add(birth);
+            }
+        }
+
+        return birthsByLocation;
+    }
+
+    /**
      * Build a location row with all calculations
      */
     private LocationDistributionRow buildLocationRow(
             Location location,
             List<Livestock> livestock,
             List<Beneficiary> beneficiaries,
-            List<Representative> representatives) {
+            List<Representative> representatives,
+            List<LivestockBirth> births) {
 
         LocationDistributionRow row = new LocationDistributionRow();
 
@@ -325,7 +373,10 @@ public class LocationDistributionService {
 
         BigDecimal totalValue = BigDecimal.ZERO;
         int active = 0, sick = 0, sold = 0, dead = 0;
+        int maleCount = 0, femaleCount = 0, pregnantCount = 0, readyToBreedCount = 0;
         Map<String, Long> categoryMap = new HashMap<>();
+
+        LocalDate now = LocalDate.now();
 
         for (Livestock l : livestock) {
             BigDecimal value = l.getCurrentValue() != null ? l.getCurrentValue() : BigDecimal.ZERO;
@@ -340,6 +391,48 @@ public class LocationDistributionService {
                 default: break;
             }
 
+            // Gender counts
+            String gender = l.getGender() != null ? l.getGender().toUpperCase() : "";
+            if ("MALE".equals(gender)) {
+                maleCount++;
+            } else if ("FEMALE".equals(gender)) {
+                femaleCount++;
+            }
+
+            // Pregnant count - check both isPregnant and reproductiveStatus
+            if (Boolean.TRUE.equals(l.getIsPregnant()) ||
+                    "PREGNANT".equalsIgnoreCase(l.getReproductiveStatus())) {
+                pregnantCount++;
+            }
+
+            // Ready-to-breed: female, not pregnant, not sold, not dead, and of breeding age
+            if ("FEMALE".equals(gender) &&
+                    !Boolean.TRUE.equals(l.getIsPregnant()) &&
+                    !"PREGNANT".equalsIgnoreCase(l.getReproductiveStatus()) &&
+                    !"SOLD".equals(status) &&
+                    !"DEAD".equals(status)) {
+
+                // Check if of breeding age using birthDate
+                LocalDate birthDate = l.getBirthDate();
+                if (birthDate != null) {
+                    // Convert long to int safely
+                    long ageMonthsLong = Period.between(birthDate, now).toTotalMonths();
+                    int ageMonths = (int) ageMonthsLong;
+
+                    LivestockCategory category = l.getLivestockCategory();
+                    if (category != null && category.getMinBreedingAgeMonths() != null) {
+                        if (ageMonths >= category.getMinBreedingAgeMonths()) {
+                            readyToBreedCount++;
+                        }
+                    } else {
+                        // Default: assume ready if age >= 12 months
+                        if (ageMonths >= 12) {
+                            readyToBreedCount++;
+                        }
+                    }
+                }
+            }
+
             String catName = l.getLivestockCategory() != null ?
                     l.getLivestockCategory().getName() : "Uncategorized";
             categoryMap.merge(catName, 1L, Long::sum);
@@ -352,15 +445,35 @@ public class LocationDistributionService {
         row.setDeadCount(dead);
         row.setByCategory(categoryMap);
 
+        // Set gender and reproductive metrics
+        row.setMaleCount(maleCount);
+        row.setFemaleCount(femaleCount);
+        row.setPregnantCount(pregnantCount);
+        row.setReadyToBreedCount(readyToBreedCount);
+
+        // Births and offspring counts
+        int birthCount = births != null ? births.size() : 0;
+        int offspringCount = 0;
+        if (births != null) {
+            offspringCount = births.stream()
+                    .mapToInt(b -> b.getOffspringCount() != null ? b.getOffspringCount() : 0)
+                    .sum();
+        }
+        row.setBirthCount(birthCount);
+        row.setOffspringCount(offspringCount);
+
         row.setBeneficiaryCount(beneficiaries.size());
         row.setRepresentativeCount(representatives.size());
 
+        // Calculate rates
         double healthRate = total > 0 ? (active * 100.0) / total : 0;
         double mortalityRate = total > 0 ? (dead * 100.0) / total : 0;
+        double sickRate = total > 0 ? (sick * 100.0) / total : 0;
         double productivityIndex = calculateProductivityIndex(row);
 
         row.setHealthRate(healthRate);
         row.setMortalityRate(mortalityRate);
+        row.setSickRate(sickRate);
         row.setProductivityIndex(productivityIndex);
 
         return row;
@@ -401,16 +514,13 @@ public class LocationDistributionService {
 
     /**
      * Calculate productivity index (FAO standard)
+     * Productivity = Active Animals / Total Animals × 100
+     * This represents the percentage of animals that are currently active/productive
      */
     private double calculateProductivityIndex(LocationDistributionRow row) {
         int total = row.getTotalAnimals();
         if (total == 0) return 0.0;
-
-        double healthFactor = (row.getActiveCount() * 100.0) / total;
-        double valueFactor = Math.min(row.getTotalValue().doubleValue() / (total * 1000), 100);
-        double diversityFactor = Math.min(row.getByCategory().size() * 10, 100);
-
-        return (healthFactor * 0.5) + (valueFactor * 0.3) + (diversityFactor * 0.2);
+        return (row.getActiveCount() * 100.0) / total;
     }
 
     /**

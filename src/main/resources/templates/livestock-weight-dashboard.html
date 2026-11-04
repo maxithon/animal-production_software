@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { background:#f0f4f8; font-family:'Inter',sans-serif; font-size:13px;
+               color:#1e293b; padding:16px; }
+        .wd-card { background:#fff; border-radius:12px; padding:22px 20px;
+                   box-shadow:0 1px 3px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.07); }
+        .page-title { font-size:18px; font-weight:700; margin:0;
+                      display:flex; align-items:center; gap:6px; }
+        .page-sub { font-size:12px; color:#94a3b8; margin:2px 0 0; }
+        .stat-row { display:flex; gap:8px; margin:14px 0; flex-wrap:wrap; }
+        .stat-pill { display:inline-flex; align-items:center; gap:5px;
+                     padding:5px 12px; border-radius:20px; font-size:11px;
+                     font-weight:600; border:1px solid; }
+        .stat-pill.total   { background:#f1f5f9; color:#1e293b; border-color:#cbd5e0; }
+        .stat-pill.has     { background:#d1fae5; color:#065f46; border-color:#6ee7b7; }
+        .stat-pill.missing { background:#fef3c7; color:#92400e; border-color:#fde68a; }
+        .search-wrap { margin-bottom:12px; }
+        .search-wrap input {
+            width:100%; padding:8px 12px; font-size:12px;
+            border:1px solid #e2e8f0; border-radius:8px; background:#f8f9fb;
+        }
+        .search-wrap input:focus { outline:none; border-color:#1a5f7a; background:#fff; }
+
+        table.wt { width:100%; border-collapse:collapse; }
+        table.wt th { font-size:10px; font-weight:700; text-transform:uppercase;
+                      letter-spacing:.05em; color:#64748b; padding:9px 8px;
+                      background:#fafbfc; border-bottom:1.5px solid #f0f2f5;
+                      text-align:left; white-space:nowrap; }
+        table.wt td { padding:10px 8px; font-size:12px;
+                      border-bottom:1px solid #f0f2f5; vertical-align:middle; }
+        table.wt tbody tr:hover { background:#f8fbff; }
+        .tag-num { font-family:'SF Mono',Consolas,monospace;
+                   font-weight:700; color:#0f172a; }
+        .cat-badge { display:inline-flex; padding:2px 8px; font-size:10px;
+                     font-weight:700; background:#e0f2fe; color:#0369a1;
+                     border-radius:20px; }
+        .w-latest { font-weight:700; color:#0f172a; }
+        .w-none { font-style:italic; color:#94a3b8; }
+        .w-date { font-size:10px; color:#94a3b8; margin-top:1px; }
+        .btn-act { display:inline-flex; align-items:center; gap:4px;
+                   padding:4px 10px; border-radius:6px; font-size:11px;
+                   font-weight:600; text-decoration:none; border:1px solid;
+                   transition:all .15s; white-space:nowrap; }
+        .btn-act.view { background:#f0fdf4; color:#059669; border-color:#a7f3d0; }
+        .btn-act.view:hover { background:#059669; color:#fff; border-color:#059669; }
+        .btn-act.add  { background:#eef2ff; color:#4338ca; border-color:#c7d2fe; }
+        .btn-act.add:hover  { background:#4338ca; color:#fff; border-color:#4338ca; }
+        .empty-row td { padding:40px 0; text-align:center; color:#94a3b8; }
+
+        /* Pagination */
+        .pagination-wrap { display:flex; align-items:center; justify-content:space-between;
+                           flex-wrap:wrap; gap:10px; margin-top:16px;
+                           padding-top:14px; border-top:1.5px solid #f0f2f5; }
+        .pagination-info { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .showing-text { font-size:12px; color:#64748b; }
+        .page-size-wrap { display:flex; align-items:center; gap:5px; }
+        .page-size-label { font-size:11px; font-weight:600; color:#64748b; }
+        .page-size-select { padding:4px 9px; border:1px solid #e2e8f0;
+                            border-radius:5px; font-size:11px;
+                            cursor:pointer; background:#fafcff; }
+        .pagination-list { display:flex; align-items:center; gap:3px;
+                           list-style:none; margin:0; padding:0; flex-wrap:wrap; }
+        .pg-btn { display:inline-flex; align-items:center; gap:3px;
+                  padding:5px 10px; border-radius:5px; font-size:11px;
+                  font-weight:600; color:#475569; background:#f8f9fb;
+                  border:1px solid #e2e8f0; text-decoration:none;
+                  transition:all .15s; cursor:pointer; }
+        .pg-btn:hover { background:#1a5f7a; color:#fff; border-color:#1a5f7a; }
+        .pg-active .pg-btn { background:#1a5f7a; color:#fff; border-color:#1a5f7a; }
+        li.disabled .pg-btn { opacity:.4; pointer-events:none; }
+        .pg-dots { padding:0 5px; font-size:12px; color:#94a3b8; }
+    </style>
+</head>
+<body>
+<div class="container-fluid px-0">
+    <div class="wd-card">
+
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;
+                    gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div>
+                <h1 class="page-title">
+                    <i class="bi bi-speedometer2 text-primary"></i>
+                    Weight Dashboard
+                </h1>
+                <p class="page-sub">Track growth for every animal in your herd</p>
+            </div>
+            <a th:href="@{/livestock/list}" class="btn-act view">
+                <i class="bi bi-arrow-left"></i> Back to Livestock
+            </a>
+        </div>
+
+        <div class="stat-row">
+            <span class="stat-pill total">
+                <i class="bi bi-collection"></i>
+                Total <strong th:text="${totalAnimals}">0</strong>
+            </span>
+            <span class="stat-pill has">
+                <i class="bi bi-check-circle-fill"></i>
+                Weighed <strong th:text="${withWeight}">0</strong>
+            </span>
+            <span class="stat-pill missing">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Not yet weighed <strong th:text="${withoutWeight}">0</strong>
+            </span>
+        </div>
+
+        <div class="search-wrap">
+            <input type="text" id="wtSearch"
+                   placeholder="Search on this page by tag or category…">
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="wt">
+                <thead>
+                <tr>
+                    <th style="width:36px;">#</th>
+                    <th>Tag #</th>
+                    <th>Category</th>
+                    <th>Gender</th>
+                    <th>Latest Weight</th>
+                    <th>Last Weighed</th>
+                    <th style="width:200px;">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${animals == null or animals.isEmpty()}" class="empty-row">
+                    <td colspan="7">
+                        <i class="bi bi-inbox" style="font-size:2rem;color:#cbd5e0;
+                            display:block;margin-bottom:6px;"></i>
+                        No animals registered yet.
+                    </td>
+                </tr>
+                <tr th:each="a, it : ${animals}"
+                    th:attr="data-search=${(a.tagNumber != null ? a.tagNumber : '') + ' '
+                                + (a.livestockCategory != null ? a.livestockCategory.name : '')}">
+                    <td th:text="${it.count + (currentPage * pageSize)}">1</td>
+                    <td><span class="tag-num" th:text="${a.tagNumber}">—</span></td>
+                    <td>
+                        <span class="cat-badge" th:if="${a.livestockCategory != null}"
+                              th:text="${a.livestockCategory.name}">—</span>
+                        <span th:unless="${a.livestockCategory != null}"
+                              style="color:#94a3b8;">N/A</span>
+                    </td>
+                    <td th:text="${a.gender}">—</td>
+                    <td th:with="w=${latestByAnimal != null ? latestByAnimal[a.id] : null}">
+                        <span th:if="${w != null}" class="w-latest"
+                              th:text="${w.weightFormatted}">—</span>
+                        <span th:if="${w == null}" class="w-none">Not recorded</span>
+                    </td>
+                    <td th:with="w=${latestByAnimal != null ? latestByAnimal[a.id] : null}">
+                        <div th:if="${w != null}">
+                            <div th:text="${#temporals.format(w.weighedOn, 'dd MMM yyyy')}">—</div>
+                            <div class="w-date" th:text="'Method: ' + ${w.methodLabel}">—</div>
+                        </div>
+                        <span th:if="${w == null}" class="w-none">—</span>
+                    </td>
+                    <td>
+                        <a th:href="@{'/livestock/' + ${a.id} + '/weight'}"
+                           class="btn-act view">
+                            <i class="bi bi-clock-history"></i> History
+                        </a>
+                        <a th:href="@{'/livestock/' + ${a.id} + '/weight/add'}"
+                           class="btn-act add">
+                            <i class="bi bi-plus-circle"></i> Add
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-wrap" th:if="${totalPages > 1}">
+            <div class="pagination-info">
+                <span class="showing-text">
+                    Page <strong th:text="${currentPage + 1}">1</strong>
+                    of <strong th:text="${totalPages}">1</strong>
+                    &nbsp;·&nbsp;
+                    <strong th:text="${totalAnimals}">0</strong> total animals
+                </span>
+                <div class="page-size-wrap">
+                    <span class="page-size-label">Per page:</span>
+                    <select class="page-size-select" onchange="changePageSize(this.value)">
+                        <option value="10"  th:selected="${pageSize == 10}">10</option>
+                        <option value="25"  th:selected="${pageSize == 25}">25</option>
+                        <option value="50"  th:selected="${pageSize == 50}">50</option>
+                        <option value="100" th:selected="${pageSize == 100}">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <ul class="pagination-list">
+                <li th:classappend="${currentPage == 0} ? 'disabled'">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${currentPage - 1}, size=${pageSize})}">
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </a>
+                </li>
+
+                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[0] > 0}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=0, size=${pageSize})}">1</a>
+                </li>
+                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[0] > 1}">
+                    <span class="pg-dots">…</span>
+                </li>
+
+                <li th:each="i : ${pageNumbers}"
+                    th:classappend="${i == currentPage} ? 'pg-active'">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${i}, size=${pageSize})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+
+                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[pageNumbers.size() - 1] < totalPages - 2}">
+                    <span class="pg-dots">…</span>
+                </li>
+                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[pageNumbers.size() - 1] < totalPages - 1}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${totalPages - 1}, size=${pageSize})}"
+                       th:text="${totalPages}">1</a>
+                </li>
+
+                <li th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${currentPage + 1}, size=${pageSize})}">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.getElementById('wtSearch').addEventListener('keyup', function() {
+        var v = this.value.toLowerCase();
+        document.querySelectorAll('table.wt tbody tr[data-search]').forEach(function(tr) {
+            tr.style.display = tr.getAttribute('data-search').toLowerCase().includes(v) ? '' : 'none';
+        });
+    });
+
+    function changePageSize(size) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', '0');
+        url.searchParams.set('size', size);
+        window.location.href = url.toString();
+    }
+</script>
+</body>
+</html>

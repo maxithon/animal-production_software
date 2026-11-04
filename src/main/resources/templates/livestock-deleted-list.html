@@ -12,20 +12,17 @@
         html, body { width: 100%; overflow-x: hidden; }
         body { background: #f0f4f8; padding: 20px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; }
 
-        /* ── Card ─────────────────────────────────────────────────────────── */
         .list-card {
             background: white; border-radius: 14px; padding: 28px 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.07);
             width: 100%; min-width: 0;
         }
 
-        /* ── Header ───────────────────────────────────────────────────────── */
         .page-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
         .page-title { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px; }
         .page-sub   { font-size: 0.8rem; color: #94a3b8; margin: 2px 0 0; }
         .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
-        /* ── Buttons ──────────────────────────────────────────────────────── */
         .btn-back {
             display: inline-flex; align-items: center; gap: 7px;
             padding: 7px 16px; border-radius: 8px;
@@ -35,7 +32,6 @@
         }
         .btn-back:hover { background: #1a5f7a; color: white; border-color: #1a5f7a; }
 
-        /* ── Warning banner ───────────────────────────────────────────────── */
         .warning-banner {
             display: flex; align-items: flex-start; gap: 12px;
             background: #fff7ed; border: 1.5px solid #fed7aa;
@@ -45,23 +41,19 @@
         .warning-banner .wt { font-weight: 700; color: #9a3412; font-size: 0.88rem; }
         .warning-banner .ws { color: #c2410c; font-size: 0.8rem; margin-top: 2px; }
 
-        /* ── Count badge ──────────────────────────────────────────────────── */
         .count-badge {
             display: inline-flex; align-items: center; gap: 6px;
             background: #fef2f2; color: #dc2626; border: 1.5px solid #fca5a5;
             border-radius: 20px; padding: 5px 14px; font-size: 0.82rem; font-weight: 700;
         }
 
-        /* ── Alerts ───────────────────────────────────────────────────────── */
         .alert { border-radius: 10px; font-size: 0.85rem; padding: 10px 16px; margin-bottom: 14px; }
 
-        /* ── Search ───────────────────────────────────────────────────────── */
         .search-wrap { max-width: 320px; margin-bottom: 16px; }
         .search-wrap .input-group-text { background: #f8f9fb; border-right: none; color: #94a3b8; }
         .search-wrap .form-control { border-left: none; font-size: 0.85rem; }
         .search-wrap .form-control:focus { box-shadow: none; border-color: #dc2626; }
 
-        /* ── Bulk bar ─────────────────────────────────────────────────────── */
         .bulk-bar {
             display: none; align-items: center; gap: 12px;
             background: linear-gradient(135deg, #dc2626, #ef4444);
@@ -78,7 +70,6 @@
         .btn-bulk.clear { background: rgba(255,255,255,0.15); color: white; }
         .btn-bulk.clear:hover { background: rgba(255,255,255,0.25); }
 
-        /* ── Table ────────────────────────────────────────────────────────── */
         .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         #deletedTable { width: 100%; table-layout: auto; border-collapse: collapse; }
         #deletedTable th {
@@ -93,22 +84,23 @@
         #deletedTable tbody tr:hover { background: #fff0f0; }
         #deletedTable tbody tr:last-child td { border-bottom: none; }
 
-        /* ── Deleted-on badge ─────────────────────────────────────────────── */
         .deleted-on {
             display: inline-flex; align-items: center; gap: 4px;
             background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
             border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; font-weight: 700;
         }
 
-        /* ── Status badge ─────────────────────────────────────────────────── */
         .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
         .status-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .status-sold     { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .status-dead     { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-        .status-sick     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
-        .status-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .status-transferred { background: #e0e7ff; color: #4338ca; border: 1px solid #c7d2fe; }
 
-        /* ── Photo ────────────────────────────────────────────────────────── */
+        .health-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+        .health-HEALTHY         { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .health-SICK             { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .health-UNDER_TREATMENT  { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+
         .animal-photo { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; border: 2px solid #e2e8f0; display: block; opacity: 0.75; }
         .animal-photo-placeholder {
             width: 38px; height: 38px; border-radius: 8px;
@@ -117,7 +109,6 @@
             color: white; font-size: 1rem; opacity: 0.75;
         }
 
-        /* ── Action buttons ───────────────────────────────────────────────── */
         .action-btn {
             display: inline-flex; align-items: center; justify-content: center;
             width: 30px; height: 30px; border-radius: 7px;
@@ -129,16 +120,13 @@
         .action-btn.hard-del:hover { background: #7f1d1d; border-color: #7f1d1d; color: white; }
         .actions-wrap { display: flex; gap: 4px; align-items: center; }
 
-        /* ── Checkbox ─────────────────────────────────────────────────────── */
         .row-checkbox { width: 15px; height: 15px; cursor: pointer; accent-color: #dc2626; }
 
-        /* ── Empty state ──────────────────────────────────────────────────── */
         .empty-state { text-align: center; padding: 50px 20px; }
         .empty-state .ei { font-size: 3rem; color: #d1fae5; margin-bottom: 12px; }
         .empty-state .et { font-size: 1.1rem; font-weight: 700; color: #065f46; margin-bottom: 4px; }
         .empty-state .es { font-size: 0.85rem; color: #94a3b8; }
 
-        /* ── Mobile ───────────────────────────────────────────────────────── */
         @media (max-width: 767.98px) {
             body { padding: 10px; }
             .list-card { padding: 14px 12px; }
@@ -172,7 +160,6 @@
 <div class="container-fluid px-0">
     <div class="list-card">
 
-        <!-- ── Header ─────────────────────────────────────────────────────── -->
         <div class="page-header">
             <div>
                 <h1 class="page-title">
@@ -192,7 +179,6 @@
             </div>
         </div>
 
-        <!-- ── Warning Banner ─────────────────────────────────────────────── -->
         <div class="warning-banner" th:if="${count > 0}">
             <i class="bi bi-exclamation-triangle-fill wi"></i>
             <div>
@@ -201,7 +187,6 @@
             </div>
         </div>
 
-        <!-- ── Alerts ─────────────────────────────────────────────────────── -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
             <i class="bi bi-check-circle-fill me-2"></i><span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -211,14 +196,12 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ── Empty State ────────────────────────────────────────────────── -->
         <div th:if="${deletedAnimals == null or deletedAnimals.empty}" class="empty-state">
             <div class="ei"><i class="bi bi-check-circle-fill"></i></div>
             <div class="et">No deleted animals</div>
             <div class="es">All animals are active. Nothing has been soft-deleted.</div>
         </div>
 
-        <!-- ── Search + Bulk Bar ──────────────────────────────────────────── -->
         <div th:if="${deletedAnimals != null and !deletedAnimals.empty}">
 
             <div class="search-wrap">
@@ -228,7 +211,6 @@
                 </div>
             </div>
 
-            <!-- Bulk bar -->
             <div class="bulk-bar" id="bulkBar">
                 <i class="bi bi-check2-square" style="color:white;font-size:1rem;"></i>
                 <span class="bulk-bar-text">Selected:</span>
@@ -244,7 +226,6 @@
                 </button>
             </div>
 
-            <!-- ── Table ──────────────────────────────────────────────────── -->
             <div class="table-wrap">
                 <table id="deletedTable">
                     <thead>
@@ -260,6 +241,7 @@
                         <th style="min-width:120px;">Beneficiary</th>
                         <th style="min-width:100px;">Location</th>
                         <th style="min-width:85px;">Status at Deletion</th>
+                        <th style="min-width:100px;">Health</th>
                         <th style="min-width:115px;">Deleted On</th>
                         <th style="min-width:130px;">Actions</th>
                     </tr>
@@ -268,16 +250,13 @@
                     <tr th:each="item, iterStat : ${deletedAnimals}"
                         th:attr="data-tag=${item.tagNumber}">
 
-                        <!-- Checkbox -->
                         <td class="col-check">
                             <input type="checkbox" class="row-checkbox animal-check"
                                    th:value="${item.id}" onchange="updateBulkBar()">
                         </td>
 
-                        <!-- # -->
                         <td data-label="#" style="color:#94a3b8;font-size:0.8rem;" th:text="${iterStat.count}"></td>
 
-                        <!-- Photo -->
                         <td data-label="Photo">
                             <img th:if="${item.photo != null and !item.photo.isEmpty()}"
                                  th:src="${item.photo}" class="animal-photo" alt="">
@@ -287,12 +266,10 @@
                             </div>
                         </td>
 
-                        <!-- Tag -->
                         <td data-label="Tag #">
                             <strong th:text="${item.tagNumber}" style="font-size:0.9rem;"></strong>
                         </td>
 
-                        <!-- Category -->
                         <td data-label="Category">
                             <span th:if="${item.livestockCategory != null}"
                                   class="badge bg-info text-dark" style="font-size:0.72rem;"
@@ -301,36 +278,37 @@
                                   class="text-muted" style="font-size:0.8rem;">N/A</span>
                         </td>
 
-                        <!-- Gender -->
                         <td data-label="Gender">
                             <span th:if="${item.gender == 'MALE'}"   class="badge bg-primary" style="font-size:0.72rem;">Male</span>
                             <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger"  style="font-size:0.72rem;">Female</span>
                             <span th:if="${item.gender == null}"     class="badge bg-secondary" style="font-size:0.72rem;">N/A</span>
                         </td>
 
-                        <!-- Beneficiary -->
                         <td data-label="Beneficiary">
                             <small th:if="${item.beneficiary != null}"
                                    th:text="${item.beneficiary.firstName + ' ' + item.beneficiary.lastName}"></small>
                             <small th:unless="${item.beneficiary != null}" class="text-muted">N/A</small>
                         </td>
 
-                        <!-- Location -->
                         <td data-label="Location">
                             <small th:text="${item.location != null ? item.location.name : 'N/A'}"></small>
                         </td>
 
-                        <!-- Status at deletion -->
                         <td data-label="Status">
                             <span th:if="${item.status == 'ACTIVE'}"   class="status-badge status-active">Active</span>
                             <span th:if="${item.status == 'SOLD'}"     class="status-badge status-sold">Sold</span>
                             <span th:if="${item.status == 'DEAD'}"     class="status-badge status-dead">Dead</span>
-                            <span th:if="${item.status == 'SICK'}"     class="status-badge status-sick">Sick</span>
-                            <span th:if="${item.status == 'PREGNANT'}" class="status-badge status-pregnant">Pregnant</span>
-                            <span th:if="${item.status == null}"       class="text-muted" style="font-size:0.8rem;">Unknown</span>
+                            <span th:if="${item.status == 'TRANSFERRED'}" class="status-badge status-transferred">Transferred</span>
                         </td>
 
-                        <!-- Deleted on -->
+                        <td data-label="Health">
+                            <span th:if="${item.healthStatus != null}"
+                                  class="health-badge"
+                                  th:classappend="'health-' + ${item.healthStatus}"
+                                  th:text="${item.healthStatusLabel()}">Healthy</span>
+                            <span th:if="${item.healthStatus == null}" class="text-muted">Unknown</span>
+                        </td>
+
                         <td data-label="Deleted On">
                             <span th:if="${item.deletedAt != null}" class="deleted-on">
                                 <i class="bi bi-calendar-x"></i>
@@ -339,11 +317,8 @@
                             <span th:unless="${item.deletedAt != null}" class="text-muted" style="font-size:0.78rem;">Unknown</span>
                         </td>
 
-                        <!-- Actions -->
                         <td data-label="Actions">
                             <div class="actions-wrap">
-
-                                <!-- Restore -->
                                 <form th:action="@{/livestock/restore/{id}(id=${item.id})}"
                                       method="post" class="d-inline">
                                     <button type="submit" class="action-btn restore"
@@ -353,7 +328,6 @@
                                     </button>
                                 </form>
 
-                                <!-- Hard Delete -->
                                 <button type="button" class="action-btn hard-del"
                                         title="Permanently delete — cannot be undone"
                                         data-bs-toggle="modal"
@@ -362,7 +336,6 @@
                                 </button>
                             </div>
 
-                            <!-- Hard Delete Confirmation Modal -->
                             <div class="modal fade" th:id="'hardDelModal' + ${item.id}" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content border-0 shadow">
@@ -398,18 +371,16 @@
                     </tbody>
                 </table>
             </div>
-        </div><!-- /th:if -->
+        </div>
 
-    </div><!-- /.list-card -->
+    </div>
 </div>
 
-<!-- ── Hidden bulk-action forms ──────────────────────────────────────────── -->
 <form id="bulkRestoreForm"     action="/livestock/bulk-restore"    method="post" style="display:none;"><div id="bulkRestoreInputs"></div></form>
 <form id="bulkHardDeleteForm"  action="/livestock/bulk-hard-delete" method="post" style="display:none;"><div id="bulkHardDeleteInputs"></div></form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // ── Search ────────────────────────────────────────────────────────────────
     document.getElementById('searchInput') && document.getElementById('searchInput').addEventListener('keyup', function() {
         var v = this.value.toLowerCase();
         document.querySelectorAll('#deletedTable tbody tr').forEach(function(row) {
@@ -418,7 +389,6 @@
         updateBulkBar();
     });
 
-    // ── Checkbox helpers ──────────────────────────────────────────────────────
     function toggleSelectAll(masterCb) {
         document.querySelectorAll('.animal-check').forEach(function(cb) {
             if (cb.closest('tr').style.display !== 'none') cb.checked = masterCb.checked;
@@ -446,7 +416,6 @@
         return Array.from(document.querySelectorAll('.animal-check:checked')).map(function(cb) { return cb.value; });
     }
 
-    // ── Bulk Restore ──────────────────────────────────────────────────────────
     function bulkRestore() {
         var ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one animal to restore.'); return; }
@@ -461,7 +430,6 @@
         document.getElementById('bulkRestoreForm').submit();
     }
 
-    // ── Bulk Hard Delete ──────────────────────────────────────────────────────
     function bulkHardDelete() {
         var ids = getSelectedIds();
         if (!ids.length) { alert('Select at least one animal to delete.'); return; }

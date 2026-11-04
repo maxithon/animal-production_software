@@ -18,7 +18,10 @@ import rw.animalproduct.animal.production.services.LivestockDeathService;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -42,9 +45,9 @@ public class LivestockDeathController {
         this.deathRepository = deathRepository;
     }
 
-    /**
-     * GET /livestock/deaths - List all death records with pagination
-     */
+    // ═════════════════════════════════════════════════════════════════
+    // LIST
+    // ═════════════════════════════════════════════════════════════════
     @GetMapping("/deaths")
     public String listDeaths(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -91,19 +94,48 @@ public class LivestockDeathController {
         return "livestock-deaths-list";
     }
 
-    /**
-     * POST /livestock/deaths/new - Create a new death record
-     *
-     * FIX: @RequestParam names now match the actual field names Thymeleaf
-     * generates from th:field="*{livestockIdValue}" / *{causeOfDeath} —
-     * this was the cause of the "Required parameter 'livestockId' is not
-     * present" 400 error (the form was sending "livestockIdValue", the
-     * controller was demanding "livestockId").
-     *
-     * NEW: "otherCauseDetail" — free-text box shown only when "Other" is
-     * picked in the dropdown. If present, it REPLACES "Other" as the
-     * stored cause of death (no schema change needed).
-     */
+    // ═════════════════════════════════════════════════════════════════
+    // API: LIVE SEARCH ANIMALS (for the death form)
+    // ═════════════════════════════════════════════════════════════════
+    @GetMapping("/deaths/api/search-animals")
+    @ResponseBody
+    public List<Map<String, Object>> searchAnimalsForDeath(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "15") int limit) {
+
+        List<String> excludedStatuses = Arrays.asList("DEAD", "SOLD");
+        List<Livestock> candidates = livestockRepository.findByStatusNotIn(excludedStatuses);
+
+        if (q != null && !q.trim().isEmpty()) {
+            String query = q.trim().toLowerCase();
+            candidates = candidates.stream()
+                    .filter(a -> (a.getTagNumber() != null
+                            && a.getTagNumber().toLowerCase().contains(query))
+                            || (a.getLivestockCategory() != null
+                            && a.getLivestockCategory().getName() != null
+                            && a.getLivestockCategory().getName().toLowerCase().contains(query)))
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        } else {
+            candidates = candidates.stream().limit(limit).collect(Collectors.toList());
+        }
+
+        return candidates.stream().map(a -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id",           a.getId().toString());
+            map.put("tagNumber",    a.getTagNumber());
+            map.put("category",     a.getLivestockCategory() != null
+                    ? a.getLivestockCategory().getName() : "—");
+            map.put("gender",       a.getGender());
+            map.put("status",       a.getStatus());
+            map.put("healthStatus", a.getHealthStatus());
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // CREATE
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/deaths/new")
     public String createDeath(
             @RequestParam("livestockIdValue") String livestockIdStr,
@@ -136,9 +168,9 @@ public class LivestockDeathController {
         return "redirect:/livestock/deaths";
     }
 
-    /**
-     * GET /livestock/deaths/edit/{id} - Show edit form
-     */
+    // ═════════════════════════════════════════════════════════════════
+    // EDIT FORM
+    // ═════════════════════════════════════════════════════════════════
     @GetMapping("/deaths/edit/{id}")
     public String editDeathForm(@PathVariable UUID id, Model model) {
         LivestockDeath death = deathService.getById(id)
@@ -152,9 +184,9 @@ public class LivestockDeathController {
         return "livestock-death-edit";
     }
 
-    /**
-     * POST /livestock/deaths/update/{id} - Update a death record
-     */
+    // ═════════════════════════════════════════════════════════════════
+    // UPDATE
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/deaths/update/{id}")
     public String updateDeath(
             @PathVariable UUID id,
@@ -186,9 +218,9 @@ public class LivestockDeathController {
         return "redirect:/livestock/deaths";
     }
 
-    /**
-     * POST /livestock/deaths/delete/{id} - Delete a death record
-     */
+    // ═════════════════════════════════════════════════════════════════
+    // DELETE
+    // ═════════════════════════════════════════════════════════════════
     @PostMapping("/deaths/delete/{id}")
     public String deleteDeath(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
@@ -202,11 +234,99 @@ public class LivestockDeathController {
         return "redirect:/livestock/deaths";
     }
 
+    // ═════════════════════════════════════════════════════════════════
+    // REPORT — fixes the 404 on /livestock/deaths-report
+    // ═════════════════════════════════════════════════════════════════
+    @GetMapping("/deaths-report")
+    public String deathsReport(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Model model) {
+
+        final LocalDate fromDate = (from != null) ? from : LocalDate.now().minusMonths(12);
+        final LocalDate toDate   = (to   != null) ? to   : LocalDate.now().plusMonths(12);
+
+        List<LivestockDeath> allDeaths = deathRepository.findByDeathDateBetween(fromDate, toDate);
+
+        long totalDeaths = allDeaths.size();
+
+        long thisMonthCount = allDeaths.stream()
+                .filter(d -> d.getDeathDate() != null
+                        && d.getDeathDate().getMonthValue() == LocalDate.now().getMonthValue()
+                        && d.getDeathDate().getYear() == LocalDate.now().getYear())
+                .count();
+
+        long distinctAnimals = allDeaths.stream()
+                .filter(d -> d.getLivestock() != null)
+                .map(d -> d.getLivestock().getId())
+                .distinct()
+                .count();
+
+        long withCauseCount = allDeaths.stream()
+                .filter(d -> d.getCauseOfDeath() != null && !d.getCauseOfDeath().isBlank())
+                .count();
+
+        Map<String, Long> causeBreakdown = allDeaths.stream()
+                .filter(d -> d.getCauseOfDeath() != null && !d.getCauseOfDeath().isBlank())
+                .collect(Collectors.groupingBy(
+                        d -> normaliseCause(d.getCauseOfDeath()),
+                        Collectors.counting()));
+
+        Map<String, Long> categoryBreakdown = allDeaths.stream()
+                .filter(d -> d.getLivestock() != null
+                        && d.getLivestock().getLivestockCategory() != null)
+                .collect(Collectors.groupingBy(
+                        d -> d.getLivestock().getLivestockCategory().getName(),
+                        Collectors.counting()));
+
+        Map<String, Long> monthlyTrend = new LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            LocalDate month = LocalDate.now().minusMonths(i);
+            String key = month.getYear() + "-" + String.format("%02d", month.getMonthValue());
+            long count = allDeaths.stream()
+                    .filter(d -> d.getDeathDate() != null
+                            && d.getDeathDate().getYear() == month.getYear()
+                            && d.getDeathDate().getMonthValue() == month.getMonthValue())
+                    .count();
+            monthlyTrend.put(key, count);
+        }
+
+        model.addAttribute("fromDate", fromDate);
+        model.addAttribute("toDate", toDate);
+        model.addAttribute("deaths", allDeaths);
+        model.addAttribute("totalDeaths", totalDeaths);
+        model.addAttribute("thisMonthCount", thisMonthCount);
+        model.addAttribute("distinctAnimals", distinctAnimals);
+        model.addAttribute("withCauseCount", withCauseCount);
+        model.addAttribute("causeBreakdown", causeBreakdown);
+        model.addAttribute("categoryBreakdown", categoryBreakdown);
+        model.addAttribute("monthlyTrend", monthlyTrend);
+
+        return "livestock-deaths-report";
+    }
+
     // ── helper ───────────────────────────────────────────────────────
+
     private String resolveCause(String causeOfDeath, String otherCauseDetail) {
         if ("Other".equals(causeOfDeath) && otherCauseDetail != null && !otherCauseDetail.trim().isEmpty()) {
             return otherCauseDetail.trim();
         }
         return causeOfDeath;
+    }
+
+    private String normaliseCause(String raw) {
+        if (raw == null) return "Other";
+        String r = raw.toLowerCase();
+        if (r.contains("disease") || r.contains("infection") || r.contains("virus")) return "Disease";
+        if (r.contains("injury") || r.contains("wound") || r.contains("fracture"))   return "Injury";
+        if (r.contains("natural") || r.contains("old age"))                            return "Natural";
+        if (r.contains("predator") || r.contains("attack"))                            return "Predator";
+        if (r.contains("starv") || r.contains("malnutrition"))                         return "Starvation";
+        if (r.contains("poison") || r.contains("toxic"))                               return "Poisoning";
+        if (r.contains("birth") || r.contains("calving") || r.contains("dystocia"))    return "Birth Complication";
+        if (r.contains("unknown"))                                                     return "Unknown";
+        return "Other";
     }
 }

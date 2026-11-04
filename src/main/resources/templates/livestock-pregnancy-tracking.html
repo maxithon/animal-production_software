@@ -1,84 +1,146 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pregnancy Tracking</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #f0f4f8; padding: 20px; font-family: 'DM Sans', sans-serif; }
+        :root {
+            --ink-900: #0f172a;
+            --ink-700: #334155;
+            --ink-500: #64748b;
+            --ink-300: #cbd5e1;
+            --ink-100: #f1f5f9;
+            --bg: #f0f4f8;
+            --card: #ffffff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            padding: 20px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            color: var(--ink-900);
+            font-size: 14px;
+        }
 
         /* ── Page header ─────────────────────────────────────────────── */
         .page-header {
-            background: white; border-radius: 14px; padding: 24px 30px;
-            margin-bottom: 22px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+            background: var(--card); border-radius: 14px; padding: 24px 30px;
+            margin-bottom: 20px; box-shadow: 0 2px 10px rgba(15,23,42,.06);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px;
         }
-        .page-title    { font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0; }
-        .page-subtitle { color: #64748b; font-size: 0.9rem; margin: 0; }
+        .page-title { font-size: 1.55rem; font-weight: 800; color: var(--ink-900); margin: 0; letter-spacing: -.01em; }
+        .page-subtitle { color: var(--ink-500); font-size: .88rem; margin: 2px 0 0; }
 
-        /* ── KPI cards ────────────────────────────────────────────────── */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 22px; }
+        /* ── KPI cards ───────────────────────────────────────────────── */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin-bottom: 20px;
+        }
         .kpi-card {
-            background: white; border-radius: 12px; padding: 18px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid;
+            background: var(--card); border-radius: 12px; padding: 16px 18px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 4px 12px rgba(15,23,42,.04);
+            border-left: 4px solid; position: relative;
         }
         .kpi-card.purple { border-color: #7c3aed; }
         .kpi-card.pink   { border-color: #ec4899; }
         .kpi-card.amber  { border-color: #f59e0b; }
         .kpi-card.red    { border-color: #ef4444; }
         .kpi-card.teal   { border-color: #0d9488; }
-        .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 6px; }
-        .kpi-value { font-size: 2rem; font-weight: 800; color: #1e293b; line-height: 1; }
-        .kpi-sub   { font-size: 0.7rem; color: #94a3b8; margin-top: 4px; }
+        .kpi-card.green  { border-color: #16a34a; }
+        .kpi-card.red::after {
+            content: ""; position: absolute; inset: 0; border-radius: 12px;
+            box-shadow: 0 0 0 0 rgba(239,68,68,.55); animation: pulse 2.4s infinite;
+            pointer-events: none;
+        }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(239,68,68,.45); }
+            70%  { box-shadow: 0 0 0 10px rgba(239,68,68,0); }
+            100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        }
+        .kpi-label {
+            font-size: .68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .07em; color: var(--ink-500); margin-bottom: 6px;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .kpi-value { font-size: 1.9rem; font-weight: 800; color: var(--ink-900); line-height: 1; letter-spacing: -.02em; }
+        .kpi-sub   { font-size: .7rem; color: var(--ink-500); margin-top: 5px; }
 
-        /* ── Section cards ────────────────────────────────────────────── */
+        /* ── Section cards ───────────────────────────────────────────── */
         .section-card {
-            background: white; border-radius: 14px; padding: 24px 28px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 22px;
+            background: var(--card); border-radius: 14px; padding: 22px 26px;
+            box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 4px 12px rgba(15,23,42,.04);
+            margin-bottom: 20px;
         }
         .section-title {
-            font-size: 1.05rem; font-weight: 700; color: #1e293b;
-            margin-bottom: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            font-size: 1.02rem; font-weight: 800; color: var(--ink-900);
+            margin-bottom: 16px; display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
         }
+        .section-title .icon-chip {
+            width: 30px; height: 30px; border-radius: 9px;
+            display: grid; place-items: center; font-size: .9rem;
+        }
+        .icon-chip.red    { background: #fee2e2; color: #b91c1c; }
+        .icon-chip.purple { background: #ede9fe; color: #6d28d9; }
+        .icon-chip.green  { background: #d1fae5; color: #047857; }
         .section-badge {
             background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd;
-            border-radius: 20px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700;
+            border-radius: 20px; padding: 3px 11px; font-size: .72rem; font-weight: 700;
         }
+        .section-badge.red   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .section-badge.green { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
 
-        /* ── Table ────────────────────────────────────────────────────── */
+        /* ── Table ───────────────────────────────────────────────────── */
         .preg-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .preg-table caption { caption-side: top; text-align: left; padding: 0 0 6px; font-size: .72rem; color: var(--ink-500); }
+
         .preg-table thead th {
-            background: #f8fafc; color: #475569; font-size: 0.72rem;
-            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-            padding: 10px 14px; border-bottom: 2px solid #e2e8f0; white-space: nowrap;
+            background: #f8fafc; color: var(--ink-500);
+            font-size: .68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .06em;
+            padding: 9px 12px; border-bottom: 2px solid #e2e8f0;
+            white-space: nowrap; position: sticky; top: 0; z-index: 1;
         }
-        .preg-table tbody td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        .preg-table tbody tr:hover { background: #fafbfc; }
-        .preg-table tbody tr.row-overdue  { background: #fff5f5; }
-        .preg-table tbody tr.row-due-soon { background: #fffbeb; }
+        .preg-table tbody td {
+            padding: 11px 12px; border-bottom: 1px solid var(--ink-100);
+            vertical-align: middle;
+        }
+        .preg-table tbody tr { transition: background .14s ease; }
+        .preg-table tbody tr:hover { background: #f8fbff; }
+        .preg-table tbody tr.row-overdue   { background: #fff5f5; }
+        .preg-table tbody tr.row-due-soon  { background: #fffbeb; }
         .preg-table tbody tr.row-due-today { background: #f0fdf4; }
 
-        /* ── Tag / badges ─────────────────────────────────────────────── */
-        .tag-cell strong { font-size: 0.9rem; color: #1e293b; }
-        .cat-badge { display: inline-block; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; font-weight: 700; margin-top: 3px; }
-        .acq-badge { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.65rem; font-weight: 700; margin-top: 3px; }
+        /* ── Tag / badges ───────────────────────────────────────────── */
+        .tag-cell strong { font-size: .9rem; color: var(--ink-900); font-weight: 700; }
+        .cat-badge {
+            display: inline-block; background: #e0f2fe; color: #0369a1;
+            border: 1px solid #bae6fd; border-radius: 10px;
+            padding: 1px 8px; font-size: .66rem; font-weight: 700; margin-top: 3px;
+        }
+        .acq-badge {
+            display: inline-block; border-radius: 10px; padding: 1px 8px;
+            font-size: .63rem; font-weight: 700; margin-top: 3px;
+        }
         .acq-purchase { background: #fef9c3; color: #92400e; border: 1px solid #fde047; }
         .acq-donation { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .acq-transfer { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .acq-birth    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .acq-other    { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
 
-        /* ── Date values ──────────────────────────────────────────────── */
-        .date-val { font-size: 0.82rem; font-weight: 600; color: #1e293b; }
-        .date-sub { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+        /* ── Date values ─────────────────────────────────────────────── */
+        .date-val { font-size: .82rem; font-weight: 600; color: var(--ink-900); }
+        .date-sub { font-size: .68rem; color: var(--ink-500); margin-top: 2px; }
 
-        /* ── Days pills ───────────────────────────────────────────────── */
+        /* ── Days pills ──────────────────────────────────────────────── */
         .days-pill {
             display: inline-flex; align-items: center; gap: 4px;
-            border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap;
+            border-radius: 20px; padding: 3px 10px;
+            font-size: .73rem; font-weight: 700; white-space: nowrap;
         }
         .days-overdue  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .days-today    { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
@@ -86,60 +148,138 @@
         .days-normal   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .days-pregnant { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .days-unknown  { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+        .days-since    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 
-        /* ── Gestation progress ───────────────────────────────────────── */
-        .gestation-bar-wrap { min-width: 130px; }
-        .gestation-bar { height: 7px; border-radius: 4px; background: #e2e8f0; overflow: hidden; margin-top: 5px; }
-        .gestation-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #7c3aed, #ec4899); }
-        .gestation-pct { font-size: 0.68rem; color: #64748b; margin-top: 3px; }
+        /* ── Gestation progress ──────────────────────────────────────── */
+        .gestation-bar-wrap { min-width: 128px; }
+        .gestation-bar {
+            height: 7px; border-radius: 4px; background: #e2e8f0;
+            overflow: hidden; margin-top: 5px; box-shadow: inset 0 1px 2px rgba(15,23,42,.06);
+        }
+        .gestation-bar-fill {
+            height: 100%; border-radius: 4px;
+            background: linear-gradient(90deg, #7c3aed, #ec4899);
+            transition: width .4s ease;
+        }
+        .gestation-pct { font-size: .66rem; color: var(--ink-500); margin-top: 3px; }
 
-        /* Stage pills on progress column */
-        .stage-pill { display: inline-block; padding: 1px 7px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; margin-top: 3px; }
+        .stage-pill {
+            display: inline-block; padding: 1px 7px; border-radius: 20px;
+            font-size: .63rem; font-weight: 800; margin-top: 3px;
+        }
         .stage-early    { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .stage-mid      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .stage-late     { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
         .stage-nearterm { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .stage-complete { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
 
-        /* ── Insemination method badges ───────────────────────────────── */
-        .method-badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 4px 10px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+        /* ── Insemination method badges ──────────────────────────────── */
+        .method-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            border-radius: 20px; padding: 4px 10px;
+            font-size: .7rem; font-weight: 700; white-space: nowrap;
+        }
         .method-natural { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
         .method-ai      { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .method-et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
-        .method-unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: 0.85; }
+        .method-unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: .85; }
 
-        /* ── Alert bars ───────────────────────────────────────────────── */
+        /* ── Reproductive status badges ──────────────────────────────── */
+        .repro-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            border-radius: 20px; padding: 4px 10px;
+            font-size: .7rem; font-weight: 700; white-space: nowrap;
+        }
+        .repro-pregnant-again { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+        .repro-open            { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+
+        /* ── Beneficiary cell ────────────────────────────────────────── */
+        .beneficiary-cell { min-width: 0; max-width: 140px; }
+        .beneficiary-cell .name {
+            font-weight: 600; color: var(--ink-900); font-size: .8rem;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .beneficiary-cell .phone { font-size: .7rem; color: var(--ink-500); margin-top: 2px; white-space: nowrap; }
+        .beneficiary-cell .phone i { margin-right: 3px; font-size: .65rem; }
+
+        /* ── Location cell ───────────────────────────────────────────── */
+        .loc-stack { font-size: .8rem; line-height: 1.25; max-width: 150px; min-width: 0; }
+        .loc-stack .village {
+            font-weight: 600; color: var(--ink-900);
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .loc-stack .path {
+            color: var(--ink-500); font-size: .65rem; margin-top: 1px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+
+        /* ── Alert bars ──────────────────────────────────────────────── */
         .critical-bar {
             background: linear-gradient(135deg, #fef2f2, #fff5f5);
-            border: 1.5px solid #fca5a5; border-radius: 10px; padding: 14px 18px;
-            margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+            border: 1.5px solid #fca5a5; border-radius: 12px;
+            padding: 14px 18px; margin-bottom: 18px;
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
         }
-        .critical-bar i { font-size: 1.3rem; color: #dc2626; flex-shrink: 0; }
-        .critical-bar-text { font-size: 0.85rem; color: #7f1d1d; font-weight: 600; }
-
-        /* ── FAO note box ─────────────────────────────────────────────── */
-        .fao-note {
-            background: #f5f3ff; border: 1px solid #ddd6fe; border-left: 4px solid #7c3aed;
-            border-radius: 0 8px 8px 0; padding: 10px 16px; font-size: 0.8rem; color: #3b0764;
-            margin-bottom: 16px;
+        .critical-bar i.bi { font-size: 1.4rem; color: #dc2626; flex-shrink: 0; }
+        .critical-bar-text { font-size: .86rem; color: #7f1d1d; font-weight: 600; flex: 1 1 260px; }
+        .critical-bar-text strong { color: #991b1b; font-weight: 800; }
+        .critical-bar .btn-high-risk {
+            background: #dc2626; color: #fff; border: none;
+            border-radius: 8px; padding: 7px 14px;
+            font-size: .78rem; font-weight: 700;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: background .14s ease;
         }
+        .critical-bar .btn-high-risk:hover { background: #b91c1c; }
 
-        /* ── Purchased section header ─────────────────────────────────── */
-        .purchased-header {
-            background: linear-gradient(135deg, #fdf4ff, #f5f3ff);
-            border: 1px solid #e9d8fd; border-radius: 10px; padding: 10px 16px;
-            margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+        /* ── Purchased / given-birth informational banners ───────────── */
+        .purchased-header, .given-birth-header {
+            border-radius: 10px; padding: 11px 16px;
+            margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px;
+            font-size: .82rem; font-weight: 500;
         }
-        .purchased-header i { color: #7c3aed; }
-        .purchased-header-text { font-size: 0.82rem; color: #4c1d95; font-weight: 600; }
+        .purchased-header { background: linear-gradient(135deg, #fdf4ff, #f5f3ff); border: 1px solid #e9d8fd; color: #4c1d95; }
+        .purchased-header i { color: #7c3aed; font-size: 1.05rem; margin-top: 1px; }
+        .given-birth-header { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; color: #14532d; }
+        .given-birth-header i { color: #16a34a; font-size: 1.05rem; margin-top: 1px; }
 
-        /* ── Empty state ──────────────────────────────────────────────── */
-        .empty-state { text-align: center; padding: 48px 20px; color: #94a3b8; }
-        .empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; }
+        /* ── Empty state ─────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--ink-500); }
+        .empty-state .empty-illustration {
+            width: 56px; height: 56px; margin: 0 auto 14px;
+            background: var(--ink-100); border-radius: 50%;
+            display: grid; place-items: center; font-size: 1.6rem; color: var(--ink-300);
+        }
+        .empty-state p { font-size: .88rem; margin: 0 0 4px; }
+        .empty-state .hint { font-size: .78rem; color: var(--ink-300); }
+
+        /* ── Pagination ──────────────────────────────────────────────── */
+        .pagination-wrap {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 18px; flex-wrap: wrap; gap: 10px;
+            padding-top: 14px; border-top: 1px solid var(--ink-100);
+        }
+        .pagination-info { font-size: .78rem; color: var(--ink-500); }
+        .pagination { margin: 0; }
+        .page-link {
+            color: #0d9488; border-color: #e2e8f0;
+            font-size: .8rem; border-radius: 6px !important;
+            padding: 5px 11px; margin: 0 2px;
+        }
+        .page-link:hover { background: #ccfbf1; color: #0f766e; border-color: #5eead4; }
+        .page-item.active .page-link { background-color: #0d9488; border-color: #0d9488; color: #fff; }
+        .page-link:focus { box-shadow: none; }
+
+        @media (max-width: 767.98px) {
+            body { padding: 10px; }
+            .page-header { padding: 18px 18px; }
+            .section-card { padding: 16px 14px; }
+            .kpi-value { font-size: 1.5rem; }
+        }
     </style>
 </head>
 <body>
-<div class="container-fluid" style="max-width: 1400px;">
+<div class="container-fluid" style="max-width: 1600px;">
 
     <!-- ── Page Header ──────────────────────────────────────────────────── -->
     <div class="page-header">
@@ -147,7 +287,9 @@
             <h1 class="page-title">
                 <i class="bi bi-heart-pulse-fill text-danger me-2"></i>Pregnancy Tracking
             </h1>
-            <p class="page-subtitle">All pregnant animals — farm-bred and purchased/external</p>
+            <p class="page-subtitle">
+                All pregnant animals — farm-bred and purchased/external — plus a log of animals that have given birth
+            </p>
         </div>
         <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to Livestock
@@ -157,29 +299,34 @@
     <!-- ── KPI Cards ──────────────────────────────────────────────────────── -->
     <div class="kpi-grid">
         <div class="kpi-card purple">
-            <div class="kpi-label">Total Pregnant</div>
+            <div class="kpi-label"><i class="bi bi-heart-fill"></i> Total Pregnant</div>
             <div class="kpi-value" th:text="${totalPregnant}">0</div>
             <div class="kpi-sub">All sources combined</div>
         </div>
         <div class="kpi-card pink">
-            <div class="kpi-label">Due Soon</div>
+            <div class="kpi-label"><i class="bi bi-alarm"></i> Due Soon</div>
             <div class="kpi-value" th:text="${dueSoon}">0</div>
             <div class="kpi-sub">Within 14 days</div>
         </div>
         <div class="kpi-card amber">
-            <div class="kpi-label">Checkups Due</div>
+            <div class="kpi-label"><i class="bi bi-clipboard2-check"></i> Checkups Due</div>
             <div class="kpi-value" th:text="${checkupsDue}">0</div>
             <div class="kpi-sub">Past check date</div>
         </div>
         <div class="kpi-card red">
-            <div class="kpi-label">High Risk</div>
+            <div class="kpi-label"><i class="bi bi-exclamation-triangle-fill"></i> High Risk</div>
             <div class="kpi-value" th:text="${highRisk}">0</div>
             <div class="kpi-sub">Overdue / critical</div>
         </div>
         <div class="kpi-card teal">
-            <div class="kpi-label">External Animals</div>
+            <div class="kpi-label"><i class="bi bi-shop-window"></i> External Animals</div>
             <div class="kpi-value" th:text="${purchasedPregnantCount}">0</div>
             <div class="kpi-sub">Purchased / donated</div>
+        </div>
+        <div class="kpi-card green">
+            <div class="kpi-label"><i class="bi bi-clipboard2-pulse"></i> Births Logged</div>
+            <div class="kpi-value" th:text="${givenBirthTotalItems}">0</div>
+            <div class="kpi-sub">All-time birth records</div>
         </div>
     </div>
 
@@ -190,64 +337,41 @@
             <strong th:text="${highRisk}">0</strong> animal(s) are overdue or high-risk.
             Check these animals immediately and contact your veterinarian if needed.
         </span>
+        <button class="btn-high-risk" onclick="scrollToFarmBred()">
+            <i class="bi bi-arrow-down-circle-fill"></i> View high-risk rows
+        </button>
     </div>
-
-    <!--
-    ════════════════════════════════════════════════════════════════════════════
-    FAO STANDARD NOTE — Days Until Due calculation rules
-    ════════════════════════════════════════════════════════════════════════════
-    The "Days Until Due" column uses these rules (matching international livestock
-    management standards):
-
-      daysUntilDue > 0   → N days left          (green)
-      daysUntilDue == 0  → Due Today             (teal/green — NOT overdue)
-      daysUntilDue == -1 → 1 day overdue         (red)
-      daysUntilDue < -1  → N days overdue        (red)
-
-    critical flag (row.critical) is set in the DTO only when daysUntilDue < 0.
-    daysUntilDue == 0 is NOT critical — it is "due today".
-
-    Fix applied here vs old template:
-      OLD: th:if="${row.critical}"  → fired when daysUntilDue <= 0 (wrong, caught == 0)
-      NEW: th:if="${row.critical}"  → fires only when daysUntilDue < 0 (correct)
-           Added separate "due today" branch for daysUntilDue == 0.
-
-    Gestation progress fix:
-      OLD: totalDays = daysPregnant + (daysUntilDue > 0 ? daysUntilDue : 0)
-           → when overdue, totalDays = daysPregnant (wrong — bar shows 100% from day 1 overdue)
-      NEW: totalDays derived from gestationPeriodDays field on the DTO, which
-           equals conceptionDate-to-expectedDueDate gap.  Falls back to
-           daysPregnant + max(0, daysUntilDue) when field is absent.
-    ════════════════════════════════════════════════════════════════════════════
-    -->
 
     <!-- ════════════════════════════════════════════════════════════════════
          SECTION 1 — FARM-BRED PREGNANT ANIMALS
     ════════════════════════════════════════════════════════════════════════ -->
-    <div class="section-card">
+    <div class="section-card" id="sectionFarmBred">
         <div class="section-title">
-            <i class="bi bi-heart-fill text-danger"></i>
+            <span class="icon-chip red"><i class="bi bi-heart-fill"></i></span>
             Farm-Bred Pregnant Animals
-            <span class="section-badge" th:text="${#lists.size(pregnancyRows)} + ' animals'">0 animals</span>
+            <span class="section-badge red" th:text="${#lists.size(pregnancyRows)} + ' animals'">0 animals</span>
         </div>
 
         <div th:if="${pregnancyRows == null or #lists.isEmpty(pregnancyRows)}" class="empty-state">
-            <i class="bi bi-heart"></i>
-            <p>No confirmed-pregnant breeding records found.</p>
+            <div class="empty-illustration"><i class="bi bi-heart"></i></div>
+            <p class="fw-semibold">No confirmed-pregnant breeding records found.</p>
+            <p class="hint">Pregnant animals appear here once a breeding record is marked confirmed.</p>
         </div>
 
         <div class="table-responsive" th:if="${pregnancyRows != null and !#lists.isEmpty(pregnancyRows)}">
             <table class="preg-table">
+                <caption class="visually-hidden">Farm-bred pregnant animals</caption>
                 <thead>
                 <tr>
                     <th>Tag / Category</th>
-                    <th>Conception Date</th>
-                    <th>Expected Due Date</th>
+                    <th>Beneficiary</th>
+                    <th>Location</th>
+                    <th>Conception</th>
+                    <th>Expected Due</th>
                     <th>Days Pregnant</th>
                     <th>Days Until Due</th>
                     <th>Gestation Progress</th>
                     <th>Breeding Method</th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -256,7 +380,6 @@
                                     (${row.daysUntilDue != null and row.daysUntilDue == 0} ? 'row-due-today' :
                                     (${row.dueSoon} ? 'row-due-soon' : ''))">
 
-                    <!-- Tag + Category + Acquisition -->
                     <td class="tag-cell">
                         <strong th:text="${row.tagNumber}">TAG</strong>
                         <div th:if="${row.categoryName != null}">
@@ -272,38 +395,57 @@
                         </div>
                     </td>
 
-                    <!-- Conception Date -->
-                    <td>
-                        <div th:if="${row.conceptionDate != null}">
-                            <div class="date-val"
-                                 th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
+                    <td th:with="b=${beneficiaryMap != null ? beneficiaryMap.get(row.beneficiaryId) : null}">
+                        <div th:if="${b != null}" class="beneficiary-cell">
+                            <div class="name" th:title="${b.fullName}" th:text="${b.fullName}">—</div>
+                            <div class="phone" th:if="${b.phone != null}">
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${b.phone}">—</span>
+                            </div>
                         </div>
+                        <span th:if="${b == null}" class="date-sub">N/A</span>
+                    </td>
+
+                    <td th:with="h=${hierarchyMap != null ? hierarchyMap.get(row.locationId) : null}">
+                        <div class="loc-stack" th:if="${h != null and h.village != null}">
+                            <div class="village" th:title="${h.village}" th:text="${h.village}">—</div>
+                            <div class="path">
+                                <span th:if="${h.sector != null}"   th:text="${h.sector} + ' / '"></span>
+                                <span th:if="${h.district != null}" th:text="${h.district} + ' / '"></span>
+                                <span th:if="${h.province != null}" th:text="${h.province}"></span>
+                            </div>
+                        </div>
+                        <div class="loc-stack" th:if="${h != null and h.village == null}">
+                            <div class="village"
+                                 th:text="${h.sector != null ? h.sector
+                                            : (h.district != null ? h.district
+                                            : (h.province != null ? h.province : '—'))}">—</div>
+                        </div>
+                        <span th:if="${h == null}" class="date-sub">N/A</span>
+                    </td>
+
+                    <td>
+                        <div th:if="${row.conceptionDate != null}" class="date-val"
+                             th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
                         <span th:if="${row.conceptionDate == null}" class="date-sub">Not recorded</span>
                     </td>
 
-                    <!-- Expected Due Date -->
                     <td>
                         <div th:if="${row.expectedDueDate != null}">
-                            <div class="date-val"
-                                 th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
-                            <div class="date-sub"
-                                 th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
+                            <div class="date-val" th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-sub" th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
                                 <i class="bi bi-exclamation-triangle-fill text-danger"></i> Overdue
                             </div>
-                            <div class="date-sub"
-                                 th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
+                            <div class="date-sub" th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
                                 <i class="bi bi-check-circle-fill text-success"></i> Due Today
                             </div>
-                            <div class="date-sub"
-                                 th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
+                            <div class="date-sub" th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
                                 <i class="bi bi-alarm text-warning"></i> Due soon
                             </div>
                         </div>
-                        <span th:if="${row.expectedDueDate == null}"
-                              class="date-sub">Not calculated</span>
+                        <span th:if="${row.expectedDueDate == null}" class="date-sub">Not calculated</span>
                     </td>
 
-                    <!-- Days Pregnant -->
                     <td>
                         <span th:if="${row.daysPregnant != null}"
                               class="days-pill days-pregnant"
@@ -311,80 +453,30 @@
                         <span th:if="${row.daysPregnant == null}" class="date-sub">Unknown</span>
                     </td>
 
-                    <!--
-                    ════════════════════════════════════════════════════════
-                    DAYS UNTIL DUE — FAO-standard rules:
-                      < 0  → overdue   (show absolute value + "d overdue")
-                      = 0  → due today (special green badge — NOT overdue)
-                      1–14 → due soon  (amber)
-                      > 14 → normal    (green)
-                    ════════════════════════════════════════════════════════
-                    -->
                     <td>
-                        <!-- OVERDUE: daysUntilDue is negative (strictly < 0) -->
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue < 0}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue < 0}"
                               class="days-pill days-overdue">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <span th:text="${-row.daysUntilDue} + 'd overdue'"></span>
                         </span>
-
-                        <!-- DUE TODAY: daysUntilDue == 0 -->
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue == 0}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue == 0}"
                               class="days-pill days-today">
                             <i class="bi bi-check-circle-fill"></i> Due Today
                         </span>
-
-                        <!-- DUE SOON: 1–14 days left -->
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue > 0
-                                       and row.dueSoon}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue > 0 and row.dueSoon}"
                               class="days-pill days-soon">
                             <i class="bi bi-alarm"></i>
                             <span th:text="${row.daysUntilDue} + 'd left'"></span>
                         </span>
-
-                        <!-- NORMAL: > 14 days left -->
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue > 0
-                                       and !row.dueSoon}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue > 0 and !row.dueSoon}"
                               class="days-pill days-normal"
                               th:text="${row.daysUntilDue} + 'd left'"></span>
-
-                        <!-- UNKNOWN: no due date -->
                         <span th:if="${row.expectedDueDate == null or row.daysUntilDue == null}"
                               class="days-pill days-unknown">
                             <i class="bi bi-question-circle"></i> Unknown
                         </span>
                     </td>
 
-                    <!--
-                    ════════════════════════════════════════════════════════
-                    GESTATION PROGRESS — FAO-standard calculation:
-
-                    totalGestationDays = distance from conceptionDate to expectedDueDate
-                                       = daysPregnant + max(0, daysUntilDue)
-                    BUT when overdue, daysUntilDue < 0 so we clamp to 0:
-                      totalGestationDays = daysPregnant + max(0, daysUntilDue)
-
-                    This correctly uses the PLANNED gestation length as denominator,
-                    not the elapsed days, so 100% = full term.
-
-                    When daysUntilDue is negative (overdue), pct > 100 → clamped to 100.
-
-                    Stage labels:
-                      0–32%   → Early
-                      33–65%  → Mid
-                      66–89%  → Late
-                      90–99%  → Near Term
-                      100%    → Full Term / Due
-                    ════════════════════════════════════════════════════════
-                    -->
                     <td>
                         <div class="gestation-bar-wrap"
                              th:if="${row.daysPregnant != null and row.expectedDueDate != null}">
@@ -394,7 +486,7 @@
                                 pct=${rawPct > 100 ? 100 : rawPct},
                                 stage=${pct < 33 ? 'Early' : (pct < 66 ? 'Mid' : (pct < 90 ? 'Late' : (pct < 100 ? 'Near Term' : 'Full Term')))}">
                                 <div style="display:flex; align-items:center; justify-content:space-between;">
-                                    <div class="gestation-pct" th:text="${pct} + '%'"></div>
+                                    <div class="gestation-pct fw-bold" th:text="${pct} + '%'"></div>
                                     <span class="stage-pill"
                                           th:classappend="${stage == 'Early'} ? 'stage-early' :
                                                           (${stage == 'Mid'}  ? 'stage-mid'   :
@@ -408,11 +500,9 @@
                                 <div class="gestation-pct" th:text="${pct} + '% of gestation complete'"></div>
                             </div>
                         </div>
-                        <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}"
-                              class="date-sub">N/A</span>
+                        <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}" class="date-sub">N/A</span>
                     </td>
 
-                    <!-- Breeding Method -->
                     <td>
                         <span th:if="${row.inseminationMethod == 'NATURAL_MATING'}"
                               class="method-badge method-natural">
@@ -426,42 +516,25 @@
                               class="method-badge method-et">
                             <i class="bi bi-stars"></i> Embryo Transfer
                         </span>
-                        <span th:if="${row.inseminationMethod == null
-                                       or row.inseminationMethod == ''
-                                       or row.inseminationMethod == 'UNKNOWN'}"
+                        <span th:if="${row.inseminationMethod == null or row.inseminationMethod == '' or row.inseminationMethod == 'UNKNOWN'}"
                               class="method-badge method-unknown">
                             <i class="bi bi-question-circle"></i> Not recorded
                         </span>
-                    </td>
-
-                    <!-- Actions -->
-                    <td>
-                        <a th:if="${row.livestockId != null}"
-                           th:href="@{/livestock/view/{id}(id=${row.livestockId})}"
-                           class="btn btn-sm btn-info" title="View Animal">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a th:if="${row.livestockId != null}"
-                           th:href="@{/livestock/edit/{id}(id=${row.livestockId})}"
-                           class="btn btn-sm btn-warning" title="Edit Animal">
-                            <i class="bi bi-pencil"></i>
-                        </a>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
-    </div><!-- /.section-card farm-bred -->
+    </div>
 
     <!-- ════════════════════════════════════════════════════════════════════
          SECTION 2 — PURCHASED / EXTERNAL PREGNANT ANIMALS
     ════════════════════════════════════════════════════════════════════════ -->
-    <div class="section-card"
-         th:if="${purchasedRows != null and !#lists.isEmpty(purchasedRows)}">
+    <div class="section-card" th:if="${purchasedRows != null and !#lists.isEmpty(purchasedRows)}">
 
         <div class="purchased-header">
             <i class="bi bi-shop-window"></i>
-            <span class="purchased-header-text">
+            <span>
                 These animals arrived already pregnant (purchased, donated, or transferred).
                 They have no on-farm breeding record. The breeding method was recorded at intake.
                 To add a full breeding record, use the <strong>Breeding</strong> module.
@@ -469,25 +542,26 @@
         </div>
 
         <div class="section-title">
-            <i class="bi bi-bag-heart-fill" style="color:#7c3aed;"></i>
+            <span class="icon-chip purple"><i class="bi bi-bag-heart-fill"></i></span>
             Purchased / External Pregnant Animals
-            <span class="section-badge"
-                  th:text="${purchasedPregnantCount} + ' animals'">0 animals</span>
+            <span class="section-badge" th:text="${purchasedPregnantCount} + ' animals'">0 animals</span>
         </div>
 
         <div class="table-responsive">
             <table class="preg-table">
+                <caption class="visually-hidden">Purchased or external pregnant animals</caption>
                 <thead>
                 <tr>
                     <th>Tag / Category</th>
+                    <th>Beneficiary</th>
+                    <th>Location</th>
                     <th>Acquisition</th>
-                    <th>Conception Date</th>
-                    <th>Expected Due Date</th>
+                    <th>Conception</th>
+                    <th>Expected Due</th>
                     <th>Days Pregnant</th>
                     <th>Days Until Due</th>
                     <th>Gestation Progress</th>
                     <th>Breeding Method</th>
-                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -496,7 +570,6 @@
                                     (${row.daysUntilDue != null and row.daysUntilDue == 0} ? 'row-due-today' :
                                     (${row.dueSoon} ? 'row-due-soon' : ''))">
 
-                    <!-- Tag + Category -->
                     <td class="tag-cell">
                         <strong th:text="${row.tagNumber}">TAG</strong>
                         <div th:if="${row.categoryName != null}">
@@ -504,7 +577,35 @@
                         </div>
                     </td>
 
-                    <!-- Acquisition Method -->
+                    <td th:with="b=${beneficiaryMap != null ? beneficiaryMap.get(row.beneficiaryId) : null}">
+                        <div th:if="${b != null}" class="beneficiary-cell">
+                            <div class="name" th:title="${b.fullName}" th:text="${b.fullName}">—</div>
+                            <div class="phone" th:if="${b.phone != null}">
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${b.phone}">—</span>
+                            </div>
+                        </div>
+                        <span th:if="${b == null}" class="date-sub">N/A</span>
+                    </td>
+
+                    <td th:with="h=${hierarchyMap != null ? hierarchyMap.get(row.locationId) : null}">
+                        <div class="loc-stack" th:if="${h != null and h.village != null}">
+                            <div class="village" th:title="${h.village}" th:text="${h.village}">—</div>
+                            <div class="path">
+                                <span th:if="${h.sector != null}"   th:text="${h.sector} + ' / '"></span>
+                                <span th:if="${h.district != null}" th:text="${h.district} + ' / '"></span>
+                                <span th:if="${h.province != null}" th:text="${h.province}"></span>
+                            </div>
+                        </div>
+                        <div class="loc-stack" th:if="${h != null and h.village == null}">
+                            <div class="village"
+                                 th:text="${h.sector != null ? h.sector
+                                            : (h.district != null ? h.district
+                                            : (h.province != null ? h.province : '—'))}">—</div>
+                        </div>
+                        <span th:if="${h == null}" class="date-sub">N/A</span>
+                    </td>
+
                     <td>
                         <span class="acq-badge"
                               th:if="${row.acquisitionMethod != null}"
@@ -512,43 +613,31 @@
                                              (${row.acquisitionMethod == 'DONATION'} ? 'acq-donation' :
                                              (${row.acquisitionMethod == 'TRANSFER'} ? 'acq-transfer' : 'acq-other'))"
                               th:text="${row.acquisitionMethod}"></span>
-                        <span th:if="${row.acquisitionMethod == null}"
-                              class="date-sub">Unknown</span>
+                        <span th:if="${row.acquisitionMethod == null}" class="date-sub">Unknown</span>
                     </td>
 
-                    <!-- Conception Date -->
                     <td>
-                        <div th:if="${row.conceptionDate != null}">
-                            <div class="date-val"
-                                 th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
-                        </div>
-                        <span th:if="${row.conceptionDate == null}"
-                              class="date-sub">Not recorded</span>
+                        <div th:if="${row.conceptionDate != null}" class="date-val"
+                             th:text="${#temporals.format(row.conceptionDate, 'dd MMM yyyy')}"></div>
+                        <span th:if="${row.conceptionDate == null}" class="date-sub">Not recorded</span>
                     </td>
 
-                    <!-- Expected Due Date -->
                     <td>
                         <div th:if="${row.expectedDueDate != null}">
-                            <div class="date-val"
-                                 th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
-                            <div class="date-sub"
-                                 th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
+                            <div class="date-val" th:text="${#temporals.format(row.expectedDueDate, 'dd MMM yyyy')}"></div>
+                            <div class="date-sub" th:if="${row.daysUntilDue != null and row.daysUntilDue < 0}">
                                 <i class="bi bi-exclamation-triangle-fill text-danger"></i> Overdue
                             </div>
-                            <div class="date-sub"
-                                 th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
+                            <div class="date-sub" th:if="${row.daysUntilDue != null and row.daysUntilDue == 0}">
                                 <i class="bi bi-check-circle-fill text-success"></i> Due Today
                             </div>
-                            <div class="date-sub"
-                                 th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
+                            <div class="date-sub" th:if="${row.dueSoon and row.daysUntilDue != null and row.daysUntilDue > 0}">
                                 <i class="bi bi-alarm text-warning"></i> Due soon
                             </div>
                         </div>
-                        <span th:if="${row.expectedDueDate == null}"
-                              class="date-sub">Not calculated</span>
+                        <span th:if="${row.expectedDueDate == null}" class="date-sub">Not calculated</span>
                     </td>
 
-                    <!-- Days Pregnant -->
                     <td>
                         <span th:if="${row.daysPregnant != null}"
                               class="days-pill days-pregnant"
@@ -556,33 +645,22 @@
                         <span th:if="${row.daysPregnant == null}" class="date-sub">Unknown</span>
                     </td>
 
-                    <!-- Days Until Due (same 4-branch logic as Section 1) -->
                     <td>
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue < 0}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue < 0}"
                               class="days-pill days-overdue">
                             <i class="bi bi-exclamation-triangle-fill"></i>
                             <span th:text="${-row.daysUntilDue} + 'd overdue'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue == 0}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue == 0}"
                               class="days-pill days-today">
                             <i class="bi bi-check-circle-fill"></i> Due Today
                         </span>
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue > 0
-                                       and row.dueSoon}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue > 0 and row.dueSoon}"
                               class="days-pill days-soon">
                             <i class="bi bi-alarm"></i>
                             <span th:text="${row.daysUntilDue} + 'd left'"></span>
                         </span>
-                        <span th:if="${row.expectedDueDate != null
-                                       and row.daysUntilDue != null
-                                       and row.daysUntilDue > 0
-                                       and !row.dueSoon}"
+                        <span th:if="${row.expectedDueDate != null and row.daysUntilDue != null and row.daysUntilDue > 0 and !row.dueSoon}"
                               class="days-pill days-normal"
                               th:text="${row.daysUntilDue} + 'd left'"></span>
                         <span th:if="${row.expectedDueDate == null or row.daysUntilDue == null}"
@@ -591,7 +669,6 @@
                         </span>
                     </td>
 
-                    <!-- Gestation Progress (same fixed calculation as Section 1) -->
                     <td>
                         <div class="gestation-bar-wrap"
                              th:if="${row.daysPregnant != null and row.expectedDueDate != null}">
@@ -601,7 +678,7 @@
                                 pct=${rawPct > 100 ? 100 : rawPct},
                                 stage=${pct < 33 ? 'Early' : (pct < 66 ? 'Mid' : (pct < 90 ? 'Late' : (pct < 100 ? 'Near Term' : 'Full Term')))}">
                                 <div style="display:flex; align-items:center; justify-content:space-between;">
-                                    <div class="gestation-pct" th:text="${pct} + '%'"></div>
+                                    <div class="gestation-pct fw-bold" th:text="${pct} + '%'"></div>
                                     <span class="stage-pill"
                                           th:classappend="${stage == 'Early'} ? 'stage-early' :
                                                           (${stage == 'Mid'}  ? 'stage-mid'   :
@@ -615,69 +692,237 @@
                                 <div class="gestation-pct" th:text="${pct} + '% of gestation complete'"></div>
                             </div>
                         </div>
-                        <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}"
-                              class="date-sub">N/A</span>
+                        <span th:if="${row.daysPregnant == null or row.expectedDueDate == null}" class="date-sub">N/A</span>
                     </td>
 
-                    <!-- Breeding Method -->
                     <td>
-                        <span th:if="${row.inseminationMethod == 'NATURAL_MATING'}"
-                              class="method-badge method-natural">
+                        <span th:if="${row.inseminationMethod == 'NATURAL_MATING'}" class="method-badge method-natural">
                             <i class="bi bi-heart-fill"></i> Natural Mating
                         </span>
-                        <span th:if="${row.inseminationMethod == 'ARTIFICIAL_INSEMINATION'}"
-                              class="method-badge method-ai">
+                        <span th:if="${row.inseminationMethod == 'ARTIFICIAL_INSEMINATION'}" class="method-badge method-ai">
                             <i class="bi bi-syringe"></i> AI
                         </span>
-                        <span th:if="${row.inseminationMethod == 'EMBRYO_TRANSFER'}"
-                              class="method-badge method-et">
+                        <span th:if="${row.inseminationMethod == 'EMBRYO_TRANSFER'}" class="method-badge method-et">
                             <i class="bi bi-stars"></i> Embryo Transfer
                         </span>
-                        <span th:if="${row.inseminationMethod == null
-                                       or row.inseminationMethod == ''
-                                       or row.inseminationMethod == 'UNKNOWN'}"
+                        <span th:if="${row.inseminationMethod == null or row.inseminationMethod == '' or row.inseminationMethod == 'UNKNOWN'}"
                               class="method-badge method-unknown">
                             <i class="bi bi-question-circle"></i> Not recorded
                         </span>
-                    </td>
-
-                    <!-- Actions -->
-                    <td>
-                        <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}"
-                           class="btn btn-sm btn-info" title="View Animal">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a th:href="@{/livestock/edit/{id}(id=${row.livestockId})}"
-                           class="btn btn-sm btn-warning" title="Edit Animal">
-                            <i class="bi bi-pencil"></i>
-                        </a>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
-    </div><!-- /.section-card purchased -->
+    </div>
 
     <!-- No pregnant animals at all -->
     <div class="section-card"
          th:if="${(pregnancyRows == null or #lists.isEmpty(pregnancyRows))
                   and (purchasedRows == null or #lists.isEmpty(purchasedRows))}">
         <div class="empty-state">
-            <i class="bi bi-heart text-muted"></i>
+            <div class="empty-illustration"><i class="bi bi-heart"></i></div>
             <p class="fw-semibold">No pregnant animals found.</p>
-            <p class="text-muted small">
+            <p class="hint">
                 Pregnant animals appear here when:<br>
                 • A breeding record is confirmed-pregnant via the Breeding module, or<br>
                 • A purchased/donated animal is flagged as pregnant during registration.
             </p>
-            <a href="/livestock/register" class="btn btn-primary btn-sm mt-2">
+            <a href="/livestock/register" class="btn btn-primary btn-sm mt-3">
                 <i class="bi bi-plus-circle me-1"></i> Register Livestock
             </a>
         </div>
     </div>
 
-</div><!-- /.container-fluid -->
+    <!-- ════════════════════════════════════════════════════════════════════
+         SECTION 3 — ANIMALS THAT HAVE GIVEN BIRTH
+    ════════════════════════════════════════════════════════════════════════ -->
+    <div class="section-card">
+        <div class="given-birth-header">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>
+                These animals were pregnant and have already given birth. They no longer
+                appear in the pregnant sections above. "Pregnant Again" means a new
+                pregnancy has since been confirmed for this animal.
+            </span>
+        </div>
+
+        <div class="section-title">
+            <span class="icon-chip green"><i class="bi bi-clipboard2-pulse-fill"></i></span>
+            Animals That Have Given Birth
+            <span class="section-badge green"
+                  th:text="${givenBirthTotalItems} + ' record(s)'">0 record(s)</span>
+        </div>
+
+        <div th:if="${givenBirthRows == null or #lists.isEmpty(givenBirthRows)}" class="empty-state">
+            <div class="empty-illustration"><i class="bi bi-clipboard2-x"></i></div>
+            <p class="fw-semibold">No birth records found yet.</p>
+            <p class="hint">Birth records appear here after they are logged in the Births module.</p>
+            <a href="/livestock/births/register" class="btn btn-success btn-sm mt-3">
+                <i class="bi bi-plus-circle me-1"></i> Record a Birth
+            </a>
+        </div>
+
+        <div class="table-responsive" th:if="${givenBirthRows != null and !#lists.isEmpty(givenBirthRows)}">
+            <table class="preg-table">
+                <caption class="visually-hidden">Animals that have given birth</caption>
+                <thead>
+                <tr>
+                    <th>Tag / Category</th>
+                    <th>Beneficiary</th>
+                    <th>Location</th>
+                    <th>Birth Date</th>
+                    <th>Days Since Birth</th>
+                    <th>Offspring</th>
+                    <th>Linked / Registered</th>
+                    <th>Current Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${givenBirthRows}">
+
+                    <td class="tag-cell">
+                        <strong th:text="${row.tagNumber}">TAG</strong>
+                        <div th:if="${row.categoryName != null}">
+                            <span class="cat-badge" th:text="${row.categoryName}"></span>
+                        </div>
+                    </td>
+
+                    <td th:with="b=${beneficiaryMap != null ? beneficiaryMap.get(row['beneficiaryId']) : null}">
+                        <div th:if="${b != null}" class="beneficiary-cell">
+                            <div class="name" th:title="${b.fullName}" th:text="${b.fullName}">—</div>
+                            <div class="phone" th:if="${b.phone != null}">
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${b.phone}">—</span>
+                            </div>
+                        </div>
+                        <span th:if="${b == null}" class="date-sub">N/A</span>
+                    </td>
+
+                    <td th:with="h=${hierarchyMap != null ? hierarchyMap.get(row['locationId']) : null}">
+                        <div class="loc-stack" th:if="${h != null and h.village != null}">
+                            <div class="village" th:title="${h.village}" th:text="${h.village}">—</div>
+                            <div class="path">
+                                <span th:if="${h.sector != null}"   th:text="${h.sector} + ' / '"></span>
+                                <span th:if="${h.district != null}" th:text="${h.district} + ' / '"></span>
+                                <span th:if="${h.province != null}" th:text="${h.province}"></span>
+                            </div>
+                        </div>
+                        <div class="loc-stack" th:if="${h != null and h.village == null}">
+                            <div class="village"
+                                 th:text="${h.sector != null ? h.sector
+                                            : (h.district != null ? h.district
+                                            : (h.province != null ? h.province : '—'))}">—</div>
+                        </div>
+                        <span th:if="${h == null}" class="date-sub">N/A</span>
+                    </td>
+
+                    <td>
+                        <div th:if="${row.birthDate != null}" class="date-val"
+                             th:text="${#temporals.format(row.birthDate, 'dd MMM yyyy')}"></div>
+                        <span th:if="${row.birthDate == null}" class="date-sub">Not recorded</span>
+                    </td>
+
+                    <td>
+                        <span th:if="${row.daysSinceBirth != null}"
+                              class="days-pill days-since"
+                              th:text="${row.daysSinceBirth} + ' days ago'"></span>
+                        <span th:if="${row.daysSinceBirth == null}" class="date-sub">Unknown</span>
+                    </td>
+
+                    <td>
+                        <span class="days-pill days-pregnant"
+                              th:text="${row.offspringCount} + ' recorded'"></span>
+                    </td>
+
+                    <td>
+                        <span class="days-pill days-normal"
+                              th:text="${row.linkedChildren} + ' linked'"></span>
+                    </td>
+
+                    <td>
+                        <span th:if="${row.isPregnantAgain}" class="repro-badge repro-pregnant-again">
+                            <i class="bi bi-heart-fill"></i> Pregnant Again
+                        </span>
+                        <span th:unless="${row.isPregnantAgain}" class="repro-badge repro-open">
+                            <i class="bi bi-check-circle"></i>
+                            <span th:text="${row.reproductiveStatusLabel}">Open</span>
+                        </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ── Pagination ──────────────────────────────────────────────── -->
+        <div class="pagination-wrap" th:if="${givenBirthRows != null and !#lists.isEmpty(givenBirthRows)}">
+            <div class="pagination-info">
+                Showing page <strong th:text="${givenBirthCurrentPage + 1}">1</strong>
+                of <strong th:text="${givenBirthTotalPages}">1</strong>
+                (<span th:text="${givenBirthTotalItems}">0</span> total birth record(s))
+            </div>
+
+            <nav th:if="${givenBirthTotalPages > 1}" aria-label="Given birth pagination">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${givenBirthCurrentPage == 0} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthCurrentPage - 1}, birthSize=${givenBirthPageSize})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    <li class="page-item" th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[0] > 0}">
+                        <a class="page-link"
+                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=0, birthSize=${givenBirthPageSize})}">1</a>
+                    </li>
+                    <li class="page-item disabled" th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[0] > 1}">
+                        <span class="page-link">…</span>
+                    </li>
+
+                    <li class="page-item" th:each="i : ${givenBirthPageNumbers}"
+                        th:classappend="${i == givenBirthCurrentPage} ? 'active'">
+                        <a class="page-link"
+                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${i}, birthSize=${givenBirthPageSize})}"
+                           th:text="${i + 1}">1</a>
+                    </li>
+
+                    <li class="page-item disabled"
+                        th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[#lists.size(givenBirthPageNumbers) - 1] < givenBirthTotalPages - 2}">
+                        <span class="page-link">…</span>
+                    </li>
+                    <li class="page-item"
+                        th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[#lists.size(givenBirthPageNumbers) - 1] < givenBirthTotalPages - 1}">
+                        <a class="page-link"
+                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthTotalPages - 1}, birthSize=${givenBirthPageSize})}"
+                           th:text="${givenBirthTotalPages}">Last</a>
+                    </li>
+
+                    <li class="page-item" th:classappend="${givenBirthCurrentPage == givenBirthTotalPages - 1} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthCurrentPage + 1}, birthSize=${givenBirthPageSize})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function scrollToFarmBred() {
+        var el = document.getElementById('sectionFarmBred');
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelectorAll('.row-overdue').forEach(function(row) {
+            row.style.transition = 'box-shadow .4s ease';
+            row.style.boxShadow = '0 0 0 3px rgba(239,68,68,.35)';
+            setTimeout(function() { row.style.boxShadow = ''; }, 1400);
+        });
+    }
+</script>
 </body>
 </html>

@@ -1,197 +1,351 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Record Breeding Event</title>
+    <title th:text="${editingId != null} ? 'Edit Breeding Record' : 'Record New Breeding'">Breeding Form</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary:    #e11d48;
-            --primary-d:  #be123c;
-            --primary-bg: #fff1f2;
-            --surface:    #ffffff;
-            --bg:         #f1f5f9;
-            --border:     #e2e8f0;
-            --text:       #1e293b;
-            --muted:      #64748b;
-            --danger:     #ef4444;
-            --info-bg:    #eff6ff;
-            --info-bd:    #bfdbfe;
-            --info-tx:    #1d4ed8;
-            --ok-bg:      #f0fdf4;
-            --ok-bd:      #bbf7d0;
-            --ok-tx:      #15803d;
-            --guide-bg:   #f5f3ff;
-            --guide-bd:   #ddd6fe;
-            --guide-tx:   #6d28d9;
+            --primary:      #166534;
+            --primary-dark: #14532d;
+            --primary-light:#dcfce7;
+            --info:         #0369a1;
+            --info-bg:      #eff6ff;
+            --info-bd:      #bfdbfe;
+            --amber:        #b45309;
+            --amber-bg:     #fffbeb;
+            --amber-bd:     #fde68a;
+            --surface:      #ffffff;
+            --bg:           #f1f5f9;
+            --border:       #e2e8f0;
+            --text:         #0f172a;
+            --muted:        #64748b;
+            --danger:       #b91c1c;
+            --danger-bg:    #fef2f2;
         }
         * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; }
 
         .top-bar {
             background: var(--surface); border-bottom: 1px solid var(--border);
-            padding: 0 32px; height: 64px; display: flex; align-items: center;
-            justify-content: space-between; position: sticky; top: 0; z-index: 100;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            padding: 0 clamp(16px, 4vw, 32px); height: 68px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
         .top-bar-left { display: flex; align-items: center; gap: 14px; }
         .top-bar-icon {
-            width: 40px; height: 40px; border-radius: 10px; background: var(--primary-bg);
-            display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--primary);
+            width: 42px; height: 42px; border-radius: 10px; background: var(--primary-light);
+            display: flex; align-items: center; justify-content: center; font-size: 1.15rem; color: var(--primary-dark);
         }
         .top-bar h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-        .breadcrumb-bar { font-size: 0.75rem; color: var(--muted); display:flex; align-items:center; gap:6px; }
+        .breadcrumb-bar { font-size: 0.76rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
         .breadcrumb-bar a { color: var(--muted); text-decoration: none; }
-        .breadcrumb-bar a:hover { color: var(--primary-d); }
-        .breadcrumb-bar .sep { opacity: .4; }
+        .breadcrumb-bar a:hover { color: var(--primary); }
 
-        .btn-cancel {
-            background: transparent; border: 1.5px solid var(--border); color: var(--muted);
-            padding: 9px 18px; border-radius: 9px; font-weight: 500; font-size: 0.85rem;
-            cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
-            transition: border-color .15s, color .15s;
+        .page-body { max-width: 1080px; margin: 28px auto 100px; padding: 0 20px; display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 992px) {
+            .page-body { grid-template-columns: 1.2fr 0.8fr; align-items: start; }
         }
-        .btn-cancel:hover { border-color: #94a3b8; color: var(--text); }
-
-        .page-body { max-width: 920px; margin: 32px auto; padding: 0 20px 100px; }
 
         .intro-banner {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-            padding: 16px 20px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: #fff; border-radius: 14px; padding: 20px 24px; display: flex; gap: 16px; align-items: flex-start;
         }
-        .intro-banner .bi { color: var(--primary); font-size: 1.25rem; margin-top: 2px; flex-shrink: 0; }
-        .intro-banner p { margin: 0; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
-        .intro-banner strong { color: var(--text); }
+        .intro-banner .bi { font-size: 1.4rem; margin-top: 2px; opacity: .9; }
+        .intro-banner h6 { margin: 0 0 4px; font-weight: 700; font-size: 0.95rem; }
+        .intro-banner p { margin: 0; font-size: 0.84rem; opacity: .92; line-height: 1.5; }
 
-        .form-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-            margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        .readiness-card {
+            grid-column: 1 / -1;
+            background: var(--surface); border: 1.5px solid var(--info-bd); border-radius: 14px;
+            overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: none;
         }
-        .form-card-header {
-            padding: 16px 24px; border-bottom: 1px solid var(--border); background: #fafafa;
-            display: flex; align-items: center; gap: 10px;
-        }
-        .form-card-header .card-icon {
-            width: 32px; height: 32px; border-radius: 8px;
-            display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
-        }
-        .form-card-header h6 {
-            margin: 0; font-size: 0.82rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .06em; color: var(--muted);
-        }
-        .form-card-header .step-tag {
-            margin-left: auto; font-size: 0.7rem; color: var(--muted); font-weight: 500;
-        }
-        .form-card-body { padding: 24px; }
+        .readiness-card .card-header { background: var(--info-bg); }
+        .readiness-card .card-header .card-icon { background: #dbeafe; color: var(--info); }
+        .readiness-card .card-header h6 { color: var(--info); }
+        .readiness-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        @media (max-width: 900px) { .readiness-grid { grid-template-columns: repeat(2, 1fr); } }
+        .readiness-item .r-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
+        .readiness-item .r-value { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+        .readiness-item .r-value.muted { color: var(--muted); font-weight: 400; font-style: italic; }
+        .r-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+        .r-pill.yes { background: var(--primary-light); color: var(--primary-dark); }
+        .r-pill.no  { background: var(--danger-bg); color: var(--danger); }
+        .r-pill.health-good { background: var(--primary-light); color: var(--primary-dark); }
+        .r-pill.health-bad  { background: var(--danger-bg); color: var(--danger); }
+        .r-pill.health-unknown { background: #f1f5f9; color: var(--muted); }
+        .readiness-reason { grid-column: 1 / -1; font-size: 0.78rem; color: var(--muted); background: #f8fafc; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 12px; margin-top: 4px; }
+        .readiness-note { grid-column: 1 / -1; font-size: 0.72rem; color: var(--muted); background: #f8fafc; border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 12px; line-height: 1.5; }
 
-        .form-label { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; display: block; }
+        .history-advisory {
+            grid-column: 1 / -1;
+            font-size: 0.8rem; border-radius: 8px; padding: 10px 12px; margin-top: 10px;
+            display: flex; align-items: flex-start; gap: 8px; line-height: 1.45;
+        }
+        .history-advisory.level-good    { background: var(--primary-light); color: var(--primary-dark); border: 1px solid #bbf7d0; }
+        .history-advisory.level-info    { background: var(--info-bg); color: var(--info); border: 1px solid var(--info-bd); }
+        .history-advisory.level-warning { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bd); }
+        .history-advisory .bi { font-size: 1rem; margin-top: 1px; flex-shrink: 0; }
+
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-header { padding: 14px 22px; border-bottom: 1px solid var(--border); background: #fafafa; display: flex; align-items: center; gap: 10px; }
+        .card-header .card-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; background: var(--primary-light); color: var(--primary-dark); }
+        .card-header h6 { margin: 0; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+        .card-body { padding: 22px; }
+
+        .form-label { font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; display: block; }
         .form-label .req { color: var(--danger); }
-        .form-label .opt { font-weight: 400; color: var(--muted); font-size: 0.75rem; margin-left: 4px; }
+        .form-label .opt { font-weight: 400; color: var(--muted); font-size: 0.74rem; margin-left: 4px; }
+        .field-help { font-size: 0.76rem; color: var(--muted); margin-top: 5px; }
 
-        .form-control, .form-select {
-            border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem;
-            padding: 9px 12px; color: var(--text); transition: border-color .15s, box-shadow .15s; width: 100%;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary); box-shadow: 0 0 0 3px rgba(225,29,72,.12); outline: none;
-        }
+        .form-control, .form-select { border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.88rem; padding: 9px 12px; width: 100%; }
+        .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(22,101,52,.12); outline: none; }
         .form-control.is-invalid, .form-select.is-invalid { border-color: var(--danger); }
-        .form-control:disabled, .form-select:disabled { background: #f8fafc; color: var(--muted); cursor: not-allowed; }
+        .invalid-feedback, .field-error { font-size: 0.78rem; color: var(--danger); margin-top: 4px; }
+        textarea.form-control { resize: vertical; min-height: 84px; }
 
-        .input-icon-wrap { position: relative; }
-        .input-icon-wrap .bi {
-            position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-            color: var(--muted); font-size: 0.9rem; pointer-events: none;
+        .eligibility-box {
+            margin-top: 10px; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px;
+            padding: 12px 14px;
         }
-        .input-icon-wrap .form-control, .input-icon-wrap .form-select { padding-left: 34px; }
-
-        .helper-text { font-size: 0.76rem; color: var(--muted); margin-top: 5px; line-height: 1.45; }
-        .helper-text.with-icon { display: flex; gap: 6px; align-items: flex-start; }
-        .helper-text.with-icon .bi { margin-top: 1px; flex-shrink: 0; }
-        .field-error { font-size: 0.78rem; color: var(--danger); margin-top: 4px; }
-
-        /* "How to fill this in" guidance — always visible, styled distinctly from the
-           dynamic blue info panels below so users learn to recognize it at a glance. */
-        .field-guide {
-            display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; font-size: 0.78rem;
-            background: var(--guide-bg); border: 1px solid var(--guide-bd); color: var(--guide-tx);
-            border-radius: 8px; padding: 9px 13px; line-height: 1.55;
+        .eligibility-box .elig-title {
+            font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+            color: var(--muted); display: flex; align-items: center; gap: 6px; margin-bottom: 8px;
         }
-        .field-guide .bi { margin-top: 1px; flex-shrink: 0; color: var(--guide-tx); }
-        .field-guide strong { color: var(--guide-tx); font-weight: 700; }
-
-        /* Generic reusable explanation / info panels */
-        .info-panel {
-            display: none; margin-top: 8px; font-size: 0.8rem;
-            background: var(--info-bg); border: 1px solid var(--info-bd); color: var(--info-tx);
-            border-radius: 8px; padding: 9px 13px; align-items: flex-start; gap: 8px; line-height: 1.5;
-        }
-        .info-panel.visible { display: flex; }
-        .info-panel.success { background: var(--ok-bg); border-color: var(--ok-bd); color: var(--ok-tx); }
-        .info-panel .bi { margin-top: 1px; flex-shrink: 0; }
-        .info-panel b { font-weight: 700; }
-
-        .eligibility-legend {
-            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
-        }
-        .eligibility-legend .pill {
-            font-size: 0.72rem; padding: 4px 10px; border-radius: 999px; font-weight: 600;
-            background: #f8fafc; border: 1px solid var(--border); color: var(--muted);
+        .eligibility-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+        .eligibility-list li { font-size: 0.78rem; color: var(--text); display: flex; align-items: flex-start; gap: 7px; line-height: 1.4; }
+        .eligibility-list li i { color: var(--primary); font-size: 0.85rem; margin-top: 1px; flex-shrink: 0; }
+        .eligibility-count {
+            font-size: 0.76rem; color: var(--info); background: var(--info-bg); border: 1px solid var(--info-bd);
+            border-radius: 20px; padding: 3px 10px; font-weight: 600; display: inline-block;
         }
 
-        #maleSection { transition: opacity .2s, filter .2s; }
-        #maleSection.hidden-method { opacity: .45; pointer-events: none; filter: grayscale(.3); }
-
-        .status-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .status-option { position: relative; }
-        .status-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
-        .status-label {
-            display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px;
-            border: 2px solid var(--border); cursor: pointer; transition: all .15s;
-            font-size: 0.85rem; font-weight: 500;
+        .eligibility-count-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .eligibility-count-list .eligibility-count { margin-top: 0; }
+        .eligibility-count-empty {
+            font-size: 0.76rem; color: var(--danger); background: var(--danger-bg); border: 1px solid #fecaca;
+            border-radius: 20px; padding: 3px 10px; font-weight: 600; display: inline-block; margin-top: 10px;
         }
-        .status-label:hover { border-color: #cbd5e1; background: #f8fafc; }
-        .status-option input:checked + .status-label { border-color: var(--primary); background: var(--primary-bg); }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .dot-pending  { background: #f59e0b; }
-        .dot-pregnant { background: #10b981; }
-        .dot-failed   { background: #ef4444; }
-        .dot-complete { background: #6366f1; }
+
+        .method-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        @media (max-width: 640px) { .method-grid { grid-template-columns: 1fr; } }
+        .method-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .method-card {
+            border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+            transition: all .15s; display: block; height: 100%;
+        }
+        .method-card:hover { border-color: #94a3b8; background: #f8fafc; }
+        .method-option input:checked + .method-card { border-color: var(--primary); background: var(--primary-light); }
+        .method-card:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .method-card .m-title { font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
+        .method-card .m-desc { font-size: 0.74rem; color: var(--muted); line-height: 1.4; }
+
+        #maleSection { transition: opacity .2s; }
+        #maleSection.hidden-method { opacity: .4; pointer-events: none; }
+        .male-note { display: none; font-size: 0.78rem; background: var(--info-bg); border: 1px solid var(--info-bd); color: var(--info); border-radius: 8px; padding: 9px 12px; margin-top: 8px; gap: 7px; align-items: flex-start; }
+        .male-note.visible { display: flex; }
+        .male-note.warn { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+
+        .calc-panel { position: sticky; top: 88px; }
+        .calc-card { border: 1.5px solid var(--info-bd); }
+        .calc-card .card-header { background: var(--info-bg); }
+        .calc-card .card-header .card-icon { background: #dbeafe; color: var(--info); }
+        .calc-card .card-header h6 { color: var(--info); }
+        .calc-intro { font-size: 0.78rem; color: var(--muted); margin: 0 0 16px; line-height: 1.5; }
+        .calc-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px dashed var(--border); }
+        .calc-row:last-child { border-bottom: none; }
+        .calc-row-label { font-size: 0.78rem; font-weight: 600; color: var(--text); }
+        .calc-row-sub { font-size: 0.7rem; color: var(--muted); margin-top: 2px; max-width: 220px; line-height: 1.35; }
+        .calc-row-value { font-size: 0.82rem; font-weight: 700; color: var(--primary-dark); text-align: right; white-space: nowrap; }
+        .calc-pill { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+        .pill-pending { background: #fef3c7; color: #92400e; }
+        .pill-notpregnant { background: #f1f5f9; color: #475569; }
+        .calc-msg { font-size: 0.8rem; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
+        .calc-msg.show { display: block; }
+        .calc-msg.msg-info { background: var(--amber-bg); border: 1px solid var(--amber-bd); color: var(--amber); }
+        .calc-msg.msg-error { background: var(--danger-bg); border: 1px solid #fecaca; color: var(--danger); }
+        .retry-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: 700; color: var(--amber); background: var(--amber-bg); border: 1px solid var(--amber-bd); padding: 2px 8px; border-radius: 20px; margin-left: 6px; }
+        .fao-note {
+            font-size: 0.72rem; color: var(--muted); background: #f8fafc; border: 1px dashed var(--border);
+            border-radius: 8px; padding: 10px 12px; margin-top: 14px; line-height: 1.5;
+        }
+        .fao-note strong { color: var(--text); }
+        .recalc-btn { font-size: 0.75rem; border: 1.5px solid var(--info-bd); background: #fff; color: var(--info); border-radius: 7px; padding: 5px 10px; font-weight: 600; cursor: pointer; }
+        .recalc-btn:hover { background: var(--info-bg); }
+
+        .error-banner { background: var(--danger-bg); border: 1.5px solid #fecaca; border-radius: 10px; padding: 14px 18px; display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; color: var(--danger); font-size: 0.88rem; grid-column: 1 / -1; }
+        .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; border-radius: 10px; grid-column: 1 / -1; font-size: 0.86rem; }
 
         .sticky-footer {
-            position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
-            border-top: 1px solid var(--border); padding: 14px 32px;
-            display: flex; align-items: center; justify-content: space-between; z-index: 99;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.07); gap: 12px;
+            position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border);
+            padding: 14px clamp(16px, 4vw, 32px); display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+            z-index: 99; box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
         }
-        .footer-hint { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--muted); }
-        .footer-hint .bi { color: var(--primary); }
-        .btn-save {
-            background: var(--primary); border: none; color: white; padding: 10px 24px; border-radius: 9px;
-            font-weight: 600; font-size: 0.88rem; cursor: pointer; transition: background .15s, transform .1s;
-            display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+        .btn-cancel { background: transparent; border: 1.5px solid var(--border); color: var(--muted); padding: 10px 20px; border-radius: 9px; font-weight: 500; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-cancel:hover { border-color: #94a3b8; color: var(--text); }
+        .btn-save { background: var(--primary); border: none; color: #fff; padding: 10px 26px; border-radius: 9px; font-weight: 600; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 7px; }
+        .btn-save:hover { background: var(--primary-dark); }
+
+        /* Enhanced Styles - Clean & User-Friendly */
+        .eligibility-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background-color: var(--primary-light);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            border: 1px solid #bbf7d0;
         }
-        .btn-save:hover { background: var(--primary-d); }
-        .btn-save:active { transform: scale(.98); }
-        .btn-save:disabled { opacity: .55; cursor: not-allowed; }
-
-        .error-banner {
-            background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 14px 18px;
-            display: flex; align-items: flex-start; gap: 12px; margin-bottom: 20px; color: #991b1b; font-size: 0.88rem;
+        .eligibility-badge i {
+            font-size: 0.9rem;
         }
-        .error-banner .bi { font-size: 1.1rem; margin-top: 1px; flex-shrink: 0; }
-
-        textarea.form-control { resize: vertical; min-height: 90px; }
-
-        @media (max-width: 600px) {
-            .status-grid { grid-template-columns: 1fr; }
-            .top-bar { padding: 0 16px; }
-            .page-body { padding: 0 12px 130px; }
-            .sticky-footer { padding: 12px 16px; flex-direction: column; align-items: stretch; }
-            .footer-hint { order: 2; }
+        .selected-female-feedback {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            display: none;
+        }
+        .selected-female-feedback.success {
+            display: block;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            border: 1px solid #bbf7d0;
+        }
+        .selected-female-feedback.warning {
+            display: block;
+            background-color: var(--amber-bg);
+            color: var(--amber);
+            border: 1px solid var(--amber-bd);
+        }
+        .selected-female-feedback .bi {
+            margin-right: 6px;
+        }
+        .selected-male-feedback {
+            margin-top: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            display: none;
+        }
+        .selected-male-feedback.success {
+            display: block;
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            border: 1px solid #bbf7d0;
+        }
+        .selected-male-feedback.warning {
+            display: block;
+            background-color: var(--danger-bg);
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+        .selected-male-feedback .bi {
+            margin-right: 6px;
+        }
+        .male-eligibility-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background-color: var(--primary-light);
+            padding: 0.3rem 0.8rem;
+            border-radius: 50px;
+            border: 1px solid #bbf7d0;
+        }
+        .male-eligibility-badge i {
+            font-size: 0.9rem;
+        }
+        .male-eligibility-box {
+            margin-top: 10px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+        .male-eligibility-box .elig-title {
+            font-size: 0.74rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .male-eligibility-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 6px;
+        }
+        .male-eligibility-list li {
+            font-size: 0.78rem;
+            color: var(--text);
+            display: flex;
+            align-items: flex-start;
+            gap: 7px;
+            line-height: 1.4;
+        }
+        .male-eligibility-list li i {
+            color: var(--primary);
+            font-size: 0.85rem;
+            margin-top: 1px;
+            flex-shrink: 0;
+        }
+        .male-count-badge {
+            font-size: 0.76rem;
+            color: var(--info);
+            background: var(--info-bg);
+            border: 1px solid var(--info-bd);
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .male-count-empty {
+            font-size: 0.76rem;
+            color: var(--danger);
+            background: var(--danger-bg);
+            border: 1px solid #fecaca;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        /* Clean user-friendly feedback */
+        .feedback-compact {
+            font-size: 0.82rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin-top: 6px;
+            display: none;
+        }
+        .feedback-compact.success {
+            display: block;
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border-left: 3px solid var(--primary);
+        }
+        .feedback-compact.warning {
+            display: block;
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-left: 3px solid var(--danger);
+        }
+        .feedback-compact .bi {
+            margin-right: 6px;
         }
     </style>
 </head>
@@ -201,39 +355,28 @@
     <div class="top-bar-left">
         <div class="top-bar-icon"><i class="bi bi-heart-fill"></i></div>
         <div>
-            <h5>Record Breeding Event</h5>
+            <h5 th:text="${editingId != null} ? 'Edit Breeding Record' : 'Record New Breeding'">Record New Breeding</h5>
             <div class="breadcrumb-bar">
-                <a th:href="@{/livestock/breeding}">Dashboard</a>
-                <span class="sep">›</span>
-                <a th:href="@{/livestock/breeding/list}">Records</a>
-                <span class="sep">›</span>
-                <span>Register</span>
+                <a th:href="@{/livestock/breeding/dashboard}">Dashboard</a>
+                <span>›</span>
+                <a th:href="@{/livestock/breeding/list}">Breedings</a>
+                <span>›</span>
+                <span th:text="${editingId != null} ? 'Edit Record' : 'New Record'">New Record</span>
             </div>
         </div>
     </div>
-    <a th:href="@{/livestock/breeding/list}" class="btn-cancel">
-        <i class="bi bi-arrow-left"></i> Back to Breeding
-    </a>
 </div>
 
-<div class="page-body">
+<form id="breedingForm" th:action="@{/livestock/breeding/save}" th:object="${breeding}" method="post">
+    <input type="hidden" name="editingId" th:value="${editingId}" />
+    <input type="hidden" th:field="*{createdBy}" value="00000000-0000-0000-0000-000000000000" />
 
-    <div class="intro-banner">
-        <i class="bi bi-info-circle-fill"></i>
-        <p><strong>How this form works:</strong> pick the female animal being bred, tell us how and when
-            breeding happened, and the system will automatically suggest the pregnancy check date and expected
-            due date for you based on her species. You can always adjust any suggested date.</p>
-    </div>
+    <div class="page-body">
 
-    <div th:if="${error}" class="error-banner">
-        <i class="bi bi-exclamation-octagon-fill"></i>
-        <span th:text="${error}"></span>
-    </div>
-
-    <form id="breedingForm"
-          th:action="@{/livestock/breeding/register}"
-          th:object="${breeding}" method="post">
-
+        <div th:if="${error}" class="error-banner">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span th:text="${error}"></span>
+        </div>
         <div th:if="${#fields.hasAnyErrors()}" class="error-banner">
             <i class="bi bi-exclamation-octagon-fill"></i>
             <div>
@@ -244,492 +387,781 @@
             </div>
         </div>
 
-        <!-- ── CARD 1: Female Animal ── -->
-        <div class="form-card">
-            <div class="form-card-header">
-                <div class="card-icon" style="background:#fce7f3; color:#be185d;"><i class="bi bi-gender-female"></i></div>
-                <h6>Female Animal (Mother)</h6>
-                <span class="step-tag">Step 1</span>
-            </div>
-            <div class="form-card-body">
-                <div th:if="${hasEligibleFemales == false}" class="info-panel visible"
-                     style="background:#fffbeb;border-color:#fde68a;color:#92400e;">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <span>No female animals are currently eligible for breeding — none meet the age, health,
-                        and status requirements right now. Register a new female or check existing animals'
-                        lifecycle stage on the Livestock page.</span>
-                </div>
-
-                <label class="form-label">Female Animal <span class="req">*</span></label>
-                <div class="input-icon-wrap">
-                    <i class="bi bi-gender-female"></i>
-                    <select th:field="*{livestockIdValue}" id="femaleSelect" class="form-select"
-                            th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'"
-                            th:disabled="${hasEligibleFemales == false}" required>
-                        <option value="">— Select female animal —</option>
-                        <optgroup th:each="entry : ${femalesByCategory}" th:label="${entry.key}">
-                            <option th:each="ls : ${entry.value}"
-                                    th:value="${ls.id}"
-                                    th:data-category-id="${ls.livestockCategory != null ? ls.livestockCategory.id : ''}"
-                                    th:data-category-name="${ls.livestockCategory != null ? ls.livestockCategory.name : 'Uncategorized'}"
-                                    th:text="${ls.tagNumber}">
-                            </option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div th:if="${#fields.hasErrors('livestockIdValue')}" class="field-error" th:errors="*{livestockIdValue}"></div>
-
-                <div class="field-guide">
-                    <i class="bi bi-shield-check"></i>
-                    <span>This list only shows animals that are <strong>eligible for breeding</strong>: active,
-                        not sold or deceased, old enough for their species, not already pregnant, and not
-                        currently marked sick. If an animal you expected isn't here, open her livestock profile
-                        to see why she's excluded.</span>
-                </div>
-
-                <div id="femaleEligibilityPanel" class="info-panel success">
-                    <i class="bi bi-check-circle-fill"></i>
-                    <span id="femaleEligibilityText"></span>
-                </div>
+        <div class="intro-banner">
+            <i class="bi bi-lightbulb-fill"></i>
+            <div>
+                <h6>You record what you observed — we calculate the rest</h6>
+                <p>Enter the female, how and when she was bred, and who was involved. Dates like the expected due date and
+                    pregnancy-check date are calculated automatically from the animal's category, following FAO/ICAR
+                    livestock breeding record guidance — reducing manual entry and typing errors. Once she's been
+                    checked, confirm or record the outcome from this record's <strong>View page</strong> — that's a
+                    separate step from registering the breeding itself.</p>
             </div>
         </div>
 
-        <!-- ── CARD 2: Breeding Details ── -->
-        <div class="form-card">
-            <div class="form-card-header">
-                <div class="card-icon" style="background:#fef3c7; color:#b45309;"><i class="bi bi-diagram-3"></i></div>
-                <h6>Breeding Details</h6>
-                <span class="step-tag">Step 2</span>
+        <!-- Breeding Readiness decision-support panel -->
+        <div class="readiness-card" id="readinessCard">
+            <div class="card-header">
+                <div class="card-icon"><i class="bi bi-clipboard-data-fill"></i></div>
+                <h6>Breeding Readiness — <span id="readinessTag">—</span></h6>
             </div>
-            <div class="form-card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Breeding Date <span class="req">*</span></label>
-                        <div class="input-icon-wrap">
-                            <i class="bi bi-calendar-event"></i>
-                            <input th:field="*{breedingDate}" type="date" id="breedingDate" class="form-control" required>
-                        </div>
-                        <div class="field-guide">
-                            <i class="bi bi-question-circle"></i>
-                            <span>The actual date mating, insemination, or embryo transfer took place — not
-                                today's date, unless it's happening right now. Defaults to today; change it if
-                                you're logging a past event. Future dates aren't allowed.</span>
+            <div class="card-body">
+                <div id="readinessMsg" class="calc-msg"></div>
+                <div class="readiness-grid">
+                    <div class="readiness-item">
+                        <div class="r-label">Age</div>
+                        <div class="r-value" id="readinessAge">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Health Status</div>
+                        <div id="readinessHealthBadge">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Ready to Breed</div>
+                        <div id="readinessReadyBadge">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Last Birth Date</div>
+                        <div class="r-value" id="readinessLastBirth">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Days Since Last Birth</div>
+                        <div class="r-value" id="readinessDaysSinceBirth">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Previous Breedings</div>
+                        <div class="r-value" id="readinessPrevCount">—</div>
+                    </div>
+                    <div class="readiness-item">
+                        <div class="r-label">Next Breeding Attempt</div>
+                        <div class="r-value">
+                            <span id="readinessNextAttempt">—</span>
+                            <span id="readinessRetryBadge" class="retry-badge" style="display:none;"><i class="bi bi-arrow-clockwise"></i> Retry</span>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Breeding Method</label>
-                        <select th:field="*{breedingMethod}" id="methodSelect" class="form-select">
-                            <option value="">— Select method —</option>
-                            <option value="NATURAL">🐄 Natural Mating</option>
-                            <option value="ARTIFICIAL_INSEMINATION">🧪 Artificial Insemination (AI)</option>
-                            <option value="EMBRYO_TRANSFER">🔬 Embryo Transfer</option>
-                        </select>
-                        <div class="helper-text">Choosing Natural Mating asks you to select the sire below.
-                            AI and Embryo Transfer don't need one — record the semen/donor details in Notes.</div>
+                    <div class="readiness-item">
+                        <div class="r-label">Previous Breeding</div>
+                        <div class="r-value" id="readinessPrevBreeding">—</div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <div class="status-grid">
-                            <div class="status-option">
-                                <input type="radio" th:field="*{status}" value="PENDING" id="st_pending">
-                                <label class="status-label" for="st_pending"><span class="status-dot dot-pending"></span> Pending</label>
-                            </div>
-                            <div class="status-option">
-                                <input type="radio" th:field="*{status}" value="CONFIRMED_PREGNANT" id="st_confirmed">
-                                <label class="status-label" for="st_confirmed"><span class="status-dot dot-pregnant"></span> Confirmed</label>
-                            </div>
-                            <div class="status-option">
-                                <input type="radio" th:field="*{status}" value="FAILED" id="st_failed">
-                                <label class="status-label" for="st_failed"><span class="status-dot dot-failed"></span> Failed</label>
-                            </div>
-                            <div class="status-option">
-                                <input type="radio" th:field="*{status}" value="COMPLETED" id="st_complete">
-                                <label class="status-label" for="st_complete"><span class="status-dot dot-complete"></span> Completed</label>
-                            </div>
-                        </div>
-                        <div class="helper-text">Leave as <strong>Pending</strong> when first recording the
-                            event. Come back and update it once the pregnancy check happens.</div>
+                    <div class="readiness-item">
+                        <div class="r-label">Current Heat Status</div>
+                        <div class="r-value muted" id="readinessHeatStatus">Not tracked</div>
                     </div>
-                </div>
 
-                <div class="mt-3" id="maleSection">
-                    <label class="form-label">Male Animal (Sire) <span class="opt">(optional)</span></label>
-                    <div class="input-icon-wrap">
-                        <i class="bi bi-gender-male"></i>
-                        <select th:field="*{maleLivestockIdValue}" id="maleSelect" class="form-select">
-                            <option value="">Select a female first…</option>
-                        </select>
-                    </div>
-                    <div class="field-guide">
-                        <i class="bi bi-shield-check"></i>
-                        <span>Only <strong>eligible males</strong> are listed: same species as the female,
-                            active, of breeding age, and not marked sick. The list refreshes automatically once
-                            you pick a female above.</span>
-                    </div>
-                    <div id="methodNote" class="info-panel">
+                    <div id="historyAdvisory" class="history-advisory" style="display:none;">
                         <i class="bi bi-info-circle-fill"></i>
-                        <span id="methodNoteText"></span>
+                        <span id="historyAdvisoryText"></span>
                     </div>
-                    <div id="noEligibleMalesNote" class="info-panel" style="background:#fffbeb;border-color:#fde68a;color:#92400e;">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <span>No eligible males are currently registered for this species. You can still save
-                            this record — for example if using Artificial Insemination — and link a sire later.</span>
-                    </div>
-                    <div th:if="${#fields.hasErrors('maleLivestockIdValue')}" class="field-error" th:errors="*{maleLivestockIdValue}"></div>
+                </div>
+                <div class="readiness-note">
+                    <strong>Note:</strong> "Current Heat Status" is not yet tracked by this system — there's no
+                    heat/estrus observation log to draw from, so this field always reads "Not tracked" rather than
+                    a guessed value. Ask your developer if you'd like real heat tracking added.
                 </div>
             </div>
         </div>
 
-        <!-- ── CARD 3: Expected Dates (FAO gestation-aware) ── -->
-        <div class="form-card">
-            <div class="form-card-header">
-                <div class="card-icon" style="background:#eff6ff; color:#1d4ed8;"><i class="bi bi-calendar-range"></i></div>
-                <h6>Expected Dates</h6>
-                <span class="step-tag">Auto-calculated</span>
-            </div>
-            <div class="form-card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Expected Pregnancy Check Date <span class="opt">(optional)</span></label>
-                        <div class="input-icon-wrap">
-                            <i class="bi bi-clipboard2-pulse"></i>
-                            <input th:field="*{expectedPregnancyCheckDate}" type="date" id="checkDate" class="form-control">
+        <div>
+
+            <!-- Female + Method -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="bi bi-gender-female"></i></div>
+                    <h6>Female Animal &amp; Breeding Method</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <label class="form-label mb-0">Female Animal <span class="req">*</span></label>
+                                <span class="eligibility-badge">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Showing eligible females
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill ms-1">not too young</span>
+                                </span>
+                            </div>
+                            <select th:field="*{livestockIdValue}" id="femaleSelect" class="form-select mt-2"
+                                    th:classappend="${#fields.hasErrors('livestockIdValue')} ? ' is-invalid'" required>
+                                <option value="">— Select the female being bred —</option>
+                                <optgroup th:each="entry : ${femalesByCategory}" th:label="${entry.key}">
+                                    <option th:each="ls : ${entry.value}"
+                                            th:value="${ls.id}"
+                                            th:attr="data-category=${entry.key}"
+                                            th:text="${ls.tagNumber + ' (' + ls.ageDisplay + ')'}">
+                                    </option>
+                                </optgroup>
+                            </select>
+                            <div th:if="${#fields.hasErrors('livestockIdValue')}" class="invalid-feedback d-block" th:errors="*{livestockIdValue}"></div>
+
+                            <!-- Compact feedback for selected female -->
+                            <div id="selectedFemaleFeedback" class="feedback-compact">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span id="selectedFemaleFeedbackText"></span>
+                            </div>
+
+                            <div class="eligibility-box">
+                                <div class="elig-title"><i class="bi bi-funnel-fill"></i> Why isn't a female showing up here?</div>
+                                <ul class="eligibility-list">
+                                    <li><i class="bi bi-check-circle-fill"></i> <strong>Active</strong> &amp; <strong>Healthy</strong></li>
+                                    <li><i class="bi bi-check-circle-fill"></i> <strong>Open</strong> (not pregnant)</li>
+                                    <li><i class="bi bi-check-circle-fill"></i> Past <strong>postpartum recovery</strong> period</li>
+                                    <li><i class="bi bi-check-circle-fill"></i> Within <strong>breeding age</strong> range for her category</li>
+                                </ul>
+
+                                <div class="eligibility-count-list"
+                                     th:if="${femaleEligibleCountByCategory != null and !femaleEligibleCountByCategory.isEmpty()}">
+                                    <span class="eligibility-count" th:each="entry : ${femaleEligibleCountByCategory}"
+                                          th:text="${entry.key + ': ' + entry.value + ' eligible'}"></span>
+                                </div>
+                                <div th:if="${femaleEligibleCountByCategory == null or femaleEligibleCountByCategory.isEmpty()}">
+                                    <span class="eligibility-count-empty">No eligible females in any category</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="field-guide">
-                            <i class="bi bi-question-circle"></i>
-                            <span>This is when you plan to have a vet confirm the pregnancy (by palpation,
-                                ultrasound, or blood test) — not the due date. We suggest a date early enough to
-                                catch a failed breeding but late enough for a reliable result; adjust it to match
-                                your vet's recommended method and your farm's schedule.</span>
+
+                        <div class="col-12 mt-2">
+                            <label class="form-label">Breeding Method</label>
+                            <div class="method-grid">
+                                <label class="method-option">
+                                    <input type="radio" th:field="*{breedingMethod}" value="NATURAL" class="method-radio">
+                                    <div class="method-card">
+                                        <div class="m-title">🐂 Natural</div>
+                                        <div class="m-desc">Direct mating with a bull/buck on the farm. Requires selecting the male below.</div>
+                                    </div>
+                                </label>
+                                <label class="method-option">
+                                    <input type="radio" th:field="*{breedingMethod}" value="ARTIFICIAL_INSEMINATION" class="method-radio">
+                                    <div class="method-card">
+                                        <div class="m-title">💉 Artificial Insemination</div>
+                                        <div class="m-desc">Semen from a straw/donor. No on-farm male needed — note the batch in Notes.</div>
+                                    </div>
+                                </label>
+                                <label class="method-option">
+                                    <input type="radio" th:field="*{breedingMethod}" value="EMBRYO_TRANSFER" class="method-radio">
+                                    <div class="method-card">
+                                        <div class="m-title">🧬 Embryo Transfer</div>
+                                        <div class="m-desc">Recipient carries a donor embryo. No on-farm male needed — note donor/recipient info.</div>
+                                    </div>
+                                </label>
+                            </div>
                         </div>
-                        <div id="checkDateGuidance" class="info-panel">
-                            <i class="bi bi-lightbulb-fill"></i>
-                            <span id="checkDateGuidanceText"></span>
-                        </div>
-                        <div th:if="${#fields.hasErrors('expectedPregnancyCheckDate')}" class="field-error" th:errors="*{expectedPregnancyCheckDate}"></div>
-                        <div id="checkDateError" class="field-error" style="display:none;"></div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Expected Due Date <span class="opt">(optional)</span></label>
-                        <div class="input-icon-wrap">
-                            <i class="bi bi-calendar-heart"></i>
-                            <input th:field="*{expectedDueDate}" type="date" id="dueDate" class="form-control">
-                        </div>
-                        <div class="field-guide">
-                            <i class="bi bi-question-circle"></i>
-                            <span>Calculated automatically from the breeding date plus the average gestation
-                                length for this species — this is your best estimate of when to expect a birth.
-                                Override it once a vet confirms a more precise date, but keep it on or after
-                                both the breeding date and the pregnancy check date above.</span>
-                        </div>
-                        <div id="gestationBadge" class="info-panel">
-                            <i class="bi bi-info-circle-fill"></i>
-                            <span id="gestationBadgeText"></span>
-                        </div>
-                        <div th:if="${#fields.hasErrors('expectedDueDate')}" class="field-error" th:errors="*{expectedDueDate}"></div>
-                        <div id="dueDateError" class="field-error" style="display:none;"></div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ── CARD 4: Veterinarian ── -->
-        <div class="form-card">
-            <div class="form-card-header">
-                <div class="card-icon" style="background:#f0fdf4; color:#15803d;"><i class="bi bi-person-badge"></i></div>
-                <h6>Veterinarian &amp; Notes</h6>
-                <span class="step-tag">Step 3</span>
-            </div>
-            <div class="form-card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Attending Veterinarian <span class="opt">(optional)</span></label>
-                        <div class="input-icon-wrap">
-                            <i class="bi bi-person-vcard"></i>
+            <!-- Date + Male + Vet -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="bi bi-calendar-event"></i></div>
+                    <h6>When &amp; With Whom</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Breeding Date <span class="req">*</span></label>
+                            <input type="date" th:field="*{breedingDate}" id="breedingDateInput" class="form-control"
+                                   th:classappend="${#fields.hasErrors('breedingDate')} ? ' is-invalid'"
+                                   th:max="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}" required>
+                            <div th:if="${#fields.hasErrors('breedingDate')}" class="invalid-feedback d-block" th:errors="*{breedingDate}"></div>
+                            <div class="field-help">The date the service/mating happened. Cannot be a future date.</div>
+                        </div>
+
+                        <div class="col-md-6" id="maleSection">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <label class="form-label mb-0">Male Animal <span class="opt">(when applicable)</span></label>
+                                <span class="male-eligibility-badge" id="maleEligibilityBadge">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    Showing eligible males
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill ms-1">healthy &amp; mature</span>
+                                </span>
+                            </div>
+                            <select th:field="*{maleLivestockIdValue}" id="maleSelect" class="form-select mt-2">
+                                <option value="">— Select male (if Natural mating) —</option>
+                                <!-- Only males that pass ALL eligibility checks (including age) will appear here -->
+                                <option th:each="ls : ${males}" th:value="${ls.id}"
+                                        th:attr="data-category=${ls.livestockCategory != null ? ls.livestockCategory.name : 'Uncategorized'},
+                                                  data-health=${ls.healthStatus},
+                                                  data-age=${ls.ageDisplay}"
+                                        th:text="${ls.tagNumber + ' (' + ls.ageDisplay + ')'}"></option>
+                            </select>
+
+                            <!-- Compact feedback for selected male -->
+                            <div id="selectedMaleFeedback" class="feedback-compact">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span id="selectedMaleFeedbackText"></span>
+                            </div>
+
+                            <div class="male-eligibility-box">
+                                <div class="elig-title"><i class="bi bi-funnel-fill"></i> Why isn't a male showing up?</div>
+                                <ul class="male-eligibility-list">
+                                    <li><i class="bi bi-check-circle-fill"></i> <strong>Active</strong> &amp; <strong>Healthy</strong></li>
+                                    <li><i class="bi bi-check-circle-fill"></i> <strong>Mature</strong> (within breeding age range for his category)</li>
+                                    <li><i class="bi bi-check-circle-fill"></i> Same <strong>category</strong> as selected female</li>
+                                </ul>
+                                <div id="maleCountDisplay" style="margin-top: 8px;">
+                                    <span id="maleCountBadge" class="male-count-badge">Loading males...</span>
+                                </div>
+                            </div>
+
+                            <div class="field-help" id="maleFilterHelp">Showing males from the same category as the selected female.</div>
+                            <div id="maleNote" class="male-note">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <span id="maleNoteText"></span>
+                            </div>
+                            <div id="maleHealthWarning" class="male-note warn" style="display:none;">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span id="maleHealthWarningText"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Veterinarian <span class="opt">(optional)</span></label>
                             <select th:field="*{veterinarianIdValue}" class="form-select">
                                 <option value="">— Select veterinarian —</option>
-                                <option th:each="v : ${vets}"
-                                        th:value="${v.id}"
-                                        th:text="${v.firstName + ' ' + v.lastName + (v.licenseNumber != null ? ' (' + v.licenseNumber + ')' : '')}">
-                                </option>
+                                <option th:each="vet : ${vets}" th:value="${vet.id}"
+                                        th:text="${vet.firstName + ' ' + vet.lastName}"></option>
                             </select>
                         </div>
-                        <div class="helper-text">Leave blank if no vet was involved (e.g. routine natural mating on-farm).</div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Notes <span class="opt">(optional)</span></label>
-                        <textarea th:field="*{notes}" class="form-control" rows="1"
-                                  placeholder="Semen batch, donor/recipient info, observations…"></textarea>
-                        <div class="helper-text">For AI or Embryo Transfer, record the semen batch number or
-                            donor/recipient IDs here since no male animal is selected above.</div>
-                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="bi bi-journal-text"></i></div>
+                    <h6>Additional Notes</h6>
+                </div>
+                <div class="card-body">
+                    <label class="form-label">Notes <span class="opt">(optional)</span></label>
+                    <textarea th:field="*{notes}" class="form-control" rows="3"
+                              placeholder="Semen batch, donor/recipient details, observations from the vet…"></textarea>
                 </div>
             </div>
         </div>
 
-        <div class="sticky-footer">
-            <div class="footer-hint">
-                <i class="bi bi-info-circle-fill"></i>
-                <span id="footerHint">Select a female animal to begin.</span>
+        <!-- RIGHT COLUMN: calculated values (read-only, live) -->
+        <div class="calc-panel">
+            <div class="card calc-card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="bi bi-cpu-fill"></i></div>
+                    <h6>System Calculated Values</h6>
+                    <button type="button" id="recalcBtn" class="recalc-btn ms-auto"><i class="bi bi-arrow-repeat"></i> Recalculate</button>
+                </div>
+                <div class="card-body">
+                    <p class="calc-intro">These are derived automatically the moment you select the female, method, and date — nothing here needs to be typed by hand.</p>
+
+                    <div id="calcMsg" class="calc-msg"></div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">First Breeding Date</div>
+                            <div class="calc-row-sub">Start of this breeding cycle. Carried forward if this is a retry of a previously failed attempt.</div>
+                        </div>
+                        <div class="calc-row-value" id="firstBreedingDateDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Last Breeding Date</div>
+                            <div class="calc-row-sub">Same as the breeding date entered.</div>
+                        </div>
+                        <div class="calc-row-value" id="lastBreedingDateDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Breeding Attempt</div>
+                            <div class="calc-row-sub">Resets to #1 for a new cycle; increments if her previous attempt failed.</div>
+                        </div>
+                        <div class="calc-row-value">
+                            <span id="breedingAttemptDisplay">—</span>
+                            <span id="retryBadge" class="retry-badge" style="display:none;"><i class="bi bi-arrow-clockwise"></i> Retry</span>
+                        </div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Conception Date (default)</div>
+                            <div class="calc-row-sub">Presumed equal to the breeding date until confirmed otherwise by a pregnancy check.</div>
+                        </div>
+                        <div class="calc-row-value" id="conceptionDateDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Expected Due Date</div>
+                            <div class="calc-row-sub" id="dueDateSub">Conception date + the category's standard gestation length (FAO/ICAR).</div>
+                        </div>
+                        <div class="calc-row-value" id="expectedDueDateDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Pregnancy Check Date</div>
+                            <div class="calc-row-sub">Earliest reliable window to confirm pregnancy for this species — adjust the real check date once it happens.</div>
+                        </div>
+                        <div class="calc-row-value" id="checkDateDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Insemination Method</div>
+                            <div class="calc-row-sub">Mirrors the breeding method you selected above.</div>
+                        </div>
+                        <div class="calc-row-value" id="inseminationMethodDisplay">—</div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Status</div>
+                            <div class="calc-row-sub">Every new record starts Pending until confirmed, failed, or completed from the record's View page.</div>
+                        </div>
+                        <div class="calc-row-value"><span class="calc-pill pill-pending" id="statusDisplay">Pending</span></div>
+                    </div>
+
+                    <div class="calc-row">
+                        <div>
+                            <div class="calc-row-label">Pregnancy Status</div>
+                            <div class="calc-row-sub">Updated later from the pregnancy check, not entered here.</div>
+                        </div>
+                        <div class="calc-row-value"><span class="calc-pill pill-notpregnant" id="pregnancyStatusDisplay">Not Pregnant</span></div>
+                    </div>
+
+                    <div class="fao-note">
+                        <strong>Why these are calculated, not typed:</strong> FAO/ICAR animal-recording guidance treats
+                        gestation length as a fixed trait of the species/category rather than something re-entered per
+                        event. Deriving due dates and check dates this way keeps every animal's breeding record
+                        consistent and traceable, and removes a common source of data-entry error.
+                    </div>
+                </div>
             </div>
-            <div class="d-flex gap-2">
-                <a th:href="@{/livestock/breeding/list}" class="btn-cancel"><i class="bi bi-x-lg"></i> Cancel</a>
-                <button type="submit" id="saveBtn" class="btn-save">
-                    <i class="bi bi-check-circle"></i> Save Breeding Record
-                </button>
-            </div>
+
+            <input type="hidden" th:field="*{firstBreedingDate}" id="firstBreedingDateHidden">
+            <input type="hidden" th:field="*{lastBreedingDate}" id="lastBreedingDateHidden">
+            <input type="hidden" th:field="*{breedingAttempt}" id="breedingAttemptHidden">
+            <input type="hidden" th:field="*{conceptionDate}" id="conceptionDateHidden">
+            <input type="hidden" th:field="*{expectedDueDate}" id="expectedDueDateHidden">
+            <input type="hidden" th:field="*{expectedPregnancyCheckDate}" id="expectedPregnancyCheckDateHidden">
+            <input type="hidden" th:field="*{inseminationMethod}" id="inseminationMethodHidden">
+            <input type="hidden" th:field="*{status}" id="statusHidden">
+            <input type="hidden" th:field="*{pregnancyStatus}" id="pregnancyStatusHidden">
         </div>
-    </form>
-</div>
+
+    </div>
+
+    <div class="sticky-footer">
+        <a th:href="@{/livestock/breeding/list}" class="btn-cancel"><i class="bi bi-x-lg"></i> Cancel</a>
+        <button type="submit" class="btn-save">
+            <i class="bi bi-check-circle-fill"></i>
+            <span th:text="${editingId != null} ? 'Update Record' : 'Save Breeding Record'">Save Breeding Record</span>
+        </button>
+    </div>
+
+</form>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
     (function () {
-        // Rendered server-side from LivestockBreedingController#buildGestationJson()
-        // FAO / OIE-referenced average gestation length per species, in days.
-        const GESTATION_DAYS = /*[[${gestationDaysJson}]]*/ {"DEFAULT":283};
+        const IS_EDITING = /*[[${editingId != null}]]*/ false;
+        const CALCULATE_URL = /*[[@{/livestock/breeding/api/calculate}]]*/ '/livestock/breeding/api/calculate';
+        const CONTEXT_URL = /*[[@{/livestock/breeding/api/context}]]*/ '/livestock/breeding/api/context';
 
-        // NOTE: this template assumes the controller only ever populates
-        // `femalesByCategory` with animals that are already eligible for
-        // breeding (active, of breeding age, not sold/deceased/pregnant/sick).
-        // Filtering must happen server-side — this page only *explains* that
-        // filtering to the end user, it does not enforce it.
+        const femaleSelect = document.getElementById('femaleSelect');
+        const methodRadios = document.querySelectorAll('.method-radio');
+        const dateInput = document.getElementById('breedingDateInput');
+        const maleSection = document.getElementById('maleSection');
+        const maleSelect = document.getElementById('maleSelect');
+        const maleNote = document.getElementById('maleNote');
+        const maleNoteText = document.getElementById('maleNoteText');
+        const maleFilterHelp = document.getElementById('maleFilterHelp');
+        const maleHealthWarning = document.getElementById('maleHealthWarning');
+        const maleHealthWarningText = document.getElementById('maleHealthWarningText');
+        const recalcBtn = document.getElementById('recalcBtn');
+        const calcMsg = document.getElementById('calcMsg');
+
+        // Feedback elements
+        const selectedFemaleFeedback = document.getElementById('selectedFemaleFeedback');
+        const selectedFemaleFeedbackText = document.getElementById('selectedFemaleFeedbackText');
+        const selectedMaleFeedback = document.getElementById('selectedMaleFeedback');
+        const selectedMaleFeedbackText = document.getElementById('selectedMaleFeedbackText');
+        const maleCountBadge = document.getElementById('maleCountBadge');
 
         const NO_MALE_METHODS = ['ARTIFICIAL_INSEMINATION', 'EMBRYO_TRANSFER'];
         const NOTES = {
-            ARTIFICIAL_INSEMINATION: 'AI does not require an on-farm male. Record the semen batch/sire ID in Notes.',
-            EMBRYO_TRANSFER: 'Embryo Transfer does not require selecting a male animal. Record donor/recipient details in Notes.'
+            ARTIFICIAL_INSEMINATION: 'AI does not require an on-farm male. Record the semen batch/donor code in Notes.',
+            EMBRYO_TRANSFER: 'Embryo Transfer does not require an on-farm male. Record donor/recipient details in Notes.'
         };
 
-        const femaleSelect     = document.getElementById('femaleSelect');
-        const femaleElig       = document.getElementById('femaleEligibilityPanel');
-        const femaleEligText   = document.getElementById('femaleEligibilityText');
-        const methodSelect     = document.getElementById('methodSelect');
-        const maleSelect       = document.getElementById('maleSelect');
-        const maleSection      = document.getElementById('maleSection');
-        const methodNote       = document.getElementById('methodNote');
-        const methodNoteText   = document.getElementById('methodNoteText');
-        const noEligibleMales  = document.getElementById('noEligibleMalesNote');
-        const breedingDate     = document.getElementById('breedingDate');
-        const checkDate        = document.getElementById('checkDate');
-        const dueDate          = document.getElementById('dueDate');
-        const gestationBadge   = document.getElementById('gestationBadge');
-        const gestationBadgeText = document.getElementById('gestationBadgeText');
-        const checkGuidance    = document.getElementById('checkDateGuidance');
-        const checkGuidanceText = document.getElementById('checkDateGuidanceText');
-        const checkDateError   = document.getElementById('checkDateError');
-        const dueDateError     = document.getElementById('dueDateError');
-        const footerHint       = document.getElementById('footerHint');
-        const saveBtn          = document.getElementById('saveBtn');
+        const hidden = {
+            firstBreedingDate: document.getElementById('firstBreedingDateHidden'),
+            lastBreedingDate: document.getElementById('lastBreedingDateHidden'),
+            breedingAttempt: document.getElementById('breedingAttemptHidden'),
+            conceptionDate: document.getElementById('conceptionDateHidden'),
+            expectedDueDate: document.getElementById('expectedDueDateHidden'),
+            expectedPregnancyCheckDate: document.getElementById('expectedPregnancyCheckDateHidden'),
+            inseminationMethod: document.getElementById('inseminationMethodHidden'),
+            status: document.getElementById('statusHidden'),
+            pregnancyStatus: document.getElementById('pregnancyStatusHidden')
+        };
 
-        let userEditedCheckDate = false;
-        let userEditedDueDate   = false;
-        checkDate.addEventListener('input', () => userEditedCheckDate = true);
-        dueDate.addEventListener('input',   () => userEditedDueDate = true);
+        const display = {
+            firstBreedingDate: document.getElementById('firstBreedingDateDisplay'),
+            lastBreedingDate: document.getElementById('lastBreedingDateDisplay'),
+            breedingAttempt: document.getElementById('breedingAttemptDisplay'),
+            conceptionDate: document.getElementById('conceptionDateDisplay'),
+            expectedDueDate: document.getElementById('expectedDueDateDisplay'),
+            expectedPregnancyCheckDate: document.getElementById('checkDateDisplay'),
+            inseminationMethod: document.getElementById('inseminationMethodDisplay'),
+            status: document.getElementById('statusDisplay'),
+            pregnancyStatus: document.getElementById('pregnancyStatusDisplay')
+        };
 
-        // ── Automation #1: default breeding date to today for new records ──
-        const todayStr = new Date().toISOString().slice(0, 10);
-        breedingDate.setAttribute('max', todayStr);
-        if (!breedingDate.value) breedingDate.value = todayStr;
+        const retryBadge = document.getElementById('retryBadge');
+        const dueDateSub = document.getElementById('dueDateSub');
 
-        function selectedFemaleOption() {
-            return femaleSelect.options[femaleSelect.selectedIndex];
+        const readinessCard = document.getElementById('readinessCard');
+        const readinessTag = document.getElementById('readinessTag');
+        const readinessMsg = document.getElementById('readinessMsg');
+        const readinessAge = document.getElementById('readinessAge');
+        const readinessHealthBadge = document.getElementById('readinessHealthBadge');
+        const readinessReadyBadge = document.getElementById('readinessReadyBadge');
+        const readinessLastBirth = document.getElementById('readinessLastBirth');
+        const readinessDaysSinceBirth = document.getElementById('readinessDaysSinceBirth');
+        const readinessPrevCount = document.getElementById('readinessPrevCount');
+        const readinessNextAttempt = document.getElementById('readinessNextAttempt');
+        const readinessRetryBadge = document.getElementById('readinessRetryBadge');
+        const readinessPrevBreeding = document.getElementById('readinessPrevBreeding');
+        const historyAdvisory = document.getElementById('historyAdvisory');
+        const historyAdvisoryText = document.getElementById('historyAdvisoryText');
+
+        function formatDate(v) {
+            if (!v) return '—';
+            const d = new Date(v + 'T00:00:00');
+            if (isNaN(d.getTime())) return v;
+            return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
         }
 
-        function gestationDaysFor(categoryName) {
-            if (!categoryName) return GESTATION_DAYS.DEFAULT;
-            const key = categoryName.trim().toUpperCase();
-            return GESTATION_DAYS[key] || GESTATION_DAYS.DEFAULT;
+        function labelize(v) {
+            if (!v) return '—';
+            return v.replace(/_/g, ' ').replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase());
         }
 
-        function addDays(dateStr, days) {
-            const d = new Date(dateStr + 'T00:00:00');
-            d.setDate(d.getDate() + days);
-            return d.toISOString().slice(0, 10);
+        function showMsg(text, type) {
+            calcMsg.textContent = text;
+            calcMsg.className = 'calc-msg show ' + (type === 'error' ? 'msg-error' : 'msg-info');
+        }
+        function hideMsg() {
+            calcMsg.className = 'calc-msg';
+            calcMsg.textContent = '';
         }
 
-        function updateMaleVisibility() {
-            const val = methodSelect.value;
-            const noMale = NO_MALE_METHODS.includes(val);
+        function renderFromHidden() {
+            Object.keys(hidden).forEach(key => {
+                if (!display[key]) return;
+                const val = hidden[key].value;
+                if (key.toLowerCase().includes('date')) {
+                    display[key].textContent = formatDate(val);
+                } else if (key === 'breedingAttempt') {
+                    display[key].textContent = val ? ('#' + val) : '—';
+                } else if (key === 'inseminationMethod' || key === 'status' || key === 'pregnancyStatus') {
+                    display[key].textContent = labelize(val);
+                } else {
+                    display[key].textContent = val || '—';
+                }
+            });
+        }
+
+        function selectedMethod() {
+            for (const r of methodRadios) { if (r.checked) return r.value; }
+            return '';
+        }
+
+        function toggleMaleSection() {
+            const method = selectedMethod();
+            const noMale = NO_MALE_METHODS.includes(method);
             maleSection.classList.toggle('hidden-method', noMale);
-            methodNote.classList.toggle('visible', noMale);
+            maleNote.classList.toggle('visible', noMale);
             if (noMale) {
                 maleSelect.value = '';
-                methodNoteText.textContent = NOTES[val] || 'Male animal is not required for this breeding method.';
+                maleNoteText.textContent = NOTES[method] || 'Male animal is not required for this method.';
+                maleHealthWarning.style.display = 'none';
+                selectedMaleFeedback.style.display = 'none';
+            } else {
+                updateSelectedMaleFeedback();
             }
         }
 
-        // Populate the male dropdown filtered by the female's category, via the
-        // /livestock/breeding/males-by-category AJAX endpoint. Only males the
-        // endpoint marks `eligible: true` are shown, per FAO breeding-age and
-        // health rules enforced server-side.
-        function loadEligibleMales() {
-            const opt = selectedFemaleOption();
-            const categoryId = opt ? opt.getAttribute('data-category-id') : '';
-            const femaleId    = femaleSelect.value;
+        function filterMalesByCategory() {
+            const selectedFemaleOption = femaleSelect.options[femaleSelect.selectedIndex];
+            const category = selectedFemaleOption ? selectedFemaleOption.getAttribute('data-category') : null;
 
-            noEligibleMales.classList.remove('visible');
-            maleSelect.innerHTML = '<option value="">Loading eligible males…</option>';
-            if (!femaleId) {
-                maleSelect.innerHTML = '<option value="">Select a female first…</option>';
+            let visibleCount = 0;
+            let currentSelectionStillVisible = false;
+
+            Array.from(maleSelect.options).forEach(opt => {
+                if (!opt.value) { opt.hidden = false; return; }
+                const matches = !category || opt.getAttribute('data-category') === category;
+                opt.hidden = !matches;
+                if (matches) visibleCount++;
+                if (matches && opt.value === maleSelect.value) currentSelectionStillVisible = true;
+            });
+
+            if (maleSelect.value && !currentSelectionStillVisible) {
+                maleSelect.value = '';
+            }
+
+            if (maleCountBadge) {
+                if (visibleCount === 0) {
+                    maleCountBadge.className = 'male-count-empty';
+                    maleCountBadge.textContent = category
+                        ? 'No eligible males in "' + category + '"'
+                        : 'Select a female to see eligible males';
+                } else {
+                    maleCountBadge.className = 'male-count-badge';
+                    maleCountBadge.textContent = category
+                        ? visibleCount + ' eligible male(s) in "' + category + '"'
+                        : visibleCount + ' eligible male(s) total';
+                }
+            }
+
+            if (maleFilterHelp) {
+                maleFilterHelp.textContent = category
+                    ? 'Showing ' + visibleCount + ' eligible male(s) in "' + category + '"'
+                    : 'Select a female to see eligible males in her category.';
+            }
+
+            updateSelectedMaleFeedback();
+        }
+
+        function checkMaleHealth() {
+            const opt = maleSelect.options[maleSelect.selectedIndex];
+            const health = opt ? opt.getAttribute('data-health') : null;
+
+            if (!maleSelect.value || !health) {
+                maleHealthWarning.style.display = 'none';
                 return;
             }
 
-            const params = new URLSearchParams();
-            if (categoryId) params.set('categoryId', categoryId);
-            params.set('femaleId', femaleId);
-
-            fetch('/livestock/breeding/males-by-category?' + params.toString())
-                .then(r => r.ok ? r.json() : Promise.reject())
-                .then(list => {
-                    // Automation #2: only eligible sires are ever shown — no manual filtering needed.
-                    const eligible = list.filter(m => m.eligible !== false);
-                    maleSelect.innerHTML = '';
-                    const blank = document.createElement('option');
-                    blank.value = '';
-                    blank.textContent = eligible.length ? '— Select male animal —' : 'No eligible males available';
-                    maleSelect.appendChild(blank);
-                    eligible.forEach(m => {
-                        const o = document.createElement('option');
-                        o.value = m.id;
-                        o.textContent = m.tagNumber + (m.category ? ' – ' + m.category : '') + ' ✓ Eligible';
-                        maleSelect.appendChild(o);
-                    });
-                    noEligibleMales.classList.toggle('visible', eligible.length === 0);
-                })
-                .catch(() => {
-                    maleSelect.innerHTML = '<option value="">Could not load eligible males — try again</option>';
-                });
+            if (health.toUpperCase() !== 'HEALTHY') {
+                maleHealthWarningText.textContent = '⚠️ ' + labelize(health) + ' — cannot be used for breeding.';
+                maleHealthWarning.style.display = 'flex';
+            } else {
+                maleHealthWarning.style.display = 'none';
+            }
         }
 
-        function updateFemaleEligibilityNote() {
-            const opt = selectedFemaleOption();
-            if (!femaleSelect.value) {
-                femaleElig.classList.remove('visible');
+        function applyCalculation(data) {
+            if (data.error) {
+                showMsg(data.error, 'error');
                 return;
             }
-            const categoryName = opt.getAttribute('data-category-name') || 'this species';
-            femaleEligText.innerHTML =
-                '<b>' + opt.textContent + '</b> (' + categoryName + ') is eligible: active, of breeding age, ' +
-                'and currently not pregnant or sick.';
-            femaleElig.classList.add('visible');
-        }
+            hideMsg();
+            if (data.warning) showMsg(data.warning, 'info');
 
-        function updateCheckDateGuidance(bDate, days) {
-            if (!bDate) {
-                checkGuidance.classList.remove('visible');
-                return;
+            hidden.firstBreedingDate.value = data.firstBreedingDate || '';
+            hidden.lastBreedingDate.value = data.lastBreedingDate || '';
+            hidden.breedingAttempt.value = data.breedingAttempt || 1;
+            hidden.conceptionDate.value = data.conceptionDate || '';
+            hidden.expectedDueDate.value = data.expectedDueDate || '';
+            hidden.expectedPregnancyCheckDate.value = data.expectedPregnancyCheckDate || '';
+            hidden.inseminationMethod.value = data.inseminationMethod || '';
+            hidden.status.value = data.status || 'PENDING';
+            hidden.pregnancyStatus.value = data.pregnancyStatus || 'NOT_PREGNANT';
+
+            renderFromHidden();
+
+            retryBadge.style.display = data.isRetryAttempt ? 'inline-flex' : 'none';
+
+            if (data.categoryName && data.gestationDaysUsed) {
+                dueDateSub.textContent = 'Conception date + ' + data.gestationDaysUsed + ' days gestation for '
+                    + data.categoryName + ' (FAO/ICAR standard).';
+            } else {
+                dueDateSub.textContent = "Conception date + the category's standard gestation length (FAO/ICAR).";
             }
-            const method = methodSelect.value;
-            const methodHint = method === 'ARTIFICIAL_INSEMINATION'
-                ? 'For AI, most vets can get a reliable ultrasound result from around 4–5 weeks after insemination.'
-                : method === 'EMBRYO_TRANSFER'
-                    ? 'For Embryo Transfer, follow the timing recommended by the transfer protocol/vet for this species.'
-                    : 'For natural mating, allow a few weeks so a false-negative early check is less likely.';
-            checkGuidanceText.textContent =
-                'Suggested check window: about ' + Math.min(30, Math.round(days * 0.2)) +
-                ' days after breeding, as a starting point. ' + methodHint +
-                ' Confirm exact timing with your veterinarian.';
-            checkGuidance.classList.add('visible');
         }
 
-        function updateExpectedDates() {
-            const opt = selectedFemaleOption();
-            const categoryName = opt ? opt.getAttribute('data-category-name') : '';
-            const bDate = breedingDate.value;
+        function fetchCalculation() {
+            const livestockId = femaleSelect.value;
+            const method = selectedMethod();
+            const date = dateInput.value;
 
-            if (!bDate) {
-                gestationBadge.classList.remove('visible');
-                checkGuidance.classList.remove('visible');
+            if (!livestockId || !date) {
+                showMsg('Select the female animal and enter a breeding date to see calculated values.', 'info');
                 return;
             }
 
-            const days = gestationDaysFor(categoryName);
-
-            // Automation #3: suggest both dates from breeding date + species gestation length,
-            // but never overwrite a date the user has already typed in themselves.
-            if (!userEditedCheckDate) {
-                checkDate.value = addDays(bDate, Math.min(30, Math.round(days * 0.2)));
-            }
-            if (!userEditedDueDate) {
-                dueDate.value = addDays(bDate, days);
-            }
-
-            gestationBadgeText.textContent =
-                (categoryName || 'This species') + ' — average FAO/OIE gestation reference: ' + days + ' days.'
-                + ' Due date auto-calculated; you may override it if the vet confirms a different estimate.';
-            gestationBadge.classList.add('visible');
-
-            updateCheckDateGuidance(bDate, days);
-            validateDateOrder();
+            const params = new URLSearchParams({ livestockId: livestockId, breedingMethod: method || '', breedingDate: date });
+            fetch(CALCULATE_URL + '?' + params.toString())
+                .then(r => r.json())
+                .then(applyCalculation)
+                .catch(() => showMsg('Could not reach the calculation service. Values will still be computed correctly when you save.', 'error'));
         }
 
-        function validateDateOrder() {
-            const bDate = breedingDate.value;
-            let ok = true;
+        function applyContext(data) {
+            if (data.error) {
+                readinessCard.style.display = 'none';
+                return;
+            }
+            readinessCard.style.display = '';
+            readinessTag.textContent = data.tagNumber || '—';
+            readinessAge.textContent = data.ageDisplay || '—';
 
-            checkDateError.style.display = 'none';
-            dueDateError.style.display = 'none';
-
-            if (bDate && breedingDate.value > todayStr) {
-                ok = false; // guarded by max attribute too, but double-checked on submit
+            if (data.healthStatus) {
+                const healthy = !!data.healthyForBreeding;
+                const cls = healthy ? 'health-good' : 'health-bad';
+                const icon = healthy ? 'bi-heart-pulse-fill' : 'bi-exclamation-triangle-fill';
+                readinessHealthBadge.innerHTML = '<span class="r-pill ' + cls + '"><i class="bi ' + icon + '"></i> '
+                    + labelize(data.healthStatus) + '</span>';
+            } else {
+                readinessHealthBadge.innerHTML = '<span class="r-pill health-unknown"><i class="bi bi-question-circle-fill"></i> Unknown</span>';
             }
 
-            // Expected Pregnancy Check Date: must be on/after breeding date, and on/before the due date.
-            if (bDate && checkDate.value && checkDate.value < bDate) {
-                checkDateError.textContent = 'Pregnancy check date cannot be before the breeding date.';
-                checkDateError.style.display = 'block';
-                ok = false;
-            } else if (checkDate.value && dueDate.value && checkDate.value > dueDate.value) {
-                checkDateError.textContent = 'Pregnancy check date should be on or before the expected due date.';
-                checkDateError.style.display = 'block';
-                ok = false;
+            if (data.readyToBreed) {
+                readinessReadyBadge.innerHTML = '<span class="r-pill yes"><i class="bi bi-check-circle-fill"></i> Yes</span>';
+            } else {
+                readinessReadyBadge.innerHTML = '<span class="r-pill no"><i class="bi bi-x-circle-fill"></i> No</span>';
             }
 
-            // Expected Due Date: must be on/after both the breeding date and the check date.
-            if (bDate && dueDate.value && dueDate.value < bDate) {
-                dueDateError.textContent = 'Expected due date cannot be before the breeding date.';
-                dueDateError.style.display = 'block';
-                ok = false;
-            } else if (checkDate.value && dueDate.value && dueDate.value < checkDate.value) {
-                dueDateError.textContent = 'Expected due date cannot be before the pregnancy check date.';
-                dueDateError.style.display = 'block';
-                ok = false;
+            if (data.readyToBreedReason) {
+                readinessMsg.textContent = data.readyToBreedReason;
+                readinessMsg.className = 'calc-msg show msg-info';
+            } else {
+                readinessMsg.className = 'calc-msg';
             }
 
-            saveBtn.disabled = !ok;
-            return ok;
+            readinessLastBirth.textContent = formatDate(data.lastBirthDate);
+            readinessDaysSinceBirth.textContent = (data.daysSinceLastBirth !== null && data.daysSinceLastBirth !== undefined)
+                ? (data.daysSinceLastBirth + ' days') : '—';
+            readinessPrevCount.textContent = (data.previousBreedingsCount !== null && data.previousBreedingsCount !== undefined)
+                ? data.previousBreedingsCount : '0';
+            readinessNextAttempt.textContent = data.nextBreedingAttempt ? ('#' + data.nextBreedingAttempt) : '#1';
+            readinessRetryBadge.style.display = data.isRetryAttempt ? 'inline-flex' : 'none';
+
+            if (data.previousBreeding) {
+                readinessPrevBreeding.textContent = formatDate(data.previousBreeding.date)
+                    + ' (' + (data.previousBreeding.statusLabel || data.previousBreeding.status) + ')';
+            } else {
+                readinessPrevBreeding.textContent = 'None recorded';
+            }
+
+            if (data.historyAdvisory && data.historyAdvisory.message) {
+                const level = data.historyAdvisory.level || 'info';
+                historyAdvisory.className = 'history-advisory level-' + level;
+                const icon = level === 'warning' ? 'bi-exclamation-triangle-fill'
+                        : level === 'good' ? 'bi-check-circle-fill'
+                        : 'bi-info-circle-fill';
+                historyAdvisory.querySelector('.bi').className = 'bi ' + icon;
+                historyAdvisoryText.textContent = data.historyAdvisory.message;
+                historyAdvisory.style.display = 'flex';
+            } else {
+                historyAdvisory.style.display = 'none';
+            }
         }
 
-        femaleSelect.addEventListener('change', () => {
-            const opt = selectedFemaleOption();
-            footerHint.textContent = femaleSelect.value
-                ? 'Recording breeding for ' + opt.textContent + '.'
-                : 'Select a female animal to begin.';
-            updateFemaleEligibilityNote();
-            loadEligibleMales();
-            updateExpectedDates();
+        function fetchContext() {
+            const livestockId = femaleSelect.value;
+            if (!livestockId) {
+                readinessCard.style.display = 'none';
+                return;
+            }
+            fetch(CONTEXT_URL + '?livestockId=' + encodeURIComponent(livestockId))
+                .then(r => r.json())
+                .then(applyContext)
+                .catch(() => { readinessCard.style.display = 'none'; });
+        }
+
+        // Clean, user-friendly feedback for female
+        function updateSelectedFemaleFeedback() {
+            const selectedOption = femaleSelect.options[femaleSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                selectedFemaleFeedback.style.display = 'none';
+                return;
+            }
+
+            const tagNumber = selectedOption.text.split(' (')[0];
+            const ageDisplay = selectedOption.text.match(/\((.*?)\)/)?.[1] || 'age unknown';
+
+            selectedFemaleFeedbackText.textContent = '✅ ' + tagNumber + ' — eligible (' + ageDisplay + ')';
+            selectedFemaleFeedback.className = 'feedback-compact success';
+            selectedFemaleFeedback.style.display = 'block';
+        }
+
+        // Clean, user-friendly feedback for male
+        function updateSelectedMaleFeedback() {
+            const method = selectedMethod();
+            const noMale = NO_MALE_METHODS.includes(method);
+
+            if (noMale) {
+                selectedMaleFeedback.style.display = 'none';
+                return;
+            }
+
+            const selectedOption = maleSelect.options[maleSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                selectedMaleFeedback.style.display = 'none';
+                return;
+            }
+
+            const tagNumber = selectedOption.text.split(' (')[0];
+            const ageDisplay = selectedOption.text.match(/\((.*?)\)/)?.[1] || 'age unknown';
+            const health = selectedOption.getAttribute('data-health');
+            const isHealthy = health && health.toUpperCase() === 'HEALTHY';
+
+            if (isHealthy) {
+                selectedMaleFeedbackText.textContent = '✅ ' + tagNumber + ' — eligible (' + ageDisplay + ')';
+                selectedMaleFeedback.className = 'feedback-compact success';
+            } else {
+                selectedMaleFeedbackText.textContent = '❌ ' + tagNumber + ' — ' + labelize(health || 'unknown') + ' (cannot breed)';
+                selectedMaleFeedback.className = 'feedback-compact warning';
+            }
+            selectedMaleFeedback.style.display = 'block';
+        }
+
+        femaleSelect.addEventListener('change', function () {
+            filterMalesByCategory();
+            checkMaleHealth();
+            fetchCalculation();
+            fetchContext();
+            updateSelectedFemaleFeedback();
+            updateSelectedMaleFeedback();
         });
 
-        methodSelect.addEventListener('change', () => {
-            updateMaleVisibility();
-            if (breedingDate.value) updateCheckDateGuidance(breedingDate.value, gestationDaysFor(
-                selectedFemaleOption() ? selectedFemaleOption().getAttribute('data-category-name') : ''
-            ));
-        });
-        breedingDate.addEventListener('change', updateExpectedDates);
-        checkDate.addEventListener('change', validateDateOrder);
-        dueDate.addEventListener('change', validateDateOrder);
+        dateInput.addEventListener('change', fetchCalculation);
+        methodRadios.forEach(r => r.addEventListener('change', function () {
+            toggleMaleSection();
+            fetchCalculation();
+            updateSelectedMaleFeedback();
+        }));
 
-        document.getElementById('breedingForm').addEventListener('submit', (e) => {
-            if (!validateDateOrder()) e.preventDefault();
+        maleSelect.addEventListener('change', function () {
+            checkMaleHealth();
+            updateSelectedMaleFeedback();
         });
 
-        // Initial state (handles server-side validation redisplay of a partially filled form)
-        updateMaleVisibility();
-        updateFemaleEligibilityNote();
-        if (femaleSelect.value) loadEligibleMales();
-        if (breedingDate.value) updateExpectedDates();
+        recalcBtn.addEventListener('click', fetchCalculation);
+
+        // -- init --
+        toggleMaleSection();
+        filterMalesByCategory();
+        checkMaleHealth();
+        fetchContext();
+        if (IS_EDITING) {
+            renderFromHidden();
+            setTimeout(() => {
+                updateSelectedFemaleFeedback();
+                updateSelectedMaleFeedback();
+            }, 100);
+        } else {
+            fetchCalculation();
+            updateSelectedFemaleFeedback();
+            updateSelectedMaleFeedback();
+        }
+
+        setTimeout(() => {
+            updateSelectedFemaleFeedback();
+            updateSelectedMaleFeedback();
+        }, 50);
     })();
 </script>
 </body>

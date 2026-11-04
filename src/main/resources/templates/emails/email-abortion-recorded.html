@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Abortion Recorded</title>
+</head>
+<body style="margin:0; padding:0; background:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8; padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+                   style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+
+                <tr>
+                    <td style="background:linear-gradient(135deg,#7f1d1d,#dc2626); padding:28px 32px;">
+                        <span style="font-size:28px;">🐄💔</span>
+                        <h1 style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:700;">
+                            Abortion Recorded
+                        </h1>
+                        <p style="margin:4px 0 0; color:#fecaca; font-size:13px;">
+                            automatic livestock reproduction notification
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:28px 32px;">
+                        <p style="margin:0 0 20px; color:#334155; font-size:14px; line-height:1.6;">
+                            An abortion event has just been recorded for one of the animals in the herd.
+                            The full details are below; the event has also been written to the permanent audit log.
+                        </p>
+
+                        <!-- Animal -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-bottom:14px;">
+                            <tr style="background:#f8fafc;">
+                                <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                    Animal Information
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b; width:42%;">Tag Number</td>
+                                <td style="padding:10px 14px; font-size:14px; font-weight:700; color:#0f172a;" th:text="${tagNumber}">GOA-023</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Category</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${category}">Goat</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Gender</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${gender}">Female</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Health Status</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${healthStatus}">SICK</td>
+                            </tr>
+                        </table>
+
+                        <!-- Ownership -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-bottom:14px;">
+                            <tr style="background:#f8fafc;">
+                                <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#7f1d1d; text-transform:uppercase; letter-spacing:.05em;">
+                                    Ownership &amp; Location
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b; width:42%;">Beneficiary</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${beneficiaryName}">—</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Phone</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${beneficiaryPhone}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Location</td>
+                                <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${locationPath}">—</td>
+                            </tr>
+                        </table>
+
+                        <!-- Abortion details -->
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                               style="border:1px solid #fecaca; border-radius:8px; overflow:hidden;">
+                            <tr style="background:#fef2f2;">
+                                <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#991b1b; text-transform:uppercase; letter-spacing:.05em;">
+                                    Abortion Details
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b; width:42%;">Abortion Date</td>
+                                <td style="padding:10px 14px; font-size:14px; font-weight:700; color:#991b1b;" th:text="${abortionDate}">10 Sep 2026</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Pregnancy #</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${pregnancyNumber}">—</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Expected Birth</td>
+                                <td style="padding:10px 14px; font-size:14px; color:#0f172a;" th:text="${expectedBirth}">—</td>
+                            </tr>
+                            <tr style="background:#f8fafc;">
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Stage</td>
+                                <td style="padding:10px 14px; font-size:14px; font-weight:700; color:#7c3aed;" th:text="${stageOfPregnancy}">Mid</td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px 14px; font-size:12px; font-weight:700; color:#64748b;">Reason</td>
+                                <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${reason}">—</td>
+                            </tr>
+                        </table>
+
+                        <p style="margin:20px 0 0; font-size:12px; color:#94a3b8;">
+                            Recorded on <strong th:text="${today}">2026-09-11</strong>.
+                            This event has also been written to the permanent audit log.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background:#f8fafc; padding:16px 32px; border-top:1px solid #e2e8f0;">
+                        <p style="margin:0; font-size:11px; color:#94a3b8;">
+                            Animal Production System | Version 0.1.0
+                            Developed by HABANABAKIZE &amp; NDAYIZEYE
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

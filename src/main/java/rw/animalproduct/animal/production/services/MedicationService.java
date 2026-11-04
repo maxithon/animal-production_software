@@ -15,12 +15,12 @@ import java.util.UUID;
 public class MedicationService {
 
     private final MedicationRepository medicationRepository;
-    private final AuditLogService      auditLogService;
+    private final AuditLogService auditLogService;
 
     public MedicationService(MedicationRepository medicationRepository,
                              AuditLogService auditLogService) {
         this.medicationRepository = medicationRepository;
-        this.auditLogService      = auditLogService;
+        this.auditLogService = auditLogService;
     }
 
     // ── READ ─────────────────────────────────────────────────────────────────
@@ -130,12 +130,12 @@ public class MedicationService {
      * Called BEFORE changes for old snapshot, and AFTER changes for new snapshot.
      */
     private String buildSnapshot(Medication m) {
-        return "Name: "         + m.getName()
-                + " | Generic: "   + m.getGenericName()
-                + " | Category: "  + m.getCategory()
-                + " | Dosage: "    + m.getDefaultDosage() + " " + m.getDefaultDosageUnit()
+        return "Name: " + m.getName()
+                + " | Generic: " + m.getGenericName()
+                + " | Category: " + m.getCategory()
+                + " | Dosage: " + m.getDefaultDosage() + " " + m.getDefaultDosageUnit()
                 + " | Manufacturer: " + m.getManufacturer()
-                + " | Active: "    + m.getIsActive()
+                + " | Active: " + m.getIsActive()
                 + " | Description: " + m.getDescription();
     }
 

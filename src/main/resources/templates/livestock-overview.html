@@ -1,434 +1,436 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livestock Overview - Age & Lifecycle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Livestock Overview</title>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            font-family: 'DM Sans', sans-serif;
+        :root {
+            --brand-700: #0f4c63;
+            --brand-600: #1a5f7a;
+            --brand-500: #2e8b9e;
+            --ink-900: #0f172a;
+            --ink-700: #334155;
+            --ink-500: #64748b;
+            --ink-300: #cbd5e1;
+            --ink-100: #f1f5f9;
         }
-        .overview-container { max-width: 1400px; margin: 0 auto; }
-        .page-header { background: white; border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .page-title { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
-        .page-subtitle { color: #64748b; font-size: 1rem; }
-        .content-card { background: white; border-radius: 16px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .filter-section { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
-        .filter-label { font-size: 0.85rem; font-weight: 700; color: #475569; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .filter-chips { display: flex; gap: 10px; flex-wrap: wrap; }
-        .filter-chip { padding: 8px 18px; border-radius: 24px; font-size: 0.85rem; font-weight: 600; border: 2px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-        .filter-chip:hover { background: #f1f5f9; border-color: #cbd5e1; transform: translateY(-1px); }
-        .filter-chip.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: #667eea; }
-        .lifecycle-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
-        .lifecycle-badge.NEWBORN       { background: #fef3c7; color: #d97706;  border: 1px solid #fde047; }
-        .lifecycle-badge.YOUNG         { background: #dbeafe; color: #2563eb;  border: 1px solid #bfdbfe; }
-        .lifecycle-badge.READY_TO_BREED{ background: #ede9fe; color: #7c3aed;  border: 1px solid #c4b5fd; }
-        .lifecycle-badge.BREEDING_MALE { background: #dbeafe; color: #1d4ed8;  border: 1px solid #93c5fd; }
-        .lifecycle-badge.PREGNANT      { background: #fce7f3; color: #be185d;  border: 1px solid #fbcfe8; }
-        .lifecycle-badge.MATURE        { background: #d1fae5; color: #059669;  border: 1px solid #a7f3d0; }
-        .lifecycle-badge.DEAD          { background: #f3f4f6; color: #374151;  border: 1px solid #d1d5db; }
-        .lifecycle-badge.SOLD          { background: #fee2e2; color: #991b1b;  border: 1px solid #fca5a5; }
-        .lifecycle-badge.UNKNOWN       { background: #f8fafc; color: #94a3b8;  border: 1px solid #e2e8f0; }
-        .age-display { display: inline-flex; align-items: center; gap: 6px; background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 600; color: #0369a1; }
-        .animal-photo { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; border: 2px solid #e2e8f0; }
-        .animal-photo-placeholder { width: 50px; height: 50px; border-radius: 10px; background: linear-gradient(135deg, #667eea, #764ba2); display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; }
-        .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
-        .status-badge.ACTIVE   { background: #d1fae5; color: #065f46; }
-        .status-badge.SOLD     { background: #fee2e2; color: #991b1b; }
-        .status-badge.DEAD     { background: #f3f4f6; color: #374151; }
-        .status-badge.SICK     { background: #fef9c3; color: #854d0e; }
-        .status-badge.PREGNANT { background: #fce7f3; color: #be185d; }
-        .table { margin-bottom: 0; }
-        .table thead th { background: #f8fafc; color: #475569; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #e2e8f0; padding: 14px 12px; }
-        .table tbody tr { transition: background 0.15s; }
-        .table tbody tr:hover { background: #f8fafc; }
-        .table tbody td { vertical-align: middle; padding: 14px 12px; }
-        .value-badge { display: inline-flex; align-items: center; gap: 5px; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 12px; border-radius: 16px; font-size: 0.8rem; font-weight: 700; color: #15803d; }
-        .search-box { position: relative; }
-        .search-box input { padding-left: 42px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 0.9rem; transition: all 0.2s; }
-        .search-box input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
-        .search-box i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; }
 
-        /* ── Pagination ── */
-        .pagination-wrap { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; border-top: 2px solid #f1f5f9; margin-top: 20px; flex-wrap: wrap; gap: 12px; }
-        .pagination-list { display: flex; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
-        .pg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; background: white; border: 2px solid #e2e8f0; color: #64748b; text-decoration: none; transition: all 0.2s; }
-        .pg-btn:hover { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-color: #667eea; }
-        .pg-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-color: #667eea; }
-        .pg-btn.disabled { opacity: 0.4; pointer-events: none; }
-        .page-size-select { padding: 6px 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 0.82rem; cursor: pointer; background: white; }
+        body { background: #f0f4f8; font-family: 'DM Sans', sans-serif; color: var(--ink-900); }
 
-        /*
-        ═══════════════════════════════════════════════════════════════════
-        NEW: clickable stat-card styling. Applied to the anchor wrapping
-        the "Ready to Breed" card so it reads as an actionable link rather
-        than a static counter — hover lift + a "Record →" affordance that
-        fades in, without disturbing the visual layout of the other cards.
-        ═══════════════════════════════════════════════════════════════════
-        */
-        .stat-card-link {
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
-            position: relative;
+        /* ───────────── ORIGINAL HEADER (unchanged) ───────────── */
+        .page-header {
+            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
+            color: white;
+            padding: 24px 32px;
+            margin-bottom: 24px;
         }
-        .stat-card-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(124, 58, 237, 0.18) !important;
+
+        /* ───────────── ORIGINAL CARDS (unchanged) ───────────── */
+        .card-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,.07);
+            padding: 24px;
+            margin-bottom: 20px;
         }
-        .stat-card-link:hover .stat-card-cta { opacity: 1; }
-        .stat-card-cta {
-            font-size: 0.62rem; font-weight: 700; color: #7c3aed;
-            opacity: 0; transition: opacity 0.15s ease;
-            margin-top: 2px; display: flex; align-items: center; gap: 2px;
+        .section-head {
+            font-size: .7rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .08em;
+            color: #94a3b8; margin-bottom: 14px;
+            padding-bottom: 8px; border-bottom: 1.5px solid #f1f5f9;
+        }
+        .stat-box {
+            background: #f8fafc; border-radius: 10px;
+            padding: 14px 16px; text-align: center; height: 100%;
+        }
+        .stat-num { font-size: 1.5rem; font-weight: 800; color: #1a5f7a; }
+        .stat-label {
+            font-size: .72rem; text-transform: uppercase;
+            letter-spacing: .04em; color: #6b7280;
+            font-weight: 600; margin-top: 2px;
+        }
+
+        /* ───────────── FILTER BAR (unchanged) ───────────── */
+        .filter-bar .form-select,
+        .filter-bar .form-control { font-size: .85rem; }
+
+        /* ───────────── NEW TABLE STYLES ───────────── */
+        .table-wrap { overflow-x: auto; }
+        .table { margin: 0; }
+        .table thead th {
+            font-size: .68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .05em;
+            color: #94a3b8;
+            border-bottom: 1.5px solid #f1f5f9;
+            padding: 10px 10px; white-space: nowrap;
+            background: #fbfdff;
+        }
+        .table tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background .12s ease;
+        }
+        .table tbody tr:hover { background: #f8fbff; }
+        .table td {
+            vertical-align: middle; padding: 12px 10px;
+            font-size: .85rem; color: #334155;
+        }
+
+        .animal-cell { display: flex; align-items: center; gap: 11px; min-width: 200px; }
+        .thumb, .thumb-placeholder {
+            width: 40px; height: 40px; border-radius: 10px;
+            flex-shrink: 0; object-fit: cover;
+        }
+        .thumb { border: 1px solid #e2e8f0; }
+        .thumb-placeholder {
+            background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
+            display: grid; place-items: center; color: #fff; font-size: .95rem;
+        }
+        .animal-tag { font-weight: 700; color: var(--ink-900); font-size: .86rem; }
+        .animal-meta { font-size: .72rem; color: #64748b; margin-top: 2px; }
+
+        .badge-soft {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 9px; border-radius: 20px;
+            font-size: .7rem; font-weight: 700; letter-spacing: .01em;
+        }
+        .b-active      { background: #d1fae5; color: #065f46; }
+        .b-pregnant    { background: #ede9fe; color: #5b21b6; }
+        .b-sick        { background: #fef9c3; color: #854d0e; }
+        .b-sold        { background: #fee2e2; color: #991b1b; }
+        .b-dead        { background: #f3f4f6; color: #374151; }
+        .b-transferred { background: #f0f9ff; color: #0369a1; }
+        .b-unknown     { background: #f1f5f9; color: #64748b; }
+
+        .gender-icon { font-weight: 700; font-size: .85rem; }
+        .gender-F { color: #be185d; }
+        .gender-M { color: #1d4ed8; }
+
+        .loc-stack { font-size: .78rem; line-height: 1.35; }
+        .loc-stack .village { font-weight: 600; color: var(--ink-900); }
+        .loc-stack .path { color: #64748b; font-size: .7rem; }
+
+        .beneficiary-cell .name  { font-weight: 600; color: var(--ink-900); font-size: .82rem; }
+        .beneficiary-cell .phone { font-size: .72rem; color: #64748b; margin-top: 2px; }
+        .beneficiary-cell .phone i { margin-right: 3px; }
+
+        .value-cell { font-weight: 700; color: #1a5f7a; white-space: nowrap; }
+
+        .action-btn {
+            width: 32px; height: 32px; padding: 0;
+            display: inline-grid; place-items: center;
+            border-radius: 8px; border: 1px solid #cbd5e1;
+            color: #334155; background: #fff;
+            transition: all .12s ease;
+        }
+        .action-btn:hover {
+            background: #1a5f7a; border-color: #1a5f7a; color: #fff;
+        }
+
+        /* ───────────── EMPTY STATE ───────────── */
+        .empty-state {
+            text-align: center; padding: 48px 20px; color: #64748b;
+        }
+        .empty-state i {
+            font-size: 2.4rem; color: #cbd5e1;
+            display: block; margin-bottom: 12px;
+        }
+        .empty-state h6 { color: var(--ink-700); font-weight: 700; margin: 0 0 6px; }
+        .empty-state p { font-size: .85rem; margin: 0; }
+
+        /* ───────────── PAGINATION ───────────── */
+        .pagination { margin: 20px 0 0; }
+        .page-link {
+            border: 1px solid #f1f5f9;
+            color: #334155; font-size: .82rem;
+            padding: 6px 11px; border-radius: 8px !important;
+            margin: 0 3px;
+        }
+        .page-link:hover { background: #e6f2f5; border-color: #2e8b9e; color: #1a5f7a; }
+        .page-item.active .page-link { background: #1a5f7a; border-color: #1a5f7a; color: #fff; }
+        .page-item.disabled .page-link { color: #cbd5e1; background: #fafbfc; }
+
+        .results-count {
+            font-size: .78rem; color: #64748b; font-weight: 500;
+            text-transform: none; letter-spacing: 0;
+        }
+
+        /* ───────────── RESPONSIVE ───────────── */
+        @media (max-width: 767.98px) {
+            .page-header { padding: 16px; }
+            .page-header .d-flex { flex-direction: column; gap: 12px; align-items: flex-start !important; }
         }
     </style>
 </head>
 <body>
-<div class="overview-container">
 
-    <!-- ── Page Header ──────────────────────────────────────────────── -->
-    <div class="page-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
-                <h1 class="page-title"><i class="bi bi-diagram-3-fill"></i> Livestock Overview</h1>
-                <p class="page-subtitle">Complete age and lifecycle tracking for all livestock</p>
-            </div>
-            <a th:href="@{/livestock/list}" class="btn btn-outline-primary">
-                <i class="bi bi-arrow-left"></i> Back to Livestock List
+<!-- ═══════════════════════════ ORIGINAL HEADER ═══════════════════════════ -->
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-1"><i class="bi bi-box2-heart me-2"></i>Livestock Overview</h4>
+            <small style="opacity:.85" th:text="${totalItems} + ' animals total'">0 animals total</small>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a th:href="@{/livestock/register}" class="btn btn-light btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Add Animal
             </a>
         </div>
     </div>
+</div>
 
-    <!-- ── Lifecycle Stat Cards ─────────────────────────────────────── -->
-    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:20px;">
+<div class="container-fluid px-4 pb-5">
 
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #fbbf24; display:flex; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#fef3c7; color:#d97706; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-egg-fill"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Newborn</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['NEWBORN'] != null ? lifecycleStats['NEWBORN'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">0–30 days</div>
-            </div>
-        </div>
-
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #60a5fa; display:flex; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#dbeafe; color:#2563eb; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-arrow-up-circle-fill"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Young</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['YOUNG'] != null ? lifecycleStats['YOUNG'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">1–12 months</div>
-            </div>
-        </div>
-
-        <!--
-        ═══════════════════════════════════════════════════════════════════
-        FIX: "Ready to Breed" is now a real link. It points to
-        /livestock/lifecycle/breeding-management — the page that actually
-        lists ready females/males grouped by category and lets you act on
-        them — rather than a blank breeding form with nothing pre-selected.
-        Card markup/visuals are unchanged; only wrapped in <a> plus a small
-        "Record →" hint that appears on hover.
-        ═══════════════════════════════════════════════════════════════════
-        -->
-        <a th:href="@{/livestock/lifecycle/breeding-management}"
-           class="stat-card-link"
-           title="View animals ready to breed and record a breeding event"
-           style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #a78bfa; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#ede9fe; color:#7c3aed; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-heart-arrow"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Ready to Breed</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['READY_TO_BREED'] != null ? lifecycleStats['READY_TO_BREED'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">Female 12+ months</div>
-                <div class="stat-card-cta">
-                    <i class="bi bi-arrow-right-circle-fill"></i> Record breeding
-                </div>
-            </div>
-        </a>
-
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #3b82f6; display:flex; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#dbeafe; color:#1d4ed8; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-gender-male"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Breeding Male</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['BREEDING_MALE'] != null ? lifecycleStats['BREEDING_MALE'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">Male 12+ months</div>
-            </div>
-        </div>
-
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #ec4899; display:flex; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#fce7f3; color:#be185d; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-heart-fill"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Pregnant</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['PREGNANT'] != null ? lifecycleStats['PREGNANT'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">Currently pregnant</div>
-            </div>
-        </div>
-
-        <div style="background:white; border-radius:10px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); border-left:4px solid #10b981; display:flex; align-items:center; gap:12px; min-width:160px;">
-            <div style="background:#d1fae5; color:#059669; border-radius:8px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;"><i class="bi bi-check-circle-fill"></i></div>
-            <div>
-                <div style="font-size:0.7rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.4px;">Mature</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1.1;" th:text="${lifecycleStats['MATURE'] != null ? lifecycleStats['MATURE'] : 0}">0</div>
-                <div style="font-size:0.68rem; color:#94a3b8;">Fully grown</div>
-            </div>
-        </div>
-
+    <!-- ALERTS -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i><span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i><span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <!-- ── Main Content Card ─────────────────────────────────────────── -->
-    <div class="content-card">
-
-        <!-- Filters -->
-        <div class="filter-section">
-            <div class="row g-3">
-
-                <!-- Stage chips — all carry current search + reset page to 0 -->
-                <div class="col-12">
-                    <div class="filter-label"><i class="bi bi-funnel-fill"></i> Filter by Lifecycle Stage</div>
-                    <div class="filter-chips">
-                        <a th:href="@{/livestock/overview(size=${pageSize}, search=${searchQuery})}"
-                           class="filter-chip"
-                           th:classappend="${selectedStage == null or selectedStage == 'ALL'} ? 'active'">
-                            <i class="bi bi-grid-fill"></i> All Stages
-                        </a>
-                        <a th:href="@{/livestock/overview(stage='NEWBORN',       size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'NEWBORN'}       ? 'active'"><i class="bi bi-egg-fill"></i> Newborn</a>
-                        <a th:href="@{/livestock/overview(stage='YOUNG',         size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'YOUNG'}         ? 'active'"><i class="bi bi-arrow-up-circle"></i> Young</a>
-                        <a th:href="@{/livestock/overview(stage='READY_TO_BREED',size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'READY_TO_BREED'}? 'active'"><i class="bi bi-heart-arrow"></i> Ready to Breed</a>
-                        <a th:href="@{/livestock/overview(stage='BREEDING_MALE', size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'BREEDING_MALE'} ? 'active'"><i class="bi bi-gender-male"></i> Breeding Male</a>
-                        <a th:href="@{/livestock/overview(stage='PREGNANT',      size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'PREGNANT'}      ? 'active'"><i class="bi bi-heart-fill"></i> Pregnant</a>
-                        <a th:href="@{/livestock/overview(stage='MATURE',        size=${pageSize}, search=${searchQuery})}" class="filter-chip" th:classappend="${selectedStage == 'MATURE'}        ? 'active'"><i class="bi bi-check-circle"></i> Mature</a>
-                    </div>
-                </div>
-
-                <!-- Search — server-side, submits to same URL with current stage -->
-                <div class="col-md-6">
-                    <div class="filter-label"><i class="bi bi-search"></i> Search by Tag Number</div>
-                    <form method="get" th:action="@{/livestock/overview}" class="d-flex gap-2">
-                        <input type="hidden" name="stage"  th:value="${selectedStage}">
-                        <input type="hidden" name="size"   th:value="${pageSize}">
-                        <div class="search-box flex-grow-1">
-                            <i class="bi bi-search"></i>
-                            <input type="text" name="search" class="form-control"
-                                   placeholder="Search by tag number..."
-                                   th:value="${searchQuery}">
+    <!-- ═══════════════════════ ORIGINAL STAT CARDS ═══════════════════════ -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-md-4">
+            <div class="card-panel py-3">
+                <div class="section-head mb-2">By Lifecycle Stage</div>
+                <div class="row g-2">
+                    <div class="col-6" th:each="entry : ${lifecycleStats}">
+                        <div class="stat-box">
+                            <div class="stat-num" th:text="${entry.value}">0</div>
+                            <div class="stat-label" th:text="${entry.key}">STAGE</div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Search</button>
-                        <a th:if="${searchQuery != null and !searchQuery.isEmpty()}"
-                           th:href="@{/livestock/overview(stage=${selectedStage}, size=${pageSize})}"
-                           class="btn btn-outline-secondary">Clear</a>
-                    </form>
+                    </div>
+                    <div class="col-12 text-muted small"
+                         th:if="${lifecycleStats == null or lifecycleStats.isEmpty()}">No data</div>
                 </div>
-
             </div>
         </div>
+        <div class="col-12 col-md-4">
+            <div class="card-panel py-3">
+                <div class="section-head mb-2">By Category</div>
+                <div class="row g-2">
+                    <div class="col-6" th:each="entry : ${categoryStats}">
+                        <div class="stat-box">
+                            <div class="stat-num" th:text="${entry.value}">0</div>
+                            <div class="stat-label" th:text="${entry.key}">CATEGORY</div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-muted small"
+                         th:if="${categoryStats == null or categoryStats.isEmpty()}">No data</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card-panel py-3">
+                <div class="section-head mb-2">By Status</div>
+                <div class="row g-2">
+                    <div class="col-6" th:each="entry : ${statusStats}">
+                        <div class="stat-box">
+                            <div class="stat-num" th:text="${entry.value}">0</div>
+                            <div class="stat-label" th:text="${entry.key}">STATUS</div>
+                        </div>
+                    </div>
+                    <div class="col-12 text-muted small"
+                         th:if="${statusStats == null or statusStats.isEmpty()}">No data</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Result count -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">
-                <span class="badge bg-primary" th:text="${totalItems}">0</span> Animals Found
-                <span th:if="${selectedStage != null and selectedStage != 'ALL'}"
-                      class="badge ms-2"
-                      th:classappend="'lifecycle-badge ' + ${selectedStage}"
-                      th:text="${#strings.replace(selectedStage, '_', ' ')}"></span>
-                <span th:if="${searchQuery != null and !searchQuery.isEmpty()}"
-                      class="badge bg-secondary ms-2">
-                    Search: <span th:text="${searchQuery}"></span>
-                </span>
-            </h5>
-            <div class="d-flex align-items-center gap-2">
-                <span style="font-size:0.82rem; color:#64748b;">Per page:</span>
-                <select class="page-size-select" onchange="changePageSize(this.value)">
-                    <option value="10"  th:selected="${pageSize == 10}">10</option>
-                    <option value="20"  th:selected="${pageSize == 20}">20</option>
-                    <option value="50"  th:selected="${pageSize == 50}">50</option>
-                    <option value="100" th:selected="${pageSize == 100}">100</option>
+    <!-- ═══════════════════════════ FILTER BAR ═══════════════════════════ -->
+    <div class="card-panel">
+        <form method="get" th:action="@{/livestock/overview}" class="row g-2 align-items-end filter-bar">
+            <div class="col-6 col-md-3">
+                <label class="form-label small fw-semibold mb-1">Search</label>
+                <input type="text" class="form-control form-control-sm" name="search"
+                       th:value="${searchQuery}" placeholder="Tag number...">
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Category</label>
+                <select class="form-select form-select-sm" name="category">
+                    <option value="ALL">All</option>
+                    <option th:each="entry : ${categoryStats}"
+                            th:value="${entry.key}" th:text="${entry.key}"
+                            th:selected="${entry.key == selectedCategory}"></option>
                 </select>
             </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Status</label>
+                <select class="form-select form-select-sm" name="status">
+                    <option value="ALL">All</option>
+                    <option th:each="entry : ${statusStats}"
+                            th:value="${entry.key}" th:text="${entry.key}"
+                            th:selected="${entry.key == selectedStatus}"></option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Stage</label>
+                <select class="form-select form-select-sm" name="stage">
+                    <option value="ALL">All</option>
+                    <option th:each="entry : ${lifecycleStats}"
+                            th:value="${entry.key}" th:text="${entry.key}"
+                            th:selected="${entry.key == selectedStage}"></option>
+                </select>
+            </div>
+            <div class="col-6 col-md-2">
+                <label class="form-label small fw-semibold mb-1">Gender</label>
+                <select class="form-select form-select-sm" name="gender">
+                    <option value="">All</option>
+                    <option value="FEMALE" th:selected="${selectedGender == 'FEMALE'}">Female</option>
+                    <option value="MALE"   th:selected="${selectedGender == 'MALE'}">Male</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100" aria-label="Apply filters">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ═══════════════════════════ NEW TABLE ═══════════════════════════ -->
+    <div class="card-panel">
+        <div class="section-head d-flex justify-content-between align-items-center">
+            <span>Animals</span>
+            <span class="results-count"
+                  th:text="${totalItems} + ' record' + (${totalItems == 1} ? '' : 's')">0 records</span>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${livestockList == null or livestockList.empty}" class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <h6>No animals found</h6>
+            <p>Try adjusting your filters, or register a new animal to get started.</p>
+            <a th:href="@{/livestock/register}" class="btn btn-sm btn-primary mt-3">
+                <i class="bi bi-plus-circle me-1"></i>Register Animal
+            </a>
         </div>
 
         <!-- Table -->
-        <div class="table-responsive">
-            <table class="table table-hover" id="dataTable">
+        <div class="table-wrap" th:if="${livestockList != null and !livestockList.empty}">
+            <table class="table">
                 <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Photo</th>
-                    <th>Tag / Category</th>
-                    <th>Gender</th>
-                    <th>Age</th>
-                    <th>Lifecycle Stage</th>
-                    <th>Reproduction Info</th>
-                    <th>Status</th>
-                    <th>Current Value</th>
-                    <th>Actions</th>
+                    <th scope="col">Animal</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Gender</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Age</th>
+                    <th scope="col" class="text-end">Value</th>
+                    <th scope="col">Beneficiary</th>
+                    <th scope="col">Location</th>
+                    <th scope="col" class="text-end">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
+                <tr th:each="animal : ${livestockList}">
 
-                <tr th:if="${livestockList == null or livestockList.empty}">
-                    <td colspan="10" class="text-center py-5">
-                        <i class="bi bi-inbox" style="font-size:3rem; color:#cbd5e1;"></i>
-                        <p class="text-muted mt-2">No livestock found</p>
-                        <a th:if="${selectedStage != null or (searchQuery != null and !searchQuery.isEmpty())}"
-                           th:href="@{/livestock/overview}"
-                           class="btn btn-outline-primary btn-sm mt-2">
-                            <i class="bi bi-x-circle me-1"></i> Clear all filters
-                        </a>
-                    </td>
-                </tr>
-
-                <tr th:each="animal, iterStat : ${livestockList}">
-
-                    <td th:text="${(currentPage * pageSize) + iterStat.count}">1</td>
-
-                    <!-- Photo -->
+                    <!-- Animal: thumb + tag + stage -->
                     <td>
-                        <img th:if="${animal.photo != null and !animal.photo.isEmpty()}"
-                             th:src="${animal.photo}" class="animal-photo" alt="Photo">
-                        <span th:if="${animal.photo == null or animal.photo.isEmpty()}"
-                              class="animal-photo-placeholder">
-                            <i class="bi bi-box2-heart"></i>
-                        </span>
+                        <div class="animal-cell">
+                            <img th:if="${animal.photo != null and !animal.photo.isEmpty()}"
+                                 th:src="${animal.photo}" th:alt="${animal.tagNumber}" class="thumb">
+                            <div th:unless="${animal.photo != null and !animal.photo.isEmpty()}"
+                                 class="thumb-placeholder">
+                                <i class="bi bi-box2-heart"></i>
+                            </div>
+                            <div>
+                                <div class="animal-tag" th:text="${animal.tagNumber}">TAG-000</div>
+                                <div class="animal-meta"
+                                     th:text="${animal.lifecycleStage != null ? animal.lifecycleStage : '—'}">
+                                    STAGE
+                                </div>
+                            </div>
+                        </div>
                     </td>
 
-                    <!-- Tag / Category -->
+                    <!-- Category -->
                     <td>
-                        <strong th:text="${animal.tagNumber}">TAG-001</strong>
-                        <div style="margin-top:4px;">
-                            <span th:if="${animal.categoryName != null}"
-                                  class="badge bg-info"
-                                  th:text="${animal.categoryName}">Category</span>
-                            <span th:if="${animal.categoryName == null}"
-                                  class="badge bg-secondary">N/A</span>
-                        </div>
-                        <div th:if="${animal.motherId != null}" style="margin-top:4px;">
-                            <span style="font-size:0.7rem; background:#e0f2fe; color:#0369a1; border:1px solid #bae6fd; border-radius:10px; padding:1px 7px;">
-                                <i class="bi bi-stars"></i> Born on Farm
-                            </span>
-                        </div>
+                        <span class="badge-soft b-active"
+                              th:if="${animal.categoryName != null}"
+                              th:text="${animal.categoryName}">CATTLE</span>
+                        <span th:unless="${animal.categoryName != null}" class="text-muted">—</span>
                     </td>
 
                     <!-- Gender -->
                     <td>
-                        <span th:if="${animal.gender == 'MALE'}"   class="badge bg-primary"><i class="bi bi-gender-male"></i> Male</span>
-                        <span th:if="${animal.gender == 'FEMALE'}" class="badge bg-danger"><i class="bi bi-gender-female"></i> Female</span>
-                        <span th:if="${animal.gender == null}"      class="badge bg-secondary">N/A</span>
-                    </td>
-
-                    <!-- Age -->
-                    <td>
-                        <div class="age-display">
-                            <i class="bi bi-calendar3"></i>
-                            <span th:text="${animal.ageDisplay != null ? animal.ageDisplay : 'Unknown'}"></span>
-                        </div>
-                        <div class="text-muted" style="font-size:0.7rem; margin-top:4px;">
-                            <span th:if="${animal.ageInDays != null}"
-                                  th:text="${animal.ageInDays + ' days'}"></span>
-                        </div>
-                    </td>
-
-                    <!-- Lifecycle Stage -->
-                    <td>
-                        <span th:if="${animal.lifecycleStage != null}"
-                              class="lifecycle-badge"
-                              th:classappend="${animal.lifecycleStage}"
-                              th:text="${#strings.replace(animal.lifecycleStage, '_', ' ')}">Stage</span>
-                        <span th:if="${animal.lifecycleStage == null}"
-                              class="lifecycle-badge UNKNOWN">UNKNOWN</span>
-                    </td>
-
-                    <!-- Reproduction Info -->
-                    <td style="min-width:180px; font-size:0.8rem;">
-                        <div th:if="${animal.offspringCount != null and animal.offspringCount > 0}" style="margin-bottom:4px;">
-                            <i class="bi bi-diagram-2 text-success"></i>
-                            <strong th:text="${animal.offspringCount}"></strong> offspring
-                        </div>
-                        <div th:if="${animal.lastBirthDate != null}" style="margin-bottom:4px;">
-                            <i class="bi bi-calendar-check text-success"></i>
-                            Last birth: <strong th:text="${#temporals.format(animal.lastBirthDate, 'dd-MM-yyyy')}"></strong>
-                        </div>
-                        <div th:if="${animal.expectedDueDate != null}" style="margin-bottom:4px;">
-                            <i class="bi bi-calendar-heart text-danger"></i>
-                            Due: <strong style="color:#be185d;" th:text="${#temporals.format(animal.expectedDueDate, 'dd-MM-yyyy')}"></strong>
-                        </div>
-                        <div th:if="${animal.lastBreedingDate != null}" style="margin-bottom:4px;">
-                            <i class="bi bi-arrow-repeat text-primary"></i>
-                            Last bred: <strong th:text="${#temporals.format(animal.lastBreedingDate, 'dd-MM-yyyy')}"></strong>
-                        </div>
-                        <div th:if="${animal.pregnancyStatus != null and animal.pregnancyStatus != 'unknown'}" style="margin-bottom:4px;">
-                            <span th:if="${animal.pregnancyStatus == 'PREGNANT'}"
-                                  style="background:#fce7f3; color:#be185d; border:1px solid #fbcfe8; border-radius:10px; padding:1px 8px; font-size:0.72rem; font-weight:700;">
-                                <i class="bi bi-heart-fill"></i> Pregnant
-                            </span>
-                            <span th:if="${animal.pregnancyStatus == 'NOT_PREGNANT'}"
-                                  style="background:#f1f5f9; color:#64748b; border:1px solid #e2e8f0; border-radius:10px; padding:1px 8px; font-size:0.72rem;">
-                                Not Pregnant
-                            </span>
-                        </div>
-                        <div th:if="${animal.gestationPeriodMonths != null}" style="color:#94a3b8; font-size:0.7rem;">
-                            <i class="bi bi-info-circle"></i>
-                            Gestation: <span th:text="${animal.gestationPeriodMonths}"></span> months
-                        </div>
-                        <span th:if="${animal.gender == 'MALE' and (animal.offspringCount == null or animal.offspringCount == 0)}"
-                              style="color:#94a3b8; font-style:italic; font-size:0.75rem;">
-                            No breeding records
+                        <span th:if="${animal.gender == 'FEMALE'}" class="gender-icon gender-F">
+                            <i class="bi bi-gender-female"></i> Female
                         </span>
+                        <span th:if="${animal.gender == 'MALE'}" class="gender-icon gender-M">
+                            <i class="bi bi-gender-male"></i> Male
+                        </span>
+                        <span th:if="${animal.gender == null}" class="text-muted">—</span>
                     </td>
 
                     <!-- Status -->
                     <td>
-                        <span th:if="${animal.status != null}"
-                              class="status-badge"
-                              th:classappend="${animal.status}"
-                              th:text="${animal.status}">Status</span>
-                        <span th:if="${animal.status == null}"
-                              class="status-badge"
-                              style="background:#f1f5f9; color:#64748b;">Unknown</span>
-                    </td>
-
-                    <!-- Current Value -->
-                    <td>
-                        <span th:if="${animal.currentValue != null}" class="value-badge">
-                            <i class="bi bi-gem"></i>
-                            <span th:text="${#numbers.formatDecimal(animal.currentValue, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
+                        <span class="badge-soft"
+                              th:classappend="'b-' + (${animal.status != null}
+                                                      ? ${#strings.toLowerCase(animal.status)}
+                                                      : 'unknown')"
+                              th:text="${animal.status != null ? animal.status : 'UNKNOWN'}">
+                            ACTIVE
                         </span>
-                        <span th:if="${animal.currentValue == null}"
-                              style="color:#94a3b8; font-style:italic; font-size:0.8rem;">Not set</span>
-                        <div th:if="${animal.soldPrice != null}" style="margin-top:4px;">
-                            <span style="font-size:0.72rem; color:#dc2626; font-weight:700;">
-                                Sold: <span th:text="${#numbers.formatDecimal(animal.soldPrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
-                            </span>
-                        </div>
                     </td>
 
-                    <!-- Actions -->
-                    <td>
+                    <!-- Age -->
+                    <td th:text="${animal.ageDisplay}">—</td>
+
+                    <!-- Value -->
+                    <td class="text-end value-cell">
+                        <span th:if="${animal.currentValue != null}"
+                              th:text="${#numbers.formatInteger(animal.currentValue, 0, 'COMMA')} + ' RWF'">
+                            0 RWF
+                        </span>
+                        <span th:unless="${animal.currentValue != null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Beneficiary: name + phone -->
+                    <td th:with="b=${beneficiaryMap != null ? beneficiaryMap.get(animal.beneficiaryId) : null}">
+                        <div class="beneficiary-cell" th:if="${b != null}">
+                            <div class="name" th:text="${b.fullName}">Name</div>
+                            <div class="phone" th:if="${b.phone != null}">
+                                <i class="bi bi-telephone"></i>
+                                <span th:text="${b.phone}">Phone</span>
+                            </div>
+                        </div>
+                        <span th:if="${b == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Location: village + breadcrumb -->
+                    <td th:with="h=${hierarchyMap != null ? hierarchyMap.get(animal.locationId) : null}">
+                        <div class="loc-stack" th:if="${h != null and h.village != null}">
+                            <div class="village" th:text="${h.village}">Village</div>
+                            <div class="path">
+                                <span th:if="${h.sector != null}"   th:text="${h.sector} + ' / '">Sector / </span>
+                                <span th:if="${h.district != null}" th:text="${h.district} + ' / '">District / </span>
+                                <span th:if="${h.province != null}" th:text="${h.province}">Province</span>
+                            </div>
+                        </div>
+                        <div class="loc-stack" th:if="${h != null and h.village == null}">
+                            <div class="village"
+                                 th:text="${h.sector != null ? h.sector
+                                            : (h.district != null ? h.district
+                                            : (h.province != null ? h.province : '—'))}">—</div>
+                        </div>
+                        <span th:if="${h == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Actions: View only -->
+                    <td class="text-end">
                         <a th:href="@{/livestock/view/{id}(id=${animal.id})}"
-                           class="btn btn-sm btn-info" title="View Details">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a th:href="@{/livestock/edit/{id}(id=${animal.id})}"
-                           class="btn btn-sm btn-warning" title="Edit">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <!--
-                        NEW: for a female that's currently READY_TO_BREED, add a
-                        direct one-click shortcut into the breeding form with her
-                        already selected via ?livestockId=, instead of forcing a
-                        second lookup on the registration page.
-                        -->
-                        <a th:if="${animal.lifecycleStage == 'READY_TO_BREED'}"
-                           th:href="@{/livestock/breeding/register(livestockId=${animal.id})}"
-                           class="btn btn-sm btn-outline-danger" title="Record Breeding">
-                            <i class="bi bi-heart-fill"></i>
+                           class="action-btn" title="View details"
+                           aria-label="View details">
+                            <i class="bi bi-arrow-right-short" style="font-size:1.1rem;"></i>
                         </a>
                     </td>
                 </tr>
@@ -436,83 +438,33 @@
             </table>
         </div>
 
-        <!-- ── Pagination ──────────────────────────────────────────── -->
-        <div class="pagination-wrap" th:if="${totalItems > 0}">
-
-            <!-- Showing X–Y of Z -->
-            <span style="color:#64748b; font-size:0.9rem;">
-                Showing
-                <strong th:text="${totalItems == 0 ? 0 : (currentPage * pageSize) + 1}">1</strong>
-                –
-                <strong th:text="${(currentPage * pageSize) + pageSize > totalItems ? totalItems : (currentPage * pageSize) + pageSize}">20</strong>
-                of <strong th:text="${totalItems}">0</strong> animals
-            </span>
-
-            <!-- Page buttons — only render when more than 1 page -->
-            <ul class="pagination-list" th:if="${totalPages > 1}">
-
-                <!-- Previous -->
-                <li>
-                    <a class="pg-btn"
-                       th:classappend="${currentPage == 0} ? 'disabled'"
-                       th:href="@{/livestock/overview(page=${currentPage - 1}, size=${pageSize}, stage=${selectedStage}, search=${searchQuery})}">
-                        <i class="bi bi-chevron-left"></i> Prev
+        <!-- Pagination -->
+        <nav th:if="${totalPages != null and totalPages > 1}" aria-label="Pagination">
+            <ul class="pagination pagination-sm justify-content-center">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                    <a class="page-link" aria-label="Previous"
+                       th:href="@{/livestock/overview(page=${currentPage - 1}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
-
-                <!-- First page shortcut when far from start -->
-                <li th:if="${currentPage > 2}">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/overview(page=0, size=${pageSize}, stage=${selectedStage}, search=${searchQuery})}">1</a>
-                </li>
-                <li th:if="${currentPage > 3}">
-                    <span class="pg-btn disabled">…</span>
-                </li>
-
-                <!-- Window of ±2 pages around current -->
-                <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                    th:if="${i >= currentPage - 2 and i <= currentPage + 2}">
-                    <a class="pg-btn"
-                       th:classappend="${i == currentPage} ? 'active'"
-                       th:href="@{/livestock/overview(page=${i}, size=${pageSize}, stage=${selectedStage}, search=${searchQuery})}"
+                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                    th:classappend="${i == currentPage} ? 'active' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/overview(page=${i}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}"
                        th:text="${i + 1}">1</a>
                 </li>
-
-                <!-- Last page shortcut when far from end -->
-                <li th:if="${currentPage < totalPages - 4}">
-                    <span class="pg-btn disabled">…</span>
-                </li>
-                <li th:if="${currentPage < totalPages - 3}">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/overview(page=${totalPages - 1}, size=${pageSize}, stage=${selectedStage}, search=${searchQuery})}"
-                       th:text="${totalPages}">N</a>
-                </li>
-
-                <!-- Next -->
-                <li>
-                    <a class="pg-btn"
-                       th:classappend="${currentPage >= totalPages - 1} ? 'disabled'"
-                       th:href="@{/livestock/overview(page=${currentPage + 1}, size=${pageSize}, stage=${selectedStage}, search=${searchQuery})}">
-                        Next <i class="bi bi-chevron-right"></i>
+                <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled' : ''">
+                    <a class="page-link" aria-label="Next"
+                       th:href="@{/livestock/overview(page=${currentPage + 1}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
-
             </ul>
-        </div>
-        <!-- END Pagination -->
-
+        </nav>
     </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Change page size — keeps current stage and search
-    function changePageSize(size) {
-        const params = new URLSearchParams(window.location.search);
-        params.set('size', size);
-        params.set('page', '0');   // reset to first page
-        window.location.href = '/livestock/overview?' + params.toString();
-    }
-</script>
 </body>
 </html>

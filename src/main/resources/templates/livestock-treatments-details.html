@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Treatment Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .detail-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .detail-label { color: #6c757d; font-size: 13px; font-weight: 600; }
+        .detail-value { font-size: 15px; }
+        .badge-ongoing { background: #0d6efd; color: white; }
+        .badge-completed { background: #198754; color: white; }
+        .badge-failed { background: #dc3545; color: white; }
+        .badge-scheduled { background: #ffc107; color: black; }
+        .payment-status-badge { padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .payment-status-badge.paid { background: #d1fae5; color: #065f46; }
+        .payment-status-badge.unpaid { background: #fee2e2; color: #991b1b; }
+        .payment-status-badge.partial { background: #fef3c7; color: #92400e; }
+        .payment-status-badge.overdue { background: #fecaca; color: #7f1d1d; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-heart-pulse text-primary"></i> Treatment Details</h2>
+        <div>
+            <a th:href="@{/livestock/treatments/edit/{id}(id=${treatment.id})}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="/livestock/treatments" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Treatment Info -->
+        <div class="col-md-7">
+            <div class="detail-card">
+                <h5 class="border-bottom pb-2"><i class="bi bi-info-circle"></i> Treatment Information</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-label">Reference</div>
+                        <div class="detail-value" th:text="${treatment.treatmentReference != null ? treatment.treatmentReference : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Animal</div>
+                        <div class="detail-value" th:text="${treatment.livestock != null ? treatment.livestock.tagNumber : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Diagnosis</div>
+                        <div class="detail-value" th:text="${treatment.diagnosisName != null ? treatment.diagnosisName : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Medication</div>
+                        <div class="detail-value" th:text="${treatment.medication != null ? treatment.medication.name : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Veterinarian</div>
+                        <div class="detail-value" th:text="${treatment.veterinarian != null ? treatment.veterinarian.fullName : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Treatment Date</div>
+                        <div class="detail-value" th:text="${#temporals.format(treatment.treatmentDate, 'dd-MM-yyyy')}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Start Date</div>
+                        <div class="detail-value" th:text="${treatment.startDate != null ? #temporals.format(treatment.startDate, 'dd-MM-yyyy') : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">End Date</div>
+                        <div class="detail-value" th:text="${treatment.endDate != null ? #temporals.format(treatment.endDate, 'dd-MM-yyyy') : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Treatment Type</div>
+                        <div class="detail-value" th:text="${treatment.treatmentType != null ? treatment.treatmentType : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value">
+                            <span th:class="${'badge badge-' + treatment.treatmentStatus.name().toLowerCase()}">
+                                <span th:text="${treatment.treatmentStatus}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Severity</div>
+                        <div class="detail-value" th:text="${treatment.severity != null ? treatment.severity : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Outcome</div>
+                        <div class="detail-value" th:text="${treatment.outcomeStatus != null ? treatment.outcomeStatus : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Symptoms</div>
+                        <div class="detail-value" th:text="${treatment.symptoms != null ? treatment.symptoms : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Clinical Observations</div>
+                        <div class="detail-value" th:text="${treatment.clinicalObservations != null ? treatment.clinicalObservations : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Follow-up Instructions</div>
+                        <div class="detail-value" th:text="${treatment.followUpInstructions != null ? treatment.followUpInstructions : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Notes</div>
+                        <div class="detail-value" th:text="${treatment.description != null ? treatment.description : 'N/A'}">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Info -->
+        <div class="col-md-5">
+            <div class="detail-card">
+                <h5 class="border-bottom pb-2"><i class="bi bi-cash-stack"></i> Payment Summary</h5>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="detail-label">Total Cost</div>
+                        <div class="detail-value" th:text="${#numbers.formatDecimal(treatment.treatmentCost, 1, 'COMMA', 0, 'POINT') + ' RWF'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Total Paid</div>
+                        <div class="detail-value text-success" th:text="${#numbers.formatDecimal(totalPaid, 1, 'COMMA', 0, 'POINT') + ' RWF'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Remaining Balance</div>
+                        <div class="detail-value text-danger" th:text="${#numbers.formatDecimal(remainingBalance, 1, 'COMMA', 0, 'POINT') + ' RWF'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Payment Status</div>
+                        <div class="detail-value">
+                            <span class="payment-status-badge" th:class="${treatment.paymentStatusBadgeClass}">
+                                <span th:text="${treatment.paymentStatusLabel}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Payment Method</div>
+                        <div class="detail-value" th:text="${treatment.paymentMethod != null ? treatment.paymentMethod : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Payment Reference</div>
+                        <div class="detail-value" th:text="${treatment.paymentReference != null ? treatment.paymentReference : 'N/A'}">-</div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="detail-label">Payment Due Date</div>
+                        <div class="detail-value" th:text="${treatment.paymentDueDate != null ? #temporals.format(treatment.paymentDueDate, 'dd-MM-yyyy') : 'N/A'}">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Record Payment -->
+            <div class="detail-card">
+                <h5 class="border-bottom pb-2"><i class="bi bi-cash-coin"></i> Record Payment</h5>
+                <form th:action="@{/livestock/treatments/payment/{id}(id=${treatment.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="mb-3">
+                        <label class="form-label">Amount (RWF)</label>
+                        <input type="number" name="amount" class="form-control" step="0.01" min="1"
+                               th:max="${remainingBalance}" required>
+                        <small class="text-muted">Max: <span th:text="${#numbers.formatDecimal(remainingBalance, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span></small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="paymentMethod" class="form-select">
+                            <option value="">Select</option>
+                            <option value="CASH">Cash</option>
+                            <option value="BANK_TRANSFER">Bank Transfer</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                            <option value="CHEQUE">Cheque</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference</label>
+                        <input type="text" name="paymentReference" class="form-control" placeholder="Transaction ID">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-cash"></i> Record Payment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History -->
+    <div class="detail-card">
+        <h5 class="border-bottom pb-2"><i class="bi bi-clock-history"></i> Payment History</h5>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${payments}">
+                    <td th:text="${#temporals.format(p.paymentDate, 'dd-MM-yyyy')}">-</td>
+                    <td th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 0, 'POINT') + ' RWF'}">-</td>
+                    <td th:text="${p.paymentMethod != null ? p.paymentMethod : 'N/A'}">-</td>
+                    <td th:text="${p.paymentReference != null ? p.paymentReference : 'N/A'}">-</td>
+                    <td th:text="${p.notes != null ? p.notes : ''}">-</td>
+                </tr>
+                <tr th:if="${payments.empty}">
+                    <td colspan="5" class="text-center py-3">No payments recorded</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

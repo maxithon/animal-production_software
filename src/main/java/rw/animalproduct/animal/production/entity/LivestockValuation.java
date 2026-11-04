@@ -1,36 +1,25 @@
 package rw.animalproduct.animal.production.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * FAO-standard append-only valuation record for a livestock animal.
- *
- * Design intent:
- *  - An animal's value is a TIME SERIES, not a single mutable field.
- *  - Every valuation event (initial registration, market revaluation,
- *    growth adjustment, appraisal, sale price, manual correction) creates
- *    a NEW row here — nothing is ever overwritten.
- *  - Livestock.currentValue is a denormalized cache of the most recent
- *    row in this table, refreshed exclusively by LivestockValuationService.
- */
+@Data
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "livestock_valuation_history")
 public class LivestockValuation {
 
-    // ── Valuation method constants ────────────────────────────────────────────
-    public static final String METHOD_INITIAL            = "INITIAL";
-    public static final String METHOD_MARKET_REVALUATION = "MARKET_REVALUATION";
-    public static final String METHOD_GROWTH_ADJUSTMENT  = "GROWTH_ADJUSTMENT";
-    public static final String METHOD_APPRAISAL          = "APPRAISAL";
-    public static final String METHOD_SALE_PRICE         = "SALE_PRICE";
-    public static final String METHOD_MANUAL_ADJUSTMENT  = "MANUAL_ADJUSTMENT";
-
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -40,76 +29,105 @@ public class LivestockValuation {
     @Column(name = "valuation_date", nullable = false)
     private LocalDate valuationDate;
 
-    @Column(name = "value", precision = 12, scale = 2, nullable = false)
-    private BigDecimal value;
+    @Column(name = "value", nullable = false)
+    private Double estimatedValue;
 
-    @Column(name = "valuation_method", length = 30, nullable = false)
+    @Column(name = "valuation_method", nullable = false, length = 30)
     private String valuationMethod;
 
     @Column(name = "notes", length = 500)
     private String notes;
 
     @Column(name = "recorded_by", length = 100)
-    private String recordedBy;
+    private String valuedBy;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // ── Transient helpers — NOT persisted, just carry extra state in memory ──
+    @Transient private LocalDateTime updatedAt;
+    @Transient private Boolean       isDeleted = false;
+    @Transient private LocalDateTime deletedAt;
+    @Transient private String        deletedBy;
+
+    // ── Convenience constructors ─────────────────────────────────────────────
+
+    public LivestockValuation(Livestock livestock, LocalDate valuationDate,
+                              Double estimatedValue, String valuationMethod,
+                              String notes, String valuedBy) {
+        this.livestock = livestock;
+        this.valuationDate = valuationDate != null ? valuationDate : LocalDate.now();
+        this.estimatedValue = estimatedValue;
+        this.valuationMethod = valuationMethod;
+        this.notes = notes;
+        this.valuedBy = valuedBy;
+        this.isDeleted = false;
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public LivestockValuation(Livestock livestock, LocalDate valuationDate,
+                              BigDecimal estimatedValue, String valuationMethod,
+                              String notes, String valuedBy) {
+        this(livestock, valuationDate,
+                estimatedValue != null ? estimatedValue.doubleValue() : null,
+                valuationMethod, notes, valuedBy);
+    }
+
+    // ── Lifecycle hooks ─────────────────────────────────────────────────────
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) createdAt = LocalDateTime.now();
+        if (updatedAt == null) updatedAt = LocalDateTime.now();
+        if (isDeleted == null) isDeleted = false;
         if (valuationDate == null) valuationDate = LocalDate.now();
     }
 
-    public LivestockValuation() {}
-
-    public LivestockValuation(Livestock livestock, LocalDate valuationDate, BigDecimal value,
-                              String valuationMethod, String notes, String recordedBy) {
-        this.livestock = livestock;
-        this.valuationDate = valuationDate;
-        this.value = value;
-        this.valuationMethod = valuationMethod;
-        this.notes = notes;
-        this.recordedBy = recordedBy;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
-    // ── Display helper ─────────────────────────────────────────────────────────
+    // ── Soft-delete helpers (in-memory only — not persisted) ────────────────
+
+    public void softDelete(String deletedBy) {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.deletedBy = deletedBy;
+    }
+
+    public void restore() {
+        this.isDeleted = false;
+        this.deletedAt = null;
+        this.deletedBy = null;
+    }
+
+    public boolean isDeleted() {
+        return Boolean.TRUE.equals(isDeleted);
+    }
+
+    // ── Template helpers ────────────────────────────────────────────────────
+
+    public Double getValue() {
+        return estimatedValue;
+    }
+
     public String methodLabel() {
-        if (valuationMethod == null) return "Unknown";
+        if (valuationMethod == null) return "—";
         return switch (valuationMethod) {
-            case METHOD_INITIAL -> "Initial Valuation";
-            case METHOD_MARKET_REVALUATION -> "Market Revaluation";
-            case METHOD_GROWTH_ADJUSTMENT -> "Growth Adjustment";
-            case METHOD_APPRAISAL -> "Appraisal";
-            case METHOD_SALE_PRICE -> "Sale Price";
-            case METHOD_MANUAL_ADJUSTMENT -> "Manual Adjustment";
+            case "MARKET_REVALUATION" -> "Market Revaluation";
+            case "GROWTH_ADJUSTMENT"  -> "Growth Adjustment";
+            case "APPRAISAL"          -> "Appraisal";
+            case "MANUAL_ADJUSTMENT"  -> "Manual Adjustment";
             default -> valuationMethod;
         };
     }
 
-    // ── Getters and Setters ───────────────────────────────────────────────────
+    public String getRecordedBy() {
+        return valuedBy;
+    }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-
-    public Livestock getLivestock() { return livestock; }
-    public void setLivestock(Livestock livestock) { this.livestock = livestock; }
-
-    public LocalDate getValuationDate() { return valuationDate; }
-    public void setValuationDate(LocalDate valuationDate) { this.valuationDate = valuationDate; }
-
-    public BigDecimal getValue() { return value; }
-    public void setValue(BigDecimal value) { this.value = value; }
-
-    public String getValuationMethod() { return valuationMethod; }
-    public void setValuationMethod(String valuationMethod) { this.valuationMethod = valuationMethod; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public String getRecordedBy() { return recordedBy; }
-    public void setRecordedBy(String recordedBy) { this.recordedBy = recordedBy; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    // ✅ REMOVED: the broken public Beneficiary getLivestock() { } method.
+    //            Lombok @Data already generates getLivestock() returning Livestock.
 }

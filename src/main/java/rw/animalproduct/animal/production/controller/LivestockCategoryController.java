@@ -1,8 +1,9 @@
 package rw.animalproduct.animal.production.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.LivestockCategory;
@@ -14,8 +15,11 @@ import java.util.UUID;
 @RequestMapping("/livestock/categories")
 public class LivestockCategoryController {
 
-    @Autowired
-    private LivestockCategoryService categoryService;
+    private final LivestockCategoryService categoryService;
+
+    public LivestockCategoryController(LivestockCategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     @GetMapping
     public String list(Model model) {
@@ -25,43 +29,55 @@ public class LivestockCategoryController {
     }
 
     @PostMapping("/new")
-    public String create(@ModelAttribute LivestockCategory category,
+    public String create(@Valid @ModelAttribute("category") LivestockCategory category,
+                         BindingResult bindingResult,
                          RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", firstError(bindingResult));
+            return "redirect:/livestock/categories";
+        }
         try {
-            if (categoryService.existsByCode(category.getCode())) {
-                redirectAttributes.addFlashAttribute("error", "A category with this code already exists.");
-                return "redirect:/livestock/categories";
-            }
-            if (categoryService.existsByName(category.getName())) {
-                redirectAttributes.addFlashAttribute("error", "A category with this name already exists.");
-                return "redirect:/livestock/categories";
-            }
             categoryService.addNew(category);
             redirectAttributes.addFlashAttribute("success", "Category added successfully.");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error adding category: " + e.getMessage());
         }
         return "redirect:/livestock/categories";
     }
 
+    // FIX: this now correctly renders the dedicated edit template instead of the list page.
     @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable UUID id, Model model) {
-        var categoryOpt = categoryService.getById(id);
-        if (categoryOpt.isEmpty()) {
-            return "redirect:/livestock/categories";
-        }
-        model.addAttribute("categories", categoryService.getAll());
-        model.addAttribute("category", categoryOpt.get());
-        model.addAttribute("editMode", true);
-        return "livestock-categories-list";
+    public String editForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
+        return categoryService.getById(id)
+                .map(cat -> {
+                    model.addAttribute("category", cat);
+                    return "livestock-category-edit";
+                })
+                .orElseGet(() -> {
+                    redirectAttributes.addFlashAttribute("error", "Category not found.");
+                    return "redirect:/livestock/categories";
+                });
     }
 
-    @PostMapping("/edit/{id}")
-    public String update(@PathVariable UUID id, @ModelAttribute LivestockCategory category,
+    // FIX: matches the edit template's actual form action (/update/{id}), which was previously
+    // pointing at a mapping that didn't exist.
+    @PostMapping("/update/{id}")
+    public String update(@PathVariable UUID id,
+                         @Valid @ModelAttribute("category") LivestockCategory category,
+                         BindingResult bindingResult,
                          RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", firstError(bindingResult));
+            return "redirect:/livestock/categories/edit/" + id;
+        }
         try {
             categoryService.update(id, category);
             redirectAttributes.addFlashAttribute("success", "Category updated successfully.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/livestock/categories/edit/" + id;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Error updating category: " + e.getMessage());
         }
@@ -74,9 +90,15 @@ public class LivestockCategoryController {
             categoryService.delete(id);
             redirectAttributes.addFlashAttribute("success", "Category deleted successfully.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error",
-                    "Cannot delete category: it is likely still in use by livestock records.");
+            redirectAttributes.addFlashAttribute("error", "Cannot delete category: " + e.getMessage());
         }
         return "redirect:/livestock/categories";
+    }
+
+    private String firstError(BindingResult bindingResult) {
+        return bindingResult.getFieldErrors().stream()
+                .findFirst()
+                .map(fe -> fe.getDefaultMessage())
+                .orElse("Invalid input — please check the form.");
     }
 }

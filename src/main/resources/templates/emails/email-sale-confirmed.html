@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sale Confirmed</title>
+</head>
+<body style="margin:0; padding:0; background:#f0f4f8; font-family:'Segoe UI', Arial, sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8; padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="680" cellpadding="0" cellspacing="0"
+                   style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.08);">
+
+                <tr>
+                    <td style="background:linear-gradient(135deg,#1a5f7a,#059669); padding:28px 32px;">
+                        <span style="font-size:28px;">✅</span>
+                        <h1 style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:700;" th:text="${title ?: 'Sale Confirmed'}">
+                            Sale Confirmed
+                        </h1>
+                        <p style="margin:4px 0 0; color:#d1fae5; font-size:13px;">
+                            Sale reference: <strong th:text="${saleReference}">SAL-2026-0001</strong>
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding:28px 32px;">
+                        <div style="background:#ecfdf5; border-radius:8px; padding:12px 16px; margin-bottom:20px; border-left:4px solid #059669;">
+                            <p style="margin:0; color:#065f46; font-size:14px;">
+                                ✅ <strong>Sale has been confirmed!</strong>
+                                <span th:if="${animalTag}">Animal <strong th:text="${animalTag}"></strong> is now marked as <strong>SOLD</strong>.</span>
+                            </p>
+                        </div>
+
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="50%" valign="top" style="padding-right:8px;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#1a5f7a; text-transform:uppercase; letter-spacing:.05em;">
+                                                Sale Information
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Reference</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#0f172a;" th:text="${saleReference}">SAL-2026-0001</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Sale Date</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${saleDate}">2026-09-02</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Sale Status</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#1e40af;" th:text="${saleStatus}">CONFIRMED</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Confirmed By</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${confirmedBy}">admin@animal.com</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Confirmed At</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${confirmedAt}">2026-09-02 14:30</td>
+                                        </tr>
+                                    </table>
+                                </td>
+
+                                <td width="50%" valign="top" style="padding-left:8px;">
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#1a5f7a; text-transform:uppercase; letter-spacing:.05em;">
+                                                Financial Details
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Sale Price</td>
+                                            <td style="padding:10px 14px; font-size:14px; font-weight:700; color:#059669;" th:text="${salePrice}">450,000 RWF</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Amount Paid</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${amountPaid}">0 RWF</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Balance</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#d97706;" th:text="${balance}">450,000 RWF</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Payment Status</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#d97706;" th:text="${paymentStatus}">UNPAID</td>
+                                        </tr>
+                                    </table>
+
+                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                                           style="border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; margin-top:12px;">
+                                        <tr style="background:#f8fafc;">
+                                            <td colspan="2" style="padding:8px 14px; font-size:11px; font-weight:800; color:#1a5f7a; text-transform:uppercase; letter-spacing:.05em;">
+                                                Animal & Buyer
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b; width:45%;">Animal Tag</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${animalTag}">GOAT-001</td>
+                                        </tr>
+                                        <tr style="background:#f8fafc;">
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Animal Status</td>
+                                            <td style="padding:10px 14px; font-size:13px; font-weight:700; color:#059669;" th:text="${animalStatus}">SOLD</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding:10px 14px; font-size:11px; font-weight:700; color:#64748b;">Buyer</td>
+                                            <td style="padding:10px 14px; font-size:13px; color:#0f172a;" th:text="${buyerName ?: 'Not assigned'}">—</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div th:if="${notes}" style="margin-top:16px; padding:12px 16px; background:#f8fafc; border-radius:8px; border-left:4px solid #059669;">
+                            <p style="margin:0; font-size:12px; color:#475569;">
+                                <strong>📝 Notes:</strong><br>
+                                <span th:text="${notes}"></span>
+                            </p>
+                        </div>
+
+                        <p style="margin:20px 0 0; font-size:12px; color:#94a3b8;">
+                            <strong>Next Step:</strong> Record payment to complete the financial transaction.
+                            <br>
+                            Confirmed on <strong th:text="${confirmedAt}">2026-09-02</strong>.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="background:#f8fafc; padding:16px 32px; border-top:1px solid #e2e8f0;">
+                        <p style="margin:0; font-size:11px; color:#94a3b8;">
+                            Animal Production System | Version 0.1.0
+                            Developed by HABANABAKIZE &amp; NDAYIZEYE
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

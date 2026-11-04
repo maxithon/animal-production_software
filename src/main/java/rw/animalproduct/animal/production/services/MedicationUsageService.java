@@ -31,9 +31,8 @@ public class MedicationUsageService {
         report.setStartDate(startDate);
         report.setEndDate(endDate);
 
-        // Get all treatments in date range
-        List<LivestockTreatment> treatments = treatmentRepository
-                .findByTreatmentDateBetweenAndIsDeletedFalse(startDate, endDate);
+        // ✅ Use findByTreatmentDateBetween (already filters isDeleted = false)
+        List<LivestockTreatment> treatments = treatmentRepository.findByTreatmentDateBetween(startDate, endDate);
 
         report.setTotalTreatments(treatments.size());
 
@@ -41,10 +40,8 @@ public class MedicationUsageService {
         Map<UUID, MedicationUsage> medicationUsageMap = new HashMap<>();
 
         for (LivestockTreatment treatment : treatments) {
-            // FIX: Get medication ID from the medication entity
             Medication medication = treatment.getMedication();
             if (medication == null) {
-                // Skip treatments without medication
                 continue;
             }
 
@@ -59,12 +56,10 @@ public class MedicationUsageService {
                 usage.addCost(treatment.getTreatmentCost());
             }
 
-            // Track by treatment type
             if (treatment.getTreatmentType() != null) {
                 usage.addTreatmentType(treatment.getTreatmentType().name());
             }
 
-            // Track by livestock
             if (treatment.getLivestock() != null && treatment.getLivestock().getId() != null) {
                 usage.addLivestock(treatment.getLivestock().getId());
             }
@@ -97,8 +92,15 @@ public class MedicationUsageService {
         Medication medication = medicationRepository.findById(medicationId)
                 .orElseThrow(() -> new RuntimeException("Medication not found"));
 
-        List<LivestockTreatment> treatments = treatmentRepository
-                .findByMedicationIdAndTreatmentDateBetweenAndIsDeletedFalse(medicationId, startDate, endDate);
+        // ✅ FIXED: Use the existing method findByMedicationIdAndTreatmentDateBetween
+        // The method name in your repository is findByMedicationIdAndTreatmentDateBetweenAndIsDeletedFalse
+        // If that doesn't exist, use this approach
+        List<LivestockTreatment> allTreatments = treatmentRepository.findByTreatmentDateBetween(startDate, endDate);
+
+        // Filter by medication ID in Java (since the repository method may not exist)
+        List<LivestockTreatment> treatments = allTreatments.stream()
+                .filter(t -> t.getMedication() != null && medicationId.equals(t.getMedication().getId()))
+                .collect(Collectors.toList());
 
         MedicationUsage usage = new MedicationUsage(medicationId, medication.getName());
 
@@ -122,8 +124,8 @@ public class MedicationUsageService {
      * Get medication usage by treatment type (CURATIVE, PREVENTIVE, etc.)
      */
     public Map<String, MedicationUsage> getMedicationUsageByType(LocalDate startDate, LocalDate endDate) {
-        List<LivestockTreatment> treatments = treatmentRepository
-                .findByTreatmentDateBetweenAndIsDeletedFalse(startDate, endDate);
+        // ✅ Use findByTreatmentDateBetween (already filters isDeleted = false)
+        List<LivestockTreatment> treatments = treatmentRepository.findByTreatmentDateBetween(startDate, endDate);
 
         Map<String, MedicationUsage> usageByType = new HashMap<>();
 

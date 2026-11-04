@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ready to Breed — Livestock</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#f0f3f8; font-family:'DM Sans',sans-serif; font-size:14px; color:#1a2233; }
+        .mono { font-family:'DM Mono',monospace; }
+
+        .page-header {
+            background: linear-gradient(135deg,#7c3aed,#a855f7);
+            color:white; padding:22px 32px; margin-bottom:24px;
+            display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+        }
+        .page-header h4 { font-weight:700; margin-bottom:2px; }
+        .page-header small { opacity:.85; }
+        .btn-light-ghost {
+            background:rgba(255,255,255,.15); color:white; border:1px solid rgba(255,255,255,.35);
+            padding:7px 16px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none;
+            display:inline-flex; align-items:center; gap:6px; transition:.15s;
+        }
+        .btn-light-ghost:hover { background:rgba(255,255,255,.25); color:white; }
+        .btn-dark-solid {
+            background:#1a2233; color:white; border:none; padding:7px 16px; border-radius:8px;
+            font-size:13px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+        }
+        .btn-dark-solid:hover { background:#2a3347; color:white; }
+
+        .container-fluid { padding: 0 32px 32px; }
+
+        .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+        .kpi-card { background:white; border-radius:14px; padding:20px; box-shadow:0 1px 3px rgba(0,0,0,.07); text-align:center; transition:.15s; }
+        .kpi-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+        .kpi-value { font-size:1.9rem; font-weight:800; font-family:'DM Mono',monospace; }
+        .kpi-label { font-size:.78rem; color:#6c757d; margin-top:4px; font-weight:600; }
+
+        .card { background:white; border-radius:14px; box-shadow:0 1px 3px rgba(0,0,0,.07); margin-bottom:22px; overflow:hidden; }
+        .card-header {
+            padding:16px 22px; border-bottom:1px solid #eee; background:#fafafa;
+            display:flex; align-items:center; flex-wrap:wrap; gap:10px;
+        }
+        .card-header-title { display:flex; align-items:center; gap:8px; font-weight:700; font-size:15.5px; margin-right:auto; }
+
+        .table { margin-bottom:0; width:100%; }
+        .table th {
+            background:#fafafa; font-size:.72rem; text-transform:uppercase; color:#64748b;
+            padding:12px 20px; white-space:nowrap; border-bottom:1px solid #e9ecef;
+        }
+        .table th.sortable { cursor:pointer; user-select:none; }
+        .table th.sortable:hover { color:#1a2233; }
+        .table th.sortable .arrow { font-size:10px; opacity:.4; margin-left:3px; }
+        .table th.sortable.active .arrow { opacity:1; color:#7c3aed; }
+        .table td { padding:13px 20px; vertical-align:middle; border-bottom:1px solid #f1f3f5; }
+
+        .badge-soft { padding:4px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
+        .b-green { background:#dcfce7; color:#166534; }
+        .b-amber { background:#fef3c7; color:#92400e; }
+        .b-blue  { background:#dbeafe; color:#1e40af; }
+        .b-purple{ background:#ede9fe; color:#5b21b6; }
+        .b-pink  { background:#fce7f3; color:#be185d; }
+
+        .empty-state { padding:48px 20px; text-align:center; color:#94a3b8; }
+        .no-match-state { padding:32px 20px; text-align:center; color:#94a3b8; display:none; }
+
+        .category-group td { background:#f1f3f5; font-weight:700; padding:10px 20px; font-size:13.5px; }
+
+        .btn-icon {
+            padding:7px 14px; border-radius:8px; border:1px solid #dee2e6; background:white;
+            text-decoration:none; color:#495057; font-size:.8rem; font-weight:600;
+            display:inline-flex; align-items:center; gap:6px; transition:.15s;
+        }
+        .btn-icon:hover { background:#f8f9fa; border-color:#adb5bd; }
+        .btn-icon.primary-female { color:#be185d; border-color:#fbcfe8; }
+        .btn-icon.primary-female:hover { background:#fce7f3; }
+        .btn-icon.primary-male { color:#1e40af; border-color:#bfdbfe; }
+        .btn-icon.primary-male:hover { background:#dbeafe; }
+
+        /* ===== Toolbar: search + category chips + sort ===== */
+        .toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .dt-search { position:relative; min-width:190px; }
+        .dt-search input {
+            width:100%; padding:7px 12px 7px 32px; border:1px solid #dee2e6; border-radius:20px;
+            font-size:12.5px; font-family:inherit; outline:none;
+        }
+        .dt-search input:focus { border-color:#7c3aed; }
+        .dt-search i { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#adb5bd; font-size:12px; }
+
+        .chip {
+            border:1px solid #dee2e6; background:white; color:#495057; padding:6px 14px;
+            border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer; transition:.15s;
+            display:inline-flex; align-items:center; gap:5px; white-space:nowrap;
+        }
+        .chip:hover { background:#f8f9fa; }
+        .chip.active { background:#1a2233; border-color:#1a2233; color:white; }
+        .chip .count { opacity:.7; font-weight:500; }
+
+        .dt-sort select {
+            border:1px solid #dee2e6; border-radius:20px; padding:6px 12px; font-size:12.5px;
+            font-family:inherit; color:#495057; outline:none; background:white;
+        }
+
+        /* ===== Pairing banner ===== */
+        .pairing-banner {
+            display:none; align-items:center; gap:10px; padding:12px 22px;
+            background:#f3e8ff; border-bottom:1px solid #e9d5ff; font-size:13.5px; color:#5b21b6;
+        }
+        .pairing-banner.show { display:flex; }
+        .pairing-banner strong { color:#4c1d95; }
+        .pairing-banner .clear-btn {
+            margin-left:auto; border:none; background:none; color:#7c3aed; font-weight:600;
+            font-size:12.5px; cursor:pointer; display:inline-flex; align-items:center; gap:4px;
+        }
+        .pairing-banner .clear-btn:hover { text-decoration:underline; }
+
+        tr.dt-row { cursor:pointer; transition:background .1s; }
+        tr.dt-row:hover { background:#fafaff; }
+        tr.dt-row.selected { background:#fdf2f8; }
+        tr.dt-row.selected td:first-child { box-shadow:inset 3px 0 0 #db2777; }
+
+        /* ===== Pagination footer ===== */
+        .dt-footer {
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+            padding:12px 22px; border-top:1px solid #f0f0f0; font-size:12.5px; color:#6c757d;
+        }
+        .dt-pagenav { display:flex; align-items:center; gap:6px; }
+        .dt-pagenav button {
+            border:1px solid #dee2e6; background:white; border-radius:6px; padding:5px 10px;
+            font-size:12.5px; cursor:pointer; color:#495057;
+        }
+        .dt-pagenav button:hover:not(:disabled) { background:#f8f9fa; }
+        .dt-pagenav button:disabled { opacity:.4; cursor:not-allowed; }
+        .dt-pagenav .pg-label { padding:0 6px; font-weight:600; color:#1a2233; }
+        .dt-pagesize select {
+            border:1px solid #dee2e6; border-radius:6px; padding:5px 8px; font-size:12.5px; font-family:inherit;
+        }
+
+        .stat-bar {
+            display:flex; align-items:center; gap:16px; padding:12px 22px; border-bottom:1px solid #eee;
+            background:#fafbfd; font-size:12.5px; color:#6c757d; flex-wrap:wrap;
+        }
+        .stat-bar strong { color:#1a2233; font-size:13.5px; }
+        .stat-bar .sep { color:#dee2e6; }
+
+        @media (max-width:768px) {
+            .kpi-grid { grid-template-columns:repeat(2,1fr); }
+            .container-fluid { padding:0 16px 24px; }
+            .page-header { padding:18px 20px; }
+        }
+        @media (max-width:480px) {
+            .kpi-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <div>
+        <h4><i class="bi bi-heart-arrow me-2"></i>Ready to Breed</h4>
+        <small>Which female is ready to breed, and which eligible male can be selected for her?</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a th:href="@{/livestock/breeding/dashboard}" class="btn-light-ghost"><i class="bi bi-arrow-left"></i> Dashboard</a>
+        <a th:href="@{/livestock/breeding/management}" class="btn-dark-solid">Management <i class="bi bi-arrow-right"></i></a>
+    </div>
+</div>
+
+<div class="container-fluid">
+
+    <!-- Summary cards (spec C) -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-value" style="color:#db2777;" th:text="${femalesReadyCount}">0</div>
+            <div class="kpi-label"><i class="bi bi-gender-female"></i> Females Ready</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color:#2563eb;" th:text="${malesEligibleCount}">0</div>
+            <div class="kpi-label"><i class="bi bi-gender-male"></i> Males Eligible</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color:#16a34a;" th:text="${categoriesReadyCount}">0</div>
+            <div class="kpi-label"><i class="bi bi-collection"></i> Categories Ready</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-value" style="color:#d97706;" th:text="${needAttentionCount}">0</div>
+            <div class="kpi-label"><i class="bi bi-exclamation-triangle"></i> Need Attention</div>
+        </div>
+    </div>
+
+    <!-- 1. FEMALES READY TO BREED -->
+    <div class="card" id="femalesCard">
+        <div class="card-header">
+            <div class="card-header-title">
+                <i class="bi bi-gender-female" style="color:#db2777;"></i> Females Ready to Breed
+                <span class="badge b-purple" id="femalesTotalBadge" th:text="${femalesReadyCount}">0</span>
+            </div>
+            <div class="toolbar" th:if="${femalesByCategory != null and !femalesByCategory.empty}">
+                <div class="dt-search"><i class="bi bi-search"></i><input type="text" id="femalesSearch" placeholder="Search tag…"></div>
+                <div class="dt-sort">
+                    <select id="femalesSort">
+                        <option value="tag">Sort: Tag</option>
+                        <option value="age">Sort: Age</option>
+                        <option value="lastBirth">Sort: Last Birth</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${femalesByCategory == null or femalesByCategory.empty}" class="empty-state">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i> No females are currently ready to breed.
+        </div>
+
+        <div th:if="${femalesByCategory != null and !femalesByCategory.empty}">
+            <div class="toolbar" id="femalesChips" style="padding:12px 22px; border-bottom:1px solid #f0f0f0;"></div>
+
+            <div class="table-responsive">
+                <table class="table" id="femalesTable">
+                    <thead>
+                    <tr>
+                        <th>Tag</th><th>Category</th><th>Age</th><th>Last Birth</th>
+                        <th>Pregnancy</th><th>Postpartum Recovery</th><th>Readiness</th><th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <th:block th:each="entry : ${femalesByCategory}">
+                        <tr class="category-group" th:attr="data-cat-group=${entry.key}"><td colspan="8" th:text="${entry.key}"></td></tr>
+                        <tr class="dt-row" th:each="f : ${entry.value}"
+                            th:attr="data-category=${entry.key},
+                                     data-search=${#strings.toLowerCase(f.tagNumber)},
+                                     data-sort-tag=${f.tagNumber},
+                                     data-sort-age=${f.ageDisplay != null ? f.ageDisplay : ''},
+                                     data-sort-lastbirth=${f.lastBirthDate != null ? f.lastBirthDate : ''},
+                                     data-female-tag=${f.tagNumber},
+                                     data-female-id=${f.livestockId}">
+                            <td class="mono"><strong th:text="${f.tagNumber}">—</strong></td>
+                            <td><span class="badge-soft b-purple" th:text="${f.categoryName}">—</span></td>
+                            <td class="mono" th:text="${f.ageDisplay}">—</td>
+                            <td class="mono" th:text="${f.lastBirthDate != null ? #temporals.format(f.lastBirthDate,'dd MMM yyyy') : 'Never'}">—</td>
+                            <td><span class="badge-soft b-green">Open</span></td>
+                            <td th:text="${f.postpartumRecoveryStatus}">—</td>
+                            <td><span class="badge-soft b-green" th:text="${f.readinessLabel}">🟢 Ready</span></td>
+                            <td><a th:href="@{/livestock/breeding/form(livestockId=${f.livestockId})}" class="btn-icon primary-female" onclick="event.stopPropagation()"><i class="bi bi-heart-fill"></i> Start Breeding</a></td>
+                        </tr>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+            <div class="no-match-state" id="femalesNoMatch"><i class="bi bi-search"></i> No females match your search/filter.</div>
+            <div class="dt-footer">
+                <div id="femalesShowing">Showing 0–0 of 0</div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="dt-pagesize">
+                        <select id="femalesPageSize">
+                            <option value="10">10 / page</option>
+                            <option value="25" selected>25 / page</option>
+                            <option value="50">50 / page</option>
+                            <option value="100">100 / page</option>
+                        </select>
+                    </div>
+                    <div class="dt-pagenav">
+                        <button id="femalesPrev">‹ Prev</button>
+                        <span class="pg-label" id="femalesPageLabel">1 / 1</span>
+                        <button id="femalesNext">Next ›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ELIGIBLE BREEDING MALES -->
+    <div class="card" id="malesCard">
+        <div class="pairing-banner" id="pairingBanner">
+            <i class="bi bi-link-45deg fs-5"></i>
+            <span>Pairing for <strong id="pairingFemaleTag">—</strong> — showing compatible males only</span>
+            <button class="clear-btn" id="clearPairing"><i class="bi bi-x-circle"></i> Clear</button>
+        </div>
+        <div class="card-header">
+            <div class="card-header-title">
+                <i class="bi bi-gender-male" style="color:#2563eb;"></i> Eligible Breeding Males
+                <span class="badge b-blue" id="malesTotalBadge" th:text="${malesEligibleCount}">0</span>
+            </div>
+            <div class="toolbar" th:if="${malesByCategory != null and !malesByCategory.empty}">
+                <div class="dt-search"><i class="bi bi-search"></i><input type="text" id="malesSearch" placeholder="Search tag…"></div>
+                <div class="dt-sort">
+                    <select id="malesSort">
+                        <option value="tag">Sort: Tag</option>
+                        <option value="age">Sort: Age</option>
+                        <option value="success" selected>Sort: Success Rate</option>
+                        <option value="breedings">Sort: Total Breedings</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${malesByCategory == null or malesByCategory.empty}" class="empty-state">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i> No eligible breeding males found.
+        </div>
+
+        <div th:if="${malesByCategory != null and !malesByCategory.empty}">
+            <div class="stat-bar">
+                <div><i class="bi bi-list-ol"></i> Total: <strong th:text="${malesEligibleCount}">0</strong></div>
+                <span class="sep">|</span>
+                <div><i class="bi bi-star"></i> Never bred males shown with an amber badge below</div>
+            </div>
+            <div class="toolbar" id="malesChips" style="padding:12px 22px; border-bottom:1px solid #f0f0f0;"></div>
+
+            <div class="table-responsive">
+                <table class="table" id="malesTable">
+                    <thead>
+                    <tr>
+                        <th>Tag</th><th>Category</th><th>Age</th><th>Previous Breedings</th>
+                        <th>Success Rate</th><th>Experience</th><th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <th:block th:each="entry : ${malesByCategory}">
+                        <tr class="category-group" th:attr="data-cat-group=${entry.key}"><td colspan="7" th:text="${entry.key}"></td></tr>
+                        <tr class="dt-row" th:each="m : ${entry.value}"
+                            th:attr="data-category=${entry.key},
+                                     data-search=${#strings.toLowerCase(m.tagNumber)},
+                                     data-sort-tag=${m.tagNumber},
+                                     data-sort-age=${m.ageMonths != null ? m.ageMonths : 0},
+                                     data-sort-success=${m.successRate != null ? m.successRate : 0},
+                                     data-sort-breedings=${m.totalBreedings != null ? m.totalBreedings : 0}">
+                            <td class="mono"><strong th:text="${m.tagNumber}">—</strong></td>
+                            <td><span class="badge-soft b-blue" th:text="${m.categoryName}">—</span></td>
+                            <td class="mono" th:text="${m.ageMonths != null ? m.ageMonths + ' mo' : '—'}">—</td>
+                            <td class="mono" th:text="${m.totalBreedings != null ? m.totalBreedings : 0}">0</td>
+                            <td class="mono" th:text="${#numbers.formatDecimal(m.successRate,1,0) + '%'}">0%</td>
+                            <td><span class="badge-soft" th:classappend="${m.neverBred ? 'b-amber' : 'b-green'}" th:text="${m.neverBred ? 'Never Bred' : 'Experienced'}">—</span></td>
+                            <td><a th:href="@{/livestock/breeding/form(livestockId=${m.id})}" class="btn-icon primary-male"><i class="bi bi-heart-fill"></i> Select Male</a></td>
+                        </tr>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+            <div class="no-match-state" id="malesNoMatch"><i class="bi bi-search"></i> No males match your search/filter.</div>
+            <div class="dt-footer">
+                <div id="malesShowing">Showing 0–0 of 0</div>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="dt-pagesize">
+                        <select id="malesPageSize">
+                            <option value="10">10 / page</option>
+                            <option value="25" selected>25 / page</option>
+                            <option value="50">50 / page</option>
+                            <option value="100">100 / page</option>
+                        </select>
+                    </div>
+                    <div class="dt-pagenav">
+                        <button id="malesPrev">‹ Prev</button>
+                        <span class="pg-label" id="malesPageLabel">1 / 1</span>
+                        <button id="malesNext">Next ›</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. NEED ATTENTION -->
+    <div class="card" id="attentionCard" th:if="${needAttention != null and !needAttention.empty}">
+        <div class="card-header">
+            <div class="card-header-title">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#d97706;"></i> Need Attention
+                <span class="badge b-amber" th:text="${needAttentionCount}">0</span>
+            </div>
+            <div class="toolbar">
+                <div class="dt-search"><i class="bi bi-search"></i><input type="text" id="attentionSearch" placeholder="Search tag or reason…"></div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table" id="attentionTable">
+                <thead><tr><th>Tag</th><th>Category</th><th>Reason</th><th>Eligible Again On</th></tr></thead>
+                <tbody>
+                <tr class="dt-row" th:each="f : ${needAttention}"
+                    th:attr="data-search=${#strings.toLowerCase(f.tagNumber + ' ' + f.reason)}">
+                    <td class="mono"><strong th:text="${f.tagNumber}">—</strong></td>
+                    <td><span class="badge-soft b-amber" th:text="${f.categoryName}">—</span></td>
+                    <td class="text-muted" th:text="${f.reason}">—</td>
+                    <td class="mono" th:text="${f.nextEligibleDate != null ? #temporals.format(f.nextEligibleDate,'dd MMM yyyy') : '—'}">—</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="no-match-state" id="attentionNoMatch"><i class="bi bi-search"></i> No matches.</div>
+        <div class="dt-footer">
+            <div id="attentionShowing">Showing 0–0 of 0</div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="dt-pagesize">
+                    <select id="attentionPageSize">
+                        <option value="10">10 / page</option>
+                        <option value="25" selected>25 / page</option>
+                        <option value="50">50 / page</option>
+                    </select>
+                </div>
+                <div class="dt-pagenav">
+                    <button id="attentionPrev">‹ Prev</button>
+                    <span class="pg-label" id="attentionPageLabel">1 / 1</span>
+                    <button id="attentionNext">Next ›</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /*
+     * NOTE ON SCALE: this client-side controller works well for datasets up to a
+     * few thousand rows rendered server-side in one page load. If the herd grows
+     * beyond that, move search/filter/sort/pagination server-side (query params +
+     * Thymeleaf re-render or a JSON endpoint) and keep this same UI contract —
+     * the markup/CSS below does not need to change, only where `rows` comes from.
+     */
+    function initDataTable(opts) {
+        var table = document.getElementById(opts.tableId);
+        if (!table) return;
+        var allRows = Array.prototype.slice.call(table.querySelectorAll('tr.dt-row'));
+        if (!allRows.length) return;
+
+        var searchInput = document.getElementById(opts.searchId);
+        var sortSelect = opts.sortId ? document.getElementById(opts.sortId) : null;
+        var chipsContainer = opts.chipsId ? document.getElementById(opts.chipsId) : null;
+        var pageSizeSelect = document.getElementById(opts.pageSizeId);
+        var prevBtn = document.getElementById(opts.prevId);
+        var nextBtn = document.getElementById(opts.nextId);
+        var pageLabel = document.getElementById(opts.pageLabelId);
+        var showingLabel = document.getElementById(opts.showingId);
+        var noMatch = document.getElementById(opts.noMatchId);
+        var groupRows = Array.prototype.slice.call(table.querySelectorAll('tr.category-group'));
+
+        var state = { page: 1, pageSize: pageSizeSelect ? parseInt(pageSizeSelect.value, 10) : 25, externalCategory: null };
+
+        // Build category chips dynamically from row data
+        if (chipsContainer) {
+            var cats = {};
+            allRows.forEach(function (r) {
+                var c = r.getAttribute('data-category');
+                if (c) cats[c] = (cats[c] || 0) + 1;
+            });
+            var allChip = document.createElement('button');
+            allChip.type = 'button'; allChip.className = 'chip active'; allChip.setAttribute('data-cat', '__all__');
+            allChip.innerHTML = 'All <span class="count">' + allRows.length + '</span>';
+            chipsContainer.appendChild(allChip);
+            Object.keys(cats).sort().forEach(function (c) {
+                var chip = document.createElement('button');
+                chip.type = 'button'; chip.className = 'chip'; chip.setAttribute('data-cat', c);
+                chip.innerHTML = c + ' <span class="count">' + cats[c] + '</span>';
+                chipsContainer.appendChild(chip);
+            });
+            chipsContainer.addEventListener('click', function (e) {
+                var chip = e.target.closest('.chip');
+                if (!chip) return;
+                Array.prototype.forEach.call(chipsContainer.querySelectorAll('.chip'), function (c) { c.classList.remove('active'); });
+                chip.classList.add('active');
+                state.manualCategory = chip.getAttribute('data-cat');
+                state.externalCategory = null; // manual click overrides pairing filter
+                state.page = 1;
+                render();
+            });
+        }
+
+        function activeCategory() {
+            if (state.externalCategory) return state.externalCategory;
+            if (state.manualCategory && state.manualCategory !== '__all__') return state.manualCategory;
+            return null;
+        }
+
+        function getSortedFiltered() {
+            var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            var cat = activeCategory();
+            var filtered = allRows.filter(function (r) {
+                var matchesSearch = !query || (r.getAttribute('data-search') || '').indexOf(query) !== -1;
+                var matchesCat = !cat || r.getAttribute('data-category') === cat;
+                return matchesSearch && matchesCat;
+            });
+            if (sortSelect) {
+                var key = sortSelect.value;
+                var attr = 'data-sort-' + key;
+                filtered.sort(function (a, b) {
+                    var av = a.getAttribute(attr) || '', bv = b.getAttribute(attr) || '';
+                    var an = parseFloat(av), bn = parseFloat(bv);
+                    if (!isNaN(an) && !isNaN(bn) && /^-?\d/.test(av) && /^-?\d/.test(bv)) {
+                        return bn - an; // numeric: descending (highest first — success rate, breedings)
+                    }
+                    return av.localeCompare(bv);
+                });
+            }
+            return filtered;
+        }
+
+        function render() {
+            var filtered = getSortedFiltered();
+            var totalPages = Math.max(1, Math.ceil(filtered.length / state.pageSize));
+            if (state.page > totalPages) state.page = totalPages;
+            var start = (state.page - 1) * state.pageSize;
+            var end = Math.min(start + state.pageSize, filtered.length);
+            var visibleSet = filtered.slice(start, end);
+            var visibleIds = new Set(visibleSet);
+
+            allRows.forEach(function (r) { r.style.display = visibleIds.has(r) ? '' : 'none'; });
+
+            // toggle category group header rows based on whether any child is visible on this page
+            groupRows.forEach(function (gr) {
+                var catName = gr.getAttribute('data-cat-group');
+                var hasVisible = visibleSet.some(function (r) { return r.getAttribute('data-category') === catName; });
+                gr.style.display = hasVisible ? '' : 'none';
+            });
+
+            if (pageLabel) pageLabel.textContent = state.page + ' / ' + totalPages;
+            if (prevBtn) prevBtn.disabled = state.page <= 1;
+            if (nextBtn) nextBtn.disabled = state.page >= totalPages;
+            if (showingLabel) {
+                showingLabel.textContent = filtered.length === 0
+                    ? 'Showing 0 of 0'
+                    : 'Showing ' + (start + 1) + '–' + end + ' of ' + filtered.length;
+            }
+            if (noMatch) noMatch.style.display = filtered.length === 0 ? '' : 'none';
+            table.style.display = filtered.length === 0 ? 'none' : '';
+        }
+
+        if (searchInput) searchInput.addEventListener('input', function () { state.page = 1; render(); });
+        if (sortSelect) sortSelect.addEventListener('change', function () { state.page = 1; render(); });
+        if (pageSizeSelect) pageSizeSelect.addEventListener('change', function () { state.pageSize = parseInt(pageSizeSelect.value, 10); state.page = 1; render(); });
+        if (prevBtn) prevBtn.addEventListener('click', function () { if (state.page > 1) { state.page--; render(); } });
+        if (nextBtn) nextBtn.addEventListener('click', function () { state.page++; render(); });
+
+        render();
+
+        return {
+            setExternalCategory: function (cat) {
+                state.externalCategory = cat;
+                if (chipsContainer) {
+                    Array.prototype.forEach.call(chipsContainer.querySelectorAll('.chip'), function (c) { c.classList.remove('active'); });
+                    if (!cat) {
+                        var allC = chipsContainer.querySelector('[data-cat="__all__"]');
+                        if (allC) allC.classList.add('active');
+                    }
+                }
+                state.page = 1;
+                render();
+            }
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initDataTable({
+            tableId: 'femalesTable', searchId: 'femalesSearch', sortId: 'femalesSort', chipsId: 'femalesChips',
+            pageSizeId: 'femalesPageSize', prevId: 'femalesPrev', nextId: 'femalesNext',
+            pageLabelId: 'femalesPageLabel', showingId: 'femalesShowing', noMatchId: 'femalesNoMatch'
+        });
+
+        var malesController = initDataTable({
+            tableId: 'malesTable', searchId: 'malesSearch', sortId: 'malesSort', chipsId: 'malesChips',
+            pageSizeId: 'malesPageSize', prevId: 'malesPrev', nextId: 'malesNext',
+            pageLabelId: 'malesPageLabel', showingId: 'malesShowing', noMatchId: 'malesNoMatch'
+        });
+
+        initDataTable({
+            tableId: 'attentionTable', searchId: 'attentionSearch',
+            pageSizeId: 'attentionPageSize', prevId: 'attentionPrev', nextId: 'attentionNext',
+            pageLabelId: 'attentionPageLabel', showingId: 'attentionShowing', noMatchId: 'attentionNoMatch'
+        });
+
+        // Female → Male pairing workflow
+        var femalesTable = document.getElementById('femalesTable');
+        var banner = document.getElementById('pairingBanner');
+        var bannerTag = document.getElementById('pairingFemaleTag');
+        var clearBtn = document.getElementById('clearPairing');
+
+        if (femalesTable && malesController) {
+            femalesTable.addEventListener('click', function (e) {
+                var row = e.target.closest('tr.dt-row');
+                if (!row || e.target.closest('a')) return;
+
+                Array.prototype.forEach.call(femalesTable.querySelectorAll('tr.dt-row.selected'), function (r) { r.classList.remove('selected'); });
+                row.classList.add('selected');
+
+                var tag = row.getAttribute('data-female-tag');
+                var category = row.getAttribute('data-category');
+                bannerTag.textContent = tag + ' · ' + category;
+                banner.classList.add('show');
+                malesController.setExternalCategory(category);
+                document.getElementById('malesCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                banner.classList.remove('show');
+                Array.prototype.forEach.call(femalesTable.querySelectorAll('tr.dt-row.selected'), function (r) { r.classList.remove('selected'); });
+                malesController.setExternalCategory(null);
+            });
+        }
+    });
+</script>
+</body>
+</html>

@@ -67,6 +67,10 @@
             font-weight: 700;
             font-size: 16px;
             background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .table {
             width: 100%;
@@ -212,6 +216,115 @@
         @media (max-width: 480px) {
             .kpi-grid { grid-template-columns: 1fr; }
         }
+
+        /* ===== Actions Required — redesigned ===== */
+        .card-header-title { display:flex; align-items:center; gap:8px; font-weight:700; font-size:16px; margin-right:auto; }
+
+        .actions-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .chip {
+            border: 1px solid #dee2e6;
+            background: white;
+            color: #495057;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chip:hover { background: #f8f9fa; }
+        .chip.active { background: #1a2233; border-color: #1a2233; color: white; }
+        .chip .count { opacity: .75; font-weight: 500; }
+
+        .actions-search {
+            position: relative;
+            min-width: 200px;
+        }
+        .actions-search input {
+            width: 100%;
+            padding: 7px 12px 7px 32px;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            font-size: 12.5px;
+            font-family: inherit;
+            outline: none;
+        }
+        .actions-search input:focus { border-color: #ea580c; }
+        .actions-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            font-size: 12px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 13px 20px 13px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            border-left: 3px solid transparent;
+            font-size: 13.5px;
+        }
+        .action-item:last-child { border-bottom: none; }
+        .action-item.sev-critical { border-left-color: #dc2626; background: #fffafa; }
+        .action-item.sev-upcoming { border-left-color: #d97706; }
+        .action-item .icon { font-size: 15px; line-height: 1.4; flex-shrink: 0; }
+        .action-item .msg { flex: 1; min-width: 0; }
+        .action-item .msg strong { color: #1a2233; }
+        .action-item .msg .sub { color: #6c757d; font-size: 12.5px; display: block; margin-top: 1px; }
+        .action-item a.act {
+            font-size: 12.5px; color: #ea580c; text-decoration: none; font-weight: 600;
+            white-space: nowrap; flex-shrink: 0; padding-top: 1px;
+        }
+        .action-item a.act:hover { text-decoration: underline; }
+        .action-item.js-hidden { display: none; }
+
+        .actions-summary-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 20px 13px 19px;
+            border-bottom: 1px solid #f0f0f0;
+            border-left: 3px solid #d97706;
+            font-size: 13.5px;
+            background: #fffdf7;
+            cursor: pointer;
+        }
+        .actions-summary-row:hover { background: #fffbf0; }
+        .actions-summary-row .icon { font-size: 15px; }
+        .actions-summary-row .msg { flex: 1; color: #495057; }
+        .actions-summary-row .msg strong { color: #1a2233; }
+        .actions-summary-row .chev { color: #adb5bd; transition: transform .15s; }
+        .actions-summary-row.expanded .chev { transform: rotate(180deg); }
+
+        .show-more-row {
+            text-align: center;
+            padding: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .show-more-row button {
+            border: none;
+            background: none;
+            color: #ea580c;
+            font-weight: 600;
+            font-size: 12.5px;
+            cursor: pointer;
+        }
+        .show-more-row button:hover { text-decoration: underline; }
+
+        .no-actions { padding: 28px 20px; text-align: center; color: #059669; font-size: 14px; }
+        .no-match-state { padding: 24px 20px; text-align: center; color: #6c757d; font-size: 13.5px; display: none; }
     </style>
 </head>
 <body>
@@ -225,7 +338,7 @@
         <a th:href="@{/livestock/lifecycle/dashboard}" class="btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Dashboard
         </a>
-        <a th:href="@{/livestock/breeding/register}" class="btn-primary-custom">
+        <a th:href="@{/livestock/breeding/form}" class="btn-primary-custom">
             <i class="bi bi-plus-circle me-1"></i> Record Breeding
         </a>
     </div>
@@ -235,7 +348,7 @@
     <div class="title-row">
         <div>
             <h1 class="page-title"><i class="bi bi-heart-fill me-2" style="color:#ea580c;"></i>Breeding Management</h1>
-            <p class="page-sub">Manage active breedings, pregnancy checks, and results</p>
+            <p class="page-sub">Actions first, then breeding status across the herd</p>
         </div>
         <div style="font-size:13px;color:#6c757d;background:#f8f9fa;padding:8px 16px;border-radius:12px;">
             <i class="bi bi-calendar3 me-1"></i>
@@ -243,40 +356,243 @@
         </div>
     </div>
 
-    <!-- KPI Cards -->
+    <!-- 1. KPI CARDS (spec D.1) -->
     <div class="kpi-grid">
         <div class="kpi-card">
-            <div class="kpi-value" style="color:#ea580c;" th:text="${maleTotal != null ? maleTotal : 0}">0</div>
-            <div class="kpi-label"><i class="bi bi-gender-male"></i> Breeding Males</div>
+            <div class="kpi-value" style="color:#ea580c;" th:text="${kpis.activeBreedings}">0</div>
+            <div class="kpi-label"><i class="bi bi-hourglass-split"></i> Active Breedings</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-value" style="color:#7c3aed;" th:text="${readyFemales != null ? readyFemales.size() : 0}">0</div>
-            <div class="kpi-label"><i class="bi bi-gender-female"></i> Ready Females</div>
+            <div class="kpi-value" style="color:#7c3aed;" th:text="${kpis.femalesReady}">0</div>
+            <div class="kpi-label"><i class="bi bi-gender-female"></i> Females Ready</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-value" style="color:#db2777;" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</div>
-            <div class="kpi-label"><i class="bi bi-heart-fill"></i> Pregnant</div>
+            <div class="kpi-value" style="color:#db2777;" th:text="${kpis.pregnantAnimals}">0</div>
+            <div class="kpi-label"><i class="bi bi-heart-fill"></i> Pregnant Animals</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-value" style="color:#16a34a;" th:text="${successRate != null ? successRate + '%' : '0%'}">0%</div>
-            <div class="kpi-label"><i class="bi bi-check-circle-fill"></i> Success Rate</div>
+            <div class="kpi-value" style="color:#dc2626;" th:text="${kpis.pendingPregnancyChecks}">0</div>
+            <div class="kpi-label"><i class="bi bi-clipboard-x-fill"></i> Pending Pregnancy Checks</div>
         </div>
         <div class="kpi-card">
-            <div class="kpi-value" style="color:#0d9488;" th:text="${avgDaysToConception != null ? avgDaysToConception + 'd' : '—'}">—</div>
-            <div class="kpi-label"><i class="bi bi-clock-history"></i> Avg Days to Confirm</div>
+            <div class="kpi-value" style="color:#16a34a;" th:text="${kpis.breedingSuccessRate + '%'}">0%</div>
+            <div class="kpi-label"><i class="bi bi-graph-up-arrow"></i> Breeding Success Rate</div>
         </div>
     </div>
 
-    <!-- Breeding Males - Grouped by Category -->
+    <!-- 2. ACTIONS REQUIRED — redesigned (severity split + filters + search + capped list) -->
     <div class="card">
         <div class="card-header">
-            <i class="bi bi-gender-male me-2"></i> Breeding Males Available
+            <div class="card-header-title">
+                <i class="bi bi-exclamation-triangle-fill" style="color:#dc2626;"></i> Actions Required
+                <span class="badge badge-red" id="actionsTotalBadge" th:text="${actionsRequired != null ? actionsRequired.size() : 0}">0</span>
+            </div>
+            <div class="actions-toolbar" th:if="${actionsRequired != null and !actionsRequired.empty}">
+                <div class="actions-search">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="actionsSearch" placeholder="Search tag or message…">
+                </div>
+                <button type="button" class="chip active" data-filter="all">All <span class="count" id="cnt-all">0</span></button>
+                <button type="button" class="chip" data-filter="critical">🔴 Critical <span class="count" id="cnt-critical">0</span></button>
+                <button type="button" class="chip" data-filter="upcoming">🟡 Upcoming <span class="count" id="cnt-upcoming">0</span></button>
+            </div>
+        </div>
+
+        <div th:if="${actionsRequired == null or actionsRequired.empty}" class="no-actions">
+            <i class="bi bi-check-circle-fill fs-4 d-block mb-1"></i>
+            Nothing urgent right now.
+        </div>
+
+        <div th:if="${actionsRequired != null and !actionsRequired.empty}" id="actionsList">
+            <!--
+                NOTE ON SCALE: for real production data (thousands of animals), don't stream every
+                row into this DOM. Have the backend return only the top N critical items plus
+                per-type counts, and pre-collapse "informational, non-actionable" reasons (e.g. not
+                yet old enough, still recovering post-birth) into counts only. Point "View all" links
+                at a dedicated, server-paginated Action Center page/endpoint instead of rendering
+                everything inline. The markup below still works with a small/medium list as-is; the
+                JS grouping is a client-side stand-in for that until the backend groups it.
+            -->
+            <div class="action-item"
+                 th:each="a : ${actionsRequired}"
+                 th:classappend="${a.icon == '🔴'} ? 'sev-critical' : 'sev-upcoming'"
+                 th:attr="data-severity=${a.icon == '🔴' ? 'critical' : 'upcoming'}, data-type=${a.title}, data-search=${(a.title + ' ' + a.message).toLowerCase()}">
+                <span class="icon" th:text="${a.icon}">🔴</span>
+                <div class="msg">
+                    <strong th:text="${a.title}">Title</strong> — <span th:text="${a.message}">message</span>
+                </div>
+                <a th:if="${a.actionUrl != null}" th:href="@{${a.actionUrl}}" class="act">View →</a>
+            </div>
+
+            <div class="show-more-row" id="showMoreRow" style="display:none;">
+                <button type="button" id="showMoreBtn">Show more items</button>
+            </div>
+            <div class="no-match-state" id="noMatchState">
+                <i class="bi bi-search"></i> No actions match your filter/search.
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. FEMALES READY TO BREED (spec D.3) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-gender-female me-2"></i> Females Ready to Breed
+            <span class="badge badge-purple ms-2" th:text="${readyFemales != null ? readyFemales.size() : 0}">0</span>
+        </div>
+        <div th:if="${readyFemales == null or readyFemales.empty}" class="empty-state">
+            <i class="bi bi-person-x fs-1"></i>
+            <p class="mt-2"><strong>No females ready to breed</strong></p>
+        </div>
+        <div th:if="${readyFemales != null and !readyFemales.empty}">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr><th>Tag</th><th>Category</th><th>Age</th><th>Last Bred</th><th>Pregnancy Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <th:block th:each="entry : ${groupedFemales}">
+                        <tr class="category-group">
+                            <td colspan="6">
+                                <i class="bi bi-folder-fill me-2"></i><strong th:text="${entry.key}"></strong>
+                                <span class="badge badge-purple ms-2" th:text="${entry.value.size()}"></span>
+                            </td>
+                        </tr>
+                        <tr th:each="female : ${entry.value}">
+                            <td class="mono"><strong th:text="${female.tagNumber}">—</strong></td>
+                            <td><span class="badge badge-purple" th:text="${female.categoryName != null ? female.categoryName : '—'}">—</span></td>
+                            <td class="mono" th:text="${female.ageMonths != null ? female.ageMonths + ' mo' : '—'}">—</td>
+                            <td class="mono" th:text="${female.lastBreedingDate != null ? #temporals.format(female.lastBreedingDate,'dd MMM yyyy') : 'Never'}">Never</td>
+                            <td><span class="badge" th:classappend="${female.isPregnant != null and female.isPregnant ? 'badge-pink' : 'badge-green'}" th:text="${female.pregnancyStatus != null ? female.pregnancyStatus : 'Ready'}">Ready</span></td>
+                            <td><a th:href="@{/livestock/breeding/form(livestockId=${female.id})}" class="btn-icon" title="Breed"><i class="bi bi-heart-fill" style="color:#7c3aed;"></i> Breed</a></td>
+                        </tr>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ACTIVE BREEDINGS (spec D.4 — auto-flags overdue) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-hourglass-split me-2"></i> Active Breedings
+            <span class="badge badge-amber ms-2" th:text="${activeBreedingRows != null ? activeBreedingRows.size() : 0}">0</span>
+            <span th:if="${overdueActiveCount != null and overdueActiveCount > 0}" class="badge badge-red ms-1"
+                  th:text="${overdueActiveCount} + ' overdue'">0 overdue</span>
+        </div>
+        <div th:if="${activeBreedingRows == null or activeBreedingRows.empty}" class="empty-state">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2"><strong>No active breedings pending confirmation</strong></p>
+        </div>
+        <div class="table-responsive" th:if="${activeBreedingRows != null and !activeBreedingRows.empty}">
+            <table class="table">
+                <thead>
+                <tr><th>Female</th><th>Male</th><th>Method</th><th>Breeding Date</th><th>Expected Check</th><th>Days Since Breeding</th><th>Status</th><th></th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${activeBreedingRows}" th:classappend="${b.overdue} ? 'table-danger' : ''">
+                    <td class="mono"><strong th:text="${b.femaleTag}">—</strong><br><small class="text-muted" th:text="${b.categoryName}"></small></td>
+                    <td class="mono" th:text="${b.maleTag != null ? b.maleTag : '—'}">—</td>
+                    <td><span class="badge" th:classappend="${b.breedingMethod == 'NATURAL' ? 'badge-green' : (b.breedingMethod == 'ARTIFICIAL_INSEMINATION' ? 'badge-blue' : 'badge-purple')}" th:text="${b.breedingMethod != null ? b.breedingMethod.replace('_',' ') : '—'}">—</span></td>
+                    <td class="mono" th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate,'dd MMM yyyy') : '—'}">—</td>
+                    <td class="mono" th:text="${b.expectedPregnancyCheckDate != null ? #temporals.format(b.expectedPregnancyCheckDate,'dd MMM yyyy') : '—'}">—</td>
+                    <td class="mono" th:text="${b.daysSinceBreeding != null ? b.daysSinceBreeding + 'd' : '—'}">—</td>
+                    <td>
+                        <span th:if="${b.overdue}" class="badge badge-red"><i class="bi bi-exclamation-triangle-fill"></i> OVERDUE</span>
+                        <span th:if="${!b.overdue}" class="badge badge-green">PENDING</span>
+                    </td>
+                    <td>
+                        <a th:href="@{/livestock/breeding/form(id=${b.breedingId})}" class="btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/livestock/breeding/view/{id}(id=${b.breedingId})}" class="btn-icon" title="View"><i class="bi bi-eye"></i></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 5. PREGNANT ANIMALS (spec D.5) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-heart-fill me-2"></i> Pregnant Animals
+            <span class="badge badge-pink ms-2" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</span>
+        </div>
+        <div th:if="${pregnantAnimals == null or pregnantAnimals.empty}" class="empty-state">
+            <i class="bi bi-inbox fs-1"></i><p class="mt-2"><strong>No pregnant animals</strong></p>
+        </div>
+        <div th:if="${pregnantAnimals != null and !pregnantAnimals.empty}">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr><th>Tag</th><th>Category</th><th>Expected Due Date</th><th>Days Until Due / Overdue</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                    <th:block th:each="entry : ${groupedPregnant}">
+                        <tr class="category-group">
+                            <td colspan="6"><i class="bi bi-folder-fill me-2"></i><strong th:text="${entry.key}"></strong>
+                                <span class="badge badge-pink ms-2" th:text="${entry.value.size()}"></span></td>
+                        </tr>
+                        <tr th:each="animal : ${entry.value}">
+                            <td class="mono"><strong th:text="${animal.tagNumber}">—</strong></td>
+                            <td><span class="badge badge-pink" th:text="${animal.categoryName}">—</span></td>
+                            <td class="mono" th:text="${animal.expectedDueDate != null ? #temporals.format(animal.expectedDueDate,'dd MMM yyyy') : '—'}">—</td>
+                            <td>
+                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue < 0}" class="text-danger">⚠️ Overdue by <span th:text="${-animal.daysUntilDue}"></span> days</span>
+                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue >= 0 and animal.daysUntilDue <= 7}" class="text-danger">🔴 Due in <span th:text="${animal.daysUntilDue}"></span> days</span>
+                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue > 7 and animal.daysUntilDue <= 30}" class="text-warning">🟡 <span th:text="${animal.daysUntilDue}"></span> days</span>
+                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue > 30}" class="text-success">🟢 <span th:text="${animal.daysUntilDue}"></span> days</span>
+                            </td>
+                            <td><span class="badge badge-pink">Pregnant</span></td>
+                            <td><a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="btn-icon" title="Track"><i class="bi bi-eye"></i></a></td>
+                        </tr>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. FEMALES NOT READY FOR BREEDING (renamed, spec D.6) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-hourglass-split me-2"></i> Females Not Ready for Breeding
+            <span class="badge badge-amber ms-2" th:text="${ineligibleFemales != null ? ineligibleFemales.size() : 0}">0</span>
+        </div>
+        <div th:if="${ineligibleFemales == null or ineligibleFemales.empty}" class="empty-state">
+            <i class="bi bi-check-circle fs-1"></i><p class="mt-2"><strong>All active females are ready</strong></p>
+        </div>
+        <div th:if="${ineligibleFemales != null and !ineligibleFemales.empty}">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Tag</th><th>Category</th><th>Reason</th><th>Eligible Again On</th><th></th></tr></thead>
+                    <tbody>
+                    <th:block th:each="entry : ${groupedIneligibleFemales}">
+                        <tr class="category-group">
+                            <td colspan="5"><i class="bi bi-folder-fill me-2"></i><strong th:text="${entry.key}"></strong>
+                                <span class="badge badge-amber ms-2" th:text="${entry.value.size()}"></span></td>
+                        </tr>
+                        <tr th:each="f : ${entry.value}">
+                            <td class="mono"><strong th:text="${f.tagNumber}">—</strong></td>
+                            <td><span class="badge badge-amber" th:text="${f.categoryName}">—</span></td>
+                            <td class="text-muted" th:text="${f.reason}">—</td>
+                            <td class="mono" th:text="${f.nextEligibleDate != null ? #temporals.format(f.nextEligibleDate,'dd MMM yyyy') : '—'}">—</td>
+                            <td><a th:href="@{/livestock/view/{id}(id=${f.id})}" class="btn-icon" title="View"><i class="bi bi-eye"></i></a></td>
+                        </tr>
+                    </th:block>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7. ELIGIBLE BREEDING MALES (spec D.7) -->
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-gender-male me-2"></i> Eligible Breeding Males
             <span class="badge badge-blue ms-2" th:text="${maleTotal != null ? maleTotal : 0}">0</span>
         </div>
         <div th:if="${breedingMales == null or breedingMales.empty}" class="empty-state">
-            <i class="bi bi-person-x fs-1"></i>
-            <p class="mt-2"><strong>No breeding males available</strong></p>
-            <p>Add males with an appropriate age and status to see them here.</p>
+            <i class="bi bi-person-x fs-1"></i><p class="mt-2"><strong>No eligible males available</strong></p>
         </div>
         <div th:if="${breedingMales != null and !breedingMales.empty}">
             <div class="stat-bar">
@@ -288,34 +604,27 @@
             </div>
             <div class="table-responsive">
                 <table class="table">
-                    <thead>
-                    <tr><th>Tag</th><th>Category</th><th>Age</th><th>Total Breedings</th><th>Success Rate</th><th>Acquired</th><th>Status</th><th></th>
-                    </thead>
+                    <thead><tr><th>Tag</th><th>Category</th><th>Age</th><th>Total Breedings</th><th>Successful</th><th>Success Rate</th><th>Experience</th><th></th></tr></thead>
                     <tbody>
                     <th:block th:each="entry : ${groupedMales}">
                         <tr class="category-group">
-                            <td colspan="8">
-                                <i class="bi bi-folder-fill me-2"></i>
-                                <strong th:text="${entry.key}"></strong>
-                                <span class="badge badge-blue ms-2" th:text="${entry.value.size()}"></span>
-                            </td>
+                            <td colspan="8"><i class="bi bi-folder-fill me-2"></i><strong th:text="${entry.key}"></strong>
+                                <span class="badge badge-blue ms-2" th:text="${entry.value.size()}"></span></td>
                         </tr>
                         <tr th:each="male : ${entry.value}">
                             <td class="mono"><strong th:text="${male.tagNumber}">—</strong></td>
                             <td><span class="badge badge-blue" th:text="${male.categoryName != null ? male.categoryName : '—'}">—</span></td>
                             <td class="mono" th:text="${male.ageMonths != null ? male.ageMonths + ' mo' : '—'}">—</td>
                             <td class="mono" th:text="${male.totalBreedings != null ? male.totalBreedings : 0}">0</td>
+                            <td class="mono" th:text="${male.successfulBreedings != null ? male.successfulBreedings : 0}">0</td>
                             <td>
                                 <div class="prog-mini">
                                     <div class="track"><div class="fill" th:style="'width:' + ${male.successRate > 100 ? 100 : male.successRate} + '%;'"></div></div>
                                     <div class="lbl" th:text="${#numbers.formatDecimal(male.successRate,1,0) + '%'}"></div>
                                 </div>
                             </td>
-                            <td class="mono" th:text="${male.dateReceived != null ? #temporals.format(male.dateReceived,'dd MMM yyyy') : '—'}">—</td>
-                            <td>
-                                <span class="badge" th:classappend="${male.neverBred ? 'badge-orange' : 'badge-green'}" th:text="${male.neverBred ? 'Never Bred' : 'Experienced'}">Available</span>
-                            </td>
-                            <td><a th:href="@{/livestock/breeding/register}" class="btn-icon" title="Use for Breeding"><i class="bi bi-heart-fill" style="color:#ea580c;"></i> Breed</a></td>
+                            <td><span class="badge" th:classappend="${male.neverBred ? 'badge-orange' : 'badge-green'}" th:text="${male.neverBred ? 'Never Bred' : 'Experienced'}">Available</span></td>
+                            <td><a th:href="@{/livestock/breeding/form(livestockId=${male.id})}" class="btn-icon" title="Select"><i class="bi bi-heart-fill" style="color:#ea580c;"></i> Select</a></td>
                         </tr>
                     </th:block>
                     </tbody>
@@ -324,168 +633,7 @@
         </div>
     </div>
 
-    <!-- Females Ready to Breed - Grouped by Category -->
-    <div class="card">
-        <div class="card-header">
-            <i class="bi bi-gender-female me-2"></i> Females Ready to Breed
-            <span class="badge badge-purple ms-2" th:text="${readyFemales != null ? readyFemales.size() : 0}">0</span>
-        </div>
-        <div th:if="${readyFemales == null or readyFemales.empty}" class="empty-state">
-            <i class="bi bi-person-x fs-1"></i>
-            <p class="mt-2"><strong>No females ready to breed</strong></p>
-            <p>Females meeting age and health requirements will appear here.</p>
-        </div>
-        <div th:if="${readyFemales != null and !readyFemales.empty}">
-            <div class="stat-bar">
-                <div class="item"><i class="bi bi-list-ol"></i> Total: <strong th:text="${readyFemales.size()}">0</strong></div>
-                <span class="sep">|</span>
-                <div class="item"><i class="bi bi-star"></i> Never bred: <strong th:text="${#lists.size(readyFemales.?[neverBred])}">0</strong></div>
-            </div>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                    <tr><th>Tag</th><th>Category</th><th>Age</th><th>Total Breedings</th><th>Success Rate</th><th>Offspring</th><th>Last Bred</th><th>Pregnancy Status</th><th></th>
-                    </thead>
-                    <tbody>
-                    <th:block th:each="entry : ${groupedFemales}">
-                        <tr class="category-group">
-                            <td colspan="9">
-                                <i class="bi bi-folder-fill me-2"></i>
-                                <strong th:text="${entry.key}"></strong>
-                                <span class="badge badge-purple ms-2" th:text="${entry.value.size()}"></span>
-                            </td>
-                        </tr>
-                        <tr th:each="female : ${entry.value}">
-                            <td class="mono"><strong th:text="${female.tagNumber}">—</strong></td>
-                            <td><span class="badge badge-purple" th:text="${female.categoryName != null ? female.categoryName : '—'}">—</span></td>
-                            <td class="mono" th:text="${female.ageMonths != null ? female.ageMonths + ' mo' : '—'}">—</td>
-                            <td class="mono" th:text="${female.totalBreedings != null ? female.totalBreedings : 0}">0</td>
-                            <td>
-                                <div class="prog-mini">
-                                    <div class="track"><div class="fill" style="background:#7c3aed;" th:style="'width:' + ${female.successRate > 100 ? 100 : female.successRate} + '%;background:#7c3aed;'"></div></div>
-                                    <div class="lbl" th:text="${#numbers.formatDecimal(female.successRate,1,0) + '%'}"></div>
-                                </div>
-                            </td>
-                            <td class="mono" th:text="${female.offspringCount != null ? female.offspringCount : 0}">0</td>
-                            <td class="mono" th:text="${female.lastBreedingDate != null ? #temporals.format(female.lastBreedingDate,'dd MMM yyyy') : 'Never'}">Never</td>
-                            <td><span class="badge" th:classappend="${female.isPregnant != null and female.isPregnant ? 'badge-pink' : 'badge-green'}" th:text="${female.pregnancyStatus != null ? female.pregnancyStatus : 'Ready'}">Ready</span></td>
-                            <td><a th:href="@{/livestock/breeding/register}" class="btn-icon" title="Breed"><i class="bi bi-heart-fill" style="color:#7c3aed;"></i> Breed</a></td>
-                        </tr>
-                    </th:block>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pregnant Animals - Grouped by Category -->
-    <div class="card">
-        <div class="card-header">
-            <i class="bi bi-heart-fill me-2"></i> Pregnant Animals
-            <span class="badge badge-pink ms-2" th:text="${pregnantAnimals != null ? pregnantAnimals.size() : 0}">0</span>
-        </div>
-        <div th:if="${pregnantAnimals == null or pregnantAnimals.empty}" class="empty-state">
-            <i class="bi bi-inbox fs-1"></i>
-            <p class="mt-2"><strong>No pregnant animals</strong></p>
-            <p>Animals with a confirmed-pregnant breeding record will appear here.</p>
-        </div>
-        <div th:if="${pregnantAnimals != null and !pregnantAnimals.empty}">
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                    <tr><th>Tag</th><th>Category</th><th>Expected Due Date</th><th>Days Until Due</th><th>Status</th><th></th>
-                    </thead>
-                    <tbody>
-                    <th:block th:each="entry : ${groupedPregnant}">
-                        <tr class="category-group">
-                            <td colspan="6">
-                                <i class="bi bi-folder-fill me-2"></i>
-                                <strong th:text="${entry.key}"></strong>
-                                <span class="badge badge-pink ms-2" th:text="${entry.value.size()}"></span>
-                            </td>
-                        </tr>
-                        <tr th:each="animal : ${entry.value}">
-                            <td class="mono"><strong th:text="${animal.tagNumber}">—</strong></td>
-                            <td><span class="badge badge-pink" th:text="${animal.categoryName != null ? animal.categoryName : '—'}">—</span></td>
-                            <td class="mono" th:text="${animal.expectedDueDate != null ? #temporals.format(animal.expectedDueDate,'dd MMM yyyy') : '—'}">—</td>
-                            <td>
-                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue < 0}" class="text-danger">⚠️ Overdue by <span th:text="${-animal.daysUntilDue}"></span> days</span>
-                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue >= 0 and animal.daysUntilDue <= 7}" class="text-danger">🔴 Due in <span th:text="${animal.daysUntilDue}"></span> days</span>
-                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue > 7 and animal.daysUntilDue <= 30}" class="text-warning">🟡 <span th:text="${animal.daysUntilDue}"></span> days</span>
-                                <span th:if="${animal.daysUntilDue != null and animal.daysUntilDue > 30}" class="text-success">🟢 <span th:text="${animal.daysUntilDue}"></span> days</span>
-                                <span th:if="${animal.daysUntilDue == null}">—</span>
-                            </td>
-                            <td><span class="badge badge-pink">Pregnant</span></td>
-                            <td><a th:href="@{/livestock/lifecycle/pregnancy-tracking}" class="btn-icon" title="Track Pregnancy"><i class="bi bi-eye"></i> View</a></td>
-                        </tr>
-                    </th:block>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Active Breedings -->
-    <div class="card">
-        <div class="card-header">
-            <i class="bi bi-hourglass-split me-2"></i> Active Breedings (Pending Confirmation)
-            <span class="badge badge-amber ms-2" th:text="${activeBreedings != null ? activeBreedings.size() : 0}">0</span>
-        </div>
-        <div th:if="${activeBreedings == null or activeBreedings.empty}" class="empty-state">
-            <i class="bi bi-inbox fs-1"></i>
-            <p class="mt-2"><strong>No active breedings pending confirmation</strong></p>
-        </div>
-        <div class="table-responsive" th:if="${activeBreedings != null and !activeBreedings.empty}">
-            <table class="table">
-                <thead>
-                <tr><th>Female Tag</th><th>Male Tag</th><th>Method</th><th>Breeding Date</th><th>Expected Check</th><th>Status</th><th>Vet</th><th></th>
-                </thead>
-                <tbody>
-                <tr th:each="b : ${activeBreedings}">
-                    <td class="mono"><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}">—</strong><br><small class="text-muted" th:if="${b.livestock?.livestockCategory != null}" th:text="${b.livestock.livestockCategory.name}"></small></td>
-                    <td class="mono" th:text="${b.maleLivestock != null ? b.maleLivestock.tagNumber : '—'}">—</td>
-                    <td>
-                        <span class="badge" th:classappend="${b.breedingMethod == 'NATURAL' ? 'badge-green' : (b.breedingMethod == 'ARTIFICIAL_INSEMINATION' ? 'badge-blue' : 'badge-purple')}" th:text="${b.breedingMethod != null ? b.breedingMethod.replace('_',' ') : '—'}">—</span>
-                    </td>
-                    <td class="mono" th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate,'dd MMM yyyy') : '—'}">—</td>
-                    <td class="mono" th:text="${b.expectedPregnancyCheckDate != null ? #temporals.format(b.expectedPregnancyCheckDate,'dd MMM yyyy') : '—'}">—</td>
-                    <td><span class="badge badge-green" th:text="${b.status != null ? b.status.replace('_',' ') : 'PENDING'}">PENDING</span></td>
-                    <td th:text="${b.veterinarian != null ? (b.veterinarian.firstName + ' ' + b.veterinarian.lastName) : '—'}">—</td>
-                    <td class="action-buttons">
-                        <a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}" class="btn-icon" title="Edit"><i class="bi bi-pencil"></i></a>
-                        <a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn-icon" title="View"><i class="bi bi-eye"></i></a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Pending Pregnancy Checks -->
-    <div class="card" th:if="${pendingPregnancyCheck != null and !pendingPregnancyCheck.empty}">
-        <div class="card-header">
-            <i class="bi bi-clipboard-pulse-fill me-2"></i> Pending Pregnancy Checks
-            <span class="badge badge-teal ms-2" th:text="${pendingPregnancyCheck.size()}">0</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                <tr><th>Female Tag</th><th>Breeding Date</th><th>Check Due Date</th><th>Status</th><th></th>
-                </thead>
-                <tbody>
-                <tr th:each="b : ${pendingPregnancyCheck}">
-                    <td class="mono"><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}">—</strong></td>
-                    <td class="mono" th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate,'dd MMM yyyy') : '—'}">—</td>
-                    <td class="mono" th:text="${b.expectedPregnancyCheckDate != null ? #temporals.format(b.expectedPregnancyCheckDate,'dd MMM yyyy') : '—'}">—</td>
-                    <td><span class="badge badge-green" th:text="${b.status != null ? b.status.replace('_',' ') : '—'}">—</span></td>
-                    <td><a th:href="@{/livestock/breeding/edit/{id}(id=${b.id})}" class="btn-icon" title="Update"><i class="bi bi-pencil"></i> Update</a></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Failed Breedings -->
+    <!-- 8. FAILED BREEDINGS — historical, at the bottom (spec D.8) -->
     <div class="card" th:if="${failedBreedings != null and !failedBreedings.empty}">
         <div class="card-header">
             <i class="bi bi-x-circle-fill me-2"></i> Failed Breedings
@@ -493,19 +641,15 @@
         </div>
         <div class="table-responsive">
             <table class="table">
-                <thead>
-                <tr><th>Female Tag</th><th>Male Tag</th><th>Breeding Date</th><th>Method</th><th>Notes</th><th></th>
-                </thead>
+                <thead><tr><th>Female Tag</th><th>Male Tag</th><th>Breeding Date</th><th>Method</th><th>Notes</th><th></th></tr></thead>
                 <tbody>
                 <tr th:each="b : ${failedBreedings}">
                     <td class="mono"><strong th:text="${b.livestock != null ? b.livestock.tagNumber : 'N/A'}">—</strong></td>
-                    <td class="mono" th:text="${b.maleLivestock != null ? b.maleLivestock.tagNumber : '—'}">—</td>
+                    <td class="mono" th:text="${b.male != null ? b.male.tagNumber : '—'}">—</td>
                     <td class="mono" th:text="${b.breedingDate != null ? #temporals.format(b.breedingDate,'dd MMM yyyy') : '—'}">—</td>
-                    <td>
-                        <span class="badge" th:classappend="${b.breedingMethod == 'NATURAL' ? 'badge-green' : (b.breedingMethod == 'ARTIFICIAL_INSEMINATION' ? 'badge-blue' : 'badge-purple')}" th:text="${b.breedingMethod != null ? b.breedingMethod.replace('_',' ') : '—'}">—</span>
-                    </td>
+                    <td><span class="badge" th:classappend="${b.breedingMethod == 'NATURAL' ? 'badge-green' : (b.breedingMethod == 'ARTIFICIAL_INSEMINATION' ? 'badge-blue' : 'badge-purple')}" th:text="${b.breedingMethod != null ? b.breedingMethod.replace('_',' ') : '—'}">—</span></td>
                     <td class="text-muted" th:text="${b.notes != null ? b.notes : '—'}">—</td>
-                    <td><a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn-icon" title="View"><i class="bi bi-eye"></i> View</a></td>
+                    <td><a th:href="@{/livestock/breeding/view/{id}(id=${b.id})}" class="btn-icon" title="View"><i class="bi bi-eye"></i></a></td>
                 </tr>
                 </tbody>
             </table>
@@ -514,5 +658,136 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        var list = document.getElementById('actionsList');
+        if (!list) return;
+
+        var items = Array.prototype.slice.call(list.querySelectorAll('.action-item'));
+        var searchInput = document.getElementById('actionsSearch');
+        var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+        var showMoreRow = document.getElementById('showMoreRow');
+        var showMoreBtn = document.getElementById('showMoreBtn');
+        var noMatchState = document.getElementById('noMatchState');
+
+        var VISIBLE_CAP = 8;          // rows shown before "Show more"
+        var NOISY_TYPE_THRESHOLD = 3; // collapse a repeated non-critical "type" into one summary row past this count
+        var activeFilter = 'all';
+        var expandedAll = false;
+
+        // --- 1. Group repetitive, non-actionable "upcoming/info" items by type into one summary row ---
+        var typeCounts = {};
+        items.forEach(function (el) {
+            var type = el.getAttribute('data-type');
+            var sev = el.getAttribute('data-severity');
+            if (sev !== 'critical') {
+                typeCounts[type] = (typeCounts[type] || 0) + 1;
+            }
+        });
+
+        Object.keys(typeCounts).forEach(function (type) {
+            if (typeCounts[type] < NOISY_TYPE_THRESHOLD) return;
+            var members = items.filter(function (el) { return el.getAttribute('data-type') === type && el.getAttribute('data-severity') !== 'critical'; });
+            if (!members.length) return;
+
+            var summary = document.createElement('div');
+            summary.className = 'actions-summary-row';
+            summary.setAttribute('data-severity', 'upcoming');
+            summary.setAttribute('data-search', type.toLowerCase());
+            summary.innerHTML =
+                '<span class="icon">🟡</span>' +
+                '<span class="msg"><strong>' + members.length + ' animals</strong> — ' + type + ' <span style="color:#adb5bd;">(no action needed yet)</span></span>' +
+                '<i class="bi bi-chevron-down chev"></i>';
+
+            members[0].parentNode.insertBefore(summary, members[0]);
+            members.forEach(function (el) { el.classList.add('js-grouped'); el.classList.add('js-hidden'); });
+
+            summary.addEventListener('click', function () {
+                var isOpen = summary.classList.toggle('expanded');
+                members.forEach(function (el) {
+                    if (isOpen) { el.classList.remove('js-hidden'); } else { el.classList.add('js-hidden'); }
+                });
+                applyCap();
+            });
+        });
+
+        // --- 2. Severity filter counts ---
+        var counts = { all: items.length, critical: 0, upcoming: 0 };
+        items.forEach(function (el) {
+            counts[el.getAttribute('data-severity')]++;
+        });
+        document.getElementById('cnt-all').textContent = counts.all;
+        document.getElementById('cnt-critical').textContent = counts.critical;
+        document.getElementById('cnt-upcoming').textContent = counts.upcoming;
+
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                chips.forEach(function (c) { c.classList.remove('active'); });
+                chip.classList.add('active');
+                activeFilter = chip.getAttribute('data-filter');
+                expandedAll = false;
+                render();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                expandedAll = false;
+                render();
+            });
+        }
+
+        if (showMoreBtn) {
+            showMoreBtn.addEventListener('click', function () {
+                expandedAll = true;
+                render();
+            });
+        }
+
+        function getRows() {
+            return Array.prototype.slice.call(list.querySelectorAll('.action-item, .actions-summary-row'));
+        }
+
+        function render() {
+            var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            var rows = getRows();
+            var visible = [];
+
+            rows.forEach(function (row) {
+                if (row.classList.contains('js-grouped') && row.classList.contains('js-hidden') &&
+                    !row.previousElementSibling /* placeholder, real check below */) { /* no-op */ }
+            });
+
+            rows.forEach(function (row) {
+                var sev = row.getAttribute('data-severity');
+                var searchable = row.getAttribute('data-search') || '';
+                var matchesFilter = (activeFilter === 'all') || (sev === activeFilter);
+                var matchesSearch = !query || searchable.indexOf(query) !== -1;
+                var isGroupedMember = row.classList.contains('js-grouped');
+                var summaryExpanded = isGroupedMember && !row.classList.contains('js-hidden');
+
+                var shouldShow = matchesFilter && matchesSearch && (!isGroupedMember || summaryExpanded || query);
+                row.style.display = shouldShow ? '' : 'none';
+                if (shouldShow) visible.push(row);
+            });
+
+            // cap
+            if (!expandedAll && visible.length > VISIBLE_CAP) {
+                visible.forEach(function (row, i) {
+                    if (i >= VISIBLE_CAP) row.style.display = 'none';
+                });
+                showMoreRow.style.display = '';
+                showMoreBtn.textContent = 'Show ' + (visible.length - VISIBLE_CAP) + ' more';
+            } else {
+                showMoreRow.style.display = 'none';
+            }
+
+            noMatchState.style.display = visible.length === 0 ? '' : 'none';
+        }
+
+        applyCap();
+        function applyCap() { render(); }
+    })();
+</script>
 </body>
 </html>

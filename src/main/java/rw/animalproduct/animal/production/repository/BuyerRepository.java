@@ -3,6 +3,7 @@ package rw.animalproduct.animal.production.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.dto.BuyerSummary;
 import rw.animalproduct.animal.production.entity.Buyer;
 
@@ -10,96 +11,82 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Repository
 public interface BuyerRepository extends JpaRepository<Buyer, UUID> {
 
-    // ── Lookups used for duplicate checks (case-insensitive where relevant) ──
+    // ─── Basic Queries ──────────────────────────────────────────────
+
     Optional<Buyer> findByPhone(String phone);
     Optional<Buyer> findByNationalId(String nationalId);
     Optional<Buyer> findByEmailIgnoreCase(String email);
+
+    List<Buyer> findByIsActiveTrue();
+
+    // ─── Existence Checks ───────────────────────────────────────────
 
     boolean existsByPhone(String phone);
     boolean existsByNationalId(String nationalId);
     boolean existsByEmailIgnoreCase(String email);
 
-    // Exclude the buyer's own id, needed when validating an UPDATE
     boolean existsByPhoneAndIdNot(String phone, UUID id);
     boolean existsByNationalIdAndIdNot(String nationalId, UUID id);
     boolean existsByEmailIgnoreCaseAndIdNot(String email, UUID id);
 
-    List<Buyer> findByIsActiveTrue();
+    // ─── Counts ─────────────────────────────────────────────────────
 
-    List<Buyer> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(String first, String last);
-
-    // ── Efficient list/summary queries (single query, no N+1) ────────────
-    @Query("SELECT b.id as id, b.firstName as firstName, b.lastName as lastName, " +
-            "b.phone as phone, b.address as address, " +
-            "b.nationalId as nationalId, b.email as email, " +
-            "b.buyerType as buyerType, b.photo as photo, " +
-            "b.notes as notes, b.createdAt as createdAt, " +
-            "b.isActive as isActive, COUNT(s.id) as totalPurchases " +
-            "FROM Buyer b LEFT JOIN b.sales s " +
-            "GROUP BY b.id, b.firstName, b.lastName, b.phone, b.address, " +
-            "b.nationalId, b.email, b.buyerType, b.photo, b.notes, b.createdAt, b.isActive " +
-            "ORDER BY b.firstName, b.lastName")
-    List<BuyerSummary> findAllSummaries();
-
-    @Query("SELECT b.id as id, b.firstName as firstName, b.lastName as lastName, " +
-            "b.phone as phone, b.address as address, " +
-            "b.nationalId as nationalId, b.email as email, " +
-            "b.buyerType as buyerType, b.photo as photo, " +
-            "b.notes as notes, b.createdAt as createdAt, " +
-            "b.isActive as isActive, COUNT(s.id) as totalPurchases " +
-            "FROM Buyer b LEFT JOIN b.sales s " +
-            "WHERE b.isActive = true AND (" +
-            "  LOWER(b.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.phone) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.address) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.nationalId) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.notes) LIKE LOWER(CONCAT('%', :search, '%'))" +
-            ") " +
-            "GROUP BY b.id, b.firstName, b.lastName, b.phone, b.address, " +
-            "b.nationalId, b.email, b.buyerType, b.photo, b.notes, b.createdAt, b.isActive " +
-            "ORDER BY b.firstName, b.lastName")
-    List<BuyerSummary> searchActiveSummaries(@Param("search") String search);
-
-    @Query("SELECT b.id as id, b.firstName as firstName, b.lastName as lastName, " +
-            "b.phone as phone, b.address as address, " +
-            "b.nationalId as nationalId, b.email as email, " +
-            "b.buyerType as buyerType, b.photo as photo, " +
-            "b.notes as notes, b.createdAt as createdAt, " +
-            "b.isActive as isActive, COUNT(s.id) as totalPurchases " +
-            "FROM Buyer b LEFT JOIN b.sales s " +
-            "WHERE (" +
-            "  LOWER(b.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.phone) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.address) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.nationalId) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
-            "  LOWER(b.notes) LIKE LOWER(CONCAT('%', :search, '%'))" +
-            ") " +
-            "GROUP BY b.id, b.firstName, b.lastName, b.phone, b.address, " +
-            "b.nationalId, b.email, b.buyerType, b.photo, b.notes, b.createdAt, b.isActive " +
-            "ORDER BY b.firstName, b.lastName")
-    List<BuyerSummary> searchAllSummaries(@Param("search") String search);
-
-    @Query("SELECT b.id as id, b.firstName as firstName, b.lastName as lastName, " +
-            "b.phone as phone, b.address as address, " +
-            "b.nationalId as nationalId, b.email as email, " +
-            "b.buyerType as buyerType, b.photo as photo, " +
-            "b.notes as notes, b.createdAt as createdAt, " +
-            "b.isActive as isActive, COUNT(s.id) as totalPurchases " +
-            "FROM Buyer b LEFT JOIN b.sales s " +
-            "GROUP BY b.id, b.firstName, b.lastName, b.phone, b.address, " +
-            "b.nationalId, b.email, b.buyerType, b.photo, b.notes, b.createdAt, b.isActive " +
-            "ORDER BY COUNT(s.id) DESC")
-    List<BuyerSummary> findTopBuyerSummaries();
-
-    @Query("SELECT COUNT(b) FROM Buyer b WHERE b.isActive = true")
+    @Query("SELECT COUNT(b) FROM Buyer b WHERE b.isActive = true AND (b.isDeleted = false OR b.isDeleted IS NULL)")
     long countActiveBuyers();
 
-    @Query("SELECT COUNT(b) FROM Buyer b WHERE b.isActive = false")
+    @Query("SELECT COUNT(b) FROM Buyer b WHERE b.isActive = false AND (b.isDeleted = false OR b.isDeleted IS NULL)")
     long countInactiveBuyers();
+
+    // ─── Summaries - Using Raw Query (No DTO Constructor) ──────────
+    // Column order: id, firstName, lastName, phone, address, nationalId,
+    // email, buyerType, notes, isActive, photo, createdAt, totalPurchases, totalSpent
+    // MUST match the BuyerSummary constructor and BuyerService#mapToBuyerSummaries.
+
+    @Query("""
+        SELECT 
+            b.id, b.firstName, b.lastName, b.phone, b.address, 
+            b.nationalId, b.email, b.buyerType, b.notes, b.isActive, b.photo, b.createdAt,
+            SIZE(b.sales), COALESCE(SUM(s.salePrice), 0)
+        FROM Buyer b
+        LEFT JOIN b.sales s
+        WHERE b.isDeleted = false OR b.isDeleted IS NULL
+        GROUP BY b.id
+        ORDER BY b.lastName ASC, b.firstName ASC
+    """)
+    List<Object[]> findAllSummariesRaw();
+
+    @Query("""
+        SELECT 
+            b.id, b.firstName, b.lastName, b.phone, b.address, 
+            b.nationalId, b.email, b.buyerType, b.notes, b.isActive, b.photo, b.createdAt,
+            SIZE(b.sales), COALESCE(SUM(s.salePrice), 0)
+        FROM Buyer b
+        LEFT JOIN b.sales s
+        WHERE (b.isDeleted = false OR b.isDeleted IS NULL)
+          AND (LOWER(b.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR LOWER(b.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+               OR b.phone LIKE CONCAT('%', :search, '%')
+               OR b.nationalId LIKE CONCAT('%', :search, '%')
+               OR LOWER(b.email) LIKE LOWER(CONCAT('%', :search, '%')))
+        GROUP BY b.id
+        ORDER BY b.lastName ASC
+    """)
+    List<Object[]> searchAllSummariesRaw(@Param("search") String search);
+
+    @Query("""
+        SELECT 
+            b.id, b.firstName, b.lastName, b.phone, b.address, 
+            b.nationalId, b.email, b.buyerType, b.notes, b.isActive, b.photo, b.createdAt,
+            SIZE(b.sales), COALESCE(SUM(s.salePrice), 0)
+        FROM Buyer b
+        LEFT JOIN b.sales s
+        WHERE b.isActive = true 
+          AND (b.isDeleted = false OR b.isDeleted IS NULL)
+        GROUP BY b.id
+        ORDER BY COALESCE(SUM(s.salePrice), 0) DESC
+    """)
+    List<Object[]> findTopBuyerSummariesRaw();
 }

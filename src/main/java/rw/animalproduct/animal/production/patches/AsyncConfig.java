@@ -1,43 +1,36 @@
 package rw.animalproduct.animal.production.patches;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.Executor;
 
 /**
- * WHY THIS FIXES "Register takes long":
- * LivestockController.register() calls emailService.sendAnimalRegisteredNotification(saved)
- * synchronously (wrapped in try/catch so it never *fails* the request, but it
- * still *blocks* the request thread until SMTP finishes — often 1-5+ seconds
- * per email, sometimes much longer on slow/blocked networks). The user's
- * browser waits for that entire round trip before the redirect happens.
+ * Asynchronous execution configuration for email notifications and other async tasks.
  *
- * Marking the email-sending method @Async (see LifecycleEmailService patch)
- * hands the email off to this background thread pool immediately, so
- * register() returns and redirects the instant the DB save + audit log are
- * done — typically under 100ms instead of several seconds.
+ * @author HABANABAKIZE & NDAYIZEYE
+ * @version 1.0.0
  */
 @Configuration
 @EnableAsync
-public class AsyncConfig {
+public class AsyncConfig implements AsyncConfigurer {
 
-    // ADD THIS CONSTANT - fixes the compilation error
+    private static final Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
+
+    // ─── EXECUTOR NAMES ──────────────────────────────────────────────────────
     public static final String NOTIFICATION_EXECUTOR = "notificationExecutor";
+    public static final String EMAIL_EXECUTOR = "emailTaskExecutor";
 
-    @Bean(name = "emailTaskExecutor")
-    public Executor emailTaskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(2);
-        executor.setMaxPoolSize(5);
-        executor.setQueueCapacity(50);
-        executor.setThreadNamePrefix("email-async-");
-        executor.initialize();
-        return executor;
-    }
-
+    /**
+     * Executor for general notification tasks (OtherExpense, etc.)
+     * Core pool size: 2, Max pool size: 6, Queue capacity: 200
+     */
     @Bean(name = NOTIFICATION_EXECUTOR)
     public Executor notificationExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -45,7 +38,42 @@ public class AsyncConfig {
         executor.setMaxPoolSize(6);
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("notify-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
         executor.initialize();
+
+        logger.info("✅ notificationExecutor initialized: corePoolSize=2, maxPoolSize=6, queueCapacity=200");
         return executor;
+    }
+
+    /**
+     * Executor for email notification tasks.
+     * Core pool size: 3, Max pool size: 10, Queue capacity: 100
+     */
+    @Bean(name = EMAIL_EXECUTOR)
+    public Executor emailTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(3);
+        executor.setMaxPoolSize(10);
+        executor.setQueueCapacity(100);
+        executor.setThreadNamePrefix("email-async-");
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(60);
+        executor.initialize();
+
+        logger.info("✅ emailTaskExecutor initialized: corePoolSize=3, maxPoolSize=10, queueCapacity=100");
+        return executor;
+    }
+
+    @Override
+    public Executor getAsyncExecutor() {
+        return emailTaskExecutor();
+    }
+
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return (ex, method, params) -> {
+            logger.error("❌ Async method execution failed: {} - {}", method.getName(), ex.getMessage(), ex);
+        };
     }
 }

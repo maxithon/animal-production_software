@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Veterinary Treatment Report</title>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink:#1a2535; --muted:#64748b; --line:#e2e8f0;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background:#f0f2f5;
+            font-family:'Inter', system-ui, -apple-system, sans-serif;
+            padding:0; margin:0; color:var(--ink);
+            font-feature-settings: 'cv11', 'ss01';
+        }
+
+        /* ─── COMPACT HEADER ─── */
+        .report-banner {
+            background:linear-gradient(135deg,#1a2535 0%,#4c1d95 60%,#8b5cf6 100%);
+            padding:12px 24px; color:white;
+        }
+        .report-banner .banner-row {
+            display:flex; align-items:center; justify-content:space-between;
+            gap:16px; flex-wrap:wrap; max-width:1600px; margin:0 auto;
+        }
+        .report-banner .banner-title {
+            display:flex; align-items:baseline; gap:12px;
+            flex-wrap:wrap; min-width:0;
+        }
+        .report-banner h2 {
+            font-family:'Inter', sans-serif;
+            font-size:1.05rem; font-weight:700; margin:0;
+            letter-spacing:-0.01em; white-space:nowrap;
+        }
+        .report-banner h2 i { font-size:1rem; margin-right:6px; opacity:.9; }
+        .report-banner .sub {
+            font-size:.75rem; opacity:.75; font-weight:500; white-space:nowrap;
+        }
+        .report-banner .sub strong { color:#fff; opacity:1; font-weight:600; }
+        .report-banner .sub .sep { opacity:.5; margin:0 6px; }
+        .report-banner .meta {
+            font-family:'Inter', monospace; font-size:.68rem;
+            opacity:.6; font-weight:500; white-space:nowrap;
+        }
+        .print-btn {
+            background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.28);
+            color:white; border-radius:6px;
+            padding:5px 12px; font-size:.75rem; font-weight:600;
+            cursor:pointer; text-decoration:none;
+            display:inline-flex; align-items:center; gap:5px;
+            transition:background .15s ease;
+        }
+        .print-btn:hover { background:rgba(255,255,255,.24); color:white; }
+
+        .report-body { padding:20px 24px; max-width:1600px; margin:0 auto; }
+
+        /* ─── FILTER CARD ─── */
+        .filter-card {
+            background:white; border-radius:10px; padding:14px 18px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05); margin-bottom:18px;
+            border:1px solid var(--line);
+        }
+
+        /* ─── SECTION HEADER ─── */
+        .sec-head { display:flex; align-items:center; gap:8px; margin:20px 0 12px; }
+        .sec-head .sec-icon {
+            width:30px; height:30px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.85rem; flex-shrink:0;
+        }
+        .sec-head h5 {
+            font-family:'Inter', sans-serif;
+            font-size:.88rem; font-weight:700; margin:0;
+            color:var(--ink); letter-spacing:-0.005em;
+        }
+        .sec-head .sec-count {
+            background:#f1f5f9; border:1px solid var(--line); border-radius:20px;
+            padding:2px 9px; font-size:.68rem; font-weight:600; color:#475569;
+        }
+
+        /* ─── KPI STRIP ─── */
+        .kpi-strip {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:10px; margin-bottom:18px;
+        }
+        .kpi {
+            background:white; border-radius:10px; padding:12px 14px;
+            box-shadow:0 1px 4px rgba(0,0,0,.05);
+            border-top:3px solid transparent;
+            border-left:1px solid var(--line);
+            border-right:1px solid var(--line);
+            border-bottom:1px solid var(--line);
+        }
+        .kpi.k-total    { border-top-color:#8b5cf6; }
+        .kpi.k-recovery { border-top-color:#10b981; }
+        .kpi.k-followup { border-top-color:#f59e0b; }
+        .kpi.k-withdraw { border-top-color:#dc2626; }
+        .kpi .kpi-num {
+            font-family:'Inter', sans-serif;
+            font-size:1.5rem; font-weight:700; line-height:1.1;
+            letter-spacing:-0.02em;
+        }
+        .kpi .kpi-lbl {
+            font-size:.65rem; font-weight:600; color:var(--muted);
+            margin-top:4px; text-transform:uppercase; letter-spacing:.04em;
+        }
+        .kpi .kpi-icon { font-size:1.05rem; margin-bottom:4px; }
+        .kpi .kpi-sub { font-size:.66rem; color:#94a3b8; margin-top:2px; font-weight:500; }
+
+        /* ─── ALERTS ─── */
+        .alert-panel {
+            border-radius:10px; padding:12px 16px;
+            margin-bottom:14px; border-left:4px solid;
+            display:flex; align-items:flex-start; gap:12px;
+        }
+        .alert-panel.danger { background:#fef2f2; border-color:#dc2626; }
+        .alert-panel.warning { background:#fffbeb; border-color:#f59e0b; }
+        .alert-panel .alert-icon { font-size:1.2rem; flex-shrink:0; }
+        .alert-panel.danger .alert-icon { color:#dc2626; }
+        .alert-panel.warning .alert-icon { color:#f59e0b; }
+        .alert-panel .alert-title { font-weight:700; font-size:.82rem; margin-bottom:4px; }
+        .alert-panel.danger .alert-title { color:#991b1b; }
+        .alert-panel.warning .alert-title { color:#92400e; }
+        .alert-panel .alert-body { font-size:.76rem; color:#475569; }
+        .alert-panel .alert-list { margin:6px 0 0 0; padding-left:20px; }
+        .alert-panel .alert-list li { margin-bottom:2px; }
+
+        /* ─── FINANCIAL SUMMARY ─── */
+        .financial-section {
+            background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+            border:1px solid #e0e7ff; border-radius:12px;
+            padding:18px; margin-bottom:18px;
+        }
+        .financial-grid {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+            gap:10px; margin-bottom:16px;
+        }
+        .financial-item {
+            background:white; border:1px solid var(--line);
+            border-radius:10px; padding:12px 14px;
+        }
+        .financial-item .fi-label {
+            font-size:.62rem; font-weight:700; color:#94a3b8;
+            text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px;
+        }
+        .financial-item .fi-value {
+            font-size:1.15rem; font-weight:700; color:#0f172a; line-height:1.1;
+        }
+        .financial-item .fi-sub { font-size:.68rem; color:#64748b; margin-top:2px; }
+        .financial-item.total   { border-left:3px solid #6366f1; }
+        .financial-item.paid    { border-left:3px solid #10b981; }
+        .financial-item.balance { border-left:3px solid #f59e0b; }
+        .financial-item.count   { border-left:3px solid #8b5cf6; }
+
+        .financial-bar-wrap {
+            background:white; border-radius:10px;
+            padding:12px 14px; border:1px solid var(--line);
+        }
+        .financial-bar-wrap .bar-labels {
+            display:flex; justify-content:space-between;
+            font-size:.72rem; font-weight:600; color:#475569;
+            margin-bottom:6px;
+        }
+        .financial-bar-wrap .bar-track {
+            height:20px; border-radius:8px; background:#f1f5f9;
+            display:flex; overflow:hidden;
+        }
+        .financial-bar-wrap .bar-paid {
+            background:linear-gradient(135deg,#10b981,#059669); height:100%;
+        }
+        .financial-bar-wrap .bar-outstanding {
+            background:linear-gradient(135deg,#f59e0b,#d97706); height:100%;
+        }
+        .financial-bar-wrap .bar-legend {
+            display:flex; gap:14px; font-size:.72rem; color:#64748b;
+            margin-top:6px; flex-wrap:wrap;
+        }
+        .financial-bar-wrap .legend-dot {
+            display:inline-block; width:10px; height:10px;
+            border-radius:50%; margin-right:4px; vertical-align:middle;
+        }
+
+        /* ─── ANALYSIS CARDS ─── */
+        .analysis-grid {
+            display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+            gap:14px; margin-bottom:18px;
+        }
+        .analysis-card {
+            background:white; border:1px solid var(--line);
+            border-radius:10px; padding:14px 16px;
+        }
+        .analysis-card .card-title {
+            font-size:.78rem; font-weight:700; color:#0f172a;
+            border-bottom:1.5px solid var(--line);
+            padding-bottom:8px; margin-bottom:10px;
+            display:flex; align-items:center;
+        }
+        .analysis-card .card-title i { color:#8b5cf6; margin-right:6px; }
+        .analysis-card .row-item {
+            display:flex; justify-content:space-between;
+            align-items:center; padding:5px 0; font-size:.76rem;
+        }
+        .analysis-card .row-item + .row-item { border-top:1px dashed #f1f5f9; }
+
+        .progress-bar-custom {
+            height:5px; border-radius:4px; background:#e9edf2;
+            overflow:hidden; width:60%;
+        }
+        .progress-bar-custom .fill { height:100%; border-radius:4px; }
+        .fill-success { background:#10b981; }
+        .fill-warning { background:#f59e0b; }
+        .fill-danger { background:#ef4444; }
+        .fill-blue { background:#3b82f6; }
+
+        /* ─── TABLE ─── */
+        .table-wrapper {
+            border:1px solid var(--line); border-radius:10px;
+            overflow:hidden; margin-bottom:18px;
+        }
+        .table {
+            font-size:.72rem; margin-bottom:0; width:100%;
+            table-layout:fixed;
+        }
+        .table thead th {
+            font-size:.6rem; text-transform:uppercase;
+            letter-spacing:.03em; color:#475569; font-weight:700;
+            padding:9px 6px; background:#f8fafc;
+            border-bottom:2px solid var(--line); white-space:nowrap;
+            vertical-align:middle; overflow:hidden; text-overflow:ellipsis;
+        }
+        .table td {
+            padding:8px 6px; vertical-align:middle;
+            border-bottom:1px solid #f1f5f9; font-size:.72rem;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .table tbody tr:nth-child(even) { background:#fafbfc; }
+        .table tbody tr:hover { background:#f5f3ff; }
+        .text-end { text-align:right; }
+
+        /* Column widths */
+        .col-num    { width:2.5%; }
+        .col-animal { width:7%; }
+        .col-benef  { width:10%; }
+        .col-vet    { width:10%; }
+        .col-loc    { width:10%; }
+        .col-diag   { width:8%; }
+        .col-med    { width:8%; }
+        .col-date   { width:6%; }
+        .col-next   { width:9%; }
+        .col-cost   { width:5.5%; }
+        .col-paid   { width:5.5%; }
+        .col-bal    { width:5.5%; }
+        .col-pay    { width:5%; }
+        .col-type   { width:5%; }
+        .col-status { width:5.5%; }
+        .col-outcome{ width:6%; }
+
+        .cell-name {
+            font-weight:600; color:var(--ink); display:block;
+            line-height:1.2; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .cell-sub {
+            font-size:.6rem; color:#94a3b8; display:block;
+            margin-top:1px; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .cell-sub i { font-size:.55rem; margin-right:2px; }
+
+        .cell-location {
+            font-size:.62rem; color:#475569;
+            line-height:1.3; display:block;
+        }
+        .cell-location .loc-level { display:inline; }
+        .cell-location .loc-level::after { content:' › '; color:#cbd5e1; }
+        .cell-location .loc-level:last-child::after { content:''; }
+
+        /* ─── NEXT ACTIONS ─── */
+        .next-actions {
+            display:block; font-size:.62rem; line-height:1.35;
+        }
+        .next-line {
+            display:block; white-space:nowrap;
+            overflow:hidden; text-overflow:ellipsis;
+        }
+        .next-line i {
+            font-size:.55rem; margin-right:3px;
+            width:10px; display:inline-block;
+            text-align:center;
+        }
+        .next-label {
+            color:#94a3b8; font-weight:600;
+            font-size:.58rem; margin-right:2px;
+        }
+        .next-date { font-weight:600; }
+        .next-date.future    { color:#475569; }
+        .next-date.due-soon  { color:#d97706; }
+        .next-date.overdue   { color:#dc2626; }
+        .next-date.none      { color:#cbd5e1; font-weight:400; }
+
+        /* ─── BADGES ─── */
+        .badge-status, .badge-payment, .type-badge, .outcome-badge {
+            padding:2px 8px; border-radius:20px;
+            font-size:.58rem; font-weight:700;
+            display:inline-block; letter-spacing:.02em;
+            white-space:nowrap;
+        }
+        .badge-ONGOING      { background:#dbeafe; color:#1e40af; }
+        .badge-COMPLETED    { background:#d1fae5; color:#065f46; }
+        .badge-FAILED       { background:#fee2e2; color:#991b1b; }
+        .badge-SCHEDULED    { background:#fef3c7; color:#92400e; }
+        .badge-PAID         { background:#d1fae5; color:#065f46; }
+        .badge-UNPAID       { background:#fee2e2; color:#991b1b; }
+        .badge-PARTIALLY_PAID { background:#fef3c7; color:#92400e; }
+        .badge-OVERDUE      { background:#fecaca; color:#7f1d1d; }
+        .type-badge { font-size:.55rem; text-transform:uppercase; }
+        .type-badge.curative    { background:#fee2e2; color:#991b1b; }
+        .type-badge.preventive  { background:#d1fae5; color:#065f46; }
+        .type-badge.vaccination { background:#dbeafe; color:#1e40af; }
+        .type-badge.deworming   { background:#fef3c7; color:#92400e; }
+        .outcome-RECOVERED          { background:#d1fae5; color:#065f46; }
+        .outcome-IMPROVING          { background:#dbeafe; color:#1e40af; }
+        .outcome-FAILED             { background:#fee2e2; color:#991b1b; }
+        .outcome-DISCONTINUED       { background:#fef3c7; color:#92400e; }
+        .outcome-FOLLOW_UP_REQUIRED { background:#fde68a; color:#78350f; }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-state { text-align:center; padding:36px 20px; color:#94a3b8; }
+        .empty-state i {
+            font-size:2rem; display:block;
+            margin-bottom:8px; color:#cbd5e1;
+        }
+        .empty-state p { margin:0; font-size:.85rem; }
+
+        /* ─── FOOTER ─── */
+        .report-footer {
+            margin-top:24px; padding-top:14px;
+            border-top:1px dashed #cbd5e1;
+            display:grid; grid-template-columns:1fr auto 1fr;
+            gap:20px; align-items:end;
+            font-size:.68rem; color:#94a3b8;
+        }
+        .report-footer .sig-line {
+            border-bottom:1px solid #cbd5e1;
+            height:24px; margin-bottom:4px;
+        }
+        .report-footer .sig-lbl {
+            font-size:.62rem; text-transform:uppercase;
+            letter-spacing:.05em; font-weight:600; color:#94a3b8;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            .analysis-grid { grid-template-columns:1fr; }
+            .report-header { flex-direction:column; align-items:stretch; }
+            .financial-grid { grid-template-columns:1fr 1fr; }
+            .kpi-strip { grid-template-columns:1fr 1fr; }
+        }
+
+        /* ─── PRINT ─── */
+        @page { size: A4 landscape; margin: 8mm; }
+
+        @media print {
+            .no-print { display:none !important; }
+            html, body {
+                background:white !important;
+                margin:0 !important; padding:0 !important;
+                font-size:7pt !important; color:#000 !important;
+                width:100% !important; overflow:visible !important;
+            }
+            .report-banner {
+                background:#4c1d95 !important;
+                -webkit-print-color-adjust:exact;
+                print-color-adjust:exact;
+                padding:8px 14px !important;
+            }
+            .report-banner h2 { font-size:11pt !important; }
+            .report-banner .sub, .report-banner .meta { font-size:6.5pt !important; }
+            .filter-card, .print-btn { display:none !important; }
+
+            .kpi-strip { grid-template-columns:repeat(4, 1fr) !important; gap:5px !important; }
+            .kpi { padding:5px 6px !important; border:1px solid #999 !important; }
+            .kpi .kpi-num { font-size:11pt !important; }
+            .kpi .kpi-lbl { font-size:4.5pt !important; }
+            .kpi .kpi-icon { font-size:8pt !important; margin-bottom:1px !important; }
+            .kpi .kpi-sub { display:none !important; }
+
+            .alert-panel { border:1px solid #999 !important; padding:4px 8px !important; margin-bottom:6px !important; }
+            .alert-panel .alert-icon { display:none !important; }
+            .alert-panel .alert-title { font-size:7pt !important; margin-bottom:2px !important; }
+            .alert-panel .alert-body { font-size:6pt !important; }
+
+            .financial-section {
+                background:white !important;
+                border:1px solid #999 !important;
+                padding:6px !important; margin-bottom:6px !important;
+            }
+            .financial-grid { grid-template-columns:repeat(4, 1fr) !important; gap:3px !important; margin-bottom:6px !important; }
+            .financial-item { padding:3px 5px !important; border:1px solid #ccc !important; border-left-width:3px !important; }
+            .financial-item .fi-label { font-size:5pt !important; margin-bottom:1px !important; }
+            .financial-item .fi-value { font-size:9pt !important; }
+            .financial-item .fi-sub { font-size:5pt !important; }
+            .financial-bar-wrap { padding:3px 5px !important; }
+            .financial-bar-wrap .bar-labels { font-size:6pt !important; margin-bottom:3px !important; }
+            .financial-bar-wrap .bar-track { height:10px !important; border:1px solid #ccc !important; }
+            .financial-bar-wrap .bar-legend { font-size:6pt !important; margin-top:3px !important; gap:8px !important; }
+
+            .analysis-grid { grid-template-columns:repeat(4, 1fr) !important; gap:4px !important; margin-bottom:6px !important; }
+            .analysis-card { border:1px solid #ccc !important; padding:4px 6px !important; }
+            .analysis-card .card-title { font-size:6pt !important; padding-bottom:2px !important; margin-bottom:3px !important; }
+            .analysis-card .card-title i { display:none !important; }
+            .analysis-card .row-item { font-size:6pt !important; padding:1px 0 !important; }
+            .progress-bar-custom { height:3px !important; width:40px !important; }
+
+            .table-wrapper { border:1px solid #999 !important; border-radius:0 !important; overflow:visible !important; width:100% !important; page-break-inside:auto !important; }
+            .table-responsive { overflow:visible !important; width:100% !important; }
+            .table { font-size:5.5pt !important; width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; }
+            .table thead { display:table-header-group !important; }
+            .table thead th {
+                background:#e5e7eb !important; color:#000 !important;
+                font-size:4.5pt !important; padding:2px 1.5px !important;
+                border:1px solid #666 !important;
+                white-space:normal !important; line-height:1.1 !important;
+                text-align:center !important;
+            }
+            .table tbody tr { page-break-inside:avoid !important; }
+            .table tbody tr:nth-child(even) { background:#f8f8f8 !important; }
+            .table td {
+                padding:2px 1.5px !important;
+                border:1px solid #ddd !important;
+                font-size:5.5pt !important;
+                line-height:1.15 !important;
+            }
+
+            .cell-name { font-size:5.5pt !important; font-weight:700 !important; color:#000 !important; }
+            .cell-sub { font-size:5pt !important; color:#333 !important; }
+            .cell-location { font-size:5pt !important; color:#333 !important; }
+
+            .next-actions { font-size:5pt !important; }
+            .next-line i { display:none !important; }
+            .next-label { font-size:4.5pt !important; color:#666 !important; }
+            .next-date { font-size:5pt !important; }
+            .next-date.future { color:#333 !important; }
+            .next-date.due-soon { color:#000 !important; font-weight:700 !important; }
+            .next-date.overdue { color:#000 !important; font-weight:700 !important; text-decoration:underline !important; }
+            .next-date.none { color:#999 !important; }
+
+            .badge-status, .badge-payment, .type-badge, .outcome-badge {
+                border:1px solid #666 !important;
+                background:white !important;
+                color:#000 !important;
+                font-size:4.5pt !important;
+                padding:0 3px !important;
+                border-radius:3px !important;
+                font-weight:700 !important;
+            }
+
+            .report-footer { page-break-inside:avoid !important; }
+            .report-footer .sig-line { height:22px !important; border-bottom:1px solid #000 !important; }
+            .report-footer .sig-lbl { font-size:6pt !important; color:#000 !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     COMPACT HEADER
+     ═══════════════════════════════════════════════════════════════ -->
+<div class="report-banner">
+    <div class="banner-row">
+        <div class="banner-title">
+            <h2><i class="bi bi-heart-pulse-fill"></i>Veterinary Treatment Report</h2>
+            <div class="sub">
+                <strong th:text="${#temporals.format(fromDate,'dd MMM yyyy')}"></strong>
+                <span class="sep">→</span>
+                <strong th:text="${#temporals.format(toDate,'dd MMM yyyy')}"></strong>
+                <span class="sep">·</span>
+                <span th:text="${totalTreatments} + ' records'"></span>
+            </div>
+            <div class="meta">
+                ID: TRT-<span th:text="${#temporals.format(#temporals.createNow(),'yyyyMMdd-HHmm')}"></span>
+                <span class="sep">·</span>
+                <span th:text="${#temporals.format(#temporals.createNow(),'dd MMM yyyy HH:mm')}"></span>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <a href="/livestock/treatments" class="print-btn"><i class="bi bi-arrow-left"></i> Back</a>
+            <button class="print-btn" onclick="window.print()"><i class="bi bi-printer"></i> Print</button>
+        </div>
+    </div>
+</div>
+
+<div class="report-body">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FILTERS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="filter-card no-print">
+        <form method="get" action="/livestock/treatments/report" class="row g-2 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">From Date</label>
+                <input type="date" name="fromDate" class="form-control form-control-sm"
+                       th:value="${#temporals.format(fromDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">To Date</label>
+                <input type="date" name="toDate" class="form-control form-control-sm"
+                       th:value="${#temporals.format(toDate,'yyyy-MM-dd')}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">Type</label>
+                <select class="form-select form-select-sm" name="type">
+                    <option value="">All Types</option>
+                    <option value="CURATIVE"    th:selected="${filterType == 'CURATIVE'}">Curative</option>
+                    <option value="PREVENTIVE"  th:selected="${filterType == 'PREVENTIVE'}">Preventive</option>
+                    <option value="VACCINATION" th:selected="${filterType == 'VACCINATION'}">Vaccination</option>
+                    <option value="DEWORMING"   th:selected="${filterType == 'DEWORMING'}">Deworming</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">Status</label>
+                <select class="form-select form-select-sm" name="status">
+                    <option value="">All</option>
+                    <option th:each="s : ${statusOptions}" th:value="${s}" th:text="${s}"
+                            th:selected="${s == filterStatus}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">Payment</label>
+                <select class="form-select form-select-sm" name="paymentStatus">
+                    <option value="">All</option>
+                    <option th:each="p : ${paymentStatusOptions}" th:value="${p}" th:text="${p}"
+                            th:selected="${p == filterPaymentStatus}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold small mb-1">Search</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="Tag, drug..." th:value="${filterSearch}">
+            </div>
+            <div class="col-12 d-flex gap-2 mt-2">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="bi bi-funnel-fill"></i> Apply Filters
+                </button>
+                <a href="/livestock/treatments/report" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         KPI BANNER
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="kpi-strip">
+        <div class="kpi k-total">
+            <div class="kpi-icon" style="color:#8b5cf6"><i class="bi bi-activity"></i></div>
+            <div class="kpi-num" style="color:#8b5cf6" th:text="${totalTreatments}">0</div>
+            <div class="kpi-lbl">Total Treatments</div>
+            <div class="kpi-sub">in selected period</div>
+        </div>
+        <div class="kpi k-recovery">
+            <div class="kpi-icon" style="color:#10b981"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="kpi-num" style="color:#10b981"
+                 th:text="${successRate != null and successRate['successRate'] != null ? successRate['successRate'] + '%' : '0%'}">0%</div>
+            <div class="kpi-lbl">Recovery Rate</div>
+            <div class="kpi-sub">recovered + improving</div>
+        </div>
+        <div class="kpi k-followup">
+            <div class="kpi-icon" style="color:#f59e0b"><i class="bi bi-clock-history"></i></div>
+            <div class="kpi-num" style="color:#f59e0b"
+                 th:text="${overdueFollowUps != null ? overdueFollowUps.size() : 0}">0</div>
+            <div class="kpi-lbl">Follow-ups Due</div>
+            <div class="kpi-sub">need attention</div>
+        </div>
+        <div class="kpi k-withdraw">
+            <div class="kpi-icon" style="color:#dc2626"><i class="bi bi-shield-exclamation"></i></div>
+            <div class="kpi-num" style="color:#dc2626"
+                 th:text="${activeWithdrawals != null ? activeWithdrawals.size() : 0}">0</div>
+            <div class="kpi-lbl">Active Withdrawals</div>
+            <div class="kpi-sub">meat/milk restrictions</div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ALERTS
+         ═══════════════════════════════════════════════════════════════ -->
+    <div th:if="${overdueFollowUps != null and !overdueFollowUps.isEmpty()}" class="alert-panel danger">
+        <div class="alert-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div class="flex-grow-1">
+            <div class="alert-title">Overdue Follow-ups — Action Required</div>
+            <div class="alert-body">
+                <span th:text="${overdueFollowUps.size()}"></span> treatment(s) have passed their scheduled follow-up date:
+                <ul class="alert-list">
+                    <li th:each="t, iter : ${overdueFollowUps}" th:if="${iter.index < 5}">
+                        Animal <strong th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>
+                        — follow-up due <strong th:text="${#temporals.format(t.followUpDate,'dd MMM yyyy')}"></strong>
+                        <span th:if="${t.livestock != null and t.livestock.beneficiary != null}">
+                            (Owner: <span th:text="${t.livestock.beneficiary.fullName}"></span>)
+                        </span>
+                    </li>
+                    <li th:if="${overdueFollowUps.size() > 5}" class="text-muted">
+                        ...and <strong th:text="${overdueFollowUps.size() - 5}"></strong> more.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${activeWithdrawals != null and !activeWithdrawals.isEmpty()}" class="alert-panel warning">
+        <div class="alert-icon"><i class="bi bi-shield-exclamation"></i></div>
+        <div class="flex-grow-1">
+            <div class="alert-title">Active Withdrawal Periods — Food Safety</div>
+            <div class="alert-body">
+                <span th:text="${activeWithdrawals.size()}"></span> animal(s) are currently in withdrawal:
+                <ul class="alert-list">
+                    <li th:each="t, iter : ${activeWithdrawals}" th:if="${iter.index < 5}">
+                        Animal <strong th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>
+                        — withdrawal ends <strong th:text="${#temporals.format(t.withdrawalEndDate,'dd MMM yyyy')}"></strong>
+                        <span th:if="${t.productAffected != null}">(<span th:text="${t.productAffected}"></span> affected)</span>
+                    </li>
+                    <li th:if="${activeWithdrawals.size() > 5}" class="text-muted">
+                        ...and <strong th:text="${activeWithdrawals.size() - 5}"></strong> more.
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FINANCIAL SUMMARY
+         ═══════════════════════════════════════════════════════════════ -->
+    <p class="sec-title" style="font-size:.72rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.08em; margin:0 0 12px 0;">Financial Summary</p>
+    <div class="financial-section">
+        <div class="financial-grid">
+            <div class="financial-item total">
+                <div class="fi-label">Total Treatment Cost</div>
+                <div class="fi-value"
+                     th:text="${financialSummary != null and financialSummary['totalCost'] != null ? #numbers.formatDecimal(financialSummary['totalCost'], 1, 'COMMA', 0, 'POINT') : '0'}">0</div>
+                <div class="fi-sub">RWF · all treatments</div>
+            </div>
+            <div class="financial-item paid">
+                <div class="fi-label">Total Paid</div>
+                <div class="fi-value" style="color:#059669;"
+                     th:text="${financialSummary != null and financialSummary['totalPaid'] != null ? #numbers.formatDecimal(financialSummary['totalPaid'], 1, 'COMMA', 0, 'POINT') : '0'}">0</div>
+                <div class="fi-sub">RWF · received payments</div>
+            </div>
+            <div class="financial-item balance">
+                <div class="fi-label">Outstanding Balance</div>
+                <div class="fi-value" style="color:#d97706;"
+                     th:text="${financialSummary != null and financialSummary['totalBalance'] != null ? #numbers.formatDecimal(financialSummary['totalBalance'], 1, 'COMMA', 0, 'POINT') : '0'}">0</div>
+                <div class="fi-sub">RWF · to be collected</div>
+            </div>
+            <div class="financial-item count">
+                <div class="fi-label">Fully Paid</div>
+                <div class="fi-value" style="color:#7c3aed;"
+                     th:text="${financialSummary != null and financialSummary['paidCount'] != null ? financialSummary['paidCount'] : 0}">0</div>
+                <div class="fi-sub">
+                    of
+                    <span th:text="${financialSummary != null and financialSummary['count'] != null ? financialSummary['count'] : 0}"></span>
+                    treatments
+                </div>
+            </div>
+        </div>
+
+        <div class="financial-bar-wrap">
+            <div class="bar-labels">
+                <span><i class="bi bi-bar-chart-fill me-1"></i> Payment Collection Progress</span>
+                <span>
+                    <strong th:text="${financialSummary != null and financialSummary['totalCost'] != null and financialSummary['totalCost'] > 0 ? #numbers.formatDecimal((financialSummary['totalPaid'] * 100.0 / financialSummary['totalCost']), 1, 'COMMA', 1, 'POINT') : '0'}"></strong>%
+                    collected
+                </span>
+            </div>
+            <div class="bar-track">
+                <div class="bar-paid"
+                     th:style="'width: ' + ${financialSummary != null and financialSummary['totalCost'] != null and financialSummary['totalCost'] > 0 ? (financialSummary['totalPaid'] * 100 / financialSummary['totalCost']) : 0} + '%;'"></div>
+                <div class="bar-outstanding"
+                     th:style="'width: ' + ${financialSummary != null and financialSummary['totalCost'] != null and financialSummary['totalCost'] > 0 ? (financialSummary['totalBalance'] * 100 / financialSummary['totalCost']) : 0} + '%;'"></div>
+            </div>
+            <div class="bar-legend">
+                <span>
+                    <span class="legend-dot" style="background:#10b981;"></span>
+                    Paid:
+                    <strong th:text="${financialSummary != null and financialSummary['totalPaid'] != null ? #numbers.formatDecimal(financialSummary['totalPaid'], 1, 'COMMA', 0, 'POINT') : '0'}"></strong>
+                    RWF
+                </span>
+                <span>
+                    <span class="legend-dot" style="background:#f59e0b;"></span>
+                    Outstanding:
+                    <strong th:text="${financialSummary != null and financialSummary['totalBalance'] != null ? #numbers.formatDecimal(financialSummary['totalBalance'], 1, 'COMMA', 0, 'POINT') : '0'}"></strong>
+                    RWF
+                </span>
+                <span class="ms-auto" th:if="${financialSummary != null}">
+                    Fully paid: <strong th:text="${financialSummary['paidCount']}"></strong> ·
+                    Partial: <strong th:text="${financialSummary['partialCount']}"></strong> ·
+                    Unpaid: <strong th:text="${financialSummary['unpaidCount']}"></strong>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         ANALYSIS CARDS
+         ═══════════════════════════════════════════════════════════════ -->
+    <p class="sec-title" style="font-size:.72rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.08em; margin:0 0 12px 0;">Operational Insights</p>
+    <div class="analysis-grid">
+        <!-- Treatment Outcomes -->
+        <div class="analysis-card">
+            <div class="card-title"><i class="bi bi-clipboard-check"></i> Treatment Outcomes</div>
+            <div th:if="${outcomeAnalysis != null and outcomeAnalysis['percentageByOutcome'] != null}">
+                <div th:each="entry : ${outcomeAnalysis['percentageByOutcome']}" class="row-item">
+                    <span>
+                        <span th:text="${entry.key}"></span>
+                        <span class="text-muted" th:text="'(' + #numbers.formatDecimal(entry.value, 1, 'COMMA', 1, 'POINT') + '%)'"></span>
+                    </span>
+                    <div class="progress-bar-custom">
+                        <div class="fill"
+                             th:class="${entry.key == 'RECOVERED' ? 'fill-success' : entry.key == 'IMPROVING' ? 'fill-blue' : entry.key == 'FAILED' ? 'fill-danger' : 'fill-warning'}"
+                             th:style="'width: ' + entry.value + '%;'"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted">
+                <span class="me-3">Recovered: <strong th:text="${successRate != null ? successRate['recovered'] : 0}"></strong></span>
+                <span class="me-3">Improving: <strong th:text="${successRate != null ? successRate['improving'] : 0}"></strong></span>
+                <span>Failed: <strong th:text="${successRate != null ? successRate['failed'] : 0}"></strong></span>
+            </div>
+        </div>
+
+        <!-- Type Distribution -->
+        <div class="analysis-card">
+            <div class="card-title"><i class="bi bi-pie-chart-fill"></i> Type Distribution</div>
+            <div th:if="${typeAnalysis != null and typeAnalysis['countByType'] != null}">
+                <div th:each="entry : ${typeAnalysis['countByType']}" class="row-item">
+                    <span class="type-badge" th:class="${entry.key.toLowerCase()}" th:text="${entry.key}"></span>
+                    <span th:text="${entry.value + ' (' + #numbers.formatDecimal((totalTreatments > 0 ? entry.value * 100.0 / totalTreatments : 0), 1, 'COMMA', 1, 'POINT') + '%)'}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Medications -->
+        <div class="analysis-card">
+            <div class="card-title"><i class="bi bi-capsule"></i> Most Used Medications</div>
+            <div th:if="${medicationAnalysis != null and medicationAnalysis['mostUsedMedications'] != null}">
+                <div th:each="entry : ${medicationAnalysis['mostUsedMedications']}" class="row-item">
+                    <span th:text="${entry.key}"></span>
+                    <span class="text-muted" th:text="${entry.value + ' uses'}"></span>
+                </div>
+            </div>
+            <div class="mt-3 small text-muted"
+                 th:if="${topExpensiveMedicationName != null and topExpensiveMedicationName != 'N/A'}">
+                Most expensive: <strong th:text="${topExpensiveMedicationName}"></strong>
+            </div>
+        </div>
+
+        <!-- Recurring Diseases -->
+        <div class="analysis-card">
+            <div class="card-title"><i class="bi bi-virus"></i> Recurring Diseases</div>
+            <div th:if="${recurringDiseases != null and !recurringDiseases.isEmpty()}">
+                <div th:each="disease : ${recurringDiseases}" class="row-item">
+                    <span th:text="${disease['disease']}"></span>
+                    <span class="text-muted" th:text="${disease['count'] + ' · ' + disease['successRate'] + '%'}"></span>
+                </div>
+            </div>
+            <div th:if="${recurringDiseases == null or recurringDiseases.isEmpty()}" class="text-muted small">
+                No recurring disease data
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         TREATMENT RECORDS TABLE
+         ═══════════════════════════════════════════════════════════════ -->
+    <p class="sec-title" style="font-size:.72rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.08em; margin:20px 0 12px 0;">
+        Treatment Records (<span th:text="${totalTreatments}"></span> total)
+    </p>
+    <div class="table-wrapper">
+        <div class="table-responsive">
+            <table class="table" id="treatmentTable">
+                <thead>
+                <tr>
+                    <th class="col-num">#</th>
+                    <th class="col-animal">Animal</th>
+                    <th class="col-benef">Beneficiary</th>
+                    <th class="col-vet">Veterinarian</th>
+                    <th class="col-loc">Location</th>
+                    <th class="col-diag">Diagnosis</th>
+                    <th class="col-med">Medication</th>
+                    <th class="col-date">Date</th>
+                    <th class="col-next">Next Actions</th>
+                    <th class="col-cost text-end">Cost</th>
+                    <th class="col-paid text-end">Paid</th>
+                    <th class="col-bal text-end">Balance</th>
+                    <th class="col-pay">Payment</th>
+                    <th class="col-type">Type</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-outcome">Outcome</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${treatments == null or treatments.empty}">
+                    <td colspan="16">
+                        <div class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <p>No treatment records found matching the current filters</p>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:each="t, i : ${treatments}">
+                    <!-- # -->
+                    <td class="text-muted" th:text="${currentPage * pageSize + i.index + 1}">1</td>
+
+                    <!-- Animal -->
+                    <td>
+                        <span class="cell-name"
+                              th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}">GOA-021</span>
+                        <span class="cell-sub"
+                              th:if="${t.livestock != null and t.livestock.livestockCategory != null}"
+                              th:text="${t.livestock.livestockCategory.name}">Goat</span>
+                    </td>
+
+                    <!-- Beneficiary -->
+                    <td>
+                        <th:block th:if="${t.livestock != null and t.livestock.beneficiary != null}">
+                            <span class="cell-name" th:text="${t.livestock.beneficiary.fullName}">—</span>
+                            <span class="cell-sub" th:if="${t.livestock.beneficiary.phoneNumber != null}">
+                                <i class="bi bi-telephone-fill"></i>
+                                <span th:text="${t.livestock.beneficiary.phoneNumber}">—</span>
+                            </span>
+                        </th:block>
+                        <span th:if="${t.livestock == null or t.livestock.beneficiary == null}"
+                              class="text-muted">—</span>
+                    </td>
+
+                    <!-- Veterinarian -->
+                    <td>
+                        <th:block th:if="${t.veterinarian != null}">
+                            <span class="cell-name" th:text="${t.veterinarian.fullName}">—</span>
+                            <span class="cell-sub" th:if="${t.veterinarian.phone != null}">
+                                <i class="bi bi-telephone-fill"></i>
+                                <span th:text="${t.veterinarian.phone}">—</span>
+                            </span>
+                        </th:block>
+                        <span th:if="${t.veterinarian == null}" class="text-muted">—</span>
+                    </td>
+
+                    <!-- Location -->
+                    <td>
+                        <th:block th:if="${t.livestock != null and t.livestock.location != null}">
+                            <span class="cell-location">
+                                <th:block th:with="loc=${t.livestock.location}">
+                                    <span class="loc-level" th:text="${loc.name}">Village</span>
+                                    <th:block th:if="${loc.parent != null}">
+                                        <span class="loc-level" th:text="${loc.parent.name}">Cell</span>
+                                        <th:block th:if="${loc.parent.parent != null}">
+                                            <span class="loc-level" th:text="${loc.parent.parent.name}">Sector</span>
+                                            <th:block th:if="${loc.parent.parent.parent != null}">
+                                                <span class="loc-level" th:text="${loc.parent.parent.parent.name}">District</span>
+                                                <th:block th:if="${loc.parent.parent.parent.parent != null}">
+                                                    <span class="loc-level" th:text="${loc.parent.parent.parent.parent.name}">Province</span>
+                                                </th:block>
+                                            </th:block>
+                                        </th:block>
+                                    </th:block>
+                                </th:block>
+                            </span>
+                        </th:block>
+                        <span th:if="${t.livestock == null or t.livestock.location == null}"
+                              class="text-muted">—</span>
+                    </td>
+
+                    <!-- Diagnosis -->
+                    <td th:text="${t.diagnosisName != null ? t.diagnosisName : '—'}">FMD</td>
+
+                    <!-- Medication -->
+                    <td th:text="${t.medication != null ? t.medication.name : '—'}">Penicillin</td>
+
+                    <!-- Treatment Date -->
+                    <td th:text="${#temporals.format(t.treatmentDate, 'dd MMM yyyy')}">10 Sep 2026</td>
+
+                    <!-- ★ NEXT ACTIONS — FIXED SYNTAX ★ -->
+                    <td>
+                        <span class="next-actions">
+                            <!-- Next Treatment -->
+                            <span class="next-line">
+                                <i class="bi bi-arrow-right-circle-fill"></i>
+                                <span class="next-label">Next:</span>
+                                <th:block th:if="${t.nextTreatmentDate != null}"
+                                          th:with="today=${#temporals.createToday()}">
+                                    <span class="next-date"
+                                          th:classappend="${t.nextTreatmentDate.isBefore(today) ? 'overdue' : (t.nextTreatmentDate.isBefore(today.plusDays(3)) ? 'due-soon' : 'future')}"
+                                          th:text="${#temporals.format(t.nextTreatmentDate, 'dd MMM yyyy')}">10 Sep 2026</span>
+                                    <span th:if="${t.nextTreatmentDate.isBefore(today)}"
+                                          style="color:#dc2626;font-weight:700;"> ⚠</span>
+                                </th:block>
+                                <span th:if="${t.nextTreatmentDate == null}" class="next-date none">—</span>
+                            </span>
+
+                            <!-- Follow-up -->
+                            <span class="next-line">
+                                <i class="bi bi-clipboard2-pulse-fill"></i>
+                                <span class="next-label">Follow:</span>
+                                <th:block th:if="${t.followUpDate != null}"
+                                          th:with="today=${#temporals.createToday()}">
+                                    <span class="next-date"
+                                          th:classappend="${t.followUpDate.isBefore(today) ? 'overdue' : (t.followUpDate.isBefore(today.plusDays(3)) ? 'due-soon' : 'future')}"
+                                          th:text="${#temporals.format(t.followUpDate, 'dd MMM yyyy')}">10 Sep 2026</span>
+                                    <span th:if="${t.followUpDate.isBefore(today)}"
+                                          style="color:#dc2626;font-weight:700;"> ⚠</span>
+                                </th:block>
+                                <span th:if="${t.followUpDate == null}" class="next-date none">—</span>
+                            </span>
+                        </span>
+                    </td>
+
+                    <!-- Financials -->
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(t.treatmentCost, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td class="text-end"
+                        th:text="${#numbers.formatDecimal(t.amountPaid, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td class="text-end fw-600"
+                        th:class="${t.remainingBalance > 0 ? 'text-danger' : 'text-success'}"
+                        th:text="${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT')}">0</td>
+
+                    <!-- Payment badge -->
+                    <td>
+                        <span class="badge-payment" th:class="${'badge-' + t.paymentStatus?.name()}">
+                            <span th:text="${t.paymentStatusLabel}"></span>
+                        </span>
+                    </td>
+
+                    <!-- Type badge -->
+                    <td>
+                        <span class="type-badge"
+                              th:class="${t.treatmentType != null ? t.treatmentType.name().toLowerCase() : ''}"
+                              th:text="${t.treatmentType != null ? t.treatmentType : '—'}"></span>
+                    </td>
+
+                    <!-- Status badge -->
+                    <td>
+                        <span class="badge-status" th:class="${'badge-' + t.treatmentStatus?.name()}">
+                            <span th:text="${t.treatmentStatus}"></span>
+                        </span>
+                    </td>
+
+                    <!-- Outcome badge -->
+                    <td>
+                        <span th:if="${t.outcomeStatus != null}" class="outcome-badge"
+                              th:class="${'outcome-' + t.outcomeStatus}"
+                              th:text="${t.outcomeStatus}"></span>
+                        <span th:if="${t.outcomeStatus == null}" class="text-muted">—</span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PAGINATION
+         ═══════════════════════════════════════════════════════════════ -->
+    <div th:if="${totalPages > 1}" class="d-flex flex-wrap justify-content-between align-items-center no-print">
+        <div class="text-muted small">
+            Showing <strong th:text="${currentPage * pageSize + 1}">1</strong>
+            to <strong th:text="${(currentPage + 1) * pageSize < totalTreatments ? (currentPage + 1) * pageSize : totalTreatments}">10</strong>
+            of <strong th:text="${totalTreatments}">0</strong> records
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/treatments/report(page=${currentPage - 1}, size=${pageSize}, fromDate=${fromDate}, toDate=${toDate}, status=${filterStatus}, type=${filterType}, paymentStatus=${filterPaymentStatus}, search=${filterSearch})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                <li th:each="p : ${#numbers.sequence(1, totalPages)}"
+                    th:with="isActive=${p - 1 == currentPage}"
+                    class="page-item" th:classappend="${isActive} ? 'active' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/treatments/report(page=${p - 1}, size=${pageSize}, fromDate=${fromDate}, toDate=${toDate}, status=${filterStatus}, type=${filterType}, paymentStatus=${filterPaymentStatus}, search=${filterSearch})}"
+                       th:text="${p}"></a>
+                </li>
+                <li class="page-item" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled' : ''">
+                    <a class="page-link"
+                       th:href="@{/livestock/treatments/report(page=${currentPage + 1}, size=${pageSize}, fromDate=${fromDate}, toDate=${toDate}, status=${filterStatus}, type=${filterType}, paymentStatus=${filterPaymentStatus}, search=${filterSearch})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         FOOTER + SIGNATURES
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="report-footer">
+        <div>
+            <div class="sig-line"></div>
+            <div class="sig-lbl">Prepared By</div>
+        </div>
+        <div class="text-center" style="font-size:.64rem;">
+            <i class="bi bi-shield-check me-1 text-success"></i>
+            Confidential — for internal use<br>
+            Generated on <span th:text="${#temporals.format(#temporals.createNow(),'dd MMM yyyy HH:mm')}"></span>
+        </div>
+        <div class="text-end">
+            <div class="sig-line"></div>
+            <div class="sig-lbl">Reviewed By (Vet)</div>
+        </div>
+    </div>
+
+</div><!-- /report-body -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

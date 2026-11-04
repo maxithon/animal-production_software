@@ -1,35 +1,5 @@
 <!DOCTYPE html>
-<!--
-=======================================================================
-  LIVESTOCK SALES REPORT — ADD-IN FOR admin-dashboard.html
-  Follows the exact same pattern as abortions-report-section.html
-=======================================================================
-  STEP 1 — CSS        : Copy <style id="SALES_CSS_COPY_THIS_BLOCK"> into <style>
-  STEP 2 — SIDEBAR    : Add sidebar link (see snippet below)
-  STEP 3 — HTML VIEW  : Paste div#sales-report-view after END ABORTION REPORT VIEW
-  STEP 4 — JAVASCRIPT : Paste <script> block at bottom of page
-  STEP 5 — CONTROLLER : Add these model attributes in DashboardController:
-                          - salesList           : List<LivestockSale>
-                          - totalSales          : Long
-                          - totalSaleRevenue    : BigDecimal
-                          - mostSoldAnimalTag   : String
-                          - salesThisMonth      : Long
 
-  ✅ FIX — MISSING RECORDS:
-     In your controller/service that loads salesList, make sure you are NOT
-     filtering by a default date range. Load ALL records:
-       salesList = saleRepository.findAll();   // or findAllByOrderBySaleDateDesc()
-     If you do want date filtering, default fromDate to LocalDate.of(2000,1,1).
-
-  ✅ FIX — BUYER COLUMN:
-     buyerName column is now uncommented and displayed in all tabs.
-=======================================================================
--->
-
-
-<!-- ═══════════════════════════════════════════════════════════════
-     SALES CSS — paste inside <style> in admin-dashboard.html
-════════════════════════════════════════════════════════════════════ -->
 <style id="SALES_CSS_COPY_THIS_BLOCK">
 
     /* ── Sidebar link ── */

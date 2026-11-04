@@ -157,7 +157,7 @@
                     <td th:text="${animal.ageInMonths != null ? animal.ageInMonths + ' months' : 'Unknown'}"></td>
                     <td class="text-center" th:text="${animal.offspringCount != null ? animal.offspringCount : 0}">0</td>
                     <td>
-                        <a th:href="@{/livestock/breeding/register}" class="btn btn-sm" style="background:#2563eb;color:white;">
+                        <a th:href="@{/livestock/breeding/form(livestockId=${animal.id})}" class="btn btn-sm" style="background:#2563eb;color:white;">
                             <i class="bi bi-heart-fill"></i> Use for Breeding
                         </a>
                     </td>

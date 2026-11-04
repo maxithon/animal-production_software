@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!--
+  Row fragment for the Ready to Breed report, split out into its own file
+  on purpose. It's only ever reached via th:replace from
+  livestock-ready-to-breed-report.html — Spring/Thymeleaf never serves this
+  file directly as a controller view, so it is never rendered "top-level"
+  with an unbound `row`. That sidesteps the earlier parsing error without
+  needing a th:if guard (which interfered with the th:replace parameter
+  binding and caused rows to disappear instead of rendering).
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<table th:fragment="rowContent(row)" style="display:none">
+    <tr>
+        <td>
+            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="tag-pill">
+                <i class="bi bi-tag-fill" style="color: var(--rtb-purple);"></i><span th:text="${row.tagNumber}">GOAT-005</span>
+            </a>
+        </td>
+        <td><span class="cat-badge" th:text="${row.categoryName}">Goat</span></td>
+        <td><i th:class="'bi gender-icon ' + ${row.gender} + ' ' + (${row.gender == 'MALE'} ? 'bi-gender-male' : 'bi-gender-female')"></i></td>
+        <td th:text="${row.ageDisplay}">1y 6m</td>
+        <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yyyy') : 'No births yet'}">—</td>
+        <td th:text="${row.lastBreedingDate != null ? #temporals.format(row.lastBreedingDate, 'dd MMM yyyy') : 'Never bred'}">—</td>
+        <td th:text="${row.readySince != null ? #temporals.format(row.readySince, 'dd MMM yyyy') : '—'}">—</td>
+        <td th:text="${row.recommendedBreedingDate != null ? #temporals.format(row.recommendedBreedingDate, 'dd MMM yyyy') : '—'}">—</td>
+        <td>
+            <span th:if="${row.readinessStatus == 'READY'}" class="days-ready-badge"
+                  th:text="${row.daysReadyForBreeding} + 'd ready'">0d ready</span>
+            <span th:if="${row.readinessStatus != 'READY'}" class="days-until-badge"
+                  th:text="'in ' + ${row.daysUntilReady} + 'd'">in 0d</span>
+        </td>
+        <td>
+            <div class="beneficiary-name" th:text="${row.beneficiaryName != null ? row.beneficiaryName : '—'}">—</div>
+            <div class="beneficiary-phone" th:if="${row.beneficiaryPhone != null}" th:text="${row.beneficiaryPhone}"></div>
+        </td>
+        <td>
+            <span class="location-breadcrumb" th:text="${row.animalLocationBreadcrumb}" th:title="${row.animalLocationBreadcrumb}">—</span>
+        </td>
+        <td>
+            <div class="reason-checklist">
+                <div class="reason-item" th:each="item : ${row.reasonChecklist}"
+                     th:classappend="${item.met} ? 'met' : 'unmet'">
+                    <i class="bi" th:classappend="${item.met} ? 'bi-check-circle-fill' : 'bi-x-circle-fill'"></i>
+                    <span th:text="${item.label}"></span>
+                </div>
+            </div>
+        </td>
+        <td>
+            <span class="status-pill"
+                  th:classappend="'status-' + ${#strings.toLowerCase(row.notificationStatus)}"
+                  th:text="${row.notificationStatusLabel}">🟢 Notified</span>
+        </td>
+        <td>
+            <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="btn btn-sm btn-info" title="View Animal"><i class="bi bi-eye"></i></a>
+            <th:block th:if="${row.readinessStatus == 'READY'}">
+                <form th:if="${!row.notified}" style="display:inline"
+                      th:action="@{/livestock/ready-to-breed-report/{id}/notify(id=${row.livestockId})}" method="post">
+                    <input type="hidden" name="categoryId" th:value="${categoryIdFilter}">
+                    <input type="hidden" name="search" th:value="${searchFilter}">
+                    <input type="hidden" name="notifyStatus" th:value="${notifyStatusFilter}">
+                    <input type="hidden" name="readiness" th:value="${readinessFilter}">
+                    <input type="hidden" name="page" th:value="${currentPage}">
+                    <button type="submit" class="btn btn-sm btn-warning" title="Mark Notified"><i class="bi bi-bell-fill"></i></button>
+                </form>
+                <a th:href="@{/livestock/breeding/management}" class="btn btn-sm btn-success" title="Start Breeding"><i class="bi bi-heart-fill"></i></a>
+            </th:block>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

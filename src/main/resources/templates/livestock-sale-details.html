@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sale Details - Animal Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #f1f5f9;
+            padding: 20px;
+            font-family: 'DM Sans', system-ui, sans-serif;
+            font-size: 0.875rem;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+        .section-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
+            border-bottom: 2px solid #e9edf2;
+            padding-bottom: 8px;
+            margin: 20px 0 14px;
+        }
+        .section-title i { color: #f59e0b; margin-right: 6px; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+        .info-row .label { color: #64748b; font-size: 0.78rem; }
+        .info-row .value { font-weight: 600; color: #0f172a; font-size: 0.82rem; }
+        .badge-status {
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .badge-draft { background: #e2e8f0; color: #475569; }
+        .badge-confirmed { background: #dbeafe; color: #1e40af; }
+        .badge-cancelled { background: #fee2e2; color: #991b1b; }
+        .badge-refunded { background: #fef3c7; color: #92400e; }
+        .badge-unpaid { background: #fef3c7; color: #92400e; }
+        .badge-partial { background: #fde68a; color: #78350f; }
+        .badge-paid { background: #d1fae5; color: #065f46; }
+        .profit-positive { color: #059669; font-weight: 700; }
+        .profit-negative { color: #dc2626; font-weight: 700; }
+        .timeline-item {
+            padding: 10px 0;
+            border-left: 3px solid #e2e8f0;
+            padding-left: 16px;
+            margin-left: 8px;
+        }
+        .timeline-item:last-child { border-left-color: transparent; }
+        .timeline-item .time { font-size: 0.68rem; color: #94a3b8; }
+        .timeline-item .event { font-weight: 600; color: #0f172a; }
+        .timeline-item .detail { font-size: 0.75rem; color: #64748b; }
+        .btn { font-size: 0.8rem; border-radius: 8px; font-weight: 600; }
+        .table { font-size: 0.78rem; }
+        .table thead th {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            background: #f8fafc;
+            border-bottom: 2px solid #e9edf2;
+        }
+        @media (max-width: 768px) {
+            .detail-card { padding: 16px; }
+            .info-row { flex-direction: column; align-items: flex-start; gap: 2px; }
+        }
+        @media print {
+            body { background: white !important; padding: 0.3in !important; }
+            .detail-card { box-shadow: none !important; padding: 0 !important; max-width: 100% !important; }
+            .no-print { display: none !important; }
+            .table { font-size: 7pt !important; }
+            .badge-status { border: 1px solid #000 !important; background: #f3f4f6 !important; color: #000 !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="detail-card">
+
+        <!-- Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-start mb-4">
+            <div>
+                <h3 class="mb-0"><i class="bi bi-receipt me-2" style="color:#f59e0b;"></i> Sale Details</h3>
+                <p class="text-muted small mb-0">
+                    Reference: <strong th:text="${sale.saleReference}"></strong>
+                    <span class="badge-status" th:class="${sale.saleStatusBadgeClass}" th:text="${sale.saleStatusLabel}"></span>
+                    <span class="badge-status ms-1" th:class="${sale.paymentStatusBadgeClass}" th:text="${sale.paymentStatusLabel}"></span>
+                </p>
+            </div>
+            <div class="d-flex gap-2 no-print">
+                <a href="/livestock/sales" class="btn btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a th:if="${sale.editable}" th:href="@{/livestock/sales/edit/{id}(id=${sale.id})}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <button class="btn btn-primary btn-sm" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left Column: Sale Info -->
+            <div class="col-lg-6">
+                <div class="section-title"><i class="bi bi-info-circle me-1"></i> Sale Information</div>
+                <div class="info-row"><span class="label">Reference</span><span class="value" th:text="${sale.saleReference}"></span></div>
+                <div class="info-row"><span class="label">Sale Date</span><span class="value" th:text="${#temporals.format(sale.saleDate, 'dd MMM yyyy')}"></span></div>
+                <div class="info-row"><span class="label">Location</span><span class="value" th:text="${sale.saleLocation != null ? sale.saleLocation : '—'}"></span></div>
+                <div class="info-row"><span class="label">Reason</span><span class="value" th:text="${sale.saleReason != null ? sale.saleReason : '—'}"></span></div>
+
+                <div class="section-title mt-3"><i class="bi bi-tag me-1"></i> Animal</div>
+                <div class="info-row"><span class="label">Tag Number</span><span class="value" th:text="${sale.livestock != null ? sale.livestock.tagNumber : 'N/A'}"></span></div>
+                <div class="info-row"><span class="label">Category</span><span class="value" th:text="${sale.livestock != null and sale.livestock.livestockCategory != null ? sale.livestock.livestockCategory.name : '—'}"></span></div>
+                <div class="info-row"><span class="label">Acquisition Cost</span><span class="value" th:text="${#numbers.formatDecimal(sale.acquisitionCost, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span></div>
+                <div class="info-row"><span class="label">Current Status</span><span class="value" th:text="${sale.livestock != null ? sale.livestock.status : 'N/A'}"></span></div>
+
+                <div class="section-title mt-3"><i class="bi bi-person me-1"></i> Buyer</div>
+                <div class="info-row"><span class="label">Name</span><span class="value" th:text="${sale.buyer != null ? sale.buyer.fullName : '—'}"></span></div>
+                <div class="info-row"><span class="label">Phone</span><span class="value" th:text="${sale.buyer != null ? sale.buyer.phone : '—'}"></span></div>
+                <div class="info-row"><span class="label">Address</span><span class="value" th:text="${sale.buyer != null ? sale.buyer.address : '—'}"></span></div>
+            </div>
+
+            <!-- Right Column: Financials -->
+            <div class="col-lg-6">
+                <div class="section-title"><i class="bi bi-cash-stack me-1"></i> Financial Summary</div>
+                <div class="info-row"><span class="label">Sale Price</span><span class="value text-success" th:text="${#numbers.formatDecimal(sale.salePrice, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span></div>
+                <div class="info-row"><span class="label">Amount Paid</span><span class="value" th:text="${#numbers.formatDecimal(sale.amountPaid, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span></div>
+                <div class="info-row"><span class="label">Balance</span><span class="value fw-600" th:text="${#numbers.formatDecimal(sale.balance, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span></div>
+                <div class="info-row"><span class="label">Payment Method</span><span class="value" th:text="${sale.paymentMethod != null ? sale.paymentMethod : '—'}"></span></div>
+                <div class="info-row"><span class="label">Payment Reference</span><span class="value" th:text="${sale.paymentReference != null ? sale.paymentReference : '—'}"></span></div>
+                <div class="info-row"><span class="label">Gross Profit</span>
+                    <span class="value" th:if="${sale.grossProfit != null}"
+                          th:class="${sale.grossProfit >= 0} ? 'profit-positive' : 'profit-negative'"
+                          th:text="${#numbers.formatDecimal(sale.grossProfit, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></span>
+                    <span class="value text-muted" th:if="${sale.grossProfit == null}">—</span>
+                </div>
+                <div class="info-row"><span class="label">Payment Status</span>
+                    <span class="badge-status" th:class="${sale.paymentStatusBadgeClass}" th:text="${sale.paymentStatusLabel}"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="section-title mt-4"><i class="bi bi-clock-history me-1"></i> Payment History</div>
+        <div th:if="${payments != null and !payments.isEmpty()}" class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Reference</th>
+                    <th>Recorded By</th>
+                    <th>Notes</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${payments}">
+                    <td th:text="${#temporals.format(p.paymentDate, 'dd MMM yyyy HH:mm')}"></td>
+                    <td class="fw-600 text-success" th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></td>
+                    <td th:text="${p.paymentMethod != null ? p.paymentMethod : '—'}"></td>
+                    <td th:text="${p.paymentReference != null ? p.paymentReference : '—'}"></td>
+                    <td th:text="${p.recordedBy != null ? p.recordedBy.email : '—'}"></td>
+                    <td th:text="${p.notes != null ? p.notes : '—'}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div th:if="${payments == null or payments.isEmpty()}" class="text-muted small py-2">
+            <i class="bi bi-info-circle"></i> No payments recorded for this sale.
+        </div>
+
+        <!-- Activity / Audit Trail -->
+        <div class="section-title mt-4"><i class="bi bi-activity me-1"></i> Activity History</div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="timeline-item">
+                    <div class="time" th:text="${#temporals.format(sale.createdAt, 'dd MMM yyyy HH:mm')}"></div>
+                    <div class="event">Sale Created</div>
+                    <div class="detail" th:text="${sale.createdBy != null ? 'by ' + sale.createdBy.email : ''}"></div>
+                </div>
+                <div th:if="${sale.confirmedAt != null}" class="timeline-item">
+                    <div class="time" th:text="${#temporals.format(sale.confirmedAt, 'dd MMM yyyy HH:mm')}"></div>
+                    <div class="event text-success">Sale Confirmed</div>
+                    <div class="detail" th:text="${sale.confirmedBy != null ? 'by ' + sale.confirmedBy.email : ''}"></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div th:if="${sale.cancelledAt != null}" class="timeline-item">
+                    <div class="time" th:text="${#temporals.format(sale.cancelledAt, 'dd MMM yyyy HH:mm')}"></div>
+                    <div class="event text-danger">Sale Cancelled</div>
+                    <div class="detail" th:text="${sale.cancelledBy != null ? 'by ' + sale.cancelledBy.email : ''}"></div>
+                    <div class="detail" th:text="'Reason: ' + ${sale.cancellationReason}"></div>
+                </div>
+                <div th:if="${sale.refundedAt != null}" class="timeline-item">
+                    <div class="time" th:text="${#temporals.format(sale.refundedAt, 'dd MMM yyyy HH:mm')}"></div>
+                    <div class="event text-warning">Sale Refunded</div>
+                    <div class="detail" th:text="${sale.refundedBy != null ? 'by ' + sale.refundedBy.email : ''}"></div>
+                    <div class="detail" th:text="'Amount: ' + ${#numbers.formatDecimal(sale.refundAmount, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></div>
+                    <div class="detail" th:text="'Reason: ' + ${sale.refundReason}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div th:if="${sale.notes != null}" class="mt-3 pt-2 border-top">
+            <div class="text-muted small">📝 Notes</div>
+            <p class="mb-0" th:text="${sale.notes}"></p>
+        </div>
+
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

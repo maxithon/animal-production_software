@@ -14,6 +14,17 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * UPDATED:
+ *  - Category selector now excludes soft-deleted categories. Previously this
+ *    called livestockCategoryRepository.findAll() directly, which was fine
+ *    when delete() was a hard delete, but now that LivestockCategoryService
+ *    soft-deletes (sets is_deleted = true), a straight findAll() would start
+ *    listing "deleted" categories in the selector grid. Now uses
+ *    findAllActiveOrderByName() everywhere a category listing is built.
+ *  - Also guards against a selected categoryId that points at a soft-deleted
+ *    category (e.g. a stale bookmarked link) by treating it the same as "not found".
+ */
 @Controller
 public class LivestockCategoryAnimalsReportController {
 
@@ -53,7 +64,9 @@ public class LivestockCategoryAnimalsReportController {
         List<Livestock> all = safe(livestockRepository.findAll());
         model.addAttribute("categories", buildCategoryOptions(all));
 
-        LivestockCategory selectedCategory = livestockCategoryRepository.findById(categoryId).orElse(null);
+        LivestockCategory selectedCategory = livestockCategoryRepository.findById(categoryId)
+                .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
+                .orElse(null);
         model.addAttribute("selectedCategory", selectedCategory);
 
         if (selectedCategory == null) {
@@ -172,12 +185,14 @@ public class LivestockCategoryAnimalsReportController {
     }
 
     // ── Build the category selector list (id, name, livestockCount) ────
+    // FIX: now sources from findAllActiveOrderByName() so soft-deleted
+    // categories never appear as selectable options.
     private List<CategoryOption> buildCategoryOptions(List<Livestock> all) {
         Map<UUID, Long> countByCategory = all.stream()
                 .filter(l -> l.getLivestockCategory() != null)
                 .collect(Collectors.groupingBy(l -> l.getLivestockCategory().getId(), Collectors.counting()));
 
-        List<LivestockCategory> categories = safe(livestockCategoryRepository.findAll());
+        List<LivestockCategory> categories = safe(livestockCategoryRepository.findAllActiveOrderByName());
         List<CategoryOption> options = new ArrayList<>();
         for (LivestockCategory cat : categories) {
             CategoryOption opt = new CategoryOption();
@@ -186,6 +201,8 @@ public class LivestockCategoryAnimalsReportController {
             opt.setLivestockCount(countByCategory.getOrDefault(cat.getId(), 0L));
             options.add(opt);
         }
+        // Already sorted by name via the repository query, but kept explicit here
+        // in case a future refactor changes that guarantee.
         options.sort(Comparator.comparing(CategoryOption::getName, String.CASE_INSENSITIVE_ORDER));
         return options;
     }

@@ -13,12 +13,14 @@
         .btn-update { background: linear-gradient(135deg, #1a5f7a 0%, #2e8b9e 100%); border: none; color: white; }
         .btn-update:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); color: white; }
         .field-hint { background: #f0f8ff; border-left: 3px solid #2e8b9e; padding: 8px 12px; border-radius: 0 6px 6px 0; font-size: 0.82rem; color: #555; margin-top: 6px; }
+        .section-title { font-size: 0.85rem; text-transform: uppercase; letter-spacing: .04em; color: #1a5f7a; font-weight: 600; margin: 24px 0 10px; border-bottom: 1px solid #e9ecef; padding-bottom: 6px; }
+        .readonly-derived { background: #f1f3f5; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-lg-7">
+        <div class="col-lg-8">
             <div class="edit-card">
 
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -36,59 +38,90 @@
                 <form th:action="@{/livestock/categories/update/{id}(id=${category.id})}"
                       th:object="${category}" method="post">
 
+                    <div class="section-title">Basic Info</div>
                     <div class="row g-3">
-
-                        <!-- Name -->
                         <div class="col-md-8">
                             <label class="form-label">Category Name *</label>
                             <input type="text" class="form-control" th:field="*{name}" required>
                         </div>
-
-                        <!-- Code -->
                         <div class="col-md-4">
                             <label class="form-label">Category Code *</label>
                             <input type="text" class="form-control" th:field="*{code}" required
                                    oninput="this.value = this.value.toUpperCase()">
                             <div class="form-text">Auto-uppercased</div>
                         </div>
-
-                        <!-- Gestation Period -->
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-clock-history text-info me-1"></i>
-                                Gestation Period (months)
-                            </label>
-                            <input type="number" class="form-control"
-                                   th:field="*{gestationPeriodMonths}"
-                                   placeholder="e.g. 5" min="1" max="24">
-                            <div class="field-hint">
-                                <strong>How long pregnancy lasts.</strong><br>
-                                Goats = 5 months &nbsp;·&nbsp; Pigs = 4 months &nbsp;·&nbsp; Cows = 9 months
-                            </div>
-                        </div>
-
-                        <!-- Min Breeding Age -->
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="bi bi-calendar-check text-success me-1"></i>
-                                Min Breeding Age (months)
-                            </label>
-                            <input type="number" class="form-control"
-                                   th:field="*{minBreedingAgeMonths}"
-                                   placeholder="e.g. 8" min="1" max="36">
-                            <div class="field-hint">
-                                <strong>Minimum age before first breeding.</strong><br>
-                                Goats = 8 months &nbsp;·&nbsp; Pigs = 6 months &nbsp;·&nbsp; Cows = 15 months
-                            </div>
-                        </div>
-
-                        <!-- Description -->
                         <div class="col-md-12">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" th:field="*{description}"
                                       rows="3" placeholder="Optional description of this category"></textarea>
                         </div>
+                    </div>
 
+                    <div class="section-title">Breeding & Gestation (FAO standards)</div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-clock-history text-info me-1"></i>
+                                Gestation Period (days) *
+                            </label>
+                            <input type="number" class="form-control" id="gestationDays"
+                                   th:field="*{gestationPeriodDays}"
+                                   placeholder="e.g. 150" min="1" required
+                                   oninput="updateGestationMonths()">
+                            <div class="field-hint">
+                                <strong>Precise pregnancy duration in days.</strong> Months are calculated automatically.<br>
+                                Goats ≈ 150 days &nbsp;·&nbsp; Pigs ≈ 114 days &nbsp;·&nbsp; Cows ≈ 283 days
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gestation Period (months, auto)</label>
+                            <input type="number" class="form-control readonly-derived" id="gestationMonths"
+                                   th:field="*{gestationPeriodMonths}" readonly tabindex="-1">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-check text-success me-1"></i>
+                                Min Breeding Age (months)
+                            </label>
+                            <input type="number" class="form-control" th:field="*{minBreedingAgeMonths}"
+                                   placeholder="e.g. 8" min="1" max="60">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-x text-warning me-1"></i>
+                                Max Breeding Age (months)
+                            </label>
+                            <input type="number" class="form-control" th:field="*{maxBreedingAgeMonths}"
+                                   placeholder="e.g. 96" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-arrow-repeat text-primary me-1"></i>
+                                Postpartum Recovery (days)
+                            </label>
+                            <input type="number" class="form-control" th:field="*{postpartumRecoveryDays}"
+                                   placeholder="45" min="0">
+                            <div class="form-text">Days after birth before re-breeding is allowed</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                <i class="bi bi-scissors text-secondary me-1"></i>
+                                Weaning Period (days)
+                            </label>
+                            <input type="number" class="form-control" th:field="*{weaningPeriodDays}"
+                                   placeholder="90" min="0">
+                            <div class="form-text">Age offspring are weaned — used to auto-fill Weaning Date on birth records</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">
+                                <i class="bi bi-diagram-3 text-secondary me-1"></i>
+                                Typical Litter Size
+                            </label>
+                            <input type="number" class="form-control" th:field="*{typicalLitterSize}"
+                                   placeholder="1" min="1">
+                            <div class="form-text">Used to estimate offspring counts in reports</div>
+                        </div>
                     </div>
 
                     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -106,5 +139,12 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function updateGestationMonths() {
+        const days = parseFloat(document.getElementById('gestationDays').value);
+        const monthsField = document.getElementById('gestationMonths');
+        monthsField.value = days > 0 ? Math.round(days / 30.44) : '';
+    }
+</script>
 </body>
 </html>

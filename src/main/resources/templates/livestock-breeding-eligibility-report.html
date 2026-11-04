@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breeding Eligibility & Reproductive Performance Report</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <!--
+      NOTE: replace with your app's actual layout include, e.g.
+      th:replace="~{fragments/layout :: layout(~{::title}, ~{::main})}"
+      and the sidebar with th:replace="~{fragments/sidebar :: sidebar}".
+    -->
+    <style>
+        :root {
+            --ber-ink: #1b2420; --ber-muted: #6b7a72; --ber-line: #e4e8e5;
+            --ber-surface: #ffffff; --ber-bg: #f6f8f6;
+            --ber-purple: #7c3aed; --ber-purple-bg: #ede9fe; --ber-purple-line: #c4b5fd;
+            --ber-blue: #0369a1; --ber-blue-bg: #e0f2fe; --ber-blue-line: #bae6fd;
+            --ber-amber: #b45309; --ber-amber-bg: #fef3c7; --ber-amber-line: #fcd34d;
+            --ber-red: #b5482f; --ber-red-bg: #fee2e2; --ber-red-line: #fca5a5;
+            --ber-magenta: #86198f; --ber-magenta-bg: #fae8ff; --ber-magenta-line: #f0abfc;
+            --ber-grey: #57606a; --ber-grey-bg: #eef0f2; --ber-grey-line: #d0d7de;
+            --ber-green: #16a34a; --ber-green-bg: #d1fae5; --ber-green-line: #a7f3d0;
+            --ber-dark: #374151; --ber-dark-bg: #e5e7eb; --ber-dark-line: #d1d5db;
+            --ber-radius: 10px;
+        }
+        body { background: var(--ber-bg); color: var(--ber-ink); font-family: "Segoe UI", system-ui, -apple-system, sans-serif; }
+        .ber-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; }
+        .ber-header p { color: var(--ber-muted); margin: 2px 0 0; font-size: .9rem; }
+        .ber-merge-note {
+            background: var(--ber-purple-bg); border: 1px solid var(--ber-purple-line); color: #4c1d95;
+            border-radius: var(--ber-radius); padding: 8px 14px; font-size: .8rem; margin: 12px 0 0;
+        }
+
+        .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin: 18px 0 10px; }
+        @media (max-width: 1300px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+        .kpi-card { background: var(--ber-surface); border: 1px solid var(--ber-line); border-radius: var(--ber-radius); padding: 14px 16px; }
+        .kpi-card .kpi-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: .95rem; margin-bottom: 8px; }
+        .kpi-card .kpi-value { font-size: 1.4rem; font-weight: 700; line-height: 1; }
+        .kpi-card .kpi-label { color: var(--ber-muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 6px; }
+        .kpi-icon.bg-green   { background: rgba(22,163,74,.12);  color: var(--ber-green); }
+        .kpi-icon.bg-blue    { background: rgba(3,105,161,.12);  color: var(--ber-blue); }
+        .kpi-icon.bg-amber   { background: rgba(180,83,9,.12);   color: var(--ber-amber); }
+        .kpi-icon.bg-red     { background: rgba(181,72,47,.12);  color: var(--ber-red); }
+        .kpi-icon.bg-magenta { background: rgba(134,25,143,.12); color: var(--ber-magenta); }
+        .kpi-icon.bg-purple  { background: rgba(124,58,237,.12); color: var(--ber-purple); }
+        .kpi-icon.bg-dark    { background: rgba(55,65,81,.12);   color: var(--ber-dark); }
+
+        .kpi-strip { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+        .kpi-strip .strip-chip {
+            display: flex; align-items: center; gap: 8px; background: var(--ber-surface);
+            border: 1px solid var(--ber-line); border-radius: 999px; padding: 6px 14px; font-size: .78rem;
+        }
+        .kpi-strip .strip-chip strong { font-size: .9rem; }
+
+        .filter-bar { background: var(--ber-surface); border: 1px solid var(--ber-line); border-radius: var(--ber-radius); padding: 14px 16px; margin-bottom: 18px; }
+        .filter-bar .form-label { font-size: .78rem; color: var(--ber-muted); margin-bottom: 4px; }
+        .btn-primary-ber { background: var(--ber-purple); border-color: var(--ber-purple); }
+        .btn-primary-ber:hover { background: #6425c9; border-color: #6425c9; }
+
+        .report-table-wrap { background: var(--ber-surface); border: 1px solid var(--ber-line); border-radius: var(--ber-radius); overflow: hidden; }
+        .table-scroll { overflow-x: auto; }
+        .report-table { width: 100%; min-width: 1930px; table-layout: fixed; border-collapse: collapse; font-size: .8rem; }
+        .beneficiary-cell .b-name { font-weight: 600; display: block; white-space: normal; }
+        .beneficiary-cell .b-phone { color: var(--ber-muted); font-size: .72rem; display: block; }
+        .location-cell { color: var(--ber-muted); font-size: .72rem; line-height: 1.35; white-space: normal; }
+        .report-table tbody td { overflow: hidden; }
+        .report-table tbody td.reason-text,
+        .report-table tbody td.location-cell,
+        .report-table tbody td.beneficiary-cell { white-space: normal; overflow: visible; }
+        .report-table thead th { background: #f5f3ff; color: var(--ber-muted); text-transform: uppercase; font-size: .62rem; letter-spacing: .02em; font-weight: 700; padding: 8px 6px; text-align: left; }
+        .report-table tbody td { padding: 10px 6px; border-top: 1px solid var(--ber-line); vertical-align: middle; }
+        .report-table tbody tr.row-exceeded   { background: #fef2f0; }
+        .report-table tbody tr.row-near       { background: #fffbeb; }
+        .report-table tbody tr.row-pregnant   { background: #fdf4ff; }
+        .report-table tbody tr:hover { filter: brightness(0.98); }
+        .tag-pill { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; color: #1b2420; white-space: nowrap; text-decoration: none; }
+        .cat-badge { display: inline-block; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; border-radius: 10px; padding: 1px 8px; font-size: .68rem; font-weight: 700; }
+        .status-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 10px; font-size: .71rem; font-weight: 700; white-space: nowrap; }
+        .status-eligible     { background: var(--ber-green-bg);   color: #065f46; border: 1px solid var(--ber-green-line); }
+        .status-too_young    { background: var(--ber-blue-bg);    color: var(--ber-blue); border: 1px solid var(--ber-blue-line); }
+        .status-approaching  { background: var(--ber-amber-bg);   color: var(--ber-amber); border: 1px solid var(--ber-amber-line); }
+        .status-exceeded     { background: var(--ber-red-bg);     color: var(--ber-red); border: 1px solid var(--ber-red-line); }
+        .status-pregnant     { background: var(--ber-magenta-bg); color: var(--ber-magenta); border: 1px solid var(--ber-magenta-line); }
+        .status-not_available{ background: var(--ber-grey-bg);    color: var(--ber-grey); border: 1px solid var(--ber-grey-line); }
+        .status-not_configured{ background: var(--ber-grey-bg);   color: var(--ber-grey); border: 1px solid var(--ber-grey-line); }
+
+        /* Age Status pills (pure age dimension) — prefixed "age-" to avoid clashing with eligibility pills above */
+        .age-too_young      { background: var(--ber-blue-bg);  color: var(--ber-blue);  border: 1px solid var(--ber-blue-line); }
+        .age-within_range   { background: var(--ber-green-bg); color: #065f46;          border: 1px solid var(--ber-green-line); }
+        .age-near_maximum   { background: var(--ber-amber-bg); color: var(--ber-amber); border: 1px solid var(--ber-amber-line); }
+        .age-exceeded       { background: var(--ber-red-bg);   color: var(--ber-red);   border: 1px solid var(--ber-red-line); }
+        .age-not_configured { background: var(--ber-grey-bg);  color: var(--ber-grey);  border: 1px solid var(--ber-grey-line); }
+
+        /* Retirement Status pills — prefixed "retire-" */
+        .retire-not_applicable         { background: var(--ber-grey-bg);  color: var(--ber-grey);  border: 1px solid var(--ber-grey-line); }
+        .retire-approaching_retirement { background: var(--ber-amber-bg); color: var(--ber-amber); border: 1px solid var(--ber-amber-line); }
+        .retire-retirement_recommended { background: var(--ber-red-bg);   color: var(--ber-red);   border: 1px solid var(--ber-red-line); }
+        .retire-retired                { background: var(--ber-dark-bg); color: var(--ber-dark);   border: 1px solid var(--ber-dark-line); }
+
+        .reason-text { color: var(--ber-muted); font-size: .74rem; }
+        .remaining-ok { color: var(--ber-green); font-weight: 600; white-space: nowrap; }
+        .remaining-over { color: var(--ber-red); font-weight: 600; white-space: nowrap; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--ber-muted); }
+        .empty-state i { font-size: 2.2rem; opacity: .5; }
+        .table-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--ber-line); }
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; font-size: .85rem; color: var(--ber-muted); }
+        .legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px; border-bottom: 1px solid var(--ber-line); font-size: .72rem; align-items: center; }
+        .legend .legend-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .legend .legend-label { color: var(--ber-muted); font-weight: 700; text-transform: uppercase; font-size: .62rem; letter-spacing: .03em; margin-right: 2px; }
+    </style>
+</head>
+<body>
+<div class="container-fluid py-4 px-4" style="max-width: 1700px;">
+
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 ber-header">
+        <div>
+            <h1><i class="bi bi-heart-arrow me-2" style="color: var(--ber-purple);"></i>Breeding Eligibility &amp; Reproductive Performance Report</h1>
+            <p>Which females are suitable for breeding, based on age <em>and</em> reproductive history — not birth count alone.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/breeding-eligibility-report/export(categoryId=${categoryIdFilter}, search=${searchFilter}, status=${statusFilter}, ageStatus=${ageStatusFilter}, retirementStatus=${retirementStatusFilter})}">
+                <i class="bi bi-filetype-csv me-1"></i>CSV
+            </a>
+            <a class="btn btn-outline-primary btn-sm"
+               th:href="@{/livestock/breeding-eligibility-report/export/pdf(categoryId=${categoryIdFilter}, search=${searchFilter}, status=${statusFilter}, ageStatus=${ageStatusFilter}, retirementStatus=${retirementStatusFilter})}">
+                <i class="bi bi-filetype-pdf me-1"></i>Download PDF
+            </a>
+        </div>
+    </div>
+    <div class="ber-merge-note">
+        <i class="bi bi-info-circle me-1"></i>
+        This report now includes breeding-age and retirement tracking — the former "Breeding Age & Retirement Report" is
+        covered here via the <strong>Age Status</strong>, <strong>Remaining</strong>, and <strong>Retirement</strong> columns/filters below.
+    </div>
+
+    <!-- PRIMARY KPI CARDS -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon bg-purple"><i class="bi bi-gender-female"></i></div>
+            <div class="kpi-value" th:text="${kpis.totalAnimals}">0</div>
+            <div class="kpi-label">Total Animals</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-green"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.eligibleForBreeding}">0</div>
+            <div class="kpi-label">Eligible for Breeding</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-blue"><i class="bi bi-hourglass-bottom"></i></div>
+            <div class="kpi-value" th:text="${kpis.tooYoung}">0</div>
+            <div class="kpi-label">Too Young</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-amber"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.nearMaximumAge}">0</div>
+            <div class="kpi-label">Near Maximum Age</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-red"><i class="bi bi-slash-circle-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.maximumAgeExceeded}">0</div>
+            <div class="kpi-label">Maximum Age Exceeded</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon bg-dark"><i class="bi bi-flag-fill"></i></div>
+            <div class="kpi-value" th:text="${kpis.retirementRecommended}">0</div>
+            <div class="kpi-label">Retirement Recommended</div>
+        </div>
+    </div>
+
+    <!-- SECONDARY BREAKDOWN STRIP -->
+    <div class="kpi-strip">
+        <div class="strip-chip"><i class="bi bi-heart-fill" style="color: var(--ber-magenta);"></i> <strong th:text="${kpis.currentlyPregnant}">0</strong> Currently Pregnant</div>
+        <div class="strip-chip"><i class="bi bi-slash-circle" style="color: var(--ber-grey);"></i> <strong th:text="${kpis.notAvailable}">0</strong> Not Available (health/status)</div>
+        <div class="strip-chip"><i class="bi bi-archive-fill" style="color: var(--ber-dark);"></i> <strong th:text="${kpis.retired}">0</strong> Already Retired</div>
+    </div>
+
+    <!-- FILTERS -->
+    <form class="filter-bar" method="get" th:action="@{/livestock/breeding-eligibility-report}">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <select name="categoryId" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}" th:text="${cat.name}"
+                            th:selected="${cat.id == categoryIdFilter}"></option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Age Status</label>
+                <select name="ageStatus" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="TOO_YOUNG" th:selected="${ageStatusFilter == 'TOO_YOUNG'}">🔵 Too Young</option>
+                    <option value="WITHIN_RANGE" th:selected="${ageStatusFilter == 'WITHIN_RANGE'}">🟢 Within Breeding Age</option>
+                    <option value="NEAR_MAXIMUM" th:selected="${ageStatusFilter == 'NEAR_MAXIMUM'}">🟡 Near Maximum Age</option>
+                    <option value="EXCEEDED" th:selected="${ageStatusFilter == 'EXCEEDED'}">🔴 Maximum Age Exceeded</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Eligibility</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="ELIGIBLE" th:selected="${statusFilter == 'ELIGIBLE'}">🟢 Eligible</option>
+                    <option value="TOO_YOUNG" th:selected="${statusFilter == 'TOO_YOUNG'}">🔵 Too Young</option>
+                    <option value="APPROACHING" th:selected="${statusFilter == 'APPROACHING'}">🟡 Approaching Max</option>
+                    <option value="EXCEEDED" th:selected="${statusFilter == 'EXCEEDED'}">🔴 Exceeded</option>
+                    <option value="PREGNANT" th:selected="${statusFilter == 'PREGNANT'}">🟣 Pregnant</option>
+                    <option value="NOT_AVAILABLE" th:selected="${statusFilter == 'NOT_AVAILABLE'}">⚪ Not Available</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Retirement Status</label>
+                <select name="retirementStatus" class="form-select form-select-sm">
+                    <option value="">All</option>
+                    <option value="NOT_APPLICABLE" th:selected="${retirementStatusFilter == 'NOT_APPLICABLE'}">Not Applicable</option>
+                    <option value="APPROACHING_RETIREMENT" th:selected="${retirementStatusFilter == 'APPROACHING_RETIREMENT'}">🟡 Approaching</option>
+                    <option value="RETIREMENT_RECOMMENDED" th:selected="${retirementStatusFilter == 'RETIREMENT_RECOMMENDED'}">🔴 Recommended</option>
+                    <option value="RETIRED" th:selected="${retirementStatusFilter == 'RETIRED'}">⚫ Retired</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Search Tag</label>
+                <input type="text" name="search" class="form-control form-control-sm"
+                       placeholder="e.g. GOAT-008" th:value="${searchFilter}">
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary-ber btn-sm text-white flex-grow-1">
+                    <i class="bi bi-funnel-fill me-1"></i>Apply
+                </button>
+                <a th:href="@{/livestock/breeding-eligibility-report}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- TABLE -->
+    <div class="report-table-wrap">
+        <div class="legend">
+            <div class="legend-group">
+                <span class="legend-label">Age</span>
+                <span class="status-pill age-too_young">🔵 Too Young</span>
+                <span class="status-pill age-within_range">🟢 Within Range</span>
+                <span class="status-pill age-near_maximum">🟡 Near Max</span>
+                <span class="status-pill age-exceeded">🔴 Exceeded</span>
+            </div>
+            <div class="legend-group">
+                <span class="legend-label">Retirement</span>
+                <span class="status-pill retire-approaching_retirement">🟡 Approaching</span>
+                <span class="status-pill retire-retirement_recommended">🔴 Recommended</span>
+                <span class="status-pill retire-retired">⚫ Retired</span>
+            </div>
+        </div>
+
+        <div class="table-toolbar">
+            <div><strong th:text="${totalItems}">0</strong> animal<span th:if="${totalItems != 1}">s</span></div>
+            <div class="text-muted small">Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span></div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(rows)}" class="empty-state">
+            <i class="bi bi-heart"></i>
+            <p class="mt-3 mb-0">No animals match the selected filters.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(rows)}" class="table-scroll">
+            <table class="report-table">
+                <colgroup>
+                    <col style="width: 110px;"><col style="width: 90px;"><col style="width: 70px;">
+                    <col style="width: 170px;"><col style="width: 160px;"><col style="width: 190px;">
+                    <col style="width: 260px;"><col style="width: 190px;"><col style="width: 100px;">
+                    <col style="width: 70px;"><col style="width: 190px;"><col style="width: 220px;">
+                    <col style="width: 110px;">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th>Tag</th><th>Category</th><th>Age</th>
+                    <th>Age Status</th><th>Remaining / Exceeded</th><th>Eligibility</th>
+                    <th>Reason</th><th>Retirement</th><th>Last Birth</th>
+                    <th>Births</th><th>Beneficiary</th><th>Location</th><th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="row : ${rows}"
+                    th:classappend="${row.ageStatus == 'EXCEEDED'} ? 'row-exceeded' : (${row.ageStatus == 'NEAR_MAXIMUM'} ? 'row-near' : (${row.breedingStatus == 'PREGNANT'} ? 'row-pregnant' : ''))">
+                    <td>
+                        <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="tag-pill">
+                            <i class="bi bi-tag-fill" style="color: var(--ber-purple);"></i><span th:text="${row.tagNumber}">GOAT-008</span>
+                        </a>
+                    </td>
+                    <td><span class="cat-badge" th:text="${row.categoryName}">Goat</span></td>
+                    <td th:text="${row.ageDisplay}">6y 0m</td>
+                    <td>
+                        <span class="status-pill"
+                              th:classappend="'age-' + ${#strings.toLowerCase(row.ageStatus)}"
+                              th:text="${row.ageStatusLabel}">🟢 Within Breeding Age</span>
+                    </td>
+                    <td>
+                        <span th:if="${row.remainingMonths != null and row.remainingMonths > 0}" class="remaining-ok" th:text="${row.remainingDisplay}">1y 10m remaining</span>
+                        <span th:if="${row.remainingMonths != null and row.remainingMonths <= 0}" class="remaining-over" th:text="${row.remainingDisplay}">Exceeded by 1y 2m</span>
+                        <span th:if="${row.remainingMonths == null}">—</span>
+                    </td>
+                    <td>
+                        <span class="status-pill"
+                              th:classappend="'status-' + ${#strings.toLowerCase(row.breedingStatus)}"
+                              th:text="${row.breedingStatusLabel}">🟢 Eligible for Breeding</span>
+                    </td>
+                    <td class="reason-text" th:text="${row.ineligibilityReason != null ? row.ineligibilityReason : '—'}">—</td>
+                    <td>
+                        <span class="status-pill"
+                              th:classappend="'retire-' + ${#strings.toLowerCase(row.retirementStatus)}"
+                              th:text="${row.retirementStatusLabel}">Not Applicable</span>
+                    </td>
+                    <td th:text="${row.lastBirthDate != null ? #temporals.format(row.lastBirthDate, 'dd MMM yy') : '—'}">—</td>
+                    <td th:text="${row.births}">0</td>
+                    <td class="beneficiary-cell">
+                        <span class="b-name" th:text="${row.beneficiaryName}">Claudette MUKAMANA</span>
+                        <span class="b-phone" th:if="${row.beneficiaryPhone != null}" th:text="${row.beneficiaryPhone}">0789781750</span>
+                    </td>
+                    <td class="location-cell" th:text="${row.fullLocationDisplay}" th:title="${row.fullLocationDisplay}">Kigali / Gasabo / Remera</td>
+                    <td class="text-nowrap">
+                        <a th:href="@{/livestock/view/{id}(id=${row.livestockId})}" class="btn btn-sm btn-info" title="View Animal"><i class="bi bi-eye"></i></a>
+                        <a th:if="${row.retirementStatus == 'RETIREMENT_RECOMMENDED'}"
+                           th:href="@{/livestock/edit/{id}(id=${row.livestockId})}" class="btn btn-sm btn-outline-dark" title="Mark as Retired / Update Status"><i class="bi bi-flag-fill"></i></a>
+                        <a th:if="${row.retirementStatus != 'RETIREMENT_RECOMMENDED'}"
+                           th:href="@{/livestock/breeding/management}" class="btn btn-sm btn-success" title="Record Breeding"><i class="bi bi-heart-fill"></i></a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-bar" th:if="${totalPages > 1}">
+            <div th:text="'Showing page ' + (${currentPage} + 1) + ' of ' + ${totalPages} + ' · ' + ${pageSize} + ' rows/page'"></div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-sm btn-outline-secondary" th:classappend="${currentPage == 0} ? 'disabled'"
+                   th:href="@{/livestock/breeding-eligibility-report(page=${currentPage - 1}, size=${pageSize}, categoryId=${categoryIdFilter}, search=${searchFilter}, status=${statusFilter}, ageStatus=${ageStatusFilter}, retirementStatus=${retirementStatusFilter})}">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </a>
+                <a class="btn btn-sm btn-outline-secondary" th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'"
+                   th:href="@{/livestock/breeding-eligibility-report(page=${currentPage + 1}, size=${pageSize}, categoryId=${categoryIdFilter}, search=${searchFilter}, status=${statusFilter}, ageStatus=${ageStatusFilter}, retirementStatus=${retirementStatusFilter})}">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

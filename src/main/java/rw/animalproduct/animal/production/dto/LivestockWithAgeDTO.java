@@ -17,6 +17,10 @@ public class LivestockWithAgeDTO {
     private String    status;
     private String    categoryName;
 
+    // ── Health & Reproductive Status (from livestock table) ──────────────────
+    private String    healthStatus;
+    private String    reproductiveStatus;
+
     // ── Raw dates (from livestock table) ─────────────────────────────────────
     private LocalDate dateReceived;      // always present for purchased animals
     private LocalDate birthDate;         // present for farm-born animals
@@ -48,73 +52,110 @@ public class LivestockWithAgeDTO {
     // Getters & Setters
     // ══════════════════════════════════════════════════════════════════════════
 
-    public UUID      getId()                  { return id; }
-    public void      setId(UUID id)           { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public String    getTagNumber()           { return tagNumber; }
-    public void      setTagNumber(String v)   { this.tagNumber = v; }
+    public String getTagNumber() { return tagNumber; }
+    public void setTagNumber(String tagNumber) { this.tagNumber = tagNumber; }
 
-    public String    getGender()              { return gender; }
-    public void      setGender(String v)      { this.gender = v; }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
-    public String    getStatus()              { return status; }
-    public void      setStatus(String v)      { this.status = v; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public String    getCategoryName()        { return categoryName; }
-    public void      setCategoryName(String v){ this.categoryName = v; }
+    public String getCategoryName() { return categoryName; }
+    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
 
-    public LocalDate getDateReceived()        { return dateReceived; }
-    public void      setDateReceived(LocalDate v)  { this.dateReceived = v; }
+    public String getHealthStatus() { return healthStatus; }
+    public void setHealthStatus(String healthStatus) { this.healthStatus = healthStatus; }
 
-    public LocalDate getBirthDate()           { return birthDate; }
-    public void      setBirthDate(LocalDate v){ this.birthDate = v; }
+    public String getReproductiveStatus() { return reproductiveStatus; }
+    public void setReproductiveStatus(String reproductiveStatus) { this.reproductiveStatus = reproductiveStatus; }
 
-    public Integer   getAgeInDays()           { return ageInDays; }
-    public void      setAgeInDays(Integer v)  { this.ageInDays = v; }
+    public LocalDate getDateReceived() { return dateReceived; }
+    public void setDateReceived(LocalDate dateReceived) { this.dateReceived = dateReceived; }
 
-    public Integer   getAgeInMonths()         { return ageInMonths; }
-    public void      setAgeInMonths(Integer v){ this.ageInMonths = v; }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
-    public Integer   getDaysToBreedingAge()   { return daysToBreedingAge; }
-    public void      setDaysToBreedingAge(Integer v) { this.daysToBreedingAge = v; }
+    public Integer getAgeInDays() { return ageInDays; }
+    public void setAgeInDays(Integer ageInDays) { this.ageInDays = ageInDays; }
 
-    public String    getLifecycleStage()      { return lifecycleStage; }
-    public void      setLifecycleStage(String v) { this.lifecycleStage = v; }
+    public Integer getAgeInMonths() { return ageInMonths; }
+    public void setAgeInMonths(Integer ageInMonths) { this.ageInMonths = ageInMonths; }
 
-    public Boolean   getIsPregnant()          { return isPregnant; }
-    public void      setIsPregnant(Boolean v) { this.isPregnant = v; }
+    public Integer getDaysToBreedingAge() { return daysToBreedingAge; }
+    public void setDaysToBreedingAge(Integer daysToBreedingAge) { this.daysToBreedingAge = daysToBreedingAge; }
 
-    public String    getPregnancyStatus()          { return pregnancyStatus; }
-    public void      setPregnancyStatus(String v)  { this.pregnancyStatus = v; }
+    public String getLifecycleStage() { return lifecycleStage; }
+    public void setLifecycleStage(String lifecycleStage) { this.lifecycleStage = lifecycleStage; }
 
-    public LocalDate getConceptionDate()           { return conceptionDate; }
-    public void      setConceptionDate(LocalDate v){ this.conceptionDate = v; }
+    public Boolean getIsPregnant() { return isPregnant; }
+    public void setIsPregnant(Boolean isPregnant) { this.isPregnant = isPregnant; }
 
-    public LocalDate getExpectedDueDate()          { return expectedDueDate; }
-    public void      setExpectedDueDate(LocalDate v){ this.expectedDueDate = v; }
+    public String getPregnancyStatus() { return pregnancyStatus; }
+    public void setPregnancyStatus(String pregnancyStatus) { this.pregnancyStatus = pregnancyStatus; }
 
-    public LocalDate getFirstBreedingDate()        { return firstBreedingDate; }
-    public void      setFirstBreedingDate(LocalDate v){ this.firstBreedingDate = v; }
+    public LocalDate getConceptionDate() { return conceptionDate; }
+    public void setConceptionDate(LocalDate conceptionDate) { this.conceptionDate = conceptionDate; }
 
-    public LocalDate getLastBreedingDate()         { return lastBreedingDate; }
-    public void      setLastBreedingDate(LocalDate v){ this.lastBreedingDate = v; }
+    public LocalDate getExpectedDueDate() { return expectedDueDate; }
+    public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
 
-    public LocalDate getLastBirthDate()            { return lastBirthDate; }
-    public void      setLastBirthDate(LocalDate v) { this.lastBirthDate = v; }
+    public LocalDate getFirstBreedingDate() { return firstBreedingDate; }
+    public void setFirstBreedingDate(LocalDate firstBreedingDate) { this.firstBreedingDate = firstBreedingDate; }
 
-    public Integer   getOffspringCount()           { return offspringCount; }
-    public void      setOffspringCount(Integer v)  { this.offspringCount = v; }
+    public LocalDate getLastBreedingDate() { return lastBreedingDate; }
+    public void setLastBreedingDate(LocalDate lastBreedingDate) { this.lastBreedingDate = lastBreedingDate; }
 
-    public BigDecimal getCurrentValue()            { return currentValue; }
-    public void       setCurrentValue(BigDecimal v){ this.currentValue = v; }
+    public LocalDate getLastBirthDate() { return lastBirthDate; }
+    public void setLastBirthDate(LocalDate lastBirthDate) { this.lastBirthDate = lastBirthDate; }
+
+    public Integer getOffspringCount() { return offspringCount; }
+    public void setOffspringCount(Integer offspringCount) { this.offspringCount = offspringCount; }
+
+    public BigDecimal getCurrentValue() { return currentValue; }
+    public void setCurrentValue(BigDecimal currentValue) { this.currentValue = currentValue; }
 
     // ══════════════════════════════════════════════════════════════════════════
     // Derived helpers — used directly in Thymeleaf templates
     // ══════════════════════════════════════════════════════════════════════════
+    private String locationName;       // leaf location name (e.g. "Nyagatare Village"), or null if unset
+    private String locationFullPath;   // "Province › District › Sector › Cell › Village", or null if unset
 
+    public String getLocationName() { return locationName; }
+    public void setLocationName(String locationName) { this.locationName = locationName; }
+
+    public String getLocationFullPath() { return locationFullPath; }
+    public void setLocationFullPath(String locationFullPath) { this.locationFullPath = locationFullPath; }
     /** True for the "Ready In" column — animal is under 12 months old. */
     public boolean isApproachingBreedingAge() {
         return ageInDays != null && ageInDays >= 180 && ageInDays < 365;
+    }
+
+    /** Human-readable health status label. */
+    public String getHealthStatusLabel() {
+        if (healthStatus == null) return "Unknown";
+        return switch (healthStatus) {
+            case "HEALTHY" -> "Healthy";
+            case "SICK" -> "Sick";
+            case "UNDER_TREATMENT" -> "Under Treatment";
+            default -> healthStatus;
+        };
+    }
+
+    /** Human-readable reproductive status label. */
+    public String getReproductiveStatusLabel() {
+        if (reproductiveStatus == null) return "Unknown";
+        return switch (reproductiveStatus) {
+            case "READY_TO_BREED" -> "Ready to Breed";
+            case "BRED" -> "Bred";
+            case "PREGNANT" -> "Pregnant";
+            case "OPEN" -> "Open";
+            case "NOT_APPLICABLE" -> "Not Applicable";
+            default -> reproductiveStatus;
+        };
     }
 
     /** Human-readable stage label for display. */
@@ -139,15 +180,57 @@ public class LivestockWithAgeDTO {
         if (lifecycleStage == null) return "bg-secondary";
         return switch (lifecycleStage) {
             case "NEWBORN"        -> "bg-warning text-dark";
-            case "YOUNG"          -> "bg-primary";
+            case "YOUNG"          -> "bg-primary text-white";
             case "PRE_BREEDING"   -> "bg-info text-dark";
-            case "READY_TO_BREED" -> "bg-success";
-            case "PREGNANT"       -> "bg-danger";
-            case "BREEDING_MALE"  -> "bg-primary";
-            case "MATURE"         -> "bg-success";
-            case "DEAD"           -> "bg-dark";
-            case "SOLD"           -> "bg-secondary";
-            default               -> "bg-secondary";
+            case "READY_TO_BREED" -> "bg-success text-white";
+            case "PREGNANT"       -> "bg-danger text-white";
+            case "BREEDING_MALE"  -> "bg-primary text-white";
+            case "MATURE"         -> "bg-success text-white";
+            case "DEAD"           -> "bg-dark text-white";
+            case "SOLD"           -> "bg-secondary text-white";
+            default               -> "bg-secondary text-white";
         };
+    }
+
+    /** Bootstrap color class for health status badge. */
+    public String getHealthBadgeClass() {
+        if (healthStatus == null) return "bg-secondary";
+        return switch (healthStatus) {
+            case "HEALTHY" -> "bg-success text-white";
+            case "SICK" -> "bg-danger text-white";
+            case "UNDER_TREATMENT" -> "bg-warning text-dark";
+            default -> "bg-secondary";
+        };
+    }
+
+    /** Bootstrap color class for reproductive status badge. */
+    public String getReproBadgeClass() {
+        if (reproductiveStatus == null) return "bg-secondary";
+        return switch (reproductiveStatus) {
+            case "READY_TO_BREED" -> "bg-purple text-white";
+            case "BRED" -> "bg-info text-white";
+            case "PREGNANT" -> "bg-pink text-white";
+            case "OPEN" -> "bg-light text-dark";
+            case "NOT_APPLICABLE" -> "bg-secondary text-white";
+            default -> "bg-secondary";
+        };
+    }
+
+    /** Age display string (e.g., "2y 6m", "8m 15d", "45d"). */
+    public String getAgeDisplay() {
+        if (ageInDays == null || ageInDays == 0) return "Unknown";
+        if (ageInDays < 30) return ageInDays + " days";
+        if (ageInDays < 365) {
+            int months = ageInDays / 30;
+            int days = ageInDays % 30;
+            return months + "m" + (days > 0 ? " " + days + "d" : "");
+        }
+        int years = ageInDays / 365;
+        int months = (ageInDays % 365) / 30;
+        return years + "y" + (months > 0 ? " " + months + "m" : "");
+    }
+
+    public boolean isReadyToBreed() {
+        return "READY_TO_BREED".equals(lifecycleStage);
     }
 }

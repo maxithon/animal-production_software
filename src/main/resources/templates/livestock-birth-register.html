@@ -26,6 +26,17 @@
         #childLoadingSpinner { display: none; }
         #childSection { display: none; }
         .no-pregnant-warning { display: none; }
+        input.auto-derived[readonly],
+        input.auto-derived[disabled] { background-color: #f0fdf4; cursor: not-allowed; }
+        #weaningDatePreview { background-color: #f0fdf4; }
+        #nextBreedingDate { background-color: #f0fdf4; }
+        #vetSearchResults {
+            border: 1px solid #ced4da; border-radius: 6px; background: #fff;
+        }
+        #vetSearchResults .list-group-item { border: none; border-bottom: 1px solid #f1f3f5; }
+        #vetSearchResults .list-group-item:last-child { border-bottom: none; }
+        #vetSelectedInfo { font-size: 0.8rem; }
+        #vetQuickAddPanel { font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -47,7 +58,6 @@
 
 <div class="form-card">
 
-    <!-- ══ GUIDANCE BANNER ════════════════════════════════════════════ -->
     <div class="info-box info-box-blue mb-3">
         <div class="fw-bold mb-1"><i class="bi bi-info-circle-fill me-1"></i> How this works</div>
         <div>
@@ -78,7 +88,6 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
-    <!-- No pregnant animals warning (shown via JS if list is empty) -->
     <div id="noPregnantWarning" class="info-box info-box-red mb-3" style="display:none;">
         <i class="bi bi-exclamation-triangle-fill me-1"></i>
         <strong>No pregnant animals found.</strong>
@@ -102,6 +111,9 @@
                 <option value="">-- Select a pregnant animal --</option>
                 <option th:each="ls : ${livestockList}"
                         th:value="${ls.id}"
+                        th:attr="data-weaning-days=${ls.livestockCategory?.weaningPeriodDays},
+                                 data-recovery-days=${ls.livestockCategory?.postpartumRecoveryDays},
+                                 data-gestation-days=${ls.livestockCategory?.gestationPeriodDays}"
                         th:text="${ls.tagNumber
                             + (ls.livestockCategory != null ? ' (' + ls.livestockCategory.name + ')' : '')
                             + ' — ' + (ls.gender != null ? ls.gender : 'Unknown')
@@ -123,10 +135,21 @@
         </h6>
 
         <div class="row g-3">
+
+            <!-- ✅ Birth Date — auto-filled from the mother's breeding record -->
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Birth Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" th:field="*{birthDate}" required>
-                <div class="form-text">The date the animal gave birth.</div>
+                <label class="form-label fw-semibold">
+                    Birth Date <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control"
+                       th:field="*{birthDate}" th:max="${today}" id="birthDateInput" required>
+                <div class="form-text" id="birthDateExplanation">
+                    The date the animal gave birth. Auto-filled from the breeding record.
+                </div>
+                <div class="text-danger small mt-1" id="birthDateFutureWarning" style="display:none;">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Birth date cannot be in the future.
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -134,31 +157,147 @@
                     Number of Offspring
                     <span class="text-muted fw-normal">(optional)</span>
                 </label>
-                <input type="number" class="form-control" th:field="*{offspringCount}" min="1" placeholder="e.g. 1">
-                <div class="form-text">
+                <input type="number" class="form-control auto-derived" th:field="*{offspringCount}"
+                       id="offspringCountInput" min="1" placeholder="e.g. 1">
+                <div class="form-text" id="offspringCountHint">
                     Leave blank when linking already-registered animals below.
                     Only fill if offspring are <em>not yet registered</em>.
                 </div>
             </div>
 
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Offspring Gender</label>
-                <select class="form-select" th:field="*{offspringGender}">
-                    <option value="">-- Mixed / Unknown --</option>
-                    <option value="MALE">Male</option>
-                    <option value="FEMALE">Female</option>
-                </select>
+                <label class="form-label fw-semibold">Offspring Gender Breakdown</label>
+                <input type="text" class="form-control auto-derived" id="offspringGenderSummary"
+                       readonly value="—">
+                <div class="form-text">Auto-calculated from the children linked below.</div>
             </div>
 
+            <!-- ✅ Weaning Date — auto-filled from birthDate + category.weaningPeriodDays -->
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Weaning Date</label>
-                <input type="date" class="form-control" th:field="*{weaningDate}">
+                <label class="form-label fw-semibold">
+                    Weaning Date <span class="text-muted fw-normal">(auto-suggested, editable)</span>
+                </label>
+                <input type="date" class="form-control" th:field="*{weaningDate}" id="weaningDatePreview">
+                <div class="form-text" id="weaningExplanation">
+                    Auto-suggested from the category's weaning period once a mother is selected.
+                    Adjust freely if needed.
+                    <span id="weaningNotConfigured" class="text-warning" style="display:none;">
+                        Not yet configured for this category — enter manually.
+                    </span>
+                </div>
             </div>
 
+            <!-- ✅ Next Breeding Date — auto-filled from birthDate + category.postpartumRecoveryDays -->
             <div class="col-md-4">
-                <label class="form-label fw-semibold">Next Breeding Date (Mother)</label>
-                <input type="date" class="form-control" th:field="*{nextBreedingDate}">
-                <div class="form-text">When the mother can be bred again.</div>
+                <label class="form-label fw-semibold">
+                    Next Breeding Date (Suggested Real Date)
+                </label>
+                <input type="date" class="form-control" th:field="*{nextBreedingDate}" id="nextBreedingDate">
+                <div class="form-text" id="breedingExplanation">
+                    Auto-filled from the category's postpartum recovery period once a mother is selected.
+                    Not an FAO-required field — adjust freely.
+                </div>
+            </div>
+
+            <!-- ══ STEP 2b: Birth Outcome / Assistance ══ -->
+            <div class="section-divider"></div>
+            <h6 class="fw-bold mb-3">
+                <span class="badge bg-success me-2">2b</span>
+                Birth Outcome
+                <span class="badge bg-secondary ms-2 fw-normal" style="font-size:0.7rem;">Optional</span>
+            </h6>
+            <div class="info-box info-box-blue mb-3" style="font-size:0.8rem;">
+                <i class="bi bi-calculator me-1"></i>
+                <strong>Rule:</strong> Number of Offspring must equal Born Alive + Stillborn.
+                Leave Number of Offspring blank and it'll be calculated for you.
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Birth Type</label>
+                    <select class="form-select" th:field="*{birthType}">
+                        <option value="">-- Not recorded --</option>
+                        <option value="NORMAL">Normal</option>
+                        <option value="DIFFICULT">Difficult</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold d-block">Assistance Required</label>
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" th:field="*{assistanceRequired}" id="assistanceRequired">
+                        <label class="form-check-label" for="assistanceRequired">Yes, assistance was required</label>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Number Born Alive</label>
+                    <input type="number" class="form-control" th:field="*{numberBornAlive}" min="0">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Number Stillborn</label>
+                    <input type="number" class="form-control" th:field="*{numberStillborn}" min="0">
+                </div>
+
+                <!-- Veterinarian live-search + quick-add -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Veterinarian <span class="text-muted fw-normal">(search registered vets)</span>
+                    </label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="vetSearchInput" autocomplete="off"
+                               placeholder="Type a name, license #, or clinic to search...">
+                        <input type="hidden" th:field="*{veterinarianIdValue}" id="veterinarianIdValue">
+                        <div id="vetSearchResults" class="list-group position-absolute w-100 shadow-sm"
+                             style="z-index:1050; max-height:260px; overflow-y:auto; display:none;"></div>
+                    </div>
+                    <div class="form-text" id="vetSelectedInfo" style="display:none;">
+                        <i class="bi bi-check-circle-fill text-success me-1"></i>
+                        <span id="vetSelectedLabel"></span>
+                        <a href="#" class="ms-2 text-danger" onclick="clearVetSelection(); return false;">Clear</a>
+                    </div>
+                    <div class="form-text" id="vetSearchHint">Start typing to find a registered veterinarian.</div>
+
+                    <div id="vetQuickAddPanel" class="border rounded p-3 mt-2 bg-light" style="display:none;">
+                        <div class="fw-semibold small mb-2">
+                            <i class="bi bi-person-plus-fill me-1"></i>Add new veterinarian
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="text" class="form-control form-control-sm" id="vetQuickFirstName" placeholder="First name">
+                            </div>
+                            <div class="col-6">
+                                <input type="text" class="form-control form-control-sm" id="vetQuickLastName" placeholder="Last name">
+                            </div>
+                            <div class="col-12">
+                                <input type="text" class="form-control form-control-sm" id="vetQuickPhone" placeholder="Phone (optional)">
+                            </div>
+                        </div>
+                        <div id="vetQuickAddError" class="text-danger small mt-2" style="display:none;"></div>
+                        <div id="vetQuickAddWarning" class="text-warning small mt-2" style="display:none;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                            A veterinarian with this exact name already exists — double check before saving a duplicate.
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn btn-success btn-sm" onclick="submitQuickAddVet()">
+                                <i class="bi bi-check-lg me-1"></i>Save veterinarian
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeQuickAddVet()">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                        Attendant Name <span class="text-muted fw-normal">(if not a registered veterinarian)</span>
+                    </label>
+                    <input type="text" class="form-control" th:field="*{attendantName}"
+                           placeholder="e.g. the farmhand who assisted">
+                    <div class="form-text">Only used when the attendant isn't in the veterinarian registry above.</div>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -180,12 +319,23 @@
             Link Already-Registered Children
             <span class="badge bg-secondary ms-2 fw-normal" style="font-size:0.7rem;">Optional</span>
         </h6>
-        <p class="text-muted small mb-3">
+        <p class="text-muted small mb-2">
             Select the mother first — only animals of the <strong>same category</strong>
-            and born within the expected age window will appear.
+            and born within the expected age window will appear. Once you select children
+            here, <strong>Number of Offspring</strong> and <strong>Offspring Gender
+            Breakdown</strong> above are calculated from them automatically.
         </p>
 
-        <!-- Child section — hidden until mother is chosen -->
+        <div class="info-box info-box-green mb-3" style="font-size:0.8rem;">
+            <div class="fw-bold mb-1"><i class="bi bi-shield-check me-1"></i>Before a child is linked, the system verifies:</div>
+            <ul class="mb-0 ps-3">
+                <li>Child belongs to the same livestock category/species as the mother</li>
+                <li>Child's birth date is compatible with this birth record</li>
+                <li>Child isn't already linked to another mother or birth event</li>
+                <li>Mother and child are both valid, active animals</li>
+            </ul>
+        </div>
+
         <div id="childSection">
             <div class="info-box info-box-green mb-3">
                 <i class="bi bi-filter-circle-fill me-1"></i>
@@ -223,7 +373,6 @@
             </div>
         </div>
 
-        <!-- Selected children display -->
         <div id="childTagsContainer" class="mb-1">
             <span class="text-muted small" id="noChildPlaceholder">
                 <i class="bi bi-info-circle me-1"></i>
@@ -242,7 +391,7 @@
             <a href="/livestock/births/list" class="btn btn-outline-secondary">Cancel</a>
             <span class="text-muted small ms-2">
                 <i class="bi bi-info-circle me-1"></i>
-                You can also link children after saving.
+                Offspring can also be linked after the birth record is saved.
             </span>
         </div>
 
@@ -252,37 +401,75 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ── State ────────────────────────────────────────────────────────
-    const selectedChildren = {}; // id → display label
-    let eligibleChildren   = []; // loaded from server
+    const selectedChildren = {};
+    let eligibleChildren   = [];
 
-    // ── On page load: check if pregnant mothers list is empty ────────
+    // Cache the category-derived defaults from the <option> data-* attributes
+    // (used as a client-side fallback if the API call fails).
+    let currentCategory = { weaningDays: null, recoveryDays: null, gestationDays: null };
+
     window.addEventListener('DOMContentLoaded', () => {
         const motherSelect = document.getElementById('motherSelect');
-        const optionCount  = motherSelect.options.length - 1; // subtract placeholder
+        const optionCount  = motherSelect.options.length - 1;
         if (optionCount === 0) {
             document.getElementById('noPregnantWarning').style.display = 'block';
         }
+        updateOffspringSummary();
     });
 
-    // ── Mother selection → load eligible children ────────────────────
+    // ─────────────────────────────────────────────────────────────────
+    // When the mother is selected:
+    //   1. Fetch auto-dates (birth, weaning, next breeding) from the
+    //      server, which reads them from existing table data
+    //      (livestock_breeding + livestock_categories).
+    //   2. Pre-fill the three date inputs.
+    //   3. Load the eligible-children list as before.
+    // ─────────────────────────────────────────────────────────────────
     document.getElementById('motherSelect').addEventListener('change', async function () {
         const motherId = this.value;
         const selectedText = this.options[this.selectedIndex]?.text || '';
 
-        // Reset children UI
+        // reset child selection UI
         selectedChildren_clear();
         eligibleChildren = [];
         document.getElementById('childSection').style.display = 'none';
 
+        // reset the three date inputs and their explanation texts
+        document.getElementById('birthDateInput').value     = '';
+        document.getElementById('weaningDatePreview').value = '';
+        document.getElementById('nextBreedingDate').value   = '';
+        resetDateExplanations();
+
         if (!motherId) return;
 
-        // Show category info
+        // Cache the category-derived defaults from the <option> data-*
+        const opt = this.options[this.selectedIndex];
+        currentCategory.weaningDays   = opt.dataset.weaningDays   || null;
+        currentCategory.recoveryDays  = opt.dataset.recoveryDays  || null;
+        currentCategory.gestationDays = opt.dataset.gestationDays || null;
+
+        // ── Fetch auto-dates from the server (reads existing table data) ──
+        try {
+            const resp = await fetch(
+                `/livestock/births/api/auto-dates?motherId=${encodeURIComponent(motherId)}`
+            );
+            if (resp.ok) {
+                const data = await resp.json();
+                applyAutoDates(data);
+            } else {
+                applyClientSideFallbackDates();
+            }
+        } catch (e) {
+            console.error('Failed to load auto-dates:', e);
+            applyClientSideFallbackDates();
+        }
+
+        // ── Load eligible children (unchanged behavior) ──
         const categoryMatch = selectedText.match(/\(([^)]+)\)/);
         const categoryName  = categoryMatch ? categoryMatch[1] : 'same category';
         document.getElementById('categoryLabel').textContent = categoryName;
         document.getElementById('childSection').style.display = 'block';
 
-        // Show spinner, hide select
         document.getElementById('childLoadingSpinner').style.display  = 'block';
         document.getElementById('childSelectRow').style.display        = 'none';
         document.getElementById('noChildrenAvailable').style.display   = 'none';
@@ -308,67 +495,205 @@
         }
     });
 
-function populateChildSelect() {
-    const sel = document.getElementById('childSelect');
-    sel.innerHTML = '<option value="">-- Select an offspring to link --</option>';
+    // ─────────────────────────────────────────────────────────────────
+    // Apply the server-provided auto-dates to the form and update the
+    // explanation text below each field so the user understands where
+    // each value came from.
+    // ─────────────────────────────────────────────────────────────────
+    function applyAutoDates(data) {
+        const bdInput = document.getElementById('birthDateInput');
+        const wdInput = document.getElementById('weaningDatePreview');
+        const nbInput = document.getElementById('nextBreedingDate');
 
-    for (const child of eligibleChildren) {
-        // Skip already-selected
-        if (selectedChildren[child.id]) continue;
-        const ageDays = child.ageDays;
-        const ageStr  = ageDays < 30
-            ? ageDays + ' days old'
-            : Math.floor(ageDays / 30) + ' months old';
-
-        const option = document.createElement('option');
-        option.value = child.id;
-
-        // Show warning if already has a mother
-        let warningText = '';
-        if (child.alreadyHasMother && child.motherTag) {
-            warningText = ` ⚠️ WARNING: Already has mother ${child.motherTag} - linking will replace it`;
-            option.style.backgroundColor = '#fff3cd';
-            option.style.color = '#856404';
+        if (data.birthDate) {
+            bdInput.value = data.birthDate;
+            if (data.birthDateExplanation) {
+                document.getElementById('birthDateExplanation').innerHTML =
+                    '<i class="bi bi-magic text-success me-1"></i>'
+                    + escapeHtml(data.birthDateExplanation)
+                    + ' <span class="text-muted">(verify / adjust if needed)</span>';
+            }
         }
-
-        option.textContent = `${child.tagNumber} (${child.category}) — ${child.gender} — ${ageStr}${warningText}`;
-        if (child.birthDate) option.textContent += ` — Born ${child.birthDate}`;
-        sel.appendChild(option);
+        if (data.weaningDate) {
+            wdInput.value = data.weaningDate;
+            if (data.weaningExplanation) {
+                document.getElementById('weaningExplanation').innerHTML =
+                    '<i class="bi bi-magic text-success me-1"></i>'
+                    + escapeHtml(data.weaningExplanation)
+                    + ' <span class="text-muted">(adjust if needed)</span>';
+            }
+        }
+        if (data.nextBreedingDate) {
+            nbInput.value = data.nextBreedingDate;
+            if (data.breedingExplanation) {
+                document.getElementById('breedingExplanation').innerHTML =
+                    '<i class="bi bi-calendar-check text-success me-1"></i>'
+                    + escapeHtml(data.breedingExplanation)
+                    + ' <span class="text-muted">(adjust if needed)</span>';
+            }
+        }
     }
 
-    document.getElementById('childCountHint').textContent =
-        eligibleChildren.length + ' eligible offspring found for this mother\'s category.';
-}
+    // ─────────────────────────────────────────────────────────────────
+    // Client-side fallback: if the server call fails, use the data-*
+    // attributes on the selected <option> to compute the same dates.
+    // ─────────────────────────────────────────────────────────────────
+    function applyClientSideFallbackDates() {
+        const today = new Date();
+        const iso = today.toISOString().split('T')[0];
+
+        // We don't have a breeding_record due date client-side, so leave
+        // Birth Date blank (the user must pick it). We can still compute
+        // Weaning + Next Breeding from today as a reasonable default.
+        const wdInput = document.getElementById('weaningDatePreview');
+        const nbInput = document.getElementById('nextBreedingDate');
+
+        if (currentCategory.weaningDays && currentCategory.weaningDays !== 'null') {
+            const d = new Date(today);
+            d.setDate(d.getDate() + parseInt(currentCategory.weaningDays, 10));
+            wdInput.value = d.toISOString().split('T')[0];
+            document.getElementById('weaningExplanation').innerHTML =
+                'Birth date + ' + currentCategory.weaningDays
+                + ' days weaning period (adjust if needed)';
+        }
+        if (currentCategory.recoveryDays && currentCategory.recoveryDays !== 'null') {
+            const d = new Date(today);
+            d.setDate(d.getDate() + parseInt(currentCategory.recoveryDays, 10));
+            nbInput.value = d.toISOString().split('T')[0];
+            document.getElementById('breedingExplanation').innerHTML =
+                'Birth date + ' + currentCategory.recoveryDays
+                + ' days postpartum recovery (adjust if needed)';
+        }
+    }
+
+    function resetDateExplanations() {
+        document.getElementById('birthDateExplanation').textContent =
+            'The date the animal gave birth. Auto-filled from the breeding record.';
+        document.getElementById('weaningExplanation').innerHTML =
+            'Auto-suggested from the category\'s weaning period once a mother is selected. ' +
+            'Adjust freely if needed. ' +
+            '<span id="weaningNotConfigured" class="text-warning" style="display:none;">' +
+            'Not yet configured for this category — enter manually.</span>';
+        document.getElementById('breedingExplanation').textContent =
+            'Auto-filled from the category\'s postpartum recovery period once a mother is selected. ' +
+            'Not an FAO-required field — adjust freely.';
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // When the user edits the Birth Date manually, recompute the
+    // Weaning + Next Breeding dates from the server.
+    // ─────────────────────────────────────────────────────────────────
+    document.getElementById('birthDateInput').addEventListener('change', async function () {
+        const motherId = document.getElementById('motherSelect').value;
+        const birthDate = this.value;
+        if (!motherId || !birthDate) return;
+
+        try {
+            const resp = await fetch(
+                `/livestock/births/api/date-suggestions`
+                + `?motherId=${encodeURIComponent(motherId)}`
+                + `&birthDate=${encodeURIComponent(birthDate)}`
+            );
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.error) return;
+
+            const wdInput = document.getElementById('weaningDatePreview');
+            const nbInput = document.getElementById('nextBreedingDate');
+
+            if (data.weaningDate) {
+                wdInput.value = data.weaningDate;
+                if (data.weaningExplanation) {
+                    document.getElementById('weaningExplanation').innerHTML =
+                        '<i class="bi bi-magic text-success me-1"></i>'
+                        + escapeHtml(data.weaningExplanation)
+                        + ' <span class="text-muted">(adjust if needed)</span>';
+                }
+            }
+            if (data.nextBreedingDate) {
+                nbInput.value = data.nextBreedingDate;
+                if (data.breedingExplanation) {
+                    document.getElementById('breedingExplanation').innerHTML =
+                        '<i class="bi bi-calendar-check text-success me-1"></i>'
+                        + escapeHtml(data.breedingExplanation)
+                        + ' <span class="text-muted">(adjust if needed)</span>';
+                }
+            }
+        } catch (e) {
+            console.error('Failed to refresh date suggestions:', e);
+        }
+    });
+
+    function populateChildSelect() {
+        const sel = document.getElementById('childSelect');
+        sel.innerHTML = '<option value="">-- Select an offspring to link --</option>';
+
+        for (const child of eligibleChildren) {
+            if (selectedChildren[child.id]) continue;
+            const ageDays = child.ageDays;
+            const ageStr  = ageDays < 30
+                ? ageDays + ' days old'
+                : Math.floor(ageDays / 30) + ' months old';
+
+            const option = document.createElement('option');
+            option.value = child.id;
+
+            let warningText = '';
+            if (child.alreadyHasMother && child.motherTag) {
+                warningText = ` ⚠️ WARNING: Already has mother ${child.motherTag} - linking will replace it`;
+                option.style.backgroundColor = '#fff3cd';
+                option.style.color = '#856404';
+            }
+
+            const statusLabel = child.status ? child.status : 'ACTIVE';
+            option.textContent = `${child.tagNumber} (${child.category}) — ${child.gender} — ${ageStr} — ${statusLabel}${warningText}`;
+            if (child.birthDate) option.textContent += ` — Born ${child.birthDate}`;
+            sel.appendChild(option);
+        }
+
+        document.getElementById('childCountHint').textContent =
+            eligibleChildren.length + ' eligible offspring found for this mother\'s category.';
+    }
 
     function addChild() {
-        const sel   = document.getElementById('childSelect');
-        const id    = sel.value;
-        const label = sel.options[sel.selectedIndex]?.text || '';
+        const sel = document.getElementById('childSelect');
+        const id  = sel.value;
 
-        if (!id)               { alert('Please select a child animal first.'); return; }
-        if (selectedChildren[id]) { alert('This animal is already added.');    return; }
+        if (!id) { alert('Please select a child animal first.'); return; }
+        if (selectedChildren[id]) { alert('This animal is already added.'); return; }
 
-        selectedChildren[id] = label;
+        const child = eligibleChildren.find(c => String(c.id) === String(id));
+        selectedChildren[id] = child ? {
+            tagNumber: child.tagNumber,
+            gender:    child.gender || 'Unknown',
+            category:  child.category || '—',
+            birthDate: child.birthDate || null,
+            status:    child.status || 'ACTIVE'
+        } : { tagNumber: id, gender: 'Unknown', category: '—', birthDate: null, status: 'ACTIVE' };
+
         renderChildTags();
-        populateChildSelect(); // re-render without this animal
+        populateChildSelect();
+        updateOffspringSummary();
         sel.value = '';
     }
 
     function removeChild(id) {
         delete selectedChildren[id];
         renderChildTags();
-        populateChildSelect(); // put it back
+        populateChildSelect();
+        updateOffspringSummary();
     }
 
     function selectedChildren_clear() {
         for (const k of Object.keys(selectedChildren)) delete selectedChildren[k];
         renderChildTags();
+        updateOffspringSummary();
     }
 
     function renderChildTags() {
-        const container   = document.getElementById('childTagsContainer');
-        const hiddenDiv   = document.getElementById('childHiddenInputs');
-        const ids         = Object.keys(selectedChildren);
+        const container = document.getElementById('childTagsContainer');
+        const hiddenDiv  = document.getElementById('childHiddenInputs');
+        const ids        = Object.keys(selectedChildren);
 
         if (ids.length === 0) {
             container.innerHTML = `
@@ -380,13 +705,17 @@ function populateChildSelect() {
             return;
         }
 
-        container.innerHTML = ids.map(id => `
-            <span class="child-tag">
+        container.innerHTML = ids.map(id => {
+            const c = selectedChildren[id];
+            const bdLabel = c.birthDate ? escapeHtml(c.birthDate) : 'no date';
+            return `
+            <span class="child-tag" title="Tag: ${escapeHtml(c.tagNumber)} | Sex: ${escapeHtml(c.gender)} | Category: ${escapeHtml(c.category)} | Birth Date: ${bdLabel} | Status: ${escapeHtml(c.status)}">
                 <i class="bi bi-tag-fill"></i>
-                ${escapeHtml(selectedChildren[id])}
+                <strong>${escapeHtml(c.tagNumber)}</strong>
+                <span class="text-muted">· ${escapeHtml(c.gender)} · ${escapeHtml(c.category)} · ${bdLabel} · ${escapeHtml(c.status)}</span>
                 <span class="remove-child" onclick="removeChild('${id}')" title="Remove">&times;</span>
-            </span>
-        `).join('');
+            </span>`;
+        }).join('');
 
         hiddenDiv.innerHTML = ids.map(id =>
             `<input type="hidden" name="linkedChildIds" value="${id}">`
@@ -395,8 +724,208 @@ function populateChildSelect() {
 
     function escapeHtml(text) {
         const div = document.createElement('div');
-        div.appendChild(document.createTextNode(text));
+        div.appendChild(document.createTextNode(String(text)));
         return div.innerHTML;
+    }
+
+    function updateOffspringSummary() {
+        const countInput   = document.getElementById('offspringCountInput');
+        const genderOutput = document.getElementById('offspringGenderSummary');
+        const countHint    = document.getElementById('offspringCountHint');
+        const ids          = Object.keys(selectedChildren);
+
+        if (ids.length > 0) {
+            countInput.value    = ids.length;
+            countInput.readOnly = true;
+            countHint.innerHTML = '<i class="bi bi-lock-fill me-1"></i>Auto-set from the ' +
+                ids.length + ' child(ren) selected below.';
+
+            const counts = { MALE: 0, FEMALE: 0, UNKNOWN: 0 };
+            ids.forEach(id => {
+                const g = (selectedChildren[id].gender || 'Unknown').toUpperCase();
+                if (g === 'MALE') counts.MALE++;
+                else if (g === 'FEMALE') counts.FEMALE++;
+                else counts.UNKNOWN++;
+            });
+
+            const parts = [];
+            if (counts.MALE)    parts.push(`Male: ${counts.MALE}`);
+            if (counts.FEMALE)  parts.push(`Female: ${counts.FEMALE}`);
+            if (counts.UNKNOWN) parts.push(`Unknown: ${counts.UNKNOWN}`);
+            genderOutput.value = parts.join(', ') || '—';
+        } else {
+            countInput.readOnly = false;
+            countHint.innerHTML = 'Leave blank when linking already-registered animals below. ' +
+                'Only fill if offspring are <em>not yet registered</em>.';
+            genderOutput.value = '—';
+        }
+    }
+
+    const birthDateEl = document.getElementById('birthDateInput');
+    const saveBtn      = document.querySelector('button[type="submit"]');
+    function checkBirthDateNotFuture() {
+        const warning = document.getElementById('birthDateFutureWarning');
+        const maxDate = birthDateEl.getAttribute('max');
+        const isFuture = maxDate && birthDateEl.value && birthDateEl.value > maxDate;
+        warning.style.display = isFuture ? 'block' : 'none';
+        if (saveBtn) saveBtn.disabled = isFuture;
+    }
+    birthDateEl.addEventListener('change', checkBirthDateNotFuture);
+    birthDateEl.addEventListener('input', checkBirthDateNotFuture);
+
+    // ── Veterinarian live search ────────────────────────────────────────
+    const vetSearchInput   = document.getElementById('vetSearchInput');
+    const vetIdField       = document.getElementById('veterinarianIdValue');
+    const vetResultsBox    = document.getElementById('vetSearchResults');
+    const vetSelectedInfo  = document.getElementById('vetSelectedInfo');
+    const vetSelectedLabel = document.getElementById('vetSelectedLabel');
+
+    let vetSearchTimer = null;
+
+    vetSearchInput.addEventListener('input', function () {
+        const q = this.value.trim();
+        vetIdField.value = '';
+        vetSelectedInfo.style.display = 'none';
+
+        clearTimeout(vetSearchTimer);
+        if (q.length < 2) {
+            vetResultsBox.style.display = 'none';
+            return;
+        }
+        vetSearchTimer = setTimeout(() => runVetSearch(q), 250);
+    });
+
+    vetSearchInput.addEventListener('focus', function () {
+        if (this.value.trim().length >= 2 && vetResultsBox.innerHTML) {
+            vetResultsBox.style.display = 'block';
+        }
+    });
+
+    async function runVetSearch(q) {
+        try {
+            const resp = await fetch(`/livestock/births/api/veterinarians/search?q=${encodeURIComponent(q)}`);
+            const results = resp.ok ? await resp.json() : [];
+            renderVetResults(results, q);
+        } catch (e) {
+            console.error('Veterinarian search failed:', e);
+            vetResultsBox.style.display = 'none';
+        }
+    }
+
+    function renderVetResults(results, query) {
+        if (!results.length) {
+            vetResultsBox.innerHTML = `
+                <div class="list-group-item text-muted small">No matching veterinarians found for "${escapeHtml(query)}".</div>
+                <button type="button" class="list-group-item list-group-item-action py-2 text-success fw-semibold"
+                        onclick="openQuickAddVet('${escapeHtml(query).replace(/'/g, "\\'")}')">
+                    <i class="bi bi-plus-circle-fill me-1"></i>
+                    Add "${escapeHtml(query)}" as new veterinarian
+                </button>`;
+            vetResultsBox.style.display = 'block';
+            return;
+        }
+        const rowsHtml = results.map(v => `
+            <button type="button" class="list-group-item list-group-item-action py-2"
+                    data-vet-id="${v.id}" data-vet-label="${escapeHtml(v.displayName)}">
+                <div class="fw-semibold">${escapeHtml(v.displayName)}</div>
+                <div class="text-muted small">${escapeHtml(v.clinicName || '')}${v.phone ? ' · ' + escapeHtml(v.phone) : ''}</div>
+            </button>
+        `).join('');
+        const addRow = `
+            <button type="button" class="list-group-item list-group-item-action py-2 text-success fw-semibold"
+                    onclick="openQuickAddVet('${escapeHtml(query).replace(/'/g, "\\'")}')">
+                <i class="bi bi-plus-circle-fill me-1"></i>
+                Not listed? Add "${escapeHtml(query)}" as new veterinarian
+            </button>`;
+        vetResultsBox.innerHTML = rowsHtml + addRow;
+        vetResultsBox.querySelectorAll('button[data-vet-id]').forEach(btn => {
+            btn.addEventListener('click', () => selectVet(btn.dataset.vetId, btn.dataset.vetLabel));
+        });
+        vetResultsBox.style.display = 'block';
+    }
+
+    function selectVet(id, label) {
+        vetIdField.value = id;
+        vetSearchInput.value = label;
+        vetSelectedLabel.textContent = label;
+        vetSelectedInfo.style.display = 'block';
+        vetResultsBox.style.display = 'none';
+    }
+
+    function clearVetSelection() {
+        vetIdField.value = '';
+        vetSearchInput.value = '';
+        vetSelectedInfo.style.display = 'none';
+    }
+
+    document.addEventListener('click', function (e) {
+        if (!vetResultsBox.contains(e.target) && e.target !== vetSearchInput) {
+            vetResultsBox.style.display = 'none';
+        }
+    });
+
+    // ── Veterinarian quick-add ──────────────────────────────────────────
+    function openQuickAddVet(typedText) {
+        vetResultsBox.style.display = 'none';
+
+        const parts = typedText.trim().split(/\s+/);
+        document.getElementById('vetQuickFirstName').value = parts[0] || '';
+        document.getElementById('vetQuickLastName').value = parts.length > 1 ? parts.slice(1).join(' ') : '';
+        document.getElementById('vetQuickPhone').value = '';
+        document.getElementById('vetQuickAddError').style.display = 'none';
+        document.getElementById('vetQuickAddWarning').style.display = 'none';
+
+        document.getElementById('vetQuickAddPanel').style.display = 'block';
+    }
+
+    function closeQuickAddVet() {
+        document.getElementById('vetQuickAddPanel').style.display = 'none';
+    }
+
+    async function submitQuickAddVet() {
+        const firstName = document.getElementById('vetQuickFirstName').value.trim();
+        const lastName  = document.getElementById('vetQuickLastName').value.trim();
+        const phone     = document.getElementById('vetQuickPhone').value.trim();
+        const errorBox  = document.getElementById('vetQuickAddError');
+        const warnBox   = document.getElementById('vetQuickAddWarning');
+
+        errorBox.style.display = 'none';
+        warnBox.style.display  = 'none';
+
+        if (!firstName || !lastName) {
+            errorBox.textContent = 'First name and last name are both required.';
+            errorBox.style.display = 'block';
+            return;
+        }
+
+        try {
+            const params = new URLSearchParams({ firstName, lastName });
+            if (phone) params.append('phone', phone);
+
+            const resp = await fetch('/livestock/births/api/veterinarians/quick-add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params.toString()
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                errorBox.textContent = data.error || 'Could not create veterinarian.';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            if (data.duplicateWarning) {
+                warnBox.style.display = 'block';
+            }
+
+            selectVet(data.id, data.displayName);
+            closeQuickAddVet();
+        } catch (e) {
+            errorBox.textContent = 'Network error — please try again.';
+            errorBox.style.display = 'block';
+        }
     }
 </script>
 </body>

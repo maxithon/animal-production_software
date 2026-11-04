@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${treatment.id != null ? 'Edit Treatment' : 'New Treatment'}">Treatment Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background: #f8f9fa; padding: 20px; }
+        .form-section { background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-section-title { font-weight: 600; color: #0d6efd; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; margin-bottom: 20px; }
+        .required::after { content: " *"; color: red; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 th:text="${treatment.id != null ? '✏️ Edit Treatment' : '➕ New Treatment'}">
+            <i class="bi bi-heart-pulse"></i> Treatment
+        </h2>
+        <a href="/livestock/treatments" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <form th:action="${treatment.id != null ? @{/livestock/treatments/update/{id}(id=${treatment.id})} : @{/livestock/treatments/new}}"
+          th:object="${treatment}" method="post">
+
+        <!-- Animal & Diagnosis Section -->
+        <div class="form-section">
+            <h5 class="form-section-title"><i class="bi bi-clipboard2-pulse"></i> Animal & Diagnosis</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Animal</label>
+                    <select th:field="*{livestockIdValue}" class="form-select" required>
+                        <option value="">Select Animal</option>
+                        <option th:each="a : ${sickAnimals}"
+                                th:value="${a.id}"
+                                th:text="${a.tagNumber + ' - ' + a.healthStatus}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Medication</label>
+                    <select th:field="*{medicationIdValue}" class="form-select" required>
+                        <option value="">Select Medication</option>
+                        <option th:each="m : ${medicationList}"
+                                th:value="${m.id}"
+                                th:text="${m.name}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Veterinarian</label>
+                    <select th:field="*{veterinarianIdValue}" class="form-select">
+                        <option value="">Select Veterinarian</option>
+                        <option th:each="v : ${veterinarianList}"
+                                th:value="${v.id}"
+                                th:text="${v.fullName}"></option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label required">Treatment Date</label>
+                    <input type="date" th:field="*{treatmentDate}" class="form-control" required>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label required">Diagnosis</label>
+                    <input type="text" th:field="*{diagnosisName}" class="form-control" placeholder="e.g. Foot and Mouth Disease" required>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Symptoms</label>
+                    <textarea th:field="*{symptoms}" class="form-control" rows="2" placeholder="Describe symptoms..."></textarea>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Clinical Observations</label>
+                    <textarea th:field="*{clinicalObservations}" class="form-control" rows="2" placeholder="Observations..."></textarea>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Severity</label>
+                    <select th:field="*{severity}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="MILD">Mild</option>
+                        <option value="MODERATE">Moderate</option>
+                        <option value="SEVERE">Severe</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Treatment Details Section -->
+        <div class="form-section">
+            <h5 class="form-section-title"><i class="bi bi-capsule"></i> Treatment Details</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" th:field="*{startDate}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" th:field="*{endDate}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Next Treatment Date</label>
+                    <input type="date" th:field="*{nextTreatmentDate}" class="form-control">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Dosage</label>
+                    <input type="text" th:field="*{dosage}" class="form-control" placeholder="e.g. 5">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Unit</label>
+                    <select th:field="*{dosageUnit}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="mg">mg</option>
+                        <option value="ml">ml</option>
+                        <option value="g">g</option>
+                        <option value="tablet">tablet</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Frequency</label>
+                    <select th:field="*{frequency}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="ONCE_DAILY">Once Daily</option>
+                        <option value="TWICE_DAILY">Twice Daily</option>
+                        <option value="THREE_TIMES_DAILY">Three Times Daily</option>
+                        <option value="WEEKLY">Weekly</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Duration</label>
+                    <input type="text" th:field="*{treatmentDuration}" class="form-control" placeholder="e.g. 7 days">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Treatment Type</label>
+                    <select th:field="*{treatmentType}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="CURATIVE">Curative</option>
+                        <option value="PREVENTIVE">Preventive</option>
+                        <option value="VACCINATION">Vaccination</option>
+                        <option value="DEWORMING">Deworming</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Status</label>
+                    <select th:field="*{treatmentStatus}" class="form-select">
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="ONGOING">Ongoing</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="FAILED">Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Treatment Cost (RWF)</label>
+                    <input type="number" th:field="*{treatmentCost}" class="form-control" step="0.01">
+                </div>
+            </div>
+        </div>
+
+        <!-- Outcome Section -->
+        <div class="form-section">
+            <h5 class="form-section-title"><i class="bi bi-clipboard-check"></i> Outcome</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Outcome Status</label>
+                    <select th:field="*{outcomeStatus}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="RECOVERED">Recovered</option>
+                        <option value="IMPROVING">Improving</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="DISCONTINUED">Discontinued</option>
+                        <option value="FOLLOW_UP_REQUIRED">Follow-up Required</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Follow-up Date</label>
+                    <input type="date" th:field="*{followUpDate}" class="form-control">
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Follow-up Instructions</label>
+                    <textarea th:field="*{followUpInstructions}" class="form-control" rows="2" placeholder="Instructions..."></textarea>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Outcome Notes</label>
+                    <textarea th:field="*{outcomeNotes}" class="form-control" rows="2" placeholder="Outcome notes..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdrawal Section -->
+        <div class="form-section">
+            <h5 class="form-section-title"><i class="bi bi-shield-exclamation"></i> Withdrawal & Traceability</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Withdrawal Period (days)</label>
+                    <input type="number" th:field="*{withdrawalPeriodDays}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Withdrawal End Date</label>
+                    <input type="date" th:field="*{withdrawalEndDate}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Product Affected</label>
+                    <select th:field="*{productAffected}" class="form-select">
+                        <option value="">Select</option>
+                        <option value="MEAT">Meat</option>
+                        <option value="MILK">Milk</option>
+                        <option value="EGGS">Eggs</option>
+                        <option value="ALL">All</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Batch Number</label>
+                    <input type="text" th:field="*{batchNumber}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Expiry Date</label>
+                    <input type="date" th:field="*{expiryDate}" class="form-control">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Manufacturer</label>
+                    <input type="text" th:field="*{manufacturer}" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-section">
+            <h5 class="form-section-title"><i class="bi bi-journal-text"></i> Notes</h5>
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    <textarea th:field="*{description}" class="form-control" rows="3" placeholder="Additional notes..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Save
+            </button>
+            <a href="/livestock/treatments" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

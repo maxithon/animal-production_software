@@ -32,6 +32,8 @@ public class BuyerController {
     }
 
     // ── LIST (now backed by a single, fast projection query — see BuyerSummary) ──
+    // FIX: was @GetMapping("/buyers") which combined with the class-level
+    // @RequestMapping("/buyers") to map this to /buyers/buyers instead of /buyers.
     @GetMapping
     public String listBuyers(Model model) {
         model.addAttribute("buyers", buyerService.getAllSummaries());
