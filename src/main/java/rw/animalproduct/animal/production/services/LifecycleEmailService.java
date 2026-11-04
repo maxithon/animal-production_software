@@ -1,9 +1,7 @@
 package rw.animalproduct.animal.production.services;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.mail.internet.MimeMessage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,509 +13,408 @@ import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBirth;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
 import rw.animalproduct.animal.production.entity.LivestockDeath;
-import rw.animalproduct.animal.production.entity.LivestockSale;
 import rw.animalproduct.animal.production.entity.LivestockValuation;
 import rw.animalproduct.animal.production.notification.LifecycleNotificationType;
+import rw.animalproduct.animal.production.patches.AsyncConfig;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 @Service
+@Slf4j
 public class LifecycleEmailService {
 
-    private static final Logger logger = LoggerFactory.getLogger(LifecycleEmailService.class);
-    private static final DateTimeFormatter DISPLAY_DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
 
-    @Value("${app.notifications.recipients:}")
-    private String recipientsCsv;
+    // ✅ FALLBACK: If properties are missing, it defaults to your working email
+    @Value("${livestock.notifications.to:samuelhabanabakize55@gmail.com}")
+    private String defaultRecipient;
 
-    @Value("${app.notifications.from:no-reply@animalproduction.rw}")
+    @Value("${livestock.notifications.from:samuelhabanabakize55@gmail.com}")
     private String fromAddress;
 
-    @Value("${app.notifications.enabled:true}")
-    private boolean notificationsEnabled;
-
-    private volatile String lastSendResult = "No notification has been attempted yet.";
-    private volatile LocalDate lastSendDate = null;
+    @Value("${livestock.notifications.dry-run:false}")
+    private boolean dryRun;
 
     public LifecycleEmailService(JavaMailSender mailSender, TemplateEngine templateEngine) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
-        logger.info("✅ LifecycleEmailService initialized");
+        log.info("✅ LifecycleEmailService Initialized. Sending TO: {}", defaultRecipient);
     }
-
-    @PostConstruct
-    void validateConfigOnStartup() {
-        logger.info("=================================================================");
-        logger.info(" Email Notification Configuration Check");
-        logger.info("=================================================================");
-        logger.info(" notifications.enabled : {}", notificationsEnabled);
-        logger.info(" notifications.from    : {}", fromAddress);
-
-        List<String> recipients = recipients();
-        if (!notificationsEnabled) {
-            logger.warn(" ⚠️ Notifications are DISABLED (app.notifications.enabled=false).");
-        } else if (recipients.isEmpty()) {
-            logger.warn(" *** NO RECIPIENTS CONFIGURED ***");
-            logger.warn(" app.notifications.recipients is empty or missing in application.properties.");
-        } else {
-            logger.info(" notifications.recipients ({}): {}", recipients.size(), recipients);
-        }
-        logger.info("=================================================================");
-    }
-
-    // ============ ZONE 1: CLICK-TRIGGERED ============
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendAnimalRegisteredNotification(Livestock animal) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        rows.add(new DetailRow("Category", animal.getLivestockCategory() != null
-                ? animal.getLivestockCategory().getName() : "—"));
-        rows.add(new DetailRow("Gender", animal.getGender()));
-        rows.add(new DetailRow("Status", animal.getStatus()));
-        rows.add(new DetailRow("Health Status", animal.healthStatusLabel()));
-        rows.add(new DetailRow("Reproductive Status", animal.reproductiveStatusLabel()));
-        rows.add(new DetailRow("Acquisition Method", animal.getAcquisitionMethod()));
-        rows.add(new DetailRow("Birth Date", format(animal.getBirthDate())));
-        rows.add(new DetailRow("Beneficiary", animal.getBeneficiary() != null
-                ? animal.getBeneficiary().getFullName() : "Not assigned"));
-        if (animal.getLocation() != null) {
-            rows.add(new DetailRow("Location", animal.getLocation().getName()));
-        }
-        if (animal.getCurrentValue() != null) {
-            rows.add(new DetailRow("Current Value", formatMoney(animal.getCurrentValue()) + " RWF"));
-        }
-        String message = animal.getTagNumber() + " has been registered in the system.";
-        send(LifecycleNotificationType.ANIMAL_REGISTERED,
-                "Animal registered — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    /**
-     * ✅ NEW: Bulk import summary email.
-     * Fires ONCE after a bulk import finishes — NOT once per animal.
-     * Called from BulkLivestockImportService.importValidatedRows().
-     */
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendBulkImportCompletedNotification(
-            int createdCount,
-            int totalRows,
-            int okRows,
-            int warningRows,
-            int errorRows,
-            String fileName,
-            String uploadedBy,
-            List<String> createdTags) {
-
-        logger.info("📧 QUEUED: Bulk import completed email ({} created)", createdCount);
-
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("File",                  fileName != null ? fileName : "—"));
-        rows.add(new DetailRow("Uploaded By",           uploadedBy != null ? uploadedBy : "system"));
-        rows.add(new DetailRow("Total Rows",            String.valueOf(totalRows)));
-        rows.add(new DetailRow("✅ Successfully Created", String.valueOf(createdCount)));
-        rows.add(new DetailRow("⚠️ Warnings",           String.valueOf(warningRows)));
-        rows.add(new DetailRow("❌ Errors (skipped)",   String.valueOf(errorRows)));
-
-        if (createdTags != null && !createdTags.isEmpty()) {
-            String preview = createdTags.size() <= 30
-                    ? String.join(", ", createdTags)
-                    : String.join(", ", createdTags.subList(0, 30))
-                    + " … +" + (createdTags.size() - 30) + " more";
-            rows.add(new DetailRow("Created Tags", preview));
-        }
-
-        String message = "Bulk import finished: " + createdCount
-                + " animal(s) registered from " + fileName + ".";
-
-        send(LifecycleNotificationType.BULK_IMPORT_COMPLETED,
-                "Bulk import completed — " + createdCount + " animal(s)",
-                message, rows);
-
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendAnimalUpdatedNotification(Livestock animal,
-                                                                 List<ChangeRow> changes,
-                                                                 String changedBy) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        rows.add(new DetailRow("Category", animal.getLivestockCategory() != null
-                ? animal.getLivestockCategory().getName() : "—"));
-        rows.add(new DetailRow("Updated By", changedBy != null ? changedBy : "system"));
-        for (ChangeRow change : changes) {
-            rows.add(new DetailRow("  ⚡ " + change.getLabel(),
-                    change.getOldValue() + " → " + change.getNewValue()));
-        }
-        String message = animal.getTagNumber() + " was updated. " + changes.size() + " field(s) changed.";
-        send(LifecycleNotificationType.STAGE_CHANGED,
-                "Animal updated — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendValuationChangedNotification(LivestockValuation valuation,
-                                                                    Double oldValue) {
-        if (valuation == null || valuation.getLivestock() == null) {
-            return CompletableFuture.completedFuture(null);
-        }
-        Livestock animal = valuation.getLivestock();
-        logger.info("📧 QUEUED: Valuation changed email for: {}", animal.getTagNumber());
-
-        Double newValue = valuation.getEstimatedValue();
-        BigDecimal delta = BigDecimal.ZERO;
-        if (oldValue != null && newValue != null) {
-            delta = BigDecimal.valueOf(newValue - oldValue);
-        }
-
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        rows.add(new DetailRow("Category", animal.getLivestockCategory() != null
-                ? animal.getLivestockCategory().getName() : "—"));
-        rows.add(new DetailRow("Previous Value",
-                oldValue != null ? formatMoney(BigDecimal.valueOf(oldValue)) + " RWF" : "—"));
-        rows.add(new DetailRow("New Value",
-                newValue != null ? formatMoney(BigDecimal.valueOf(newValue)) + " RWF" : "—"));
-        rows.add(new DetailRow("Change",
-                (delta.signum() >= 0 ? "+" : "") + formatMoney(delta) + " RWF"));
-        rows.add(new DetailRow("Valuation Date", format(valuation.getValuationDate())));
-        rows.add(new DetailRow("Method", valuation.methodLabel()));
-        rows.add(new DetailRow("Notes", valuation.getNotes() != null ? valuation.getNotes() : "—"));
-        rows.add(new DetailRow("Recorded By", valuation.getValuedBy() != null
-                ? valuation.getValuedBy() : "system"));
-
-        String message = "New valuation recorded for " + animal.getTagNumber()
-                + (oldValue != null
-                ? ": " + formatMoney(BigDecimal.valueOf(oldValue)) + " RWF → "
-                + formatMoney(BigDecimal.valueOf(newValue)) + " RWF"
-                : ": " + formatMoney(BigDecimal.valueOf(newValue)) + " RWF");
-
-        send(LifecycleNotificationType.STAGE_CHANGED,
-                "Valuation changed — " + animal.getTagNumber(),
-                message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendBreedingStartedNotification(LivestockBreeding breeding) {
-        if (breeding == null || breeding.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = breeding.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Dam Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Sire", breeding.getMale() != null
-                ? breeding.getMale().getTagNumber() : "External / Not recorded"));
-        rows.add(new DetailRow("Breeding Method", breeding.getInseminationMethodLabel()));
-        rows.add(new DetailRow("Breeding Date", format(breeding.getBreedingDate())));
-        rows.add(new DetailRow("Status", breeding.getStatusLabel()));
-        String message = "A new breeding has been recorded for " + dam.getTagNumber() + ".";
-        send(LifecycleNotificationType.BREEDING_RECORDED,
-                "Breeding recorded — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendBreedingFailedNotification(LivestockBreeding breeding) {
-        if (breeding == null || breeding.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = breeding.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Dam Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Failure Reason", breeding.getFailureReason() != null
-                ? breeding.getFailureReason() : "Not specified"));
-        String message = "Breeding attempt for " + dam.getTagNumber() + " was marked as failed.";
-        send(LifecycleNotificationType.BREEDING_FAILED,
-                "Breeding failed — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendPregnancyConfirmedNotification(LivestockBreeding breeding) {
-        if (breeding == null || breeding.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = breeding.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Dam Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Breeding Date", format(breeding.getBreedingDate())));
-        rows.add(new DetailRow("Expected Due Date", format(breeding.getExpectedDueDate())));
-        String message = "Pregnancy confirmed for " + dam.getTagNumber() + ".";
-        send(LifecycleNotificationType.PREGNANCY_CONFIRMED,
-                "Pregnancy confirmed — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendBirthRecordedNotification(LivestockBirth birth) {
-        if (birth == null || birth.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = birth.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Mother Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Birth Date", format(birth.getBirthDate())));
-        rows.add(new DetailRow("Offspring Count", String.valueOf(birth.getOffspringCount())));
-        String message = "A birth has been recorded for " + dam.getTagNumber() + ".";
-        send(LifecycleNotificationType.BIRTH_RECORDED,
-                "Birth recorded — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendDeathNotification(LivestockDeath death) {
-        if (death == null || death.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock animal = death.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        rows.add(new DetailRow("Death Date", format(death.getDeathDate())));
-        rows.add(new DetailRow("Cause of Death", death.getCauseOfDeath() != null
-                ? death.getCauseOfDeath() : "Not specified"));
-        String message = "A death has been recorded for " + animal.getTagNumber() + ".";
-        send(LifecycleNotificationType.ANIMAL_DEATH,
-                "Death recorded — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendSaleCreatedNotification(LivestockSale sale, String createdBy) {
-        if (sale == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Sale Reference", sale.getSaleReference()));
-        rows.add(new DetailRow("Sale Price", formatMoney(sale.getSalePrice()) + " RWF"));
-        String message = "Sale " + sale.getSaleReference() + " was created by " + createdBy + ".";
-        send(LifecycleNotificationType.SALE_CREATED,
-                "Sale created — " + sale.getSaleReference(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendSaleConfirmedNotification(LivestockSale sale, String confirmedBy) {
-        if (sale == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Sale Reference", sale.getSaleReference()));
-        rows.add(new DetailRow("Confirmed By", confirmedBy));
-        String message = "Sale " + sale.getSaleReference() + " was confirmed.";
-        send(LifecycleNotificationType.SALE_CONFIRMED,
-                "Sale confirmed — " + sale.getSaleReference(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendPaymentRecordedNotification(LivestockSale sale,
-                                                                   String recordedBy,
-                                                                   String paymentMethod,
-                                                                   String paymentReference) {
-        if (sale == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Sale Reference", sale.getSaleReference()));
-        rows.add(new DetailRow("Amount Paid", formatMoney(sale.getAmountPaid()) + " RWF"));
-        rows.add(new DetailRow("Balance", formatMoney(sale.getBalance()) + " RWF"));
-        String message = "Payment recorded for sale " + sale.getSaleReference() + ".";
-        send(LifecycleNotificationType.SALE_PAYMENT_RECORDED,
-                "Payment recorded — " + sale.getSaleReference(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendSaleCancelledNotification(LivestockSale sale, String cancelledBy) {
-        if (sale == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Sale Reference", sale.getSaleReference()));
-        rows.add(new DetailRow("Cancelled By", cancelledBy));
-        String message = "Sale " + sale.getSaleReference() + " was cancelled.";
-        send(LifecycleNotificationType.SALE_CANCELLED,
-                "Sale cancelled — " + sale.getSaleReference(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendSaleRefundedNotification(LivestockSale sale, String refundedBy) {
-        if (sale == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Sale Reference", sale.getSaleReference()));
-        rows.add(new DetailRow("Refunded By", refundedBy));
-        String message = "Sale " + sale.getSaleReference() + " was refunded.";
-        send(LifecycleNotificationType.SALE_REFUNDED,
-                "Sale refunded — " + sale.getSaleReference(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    // ============ ZONE 2: SCHEDULED ============
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendReadyToBreedNotification(Livestock animal) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        rows.add(new DetailRow("Age", animal.getAgeDisplay()));
-        String message = animal.getTagNumber() + " is ready to breed.";
-        send(LifecycleNotificationType.READY_TO_BREED,
-                "Ready to breed — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendYoungStageNotification(Livestock animal) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        String message = animal.getTagNumber() + " entered young stage.";
-        send(LifecycleNotificationType.YOUNG_ANIMAL,
-                "Young animal — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendPreBreedingNotification(Livestock animal) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        String message = animal.getTagNumber() + " approaching breeding age.";
-        send(LifecycleNotificationType.PRE_BREEDING,
-                "Pre-breeding — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendNewbornNotification(Livestock animal) {
-        if (animal == null) return CompletableFuture.completedFuture(null);
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-        String message = animal.getTagNumber() + " is a newborn.";
-        send(LifecycleNotificationType.YOUNG_ANIMAL,
-                "Newborn — " + animal.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendDueSoonNotification(List<Livestock> animals, int daysUntilDue) {
-        if (animals == null || animals.isEmpty()) return CompletableFuture.completedFuture(null);
-        for (Livestock animal : animals) {
-            List<DetailRow> rows = new ArrayList<>();
-            rows.add(new DetailRow("Tag Number", animal.getTagNumber()));
-            rows.add(new DetailRow("Days Until Due", String.valueOf(daysUntilDue)));
-            String message = animal.getTagNumber() + " is due in " + daysUntilDue + " day(s).";
-            send(LifecycleNotificationType.UPCOMING_BIRTH,
-                    "Upcoming birth — " + animal.getTagNumber(), message, rows);
-        }
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendOverduePregnancyNotification(LivestockBreeding breeding,
-                                                                    int daysOverdue, int tier) {
-        if (breeding == null || breeding.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = breeding.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Dam Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Days Overdue", String.valueOf(daysOverdue)));
-        String message = dam.getTagNumber() + " is " + daysOverdue + " day(s) overdue.";
-        send(LifecycleNotificationType.OVERDUE_PREGNANCY,
-                "URGENT: Overdue pregnancy — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    @Async("emailTaskExecutor")
-    public CompletableFuture<Void> sendPregnancyTimelineNotification(LifecycleNotificationType type,
-                                                                     LivestockBreeding breeding,
-                                                                     int daysUntilDue) {
-        if (breeding == null || breeding.getLivestock() == null) return CompletableFuture.completedFuture(null);
-        Livestock dam = breeding.getLivestock();
-        List<DetailRow> rows = new ArrayList<>();
-        rows.add(new DetailRow("Dam Tag", dam.getTagNumber()));
-        rows.add(new DetailRow("Days Until Due", String.valueOf(daysUntilDue)));
-        String message = "Pregnancy update for " + dam.getTagNumber();
-        send(type, "Pregnancy update — " + dam.getTagNumber(), message, rows);
-        return CompletableFuture.completedFuture(null);
-    }
-
-    // ============ SENDING ============
-
-    private void send(LifecycleNotificationType type, String subject, String message, List<DetailRow> rows) {
-        logger.info("📧 ATTEMPTING to send {} email: {}", type, subject);
-
-        if (!notificationsEnabled) {
-            logger.warn("⛔ Notifications disabled — skipping {}", type);
-            lastSendResult = "Skipped — notifications disabled.";
-            return;
-        }
-
-        List<String> recipients = recipients();
-        if (recipients.isEmpty()) {
-            logger.error("❌ NO RECIPIENTS configured — skipping {}", type);
-            lastSendResult = "Skipped — no recipients configured.";
-            return;
-        }
-
-        if (mailSender == null) {
-            logger.error("❌ mailSender is NULL");
-            lastSendResult = "FAILED — mailSender is null.";
-            return;
-        }
-
-        try {
-            Context ctx = new Context();
-            ctx.setVariable("title", type.getLabel());
-            ctx.setVariable("emoji", type.getEmoji());
-            ctx.setVariable("colorHex", type.getColorHex());
-            ctx.setVariable("subtitle", "Livestock Lifecycle Notification");
-            ctx.setVariable("message", message);
-            ctx.setVariable("detailRows", rows);
-            ctx.setVariable("today", LocalDate.now().format(DISPLAY_DATE_FMT));
-            ctx.setVariable("systemName", "Animal Production System");
-
-            String html = templateEngine.process("email-lifecycle-notification", ctx);
-
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setFrom(fromAddress);
-            helper.setTo(recipients.toArray(new String[0]));
-            helper.setSubject(type.getEmoji() + " " + subject);
-            helper.setText(html, true);
-
-            mailSender.send(mimeMessage);
-            logger.info("✅ SUCCESS: Sent {} notification to {} recipient(s).", type, recipients.size());
-            lastSendResult = "Success — " + type + " sent.";
-            lastSendDate = LocalDate.now();
-        } catch (Exception e) {
-            logger.error("❌ FAILED to send {} notification: {}", type, e.getMessage(), e);
-            lastSendResult = "FAILED — " + type + ": " + e.getMessage();
-        }
-    }
-
-    private List<String> recipients() {
-        if (recipientsCsv == null || recipientsCsv.isBlank()) return List.of();
-        return java.util.Arrays.stream(recipientsCsv.split(","))
-                .map(String::trim).filter(s -> !s.isBlank()).toList();
-    }
-
-    private String format(LocalDate date) {
-        return date == null ? "—" : date.format(DISPLAY_DATE_FMT);
-    }
-
-    private String formatMoney(BigDecimal value) {
-        if (value == null) return "0";
-        return value.setScale(0, RoundingMode.HALF_UP)
-                .toBigInteger().toString()
-                .replaceAll("\\B(?=(\\d{3})+(?!\\d))", ",");
-    }
-
-    public boolean isNotificationsEnabled() { return notificationsEnabled; }
-    public String getFromAddress() { return fromAddress; }
-    public List<String> getConfiguredRecipients() { return recipients(); }
-    public String getLastSendResult() { return lastSendResult; }
-    public LocalDate getLastSendDate() { return lastSendDate; }
 
     public record DetailRow(String label, String value) {}
-    public record ChangeRow(String label, String oldValue, String newValue) {
-        public String getLabel() { return label; }
-        public String getOldValue() { return oldValue; }
-        public String getNewValue() { return newValue; }
+
+    // ════════════════════════════════════════════════════════════════════
+    // GENERIC PIPELINE
+    // ════════════════════════════════════════════════════════════════════
+
+    public void sendGeneric(LifecycleNotificationType type, String subject, String message, List<DetailRow> rows) {
+        try {
+            if (type == null) type = LifecycleNotificationType.STAGE_CHANGED;
+
+            Map<String, Object> m = new HashMap<>();
+            m.put("title",     type.getLabel());
+            m.put("emoji",     type.getEmoji());
+            m.put("message",   message != null ? message : "");
+            m.put("tagNumber", extractRow(rows, "Tag Number", "—"));
+            m.put("stageName", extractRow(rows, "Status", extractRow(rows, "Stage", "—")));
+            m.put("category",  extractRow(rows, "Category", "—"));
+            m.put("gender",    extractRow(rows, "Gender", "—"));
+            m.put("ageDays",   extractRow(rows, "Age", extractRow(rows, "Age (days)", "—")));
+            m.put("ageMonths", extractRow(rows, "Age", extractRow(rows, "Age (months)", "—")));
+            m.put("nextStage", extractRow(rows, "Next Stage", "—"));
+            m.put("today",     LocalDate.now().format(DATE_FMT));
+            m.put("rows",      rows != null ? rows : List.of());
+
+            sendHtmlEmail(subject, "email-lifecycle-stage", m);
+        } catch (Exception e) {
+            log.error("❌ sendGeneric failed for type={} subject='{}'", type, subject, e);
+        }
+    }
+
+    private String extractRow(List<DetailRow> rows, String label, String fallback) {
+        if (rows == null) return fallback;
+        for (DetailRow r : rows) {
+            if (r != null && label.equalsIgnoreCase(r.label()) && r.value() != null && !r.value().isBlank()) {
+                return r.value();
+            }
+        }
+        return fallback;
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // LIVESTOCK — REGISTERED / UPDATED / DELETED
+    // ════════════════════════════════════════════════════════════════════
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendAnimalRegisteredNotification(String tagNumber, String category, String gender, String age, String status, String health, String beneficiaryName, String beneficiaryPhone, String fullLocation) {
+        try {
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tagNumber != null ? tagNumber : "—"));
+            rows.add(new DetailRow("Category", category != null ? category : "—"));
+            rows.add(new DetailRow("Gender", gender != null ? gender : "—"));
+            rows.add(new DetailRow("Age", age != null ? age : "—"));
+            rows.add(new DetailRow("Status", status != null ? status : "ACTIVE"));
+            rows.add(new DetailRow("Health Status", health != null ? health : "—"));
+            rows.add(new DetailRow("Beneficiary", beneficiaryName != null ? beneficiaryName : "—"));
+            rows.add(new DetailRow("Phone", beneficiaryPhone != null ? beneficiaryPhone : "—"));
+            rows.add(new DetailRow("Location", fullLocation != null ? fullLocation : "—"));
+
+            sendGeneric(LifecycleNotificationType.ANIMAL_REGISTERED, "[Livestock] Animal registered — " + tagNumber, "A new animal has been registered: " + tagNumber + ".", rows);
+        } catch (Exception e) { log.error("❌ sendAnimalRegisteredNotification failed", e); }
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendAnimalUpdatedNotification(String tagNumber, String category, String status, String changedSummary, String gender, String age, String health, String beneficiaryName, String beneficiaryPhone, String fullLocation) {
+        try {
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tagNumber != null ? tagNumber : "—"));
+            rows.add(new DetailRow("Category", category != null ? category : "—"));
+            rows.add(new DetailRow("Status", status != null ? status : "—"));
+            rows.add(new DetailRow("Change Summary", changedSummary != null ? changedSummary : "Fields updated."));
+            rows.add(new DetailRow("Gender", gender != null ? gender : "—"));
+            rows.add(new DetailRow("Age", age != null ? age : "—"));
+            rows.add(new DetailRow("Health Status", health != null ? health : "—"));
+            rows.add(new DetailRow("Beneficiary", beneficiaryName != null ? beneficiaryName : "—"));
+            rows.add(new DetailRow("Phone", beneficiaryPhone != null ? beneficiaryPhone : "—"));
+            rows.add(new DetailRow("Location", fullLocation != null ? fullLocation : "—"));
+
+            sendGeneric(LifecycleNotificationType.STAGE_CHANGED, "[Livestock] Animal updated — " + tagNumber, "Animal " + tagNumber + " was updated.", rows);
+        } catch (Exception e) { log.error("❌ sendAnimalUpdatedNotification failed", e); }
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendAnimalDeletedNotification(String tagNumber, String category, String status, String reason, String gender, String age, String beneficiaryName, String beneficiaryPhone, String fullLocation) {
+        try {
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tagNumber != null ? tagNumber : "—"));
+            rows.add(new DetailRow("Category", category != null ? category : "—"));
+            rows.add(new DetailRow("Status", status != null ? status : "—"));
+            rows.add(new DetailRow("Reason", reason != null && !reason.isBlank() ? reason : "—"));
+            rows.add(new DetailRow("Gender", gender != null ? gender : "—"));
+            rows.add(new DetailRow("Age", age != null ? age : "—"));
+            rows.add(new DetailRow("Beneficiary", beneficiaryName != null ? beneficiaryName : "—"));
+            rows.add(new DetailRow("Phone", beneficiaryPhone != null ? beneficiaryPhone : "—"));
+            rows.add(new DetailRow("Location", fullLocation != null ? fullLocation : "—"));
+
+            sendGeneric(LifecycleNotificationType.ANIMAL_DELETED, "[Livestock] Animal deleted — " + tagNumber, "Animal " + tagNumber + " has been deleted.", rows);
+        } catch (Exception e) { log.error("❌ sendAnimalDeletedNotification failed", e); }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // PREGNANCY / BREEDING
+    // ════════════════════════════════════════════════════════════════════
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBreedingStartedNotification(LivestockBreeding breeding) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        try {
+            String tag = breeding.getLivestock().getTagNumber();
+            String method = breeding.getBreedingMethod() != null ? breeding.getBreedingMethod() : "—";
+            String date = breeding.getBreedingDate() != null ? breeding.getBreedingDate().toString() : "—";
+
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tag));
+            rows.add(new DetailRow("Method", method));
+            rows.add(new DetailRow("Date", date));
+
+            sendGeneric(LifecycleNotificationType.BREEDING_RECORDED, "[Livestock] Breeding recorded — " + tag, "A new breeding record was created for " + tag + ".", rows);
+        } catch (Exception e) { log.error("❌ sendBreedingStartedNotification failed", e); }
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBreedingUpdatedNotification(LivestockBreeding breeding, String changedSummary) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        String tag = breeding.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.STAGE_CHANGED, "[Livestock] Breeding updated — " + tag, "Breeding updated: " + changedSummary, List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBreedingFailedNotification(LivestockBreeding breeding) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        String tag = breeding.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.BREEDING_FAILED, "[Livestock] Breeding failed — " + tag, "Breeding failed for " + tag + ".", List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBreedingDeletedNotification(LivestockBreeding breeding) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        String tag = breeding.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.ANIMAL_DELETED, "[Livestock] Breeding deleted — " + tag, "Breeding deleted.", List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendPregnancyTimelineNotification(LifecycleNotificationType type, LivestockBreeding breeding, int days) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        try {
+            String tag = breeding.getLivestock().getTagNumber();
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tag));
+            rows.add(new DetailRow("Breeding Date", breeding.getBreedingDate() != null ? breeding.getBreedingDate().toString() : "—"));
+            rows.add(new DetailRow("Expected Due Date", breeding.getExpectedDueDate() != null ? breeding.getExpectedDueDate().toString() : "—"));
+            rows.add(new DetailRow("Days", String.valueOf(days)));
+
+            String subject = "[Livestock] Pregnancy Timeline — " + tag;
+            String message = "Pregnancy timeline update for " + tag + " (" + days + " days).";
+
+            if (type == LifecycleNotificationType.PREGNANCY_CONFIRMED) {
+                subject = "[Livestock] Awaiting Pregnancy Confirmation — " + tag;
+                message = "Please confirm pregnancy status for " + tag + " (" + Math.abs(days) + " days since breeding).";
+            } else if (type == LifecycleNotificationType.UPCOMING_BIRTH) {
+                subject = "[Livestock] Due Soon — " + tag;
+                message = tag + " is due in " + days + " days.";
+            }
+
+            sendGeneric(type, subject, message, rows);
+        } catch (Exception e) { log.error("❌ sendPregnancyTimelineNotification failed", e); }
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendPregnancyConfirmedNotification(LivestockBreeding breeding) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        String tag = breeding.getLivestock().getTagNumber();
+        List<DetailRow> rows = new ArrayList<>();
+        rows.add(new DetailRow("Tag Number", tag));
+        rows.add(new DetailRow("Breeding Date", breeding.getBreedingDate() != null ? breeding.getBreedingDate().toString() : "—"));
+        rows.add(new DetailRow("Expected Due Date", breeding.getExpectedDueDate() != null ? breeding.getExpectedDueDate().toString() : "—"));
+
+        sendGeneric(LifecycleNotificationType.PREGNANCY_CONFIRMED, "[Livestock] Pregnancy confirmed — " + tag, "Pregnancy has been confirmed for " + tag + ".", rows);
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendOverduePregnancyNotification(LivestockBreeding breeding, int daysOverdue, int tier) {
+        if (breeding == null || breeding.getLivestock() == null) return;
+        String tag = breeding.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.OVERDUE_PREGNANCY, "[Livestock] Overdue pregnancy — " + tag, "Pregnancy overdue by " + daysOverdue + " days.",
+                List.of(new DetailRow("Tag Number", tag), new DetailRow("Days Overdue", String.valueOf(daysOverdue))));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendDueSoonNotification(List<Livestock> animals, int withinDays) {
+        if (animals == null || animals.isEmpty()) return;
+        sendGeneric(LifecycleNotificationType.UPCOMING_BIRTH, "[Livestock] " + animals.size() + " animals due", "Animals due within " + withinDays + " days.",
+                List.of(new DetailRow("Count", String.valueOf(animals.size()))));
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // BIRTHS & DEATHS & BULK IMPORT
+    // ════════════════════════════════════════════════════════════════════
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBirthUpdatedNotification(LivestockBirth b, String changedSummary) {
+        if (b == null || b.getLivestock() == null) return;
+        String tag = b.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.STAGE_CHANGED, "[Livestock] Birth updated — " + tag, "Birth updated: " + changedSummary, List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBirthDeletedNotification(LivestockBirth b) {
+        if (b == null || b.getLivestock() == null) return;
+        String tag = b.getLivestock().getTagNumber();
+        sendGeneric(LifecycleNotificationType.ANIMAL_DELETED, "[Livestock] Birth deleted — " + tag, "Birth deleted.", List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendDeathNotification(LivestockDeath death) {
+        if (death == null) return;
+        Livestock animal = death.getLivestock();
+        String tag = animal != null ? animal.getTagNumber() : "—";
+        sendGeneric(LifecycleNotificationType.ANIMAL_DEATH, "[Livestock] Death recorded — " + tag, "A death record has been recorded for " + tag + ".",
+                List.of(new DetailRow("Tag Number", tag), new DetailRow("Cause", death.getCauseOfDeath() != null ? death.getCauseOfDeath() : "—")));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendDeathNotification(String tagNumber, String category, String gender, String deathDate, String causeOfDeath, String notes, Long ageDays, Long ageMonths) {
+        sendGeneric(LifecycleNotificationType.ANIMAL_DEATH, "[Livestock] Death recorded — " + tagNumber, "A death record has been recorded for " + tagNumber + ".",
+                List.of(new DetailRow("Tag Number", tagNumber), new DetailRow("Cause", causeOfDeath)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendDeathChangeNotification(String action, String tagNumber, String category, String deathDate, String causeOfDeath, String previousCause, String notes, String performedBy) {
+        String act = action != null ? action.toUpperCase() : "UPDATED";
+        LifecycleNotificationType type = act.equals("CREATED") ? LifecycleNotificationType.ANIMAL_DEATH : act.equals("DELETED") ? LifecycleNotificationType.ANIMAL_DELETED : LifecycleNotificationType.STAGE_CHANGED;
+        String verb = act.equals("CREATED") ? "recorded" : act.equals("DELETED") ? "deleted" : "updated";
+        List<DetailRow> rows = new ArrayList<>();
+        rows.add(new DetailRow("Tag Number", tagNumber));
+        rows.add(new DetailRow("Action", act));
+        rows.add(new DetailRow("Cause", causeOfDeath));
+        rows.add(new DetailRow("Performed By", performedBy));
+        sendGeneric(type, "[Livestock] Death " + verb + " — " + tagNumber, "Death record for " + tagNumber + " was " + verb + ".", rows);
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendBulkImportCompletedNotification(int imported, int totalRows, int okRows, int warningRows, int errorRows, String fileName, String uploadedBy, List<String> createdTags) {
+        try {
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("File Name", fileName != null ? fileName : "—"));
+            rows.add(new DetailRow("Uploaded By", uploadedBy != null ? uploadedBy : "system"));
+            rows.add(new DetailRow("Total Rows", String.valueOf(totalRows)));
+            rows.add(new DetailRow("OK Rows", String.valueOf(okRows)));
+            rows.add(new DetailRow("Warning Rows", String.valueOf(warningRows)));
+            rows.add(new DetailRow("Error Rows", String.valueOf(errorRows)));
+            rows.add(new DetailRow("Imported", String.valueOf(imported)));
+            rows.add(new DetailRow("Created Tags", String.valueOf(createdTags != null ? createdTags.size() : 0)));
+
+            sendGeneric(LifecycleNotificationType.BULK_IMPORT_COMPLETED, "[Livestock] Bulk import completed — " + (fileName != null ? fileName : "upload"), "Bulk import finished.", rows);
+        } catch (Exception e) { log.error("❌ sendBulkImportCompletedNotification failed", e); }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // STAGE TRANSITIONS
+    // ════════════════════════════════════════════════════════════════════
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendNewbornNotification(Livestock animal) {
+        if (animal == null) return;
+        String tag = animal.getTagNumber();
+        sendGeneric(LifecycleNotificationType.NEWBORN, "[Livestock] Newborn registered — " + tag, "A newborn animal has been registered: " + tag + ".",
+                List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendNewbornStageNotification(Livestock animal) { sendNewbornNotification(animal); }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendYoungStageNotification(Livestock animal) {
+        if (animal == null) return;
+        String tag = animal.getTagNumber();
+        sendGeneric(LifecycleNotificationType.YOUNG_ANIMAL, "[Livestock] Young animal — " + tag, tag + " has entered the Young Animal stage.",
+                List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendPreBreedingNotification(Livestock animal) {
+        if (animal == null) return;
+        String tag = animal.getTagNumber();
+        sendGeneric(LifecycleNotificationType.PRE_BREEDING, "[Livestock] Pre-breeding — " + tag, tag + " is approaching breeding age.",
+                List.of(new DetailRow("Tag Number", tag)));
+    }
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendReadyToBreedNotification(Livestock female) {
+        if (female == null) return;
+        String tag = female.getTagNumber();
+        String category = female.getLivestockCategory() != null ? female.getLivestockCategory().getName() : "—";
+        sendGeneric(LifecycleNotificationType.READY_TO_BREED, "[Livestock] Ready to breed — " + tag, tag + " is ready to breed.",
+                List.of(new DetailRow("Tag Number", tag), new DetailRow("Category", category)));
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // VALUATION
+    // ════════════════════════════════════════════════════════════════════
+
+    @Async(AsyncConfig.EMAIL_EXECUTOR)
+    public void sendValuationChangedNotification(LivestockValuation valuation, Double previousValue) {
+        if (valuation == null || valuation.getLivestock() == null) return;
+        try {
+            String tag = valuation.getLivestock().getTagNumber();
+            List<DetailRow> rows = new ArrayList<>();
+            rows.add(new DetailRow("Tag Number", tag));
+            rows.add(new DetailRow("New Value", String.valueOf(valuation.getEstimatedValue())));
+            rows.add(new DetailRow("Previous Value", previousValue != null ? String.valueOf(previousValue) : "—"));
+            rows.add(new DetailRow("Valuation Method", valuation.getValuationMethod() != null ? valuation.getValuationMethod() : "—"));
+            rows.add(new DetailRow("Notes", valuation.getNotes() != null ? valuation.getNotes() : "—"));
+
+            sendGeneric(LifecycleNotificationType.STAGE_CHANGED, "[Livestock] Valuation — " + tag, "A new valuation has been recorded for " + tag + ".", rows);
+        } catch (Exception e) { log.error("❌ sendValuationChangedNotification failed", e); }
+    }
+
+    // ════════════════════════════════════════════════════════════════════
+    // INTERNAL HELPER
+    // ════════════════════════════════════════════════════════════════════
+
+    private void sendHtmlEmail(String subject, String templateName, Map<String, Object> model) {
+        log.info("📧 PREPARING SEND: {}", subject);
+        try {
+            if (defaultRecipient == null || defaultRecipient.isBlank()) {
+                log.error("❌ FATAL: No recipient configured! Check app.notifications.recipients");
+                return;
+            }
+
+            String html = "";
+            try {
+                Context ctx = new Context();
+                ctx.setVariables(model);
+                html = templateEngine.process("emails/" + templateName, ctx);
+            } catch (Exception e) {
+                log.warn("⚠️ Template processing failed for '{}': {}. Falling back to plain text.", templateName, e.getMessage());
+                StringBuilder fallback = new StringBuilder();
+                fallback.append("<h3>").append(subject).append("</h3>");
+                fallback.append("<p>").append(model.getOrDefault("message", "")).append("</p>");
+                fallback.append("<ul>");
+                if (model.containsKey("rows")) {
+                    List<DetailRow> rows = (List<DetailRow>) model.get("rows");
+                    for (DetailRow row : rows) {
+                        fallback.append("<li><b>").append(row.label()).append(":</b> ").append(row.value()).append("</li>");
+                    }
+                }
+                fallback.append("</ul>");
+                html = fallback.toString();
+            }
+
+            if (dryRun) {
+                log.info("[DRY-RUN] Email '{}' would be sent to {}", subject, defaultRecipient);
+                return;
+            }
+
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(defaultRecipient);
+            helper.setSubject(subject);
+            helper.setText(html, true);
+            mailSender.send(msg);
+
+            log.info("✅ SENT successfully: '{}' → {}", subject, defaultRecipient);
+        } catch (Exception e) {
+            log.error("❌ SMTP FAILED for '{}': {}", subject, e.getMessage(), e);
+        }
     }
 }

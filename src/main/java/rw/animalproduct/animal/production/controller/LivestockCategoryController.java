@@ -1,6 +1,8 @@
 package rw.animalproduct.animal.production.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,10 +23,19 @@ public class LivestockCategoryController {
         this.categoryService = categoryService;
     }
 
+    private String getCurrentUsername() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            return auth.getName();
+        }
+        return "system";
+    }
+
     @GetMapping
     public String list(Model model) {
         model.addAttribute("categories", categoryService.getAll());
-        model.addAttribute("category", new LivestockCategory());
+        model.addAttribute("category",   new LivestockCategory());
+        model.addAttribute("usageCount", categoryService.getUsageCounts());
         return "livestock-categories-list";
     }
 
@@ -47,7 +58,6 @@ public class LivestockCategoryController {
         return "redirect:/livestock/categories";
     }
 
-    // FIX: this now correctly renders the dedicated edit template instead of the list page.
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
         return categoryService.getById(id)
@@ -61,8 +71,6 @@ public class LivestockCategoryController {
                 });
     }
 
-    // FIX: matches the edit template's actual form action (/update/{id}), which was previously
-    // pointing at a mapping that didn't exist.
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute("category") LivestockCategory category,
@@ -87,10 +95,13 @@ public class LivestockCategoryController {
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
-            categoryService.delete(id);
-            redirectAttributes.addFlashAttribute("success", "Category deleted successfully.");
-        } catch (Exception e) {
+            LivestockCategoryService.DeleteResult result = categoryService.delete(id);
+            redirectAttributes.addFlashAttribute("success",
+                    "Category '" + result.categoryName() + "' was deleted permanently.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("error", "Cannot delete category: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Error deleting category: " + e.getMessage());
         }
         return "redirect:/livestock/categories";
     }

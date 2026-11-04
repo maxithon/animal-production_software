@@ -13,6 +13,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AuditLog {
 
+    public static final String ACTION_CREATE      = "CREATE";
+    public static final String ACTION_UPDATE      = "UPDATE";
+    public static final String ACTION_DELETE      = "DELETE";
+    public static final String ACTION_SOFT_DELETE = "SOFT_DELETE";
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -46,7 +51,7 @@ public class AuditLog {
 
     @PrePersist
     public void onCreate() {
-        this.changedAt = LocalDateTime.now();
+        if (this.changedAt == null) this.changedAt = LocalDateTime.now();
         if (this.isDeleted == null) this.isDeleted = false;
     }
 }

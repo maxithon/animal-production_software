@@ -12,6 +12,11 @@ import java.util.UUID;
 @Repository
 public interface FemalesReadyToBreedRepository extends JpaRepository<Livestock, UUID> {
 
+    /**
+     * Fetches all ready-to-breed females directly from the database View.
+     * The View handles all the complex logic (age, pregnancy, recovery).
+     * Column order MUST match the View's SELECT order.
+     */
     @Query(value = """
             SELECT
                 id,
@@ -41,6 +46,9 @@ public interface FemalesReadyToBreedRepository extends JpaRepository<Livestock, 
             """, nativeQuery = true)
     List<Object[]> findAllReadyToBreedRaw();
 
+    /**
+     * Search by Tag Number or Category Name.
+     */
     @Query(value = """
             SELECT
                 id,

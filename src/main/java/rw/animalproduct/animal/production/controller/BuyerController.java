@@ -31,9 +31,7 @@ public class BuyerController {
         this.auditLogService = auditLogService;
     }
 
-    // ── LIST (now backed by a single, fast projection query — see BuyerSummary) ──
-    // FIX: was @GetMapping("/buyers") which combined with the class-level
-    // @RequestMapping("/buyers") to map this to /buyers/buyers instead of /buyers.
+    // ── LIST ──────────────────────────────────────────────────────────
     @GetMapping
     public String listBuyers(Model model) {
         model.addAttribute("buyers", buyerService.getAllSummaries());
@@ -44,7 +42,7 @@ public class BuyerController {
         return "buyers-list";
     }
 
-    // ── CREATE ─────────────────────────────────────────────────────────
+    // ── CREATE ────────────────────────────────────────────────────────
     @PostMapping("/new")
     public String saveBuyer(@Valid @ModelAttribute("buyer") Buyer buyer,
                             BindingResult result,
@@ -57,8 +55,6 @@ public class BuyerController {
         try {
             Buyer saved = buyerService.addNew(buyer, photoFile);
 
-            // Sanity check: never tell the user "saved" unless it truly has an id
-            // from the database. This closes the "says saved but isn't in the DB" gap.
             if (saved == null || saved.getId() == null) {
                 throw new IllegalStateException("Save did not return a persisted record.");
             }
@@ -73,7 +69,8 @@ public class BuyerController {
                     "Registered buyer: " + saved.getFullName()
             );
 
-            ra.addFlashAttribute("success", "Buyer \"" + saved.getFullName() + "\" saved successfully!");
+            ra.addFlashAttribute("success",
+                    "Buyer \"" + saved.getFullName() + "\" saved successfully! Confirmation email sent.");
             return "redirect:/buyers";
         } catch (rw.animalproduct.animal.production.exception.DuplicateBuyerException dup) {
             result.addError(new FieldError("buyer", dup.getField(), dup.getMessage()));
@@ -84,6 +81,7 @@ public class BuyerController {
         }
     }
 
+    // ── EDIT FORM ─────────────────────────────────────────────────────
     @GetMapping("/edit/{id}")
     public String editBuyerForm(@PathVariable UUID id, Model model) {
         Optional<Buyer> opt = buyerService.getById(id);
@@ -92,7 +90,7 @@ public class BuyerController {
         return "buyer-edit";
     }
 
-    // ── UPDATE ─────────────────────────────────────────────────────────
+    // ── UPDATE ────────────────────────────────────────────────────────
     @PostMapping("/update/{id}")
     public String updateBuyer(@PathVariable UUID id,
                               @Valid @ModelAttribute("buyer") Buyer buyer,
@@ -120,7 +118,8 @@ public class BuyerController {
                     "Updated buyer: " + updated.getFullName()
             );
 
-            ra.addFlashAttribute("success", "Buyer updated successfully!");
+            ra.addFlashAttribute("success",
+                    "Buyer updated successfully! Notification email sent.");
             return "redirect:/buyers";
         } catch (rw.animalproduct.animal.production.exception.DuplicateBuyerException dup) {
             result.addError(new FieldError("buyer", dup.getField(), dup.getMessage()));
@@ -132,7 +131,7 @@ public class BuyerController {
         }
     }
 
-    // ── DELETE (soft-delete when the buyer has sales history) ────────────
+    // ── DELETE — soft-delete when the buyer has sales history ────────
     @PostMapping("/delete/{id}")
     public String deleteBuyer(@PathVariable UUID id, RedirectAttributes ra) {
         try {
@@ -156,9 +155,43 @@ public class BuyerController {
             }
 
             buyerService.delete(id);
-            ra.addFlashAttribute("success", "Buyer deactivated (soft delete) for history tracking.");
+            ra.addFlashAttribute("success",
+                    "Buyer removed successfully. Deletion notification email sent.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Error: " + e.getMessage());
+        }
+        return "redirect:/buyers";
+    }
+
+    // ── STATUS TOGGLE (Activate / Deactivate) ────────────────────────
+    @PostMapping("/toggle-status/{id}")
+    public String toggleStatus(@PathVariable UUID id, RedirectAttributes ra) {
+        try {
+            Optional<Buyer> beforeOpt = buyerService.getById(id);
+            if (beforeOpt.isEmpty()) {
+                ra.addFlashAttribute("error", "Buyer not found");
+                return "redirect:/buyers";
+            }
+
+            String beforeSnapshot = auditLogService.snapshot(beforeOpt.get());
+            Buyer updated = buyerService.toggleStatus(id);
+
+            auditLogService.log(
+                    "buyer",
+                    id,
+                    "STATUS_CHANGE",
+                    getCurrentUsername(),
+                    beforeSnapshot,
+                    updated,
+                    "Changed buyer status to " + (Boolean.TRUE.equals(updated.getIsActive()) ? "ACTIVE" : "INACTIVE")
+                            + " for: " + updated.getFullName()
+            );
+
+            ra.addFlashAttribute("success",
+                    "Status changed to " + (Boolean.TRUE.equals(updated.getIsActive()) ? "ACTIVE" : "INACTIVE")
+                            + " successfully! Notification email sent.");
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Error changing status: " + e.getMessage());
         }
         return "redirect:/buyers";
     }
@@ -171,11 +204,6 @@ public class BuyerController {
 
     // ── Helpers ────────────────────────────────────────────────────────
 
-    /**
-     * When the "Add Buyer" form fails validation, re-render the list page
-     * with every attribute the template needs (this was missing before,
-     * which is likely why validation failures looked broken/blank).
-     */
     private String reRenderListWithErrors(Model model) {
         model.addAttribute("buyers", buyerService.getAllSummaries());
         model.addAttribute("activeCount", buyerService.countActive());

@@ -123,6 +123,12 @@ public interface LivestockSaleRepository extends JpaRepository<LivestockSale, UU
 
     // ─── Analytics - Raw Queries ─────────────────────────────────
 
+    // ✅ FIXED: removed `AND (l.isDeleted = false OR l.isDeleted IS NULL)`.
+    //    That clause referenced Livestock.isDeleted, which no longer exists —
+    //    the column was dropped along with all other soft-delete fields on Livestock.
+    //    Deleted animals are now physically removed from the table, so a join to
+    //    s.livestock can only ever match live animals. The `s.isDeleted` guard
+    //    on LivestockSale stays, because that entity still has its own soft-delete flag.
     @Query("SELECT " +
             "l.livestockCategory.name, " +
             "COUNT(s), " +
@@ -132,7 +138,6 @@ public interface LivestockSaleRepository extends JpaRepository<LivestockSale, UU
             "FROM LivestockSale s JOIN s.livestock l " +
             "WHERE (s.isDeleted = false OR s.isDeleted IS NULL) " +
             "AND s.saleStatus = 'CONFIRMED' " +
-            "AND (l.isDeleted = false OR l.isDeleted IS NULL) " +
             "GROUP BY l.livestockCategory.name")
     List<Object[]> getSalesSummaryByCategoryRaw();
 

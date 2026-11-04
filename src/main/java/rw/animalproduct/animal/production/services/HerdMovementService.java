@@ -61,12 +61,6 @@ public class HerdMovementService {
      *  PUBLIC ENTRY POINT
      * ================================================================ */
 
-    /**
-     * @param categoryIds null or empty = all categories; otherwise the
-     *                    report is scoped to animals whose category is in
-     *                    the set. Pass List.of(singleId) for a single
-     *                    category.
-     */
     public HerdMovementReportDto generateReport(LocalDate from,
                                                 LocalDate to,
                                                 List<UUID> categoryIds) {
@@ -89,6 +83,8 @@ public class HerdMovementService {
                 .filter(l -> catFilter == null || matchesCategory(l.getLivestockCategory(), catFilter))
                 .collect(Collectors.toList());
 
+        // ✅ FIXED: removed the orphan `List<LivestockSale> allSales = saleService.getAll().stream();`
+        // line and added the missing `.collect(Collectors.toList())` below.
         List<LivestockSale> allSales = saleService.getAll().stream()
                 .filter(s -> s.getLivestock() != null)
                 .filter(s -> catFilter == null || matchesCategory(s.getLivestock().getLivestockCategory(), catFilter))
@@ -285,7 +281,6 @@ public class HerdMovementService {
 
         List<UUID> prevIds = (catFilter == null) ? null : new ArrayList<>(catFilter);
 
-        // KEY: call the INTERNAL method with includePrevious=false.
         HerdMovementReportDto prev = generateReportInternal(prevFrom, prevTo, prevIds, false);
 
         HerdMovementReportDto.PreviousPeriodSummary s = new HerdMovementReportDto.PreviousPeriodSummary();

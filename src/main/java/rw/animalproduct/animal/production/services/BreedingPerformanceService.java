@@ -41,21 +41,15 @@ public class BreedingPerformanceService {
     // 1. BREEDING SUCCESS RATE
     // ─────────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Calculate breeding success rate for a specific livestock animal.
-     * Success = confirmed pregnancies that resulted in live births.
-     */
     public BreedingPerformanceMetrics getBreedingPerformance(UUID livestockId) {
         log.debug("Calculating breeding performance for livestock ID: {}", livestockId);
 
         BreedingPerformanceMetrics metrics = new BreedingPerformanceMetrics();
         metrics.setLivestockId(livestockId);
 
-        // Get all breeding records for this animal
-        List<LivestockBreeding> breedings = breedingRepository.findByLivestockIdAndIsDeletedFalse(livestockId);
+        List<LivestockBreeding> breedings = breedingRepository.findByLivestockId(livestockId);
         metrics.setTotalBreedingAttempts(breedings.size());
 
-        // Count by status
         long confirmedPregnancies = breedings.stream()
                 .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
                         || LivestockBreeding.STATUS_COMPLETED.equals(b.getStatus()))
@@ -72,7 +66,6 @@ public class BreedingPerformanceService {
                 .count();
         metrics.setCompletedPregnancies((int) completedPregnancies);
 
-        // Calculate success rate
         if (metrics.getTotalBreedingAttempts() > 0) {
             double successRate = (double) confirmedPregnancies / metrics.getTotalBreedingAttempts() * 100;
             metrics.setSuccessRate(Math.round(successRate * 100.0) / 100.0);
@@ -80,11 +73,9 @@ public class BreedingPerformanceService {
             metrics.setSuccessRate(0.0);
         }
 
-        // Get births for this livestock
-        List<LivestockBirth> births = birthRepository.findByLivestockIdAndIsDeletedFalse(livestockId);
+        List<LivestockBirth> births = birthRepository.findByLivestockId(livestockId);
         metrics.setTotalBirths(births.size());
 
-        // Calculate average offspring per birth
         if (!births.isEmpty()) {
             int totalOffspring = births.stream()
                     .mapToInt(birth -> birth.getOffspringCount() != null ? birth.getOffspringCount() : 0)
@@ -94,94 +85,71 @@ public class BreedingPerformanceService {
             );
         }
 
-        // Get offspring count from livestock entity
-        livestockRepository.findById(livestockId).ifPresent(livestock -> {
-            metrics.setTotalOffspringProduced(livestock.getOffspringCount() != null
-                    ? livestock.getOffspringCount() : 0);
-        });
+        livestockRepository.findById(livestockId).ifPresent(livestock ->
+                metrics.setTotalOffspringProduced(livestock.getOffspringCount() != null
+                        ? livestock.getOffspringCount() : 0));
 
-        // Calculate conception rate (if we have breeding dates)
         calculateConceptionMetrics(breedings, metrics);
-
-        // Calculate breeding interval
         calculateBreedingInterval(breedings, metrics);
 
         return metrics;
     }
 
-    /**
-     * Get breeding performance for all animals by category.
-     */
     public Map<String, BreedingPerformanceMetrics> getBreedingPerformanceByCategory() {
         log.debug("Calculating breeding performance by category");
 
         Map<String, BreedingPerformanceMetrics> categoryMetrics = new HashMap<>();
-        List<LivestockCategory> categories = categoryRepository.findAllByIsDeletedFalse();
+        List<LivestockCategory> categories = categoryRepository.findAllByOrderByNameAsc();
 
         for (LivestockCategory category : categories) {
-            // Get all livestock in this category
-            List<Livestock> livestockList = livestockRepository.findByLivestockCategoryIdAndIsDeletedFalse(category.getId());
+            List<Livestock> livestockList = livestockRepository.findByLivestockCategoryId(category.getId());
+            if (livestockList.isEmpty()) continue;
 
-            if (!livestockList.isEmpty()) {
-                BreedingPerformanceMetrics aggregated = new BreedingPerformanceMetrics();
-                aggregated.setCategoryName(category.getName());
+            BreedingPerformanceMetrics aggregated = new BreedingPerformanceMetrics();
+            aggregated.setCategoryName(category.getName());
 
-                int totalBreedings = 0;
-                int totalConfirmed = 0;
-                int totalCompleted = 0;
-                int totalFailed = 0;
-                int totalBirths = 0;
-                int totalOffspring = 0;
+            int totalBreedings = 0, totalConfirmed = 0, totalCompleted = 0, totalFailed = 0;
+            int totalBirths = 0, totalOffspring = 0;
 
-                for (Livestock livestock : livestockList) {
-                    // Get breeding records
-                    List<LivestockBreeding> breedings = breedingRepository
-                            .findByLivestockIdAndIsDeletedFalse(livestock.getId());
+            for (Livestock livestock : livestockList) {
+                List<LivestockBreeding> breedings = breedingRepository.findByLivestockId(livestock.getId());
 
-                    totalBreedings += breedings.size();
-                    totalConfirmed += breedings.stream()
-                            .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
-                                    || LivestockBreeding.STATUS_COMPLETED.equals(b.getStatus()))
-                            .count();
-                    totalCompleted += breedings.stream()
-                            .filter(b -> LivestockBreeding.STATUS_COMPLETED.equals(b.getStatus()))
-                            .count();
-                    totalFailed += breedings.stream()
-                            .filter(b -> LivestockBreeding.STATUS_FAILED.equals(b.getStatus()))
-                            .count();
+                totalBreedings += breedings.size();
+                totalConfirmed += breedings.stream()
+                        .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus())
+                                || LivestockBreeding.STATUS_COMPLETED.equals(b.getStatus()))
+                        .count();
+                totalCompleted += breedings.stream()
+                        .filter(b -> LivestockBreeding.STATUS_COMPLETED.equals(b.getStatus()))
+                        .count();
+                totalFailed += breedings.stream()
+                        .filter(b -> LivestockBreeding.STATUS_FAILED.equals(b.getStatus()))
+                        .count();
 
-                    // Get births
-                    List<LivestockBirth> births = birthRepository
-                            .findByLivestockIdAndIsDeletedFalse(livestock.getId());
-                    totalBirths += births.size();
-
-                    for (LivestockBirth birth : births) {
-                        totalOffspring += birth.getOffspringCount() != null ? birth.getOffspringCount() : 0;
-                    }
+                List<LivestockBirth> births = birthRepository.findByLivestockId(livestock.getId());
+                totalBirths += births.size();
+                for (LivestockBirth birth : births) {
+                    totalOffspring += birth.getOffspringCount() != null ? birth.getOffspringCount() : 0;
                 }
-
-                aggregated.setTotalBreedingAttempts(totalBreedings);
-                aggregated.setConfirmedPregnancies((int) totalConfirmed);
-                aggregated.setCompletedPregnancies((int) totalCompleted);
-                aggregated.setFailedAttempts((int) totalFailed);
-                aggregated.setTotalBirths(totalBirths);
-                aggregated.setTotalOffspringProduced(totalOffspring);
-
-                if (totalBreedings > 0) {
-                    aggregated.setSuccessRate(Math.round((double) totalConfirmed / totalBreedings * 10000.0) / 100.0);
-                }
-
-                if (totalBirths > 0) {
-                    aggregated.setAverageOffspringPerBirth(
-                            Math.round((double) totalOffspring / totalBirths * 100.0) / 100.0
-                    );
-                }
-
-                // Set count of animals in this category
-                aggregated.setAnimalCount(livestockList.size());
-
-                categoryMetrics.put(category.getName(), aggregated);
             }
+
+            aggregated.setTotalBreedingAttempts(totalBreedings);
+            aggregated.setConfirmedPregnancies((int) totalConfirmed);
+            aggregated.setCompletedPregnancies((int) totalCompleted);
+            aggregated.setFailedAttempts((int) totalFailed);
+            aggregated.setTotalBirths(totalBirths);
+            aggregated.setTotalOffspringProduced(totalOffspring);
+
+            if (totalBreedings > 0) {
+                aggregated.setSuccessRate(
+                        Math.round((double) totalConfirmed / totalBreedings * 10000.0) / 100.0);
+            }
+            if (totalBirths > 0) {
+                aggregated.setAverageOffspringPerBirth(
+                        Math.round((double) totalOffspring / totalBirths * 100.0) / 100.0);
+            }
+            aggregated.setAnimalCount(livestockList.size());
+            categoryMetrics.put(category.getName(), aggregated);
         }
 
         return categoryMetrics;
@@ -191,63 +159,47 @@ public class BreedingPerformanceService {
     // 2. PREGNANCY TRACKING
     // ─────────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Get all currently pregnant animals with expected due dates.
-     */
     public List<PregnancyTrackingDto> getCurrentPregnancies() {
         log.debug("Fetching current pregnancies");
 
-        // Find all confirmed pregnant animals
-        List<Livestock> pregnantAnimals = livestockRepository
-                .findByStatusAndIsDeletedFalse(Livestock.STATUS_PREGNANT);
-
+        List<Livestock> pregnantAnimals = livestockRepository.findByStatus(Livestock.STATUS_PREGNANT);
         List<PregnancyTrackingDto> results = new ArrayList<>();
 
         for (Livestock animal : pregnantAnimals) {
-            // Get the latest breeding record
-            List<LivestockBreeding> breedings = breedingRepository
-                    .findByLivestockIdAndStatusAndIsDeletedFalse(
-                            animal.getId(),
-                            LivestockBreeding.STATUS_CONFIRMED_PREGNANT
-                    );
+            List<LivestockBreeding> breedings = breedingRepository.findByLivestockIdAndStatus(
+                    animal.getId(),
+                    LivestockBreeding.STATUS_CONFIRMED_PREGNANT
+            );
 
             if (!breedings.isEmpty()) {
                 LivestockBreeding latestBreeding = breedings.get(breedings.size() - 1);
-                PregnancyTrackingDto dto = createPregnancyDto(animal, latestBreeding);
-                results.add(dto);
+                results.add(createPregnancyDto(animal, latestBreeding));
             } else {
-                // Fallback: create DTO from livestock data
-                PregnancyTrackingDto dto = createPregnancyDtoFromLivestock(animal);
-                results.add(dto);
+                results.add(createPregnancyDtoFromLivestock(animal));
             }
         }
 
         return results;
     }
 
-    /**
-     * Get upcoming births (expected in next days).
-     */
     public List<PregnancyTrackingDto> getUpcomingBirths(int days) {
         log.debug("Fetching upcoming births within {} days", days);
 
         LocalDate today = LocalDate.now();
         LocalDate cutoff = today.plusDays(days);
 
-        List<LivestockBreeding> upcomingBreedings = breedingRepository
-                .findByStatusAndExpectedDueDateBetweenAndIsDeletedFalse(
-                        LivestockBreeding.STATUS_CONFIRMED_PREGNANT,
-                        today,
-                        cutoff
-                );
+        List<LivestockBreeding> upcomingBreedings = breedingRepository.findByStatusAndExpectedDueDateBetween(
+                LivestockBreeding.STATUS_CONFIRMED_PREGNANT,
+                today,
+                cutoff
+        );
 
         List<PregnancyTrackingDto> results = new ArrayList<>();
 
         for (LivestockBreeding breeding : upcomingBreedings) {
             Livestock animal = breeding.getLivestock();
-            if (animal != null && !Boolean.TRUE.equals(animal.getIsDeleted())) {
+            if (animal != null) {
                 PregnancyTrackingDto dto = createPregnancyDto(animal, breeding);
-                // Calculate days until due
                 long daysUntilDue = ChronoUnit.DAYS.between(today, breeding.getExpectedDueDate());
                 dto.setDaysUntilDue((int) daysUntilDue);
                 results.add(dto);
@@ -258,12 +210,9 @@ public class BreedingPerformanceService {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 3. CALVING/BIRTHING REPORTS
+    // 3. CALVING / BIRTHING REPORTS
     // ─────────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Get birthing report for a specific time period.
-     */
     public BirthingReportDto getBirthingReport(LocalDate startDate, LocalDate endDate) {
         log.debug("Generating birthing report from {} to {}", startDate, endDate);
 
@@ -271,46 +220,28 @@ public class BreedingPerformanceService {
         report.setStartDate(startDate);
         report.setEndDate(endDate);
 
-        // Get births in the date range
-        List<LivestockBirth> births = birthRepository
-                .findByBirthDateBetweenAndIsDeletedFalse(startDate, endDate);
-
+        List<LivestockBirth> births = birthRepository.findByBirthDateBetween(startDate, endDate);
         report.setTotalBirths(births.size());
 
-        int totalOffspring = 0;
-        int liveOffspring = 0;
-        int stillborn = 0;
+        int totalOffspring = 0, liveOffspring = 0, stillborn = 0;
         Map<String, Integer> birthsByCategory = new HashMap<>();
         Map<String, Integer> offspringByGender = new HashMap<>();
 
         for (LivestockBirth birth : births) {
-            // Get offspring count
             int count = birth.getOffspringCount() != null ? birth.getOffspringCount() : 0;
             totalOffspring += count;
 
-            // Get offspring details from the children list
             if (birth.getChildren() != null && !birth.getChildren().isEmpty()) {
                 for (LivestockOffspring child : birth.getChildren()) {
-                    // FIX: Use the isAlive() method which checks both flag and child status
-                    if (child.isAlive()) {
-                        liveOffspring++;
-                    } else {
-                        stillborn++;
-                    }
-
-                    // FIX: Get gender from child livestock entity
+                    if (child.isAlive()) liveOffspring++; else stillborn++;
                     String gender = child.getGender();
-                    if (gender != null) {
-                        offspringByGender.merge(gender, 1, Integer::sum);
-                    }
+                    if (gender != null) offspringByGender.merge(gender, 1, Integer::sum);
                 }
             }
 
-            // Count by category
             Livestock mother = birth.getLivestock();
             if (mother != null && mother.getLivestockCategory() != null) {
-                String categoryName = mother.getLivestockCategory().getName();
-                birthsByCategory.merge(categoryName, 1, Integer::sum);
+                birthsByCategory.merge(mother.getLivestockCategory().getName(), 1, Integer::sum);
             }
         }
 
@@ -320,32 +251,25 @@ public class BreedingPerformanceService {
         report.setBirthsByCategory(birthsByCategory);
         report.setOffspringByGender(offspringByGender);
 
-        // Calculate average offspring per birth
-        if (births.size() > 0) {
+        if (!births.isEmpty()) {
             report.setAverageOffspringPerBirth(
-                    Math.round((double) totalOffspring / births.size() * 100.0) / 100.0
-            );
+                    Math.round((double) totalOffspring / births.size() * 100.0) / 100.0);
         }
 
         return report;
     }
 
-    /**
-     * Get calving interval for a specific animal.
-     * Calving interval = time between successive births.
-     */
     public CalvingIntervalDto getCalvingInterval(UUID livestockId) {
         log.debug("Calculating calving interval for livestock ID: {}", livestockId);
 
         CalvingIntervalDto dto = new CalvingIntervalDto();
         dto.setLivestockId(livestockId);
 
-        // Get all births for this animal
-        List<LivestockBirth> births = birthRepository
-                .findByLivestockIdAndIsDeletedFalseOrderByBirthDateAsc(livestockId);
+        List<LivestockBirth> births = birthRepository.findByLivestockIdOrderByBirthDateAsc(livestockId);
 
         if (births.size() < 2) {
-            dto.setMessage("Animal has " + births.size() + " birth(s) recorded. Need at least 2 for calving interval.");
+            dto.setMessage("Animal has " + births.size()
+                    + " birth(s) recorded. Need at least 2 for calving interval.");
             dto.setHasSufficientData(false);
             return dto;
         }
@@ -358,11 +282,9 @@ public class BreedingPerformanceService {
                 .collect(Collectors.toList());
 
         for (int i = 1; i < birthDates.size(); i++) {
-            int daysBetween = (int) ChronoUnit.DAYS.between(birthDates.get(i - 1), birthDates.get(i));
-            intervals.add(daysBetween);
+            intervals.add((int) ChronoUnit.DAYS.between(birthDates.get(i - 1), birthDates.get(i)));
         }
 
-        // Calculate statistics
         int totalDays = intervals.stream().mapToInt(Integer::intValue).sum();
         double averageDays = (double) totalDays / intervals.size();
 
@@ -373,7 +295,6 @@ public class BreedingPerformanceService {
         dto.setIntervals(intervals);
         dto.setHasSufficientData(true);
 
-        // Get the animal's category for reference
         livestockRepository.findById(livestockId).ifPresent(livestock -> {
             if (livestock.getLivestockCategory() != null) {
                 dto.setCategoryName(livestock.getLivestockCategory().getName());
@@ -388,10 +309,6 @@ public class BreedingPerformanceService {
     // 4. COMBINED REPORT
     // ─────────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Generate a comprehensive breeding performance report for a date range.
-     * This method combines multiple metrics into one report.
-     */
     public BreedingPerformanceReport generateReport(LocalDate startDate, LocalDate endDate) {
         log.debug("Generating comprehensive breeding report from {} to {}", startDate, endDate);
 
@@ -399,24 +316,19 @@ public class BreedingPerformanceService {
         report.setStartDate(startDate);
         report.setEndDate(endDate);
 
-        // Get birthing report
         BirthingReportDto birthingReport = getBirthingReport(startDate, endDate);
         report.setBirthingReport(birthingReport);
 
-        // Get performance by category
         Map<String, BreedingPerformanceMetrics> categoryPerformance = getBreedingPerformanceByCategory();
         report.setCategoryPerformance(categoryPerformance);
 
-        // Get current pregnancies
         List<PregnancyTrackingDto> pregnancies = getCurrentPregnancies();
         report.setCurrentPregnancies(pregnancies);
 
-        // Get upcoming births (within the date range)
         long daysBetween = ChronoUnit.DAYS.between(startDate, endDate);
         List<PregnancyTrackingDto> upcoming = getUpcomingBirths((int) Math.max(daysBetween, 30));
         report.setUpcomingBirths(upcoming);
 
-        // Calculate summary statistics
         int totalBirths = birthingReport.getTotalBirths();
         int totalOffspring = birthingReport.getTotalOffspring();
         double avgOffspring = totalBirths > 0 ? (double) totalOffspring / totalBirths : 0.0;
@@ -424,14 +336,12 @@ public class BreedingPerformanceService {
 
         report.setTotalActivePregnancies(pregnancies.size());
 
-        // Calculate overall success rate
         double overallSuccessRate = categoryPerformance.values().stream()
                 .mapToDouble(BreedingPerformanceMetrics::getSuccessRate)
                 .average()
                 .orElse(0.0);
         report.setOverallSuccessRate(Math.round(overallSuccessRate * 100.0) / 100.0);
 
-        // Calculate total breeding attempts
         int totalBreedingAttempts = categoryPerformance.values().stream()
                 .mapToInt(BreedingPerformanceMetrics::getTotalBreedingAttempts)
                 .sum();
@@ -441,28 +351,22 @@ public class BreedingPerformanceService {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // PRIVATE HELPER METHODS
+    // PRIVATE HELPERS
     // ─────────────────────────────────────────────────────────────────────────────
 
     private void calculateConceptionMetrics(List<LivestockBreeding> breedings,
                                             BreedingPerformanceMetrics metrics) {
-        // Calculate average conception time (days between breeding and confirmation)
         List<Integer> conceptionTimes = new ArrayList<>();
-
         for (LivestockBreeding breeding : breedings) {
             if (breeding.getExpectedPregnancyCheckDate() != null
                     && breeding.getBreedingDate() != null
                     && (LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(breeding.getStatus())
                     || LivestockBreeding.STATUS_COMPLETED.equals(breeding.getStatus()))) {
-
-                int days = (int) ChronoUnit.DAYS.between(
+                conceptionTimes.add((int) ChronoUnit.DAYS.between(
                         breeding.getBreedingDate(),
-                        breeding.getExpectedPregnancyCheckDate()
-                );
-                conceptionTimes.add(days);
+                        breeding.getExpectedPregnancyCheckDate()));
             }
         }
-
         if (!conceptionTimes.isEmpty()) {
             double avg = conceptionTimes.stream().mapToInt(Integer::intValue).average().orElse(0);
             metrics.setAverageConceptionDays(Math.round(avg * 100.0) / 100.0);
@@ -471,7 +375,6 @@ public class BreedingPerformanceService {
 
     private void calculateBreedingInterval(List<LivestockBreeding> breedings,
                                            BreedingPerformanceMetrics metrics) {
-        // Calculate average time between breedings
         List<LocalDate> breedingDates = breedings.stream()
                 .map(LivestockBreeding::getBreedingDate)
                 .filter(Objects::nonNull)
@@ -481,13 +384,10 @@ public class BreedingPerformanceService {
         if (breedingDates.size() >= 2) {
             List<Integer> intervals = new ArrayList<>();
             for (int i = 1; i < breedingDates.size(); i++) {
-                int days = (int) ChronoUnit.DAYS.between(
+                intervals.add((int) ChronoUnit.DAYS.between(
                         breedingDates.get(i - 1),
-                        breedingDates.get(i)
-                );
-                intervals.add(days);
+                        breedingDates.get(i)));
             }
-
             double avg = intervals.stream().mapToInt(Integer::intValue).average().orElse(0);
             metrics.setAverageBreedingIntervalDays(Math.round(avg * 100.0) / 100.0);
         }
@@ -510,41 +410,21 @@ public class BreedingPerformanceService {
             long daysRemaining = ChronoUnit.DAYS.between(today, breeding.getExpectedDueDate());
             dto.setDaysRemaining((int) daysRemaining);
 
-            // Calculate gestation progress
             if (breeding.getBreedingDate() != null) {
-                long totalDays = ChronoUnit.DAYS.between(breeding.getBreedingDate(), breeding.getExpectedDueDate());
+                long totalDays = ChronoUnit.DAYS.between(breeding.getBreedingDate(),
+                        breeding.getExpectedDueDate());
                 long elapsed = ChronoUnit.DAYS.between(breeding.getBreedingDate(), today);
                 if (totalDays > 0) {
-                    int progress = (int) Math.min(100, Math.round((double) elapsed / totalDays * 100));
-                    dto.setGestationProgress(progress);
+                    dto.setGestationProgress((int) Math.min(100,
+                            Math.round((double) elapsed / totalDays * 100)));
                 }
             }
         }
 
-        // Get pregnancy check date
         dto.setPregnancyCheckDate(breeding.getExpectedPregnancyCheckDate());
-
         return dto;
     }
 
-    /**
-     * Fallback used by getCurrentPregnancies() when a livestock record is
-     * flagged STATUS_PREGNANT but has no matching CONFIRMED_PREGNANT
-     * LivestockBreeding record (data-entry gap, or the status was set
-     * manually rather than through the breeding workflow).
-     *
-     * FIXED: previously called animal.getConceptionDate() /
-     * animal.getExpectedDueDate() — Livestock no longer stores a conception
-     * date (that field was removed; conception_date now lives only on
-     * livestock_breeding — see Livestock.java / LivestockBreeding.java).
-     * This now falls back to the animal's most recent breeding record of
-     * ANY status (not just CONFIRMED_PREGNANT) to recover a conception date
-     * if one exists, and leaves it null with a note in the DTO status if no
-     * breeding record exists at all — rather than silently reading a field
-     * that no longer holds real data. expectedDueDate is still read from
-     * Livestock, since that denormalized snapshot is still maintained by
-     * LivestockBreedingService.
-     */
     private PregnancyTrackingDto createPregnancyDtoFromLivestock(Livestock animal) {
         PregnancyTrackingDto dto = new PregnancyTrackingDto();
         dto.setAnimalId(animal.getId());
@@ -557,7 +437,8 @@ public class BreedingPerformanceService {
                 breedingRepository.findMostRecentByLivestockId(animal.getId());
         if (mostRecent.isPresent()) {
             LivestockBreeding b = mostRecent.get();
-            resolvedConceptionDate = b.getConceptionDate() != null ? b.getConceptionDate() : b.getBreedingDate();
+            resolvedConceptionDate = b.getConceptionDate() != null
+                    ? b.getConceptionDate() : b.getBreedingDate();
         }
         dto.setConceptionDate(resolvedConceptionDate);
         dto.setExpectedDueDate(animal.getExpectedDueDate());
@@ -567,11 +448,9 @@ public class BreedingPerformanceService {
         dto.setBreedingMethod("UNKNOWN");
 
         if (animal.getExpectedDueDate() != null) {
-            LocalDate today = LocalDate.now();
-            long daysRemaining = ChronoUnit.DAYS.between(today, animal.getExpectedDueDate());
+            long daysRemaining = ChronoUnit.DAYS.between(LocalDate.now(), animal.getExpectedDueDate());
             dto.setDaysRemaining((int) daysRemaining);
         }
-
         return dto;
     }
 
@@ -594,55 +473,42 @@ public class BreedingPerformanceService {
         private double averageConceptionDays;
         private double averageBreedingIntervalDays;
 
-        // Getters and Setters
         public UUID getLivestockId() { return livestockId; }
         public void setLivestockId(UUID livestockId) { this.livestockId = livestockId; }
-
         public String getCategoryName() { return categoryName; }
         public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
         public int getAnimalCount() { return animalCount; }
         public void setAnimalCount(int animalCount) { this.animalCount = animalCount; }
-
         public int getTotalBreedingAttempts() { return totalBreedingAttempts; }
         public void setTotalBreedingAttempts(int totalBreedingAttempts) {
             this.totalBreedingAttempts = totalBreedingAttempts;
         }
-
         public int getConfirmedPregnancies() { return confirmedPregnancies; }
         public void setConfirmedPregnancies(int confirmedPregnancies) {
             this.confirmedPregnancies = confirmedPregnancies;
         }
-
         public int getCompletedPregnancies() { return completedPregnancies; }
         public void setCompletedPregnancies(int completedPregnancies) {
             this.completedPregnancies = completedPregnancies;
         }
-
         public int getFailedAttempts() { return failedAttempts; }
         public void setFailedAttempts(int failedAttempts) { this.failedAttempts = failedAttempts; }
-
         public int getTotalBirths() { return totalBirths; }
         public void setTotalBirths(int totalBirths) { this.totalBirths = totalBirths; }
-
         public int getTotalOffspringProduced() { return totalOffspringProduced; }
         public void setTotalOffspringProduced(int totalOffspringProduced) {
             this.totalOffspringProduced = totalOffspringProduced;
         }
-
         public double getSuccessRate() { return successRate; }
         public void setSuccessRate(double successRate) { this.successRate = successRate; }
-
         public double getAverageOffspringPerBirth() { return averageOffspringPerBirth; }
         public void setAverageOffspringPerBirth(double averageOffspringPerBirth) {
             this.averageOffspringPerBirth = averageOffspringPerBirth;
         }
-
         public double getAverageConceptionDays() { return averageConceptionDays; }
         public void setAverageConceptionDays(double averageConceptionDays) {
             this.averageConceptionDays = averageConceptionDays;
         }
-
         public double getAverageBreedingIntervalDays() { return averageBreedingIntervalDays; }
         public void setAverageBreedingIntervalDays(double averageBreedingIntervalDays) {
             this.averageBreedingIntervalDays = averageBreedingIntervalDays;
@@ -662,39 +528,28 @@ public class BreedingPerformanceService {
         private int daysUntilDue;
         private int gestationProgress;
 
-        // Getters and Setters
         public UUID getAnimalId() { return animalId; }
         public void setAnimalId(UUID animalId) { this.animalId = animalId; }
-
         public String getTagNumber() { return tagNumber; }
         public void setTagNumber(String tagNumber) { this.tagNumber = tagNumber; }
-
         public String getCategoryName() { return categoryName; }
         public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
         public LocalDate getConceptionDate() { return conceptionDate; }
         public void setConceptionDate(LocalDate conceptionDate) { this.conceptionDate = conceptionDate; }
-
         public LocalDate getExpectedDueDate() { return expectedDueDate; }
         public void setExpectedDueDate(LocalDate expectedDueDate) { this.expectedDueDate = expectedDueDate; }
-
         public LocalDate getPregnancyCheckDate() { return pregnancyCheckDate; }
         public void setPregnancyCheckDate(LocalDate pregnancyCheckDate) {
             this.pregnancyCheckDate = pregnancyCheckDate;
         }
-
         public String getBreedingMethod() { return breedingMethod; }
         public void setBreedingMethod(String breedingMethod) { this.breedingMethod = breedingMethod; }
-
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }
-
         public int getDaysRemaining() { return daysRemaining; }
         public void setDaysRemaining(int daysRemaining) { this.daysRemaining = daysRemaining; }
-
         public int getDaysUntilDue() { return daysUntilDue; }
         public void setDaysUntilDue(int daysUntilDue) { this.daysUntilDue = daysUntilDue; }
-
         public int getGestationProgress() { return gestationProgress; }
         public void setGestationProgress(int gestationProgress) { this.gestationProgress = gestationProgress; }
     }
@@ -710,35 +565,26 @@ public class BreedingPerformanceService {
         private Map<String, Integer> birthsByCategory = new HashMap<>();
         private Map<String, Integer> offspringByGender = new HashMap<>();
 
-        // Getters and Setters
         public LocalDate getStartDate() { return startDate; }
         public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-
         public LocalDate getEndDate() { return endDate; }
         public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-
         public int getTotalBirths() { return totalBirths; }
         public void setTotalBirths(int totalBirths) { this.totalBirths = totalBirths; }
-
         public int getTotalOffspring() { return totalOffspring; }
         public void setTotalOffspring(int totalOffspring) { this.totalOffspring = totalOffspring; }
-
         public int getLiveOffspring() { return liveOffspring; }
         public void setLiveOffspring(int liveOffspring) { this.liveOffspring = liveOffspring; }
-
         public int getStillborn() { return stillborn; }
         public void setStillborn(int stillborn) { this.stillborn = stillborn; }
-
         public double getAverageOffspringPerBirth() { return averageOffspringPerBirth; }
         public void setAverageOffspringPerBirth(double averageOffspringPerBirth) {
             this.averageOffspringPerBirth = averageOffspringPerBirth;
         }
-
         public Map<String, Integer> getBirthsByCategory() { return birthsByCategory; }
         public void setBirthsByCategory(Map<String, Integer> birthsByCategory) {
             this.birthsByCategory = birthsByCategory;
         }
-
         public Map<String, Integer> getOffspringByGender() { return offspringByGender; }
         public void setOffspringByGender(Map<String, Integer> offspringByGender) {
             this.offspringByGender = offspringByGender;
@@ -757,38 +603,28 @@ public class BreedingPerformanceService {
         private boolean hasSufficientData;
         private String message;
 
-        // Getters and Setters
         public UUID getLivestockId() { return livestockId; }
         public void setLivestockId(UUID livestockId) { this.livestockId = livestockId; }
-
         public String getTagNumber() { return tagNumber; }
         public void setTagNumber(String tagNumber) { this.tagNumber = tagNumber; }
-
         public String getCategoryName() { return categoryName; }
         public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
         public int getNumberOfBirths() { return numberOfBirths; }
         public void setNumberOfBirths(int numberOfBirths) { this.numberOfBirths = numberOfBirths; }
-
         public double getAverageIntervalDays() { return averageIntervalDays; }
         public void setAverageIntervalDays(double averageIntervalDays) {
             this.averageIntervalDays = averageIntervalDays;
         }
-
         public int getMinIntervalDays() { return minIntervalDays; }
         public void setMinIntervalDays(int minIntervalDays) { this.minIntervalDays = minIntervalDays; }
-
         public int getMaxIntervalDays() { return maxIntervalDays; }
         public void setMaxIntervalDays(int maxIntervalDays) { this.maxIntervalDays = maxIntervalDays; }
-
         public List<Integer> getIntervals() { return intervals; }
         public void setIntervals(List<Integer> intervals) { this.intervals = intervals; }
-
         public boolean isHasSufficientData() { return hasSufficientData; }
         public void setHasSufficientData(boolean hasSufficientData) {
             this.hasSufficientData = hasSufficientData;
         }
-
         public String getMessage() { return message; }
         public void setMessage(String message) { this.message = message; }
     }
@@ -805,50 +641,40 @@ public class BreedingPerformanceService {
         private double overallSuccessRate;
         private int totalBreedingAttempts;
 
-        // Getters and Setters
         public LocalDate getStartDate() { return startDate; }
         public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-
         public LocalDate getEndDate() { return endDate; }
         public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
-
         public BirthingReportDto getBirthingReport() { return birthingReport; }
         public void setBirthingReport(BirthingReportDto birthingReport) {
             this.birthingReport = birthingReport;
         }
-
         public Map<String, BreedingPerformanceMetrics> getCategoryPerformance() {
             return categoryPerformance;
         }
         public void setCategoryPerformance(Map<String, BreedingPerformanceMetrics> categoryPerformance) {
             this.categoryPerformance = categoryPerformance;
         }
-
         public List<PregnancyTrackingDto> getCurrentPregnancies() { return currentPregnancies; }
         public void setCurrentPregnancies(List<PregnancyTrackingDto> currentPregnancies) {
             this.currentPregnancies = currentPregnancies;
         }
-
         public List<PregnancyTrackingDto> getUpcomingBirths() { return upcomingBirths; }
         public void setUpcomingBirths(List<PregnancyTrackingDto> upcomingBirths) {
             this.upcomingBirths = upcomingBirths;
         }
-
         public double getAverageOffspringPerBirth() { return averageOffspringPerBirth; }
         public void setAverageOffspringPerBirth(double averageOffspringPerBirth) {
             this.averageOffspringPerBirth = averageOffspringPerBirth;
         }
-
         public int getTotalActivePregnancies() { return totalActivePregnancies; }
         public void setTotalActivePregnancies(int totalActivePregnancies) {
             this.totalActivePregnancies = totalActivePregnancies;
         }
-
         public double getOverallSuccessRate() { return overallSuccessRate; }
         public void setOverallSuccessRate(double overallSuccessRate) {
             this.overallSuccessRate = overallSuccessRate;
         }
-
         public int getTotalBreedingAttempts() { return totalBreedingAttempts; }
         public void setTotalBreedingAttempts(int totalBreedingAttempts) {
             this.totalBreedingAttempts = totalBreedingAttempts;

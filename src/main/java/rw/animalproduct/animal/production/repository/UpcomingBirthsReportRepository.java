@@ -13,34 +13,6 @@ import java.util.UUID;
 
 public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockBreeding, UUID> {
 
-    /*
-     * ════════════════════════════════════════════════════════════════════
-     * Upcoming Births report — UNION of two independent sources:
-     *
-     *   A) livestock_breeding  → active pregnancies (status IN
-     *                            ('PREGNANT','CONFIRMED_PREGNANT')) with
-     *                            a populated expected_due_date.
-     *
-     *   B) livestock_births    → animals whose most recent birth row
-     *                            carries a next_breeding_date inside the
-     *                            report window. Captures cases whose
-     *                            breeding record is already COMPLETED but
-     *                            the next due date lives on the births log.
-     *
-     * STALENESS GUARD: source B only accepts next_breeding_date within
-     * the last 30 days → future (windowDays). Ancient rows from 2024/2025
-     * are dropped.
-     *
-     * KPI WINDOW SEMANTICS:
-     *   "Due Within 3 Days"  → days_until_due BETWEEN -30 AND 3
-     *   "Due This Week"      → days_until_due BETWEEN -30 AND 7
-     *   "Due This Month"     → days_until_due BETWEEN -30 AND 30
-     *   "Overdue"            → days_until_due < 0
-     * The -30 lower bound keeps up to 30 days overdue in the "due soon" cards.
-     * ════════════════════════════════════════════════════════════════════
-     */
-
-    /** Source A — active pregnancies tracked in livestock_breeding. */
     String UPCOMING_BREEDING_WHERE =
             " FROM livestock_breeding b " +
                     " JOIN livestock l ON l.id = b.livestock_id " +
@@ -54,7 +26,6 @@ public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockB
                     "   AND (:categoryId IS NULL OR l.livestock_category_id = :categoryId) " +
                     "   AND (:search IS NULL OR l.tag_number ILIKE CONCAT('%', CAST(:search AS text), '%')) ";
 
-    /** Source B — most recent livestock_births.next_breeding_date per animal. */
     String UPCOMING_BIRTHS_WHERE =
             " FROM (" +
                     "   SELECT DISTINCT ON (lb.livestock_id) " +
@@ -75,7 +46,6 @@ public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockB
                     "   AND (:categoryId IS NULL OR l.livestock_category_id = :categoryId) " +
                     "   AND (:search IS NULL OR l.tag_number ILIKE CONCAT('%', CAST(:search AS text), '%')) ";
 
-    /** UNION wrapper — column order must match across both branches. */
     String UPCOMING_UNION =
             " FROM ( " +
                     "   SELECT " +
@@ -119,9 +89,6 @@ public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockB
                     UPCOMING_BIRTHS_WHERE +
                     " ) u ";
 
-    // ════════════════════════════════════════════════════════════════════
-    // TABLE — pass an UNSORTED Pageable; ORDER BY is fixed here.
-    // ════════════════════════════════════════════════════════════════════
     @Query(value =
             "SELECT u.* " + UPCOMING_UNION +
                     " ORDER BY u.expected_due_date ASC ",
@@ -132,9 +99,6 @@ public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockB
                                          @Param("windowDays") Integer windowDays,
                                          Pageable pageable);
 
-    // ════════════════════════════════════════════════════════════════════
-    // KPIs — union-aware with the "-30 … +N" buckets
-    // ════════════════════════════════════════════════════════════════════
     @Query(value =
             "SELECT " +
                     "  COUNT(*) AS total_pregnant, " +
@@ -149,9 +113,6 @@ public interface UpcomingBirthsReportRepository extends JpaRepository<LivestockB
                     @Param("search") String search,
                     @Param("windowDays") Integer windowDays);
 
-    // ════════════════════════════════════════════════════════════════════
-    // CATEGORY BREAKDOWN
-    // ════════════════════════════════════════════════════════════════════
     @Query(value =
             "SELECT " +
                     "  u.category_name AS category_name, " +

@@ -24,7 +24,6 @@ import rw.animalproduct.animal.production.services.BeneficiaryService;
 import rw.animalproduct.animal.production.services.LocationService;
 import rw.animalproduct.animal.production.services.RepresentativeService;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -70,10 +69,8 @@ public class BeneficiaryController {
 
             Page<Beneficiary> pageContent;
             if (representativeId != null && status != null && !status.isBlank()) {
-                pageContent = beneficiaryRepository.findByRepresentativeId(representativeId, pageable);
-                // representative + status combo isn't a single derived query yet;
-                // filter the current page in-memory rather than adding another
-                // narrow repository method for a rarely-combined filter pair.
+                pageContent = beneficiaryRepository.findByRepresentativeIdAndStatus(
+                        representativeId, status.toUpperCase(), pageable);
             } else if (status != null && !status.isBlank()) {
                 pageContent = beneficiaryRepository.findByStatus(status.toUpperCase(), pageable);
             } else if (representativeId != null) {
@@ -112,20 +109,22 @@ public class BeneficiaryController {
         return "beneficiaries-list";
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    //  REGISTER FORM — only ACTIVE representatives
+    // ═══════════════════════════════════════════════════════════════════════
     @GetMapping("/register")
     public String showRegistrationForm(
             @RequestParam(value = "representativeId", required = false) UUID representativeId,
             Model model) {
-        List<Representative> representativesList = representativesAbororaService.getAll();
+
+        // ★ Only ACTIVE representatives are selectable when registering a new beneficiary
+        List<Representative> activeRepresentatives =
+                representativesAbororaService.getByStatus("ACTIVE");
+
         List<Location> locationList = locationRepository.findAll();
 
-        model.addAttribute("representativesList", representativesList);
+        model.addAttribute("representativesList", activeRepresentatives);
         model.addAttribute("locationList", locationList);
-
-        // NEW: render provinces server-side instead of fetching them over AJAX
-        // after the page loads. This removes one full network round trip before
-        // the location section becomes usable, which is the first thing most
-        // users touch after the name fields.
         model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
 
         Beneficiary beneficiaries = new Beneficiary();
@@ -136,7 +135,7 @@ public class BeneficiaryController {
         return "beneficiaries-register";
     }
 
-    // ── CREATE (now logged) ─────────────────────────────────────────────────
+    // ─── CREATE ─────────────────────────────────────────────────────────────
     @PostMapping("/register/new")
     public String register(@Valid @ModelAttribute("beneficiaries") Beneficiary beneficiaries,
                            @RequestParam(value = "locationId", required = false) UUID locationId,
@@ -148,23 +147,18 @@ public class BeneficiaryController {
         if (existingOpt.isPresent()) {
             result.rejectValue("nid", "error.beneficiaries", "NID already exists");
         }
-
         if (beneficiaries.getNid() != null && !beneficiaries.getNid().matches("^[0-9]{16}$")) {
             result.rejectValue("nid", "error.beneficiaries", "National ID must be exactly 16 digits");
         }
-
         if (beneficiaries.getPhone() != null && !beneficiaries.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
             result.rejectValue("phone", "error.beneficiaries", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
-
         if (locationId == null) {
             result.reject("error.location", "Location is required");
         }
-
         if (beneficiaries.getRepresentativeIdValue() == null || beneficiaries.getRepresentativeIdValue().trim().isEmpty()) {
             result.rejectValue("representativeIdValue", "error.beneficiaries", "Representative is required");
         }
-
         if (beneficiaries.getContractAgreement() == null || beneficiaries.getContractAgreement().trim().isEmpty()) {
             result.reject("error.contractAgreement", "Contract PDF is required");
         }
@@ -173,19 +167,17 @@ public class BeneficiaryController {
             String errorMessages = result.getFieldErrors().stream()
                     .map(FieldError::getDefaultMessage)
                     .collect(Collectors.joining(", "));
-
             model.addAttribute("error", errorMessages);
-            List<Representative> representativesList = representativesAbororaService.getAll();
-            List<Location> locationList = locationRepository.findAll();
-            model.addAttribute("representativesList", representativesList);
-            model.addAttribute("locationList", locationList);
+            model.addAttribute("representativesList", representativesAbororaService.getByStatus("ACTIVE"));
+            model.addAttribute("locationList", locationRepository.findAll());
             model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-register";
         }
 
         try {
             if (beneficiaries.getRepresentativeIdValue() != null && !beneficiaries.getRepresentativeIdValue().trim().isEmpty()) {
-                Representative representative = representativesAbororaService.getById(UUID.fromString(beneficiaries.getRepresentativeIdValue()))
+                Representative representative = representativesAbororaService
+                        .getById(UUID.fromString(beneficiaries.getRepresentativeIdValue()))
                         .orElseThrow(() -> new IllegalArgumentException("Representative not found"));
                 beneficiaries.setRepresentative(representative);
             }
@@ -193,8 +185,6 @@ public class BeneficiaryController {
             Location location = locationRepository.findById(locationId)
                     .orElseThrow(() -> new IllegalArgumentException("Location not found"));
             beneficiaries.setLocation(location);
-
-            beneficiaries.setCreatedDate(new Date());
 
             Beneficiary saved = beneficiariesAmatungoService.addNew(beneficiaries);
 
@@ -212,10 +202,8 @@ public class BeneficiaryController {
             return "redirect:/beneficiaries/list";
         } catch (Exception e) {
             model.addAttribute("error", "Error registering beneficiary: " + e.getMessage());
-            List<Representative> representativesList = representativesAbororaService.getAll();
-            List<Location> locationList = locationRepository.findAll();
-            model.addAttribute("representativesList", representativesList);
-            model.addAttribute("locationList", locationList);
+            model.addAttribute("representativesList", representativesAbororaService.getByStatus("ACTIVE"));
+            model.addAttribute("locationList", locationRepository.findAll());
             model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-register";
         }
@@ -228,9 +216,13 @@ public class BeneficiaryController {
             return "redirect:/beneficiaries/list";
         }
 
-        List<Representative> representativesList = representativesAbororaService.getAll();
-
+        // ★ On edit, allow ACTIVE + the currently-assigned rep even if inactive
         Beneficiary beneficiaries = beneficiariesOpt.get();
+        List<Representative> representativesList = representativesAbororaService.getByStatus("ACTIVE");
+        if (beneficiaries.getRepresentative() != null
+                && representativesList.stream().noneMatch(r -> r.getId().equals(beneficiaries.getRepresentative().getId()))) {
+            representativesList.add(0, beneficiaries.getRepresentative());
+        }
 
         if (beneficiaries.getRepresentative() != null) {
             beneficiaries.setRepresentativeIdValue(beneficiaries.getRepresentative().getId().toString());
@@ -239,10 +231,7 @@ public class BeneficiaryController {
         model.addAttribute("beneficiaries", beneficiaries);
         model.addAttribute("representativesList", representativesList);
 
-        Location parent = null;
-        Location grandParent = null;
-        Location greatGrandParent = null;
-        Location greatGreatGrandParent = null;
+        Location parent = null, grandParent = null, greatGrandParent = null, greatGreatGrandParent = null;
 
         if (beneficiaries.getLocation() != null) {
             Location currentLocation = beneficiaries.getLocation();
@@ -279,15 +268,13 @@ public class BeneficiaryController {
         }
         if (parent != null) {
             model.addAttribute("cells", locationService.getChildLocations(parent.getId()));
-        }
-        if (parent != null) {
             model.addAttribute("villages", locationService.getChildLocations(parent.getId()));
         }
 
         return "beneficiaries-edit";
     }
 
-    // ── UPDATE (now logged) ─────────────────────────────────────────────────
+    // ─── UPDATE ─────────────────────────────────────────────────────────────
     @PostMapping("/update/{id}")
     public String update(@PathVariable("id") UUID id,
                          @Valid @ModelAttribute("beneficiaries") Beneficiary beneficiaries,
@@ -300,19 +287,15 @@ public class BeneficiaryController {
         if (existingOpt.isPresent() && !existingOpt.get().getId().equals(id)) {
             result.rejectValue("nid", "error.beneficiaries", "NID already exists");
         }
-
         if (beneficiaries.getNid() != null && !beneficiaries.getNid().matches("^[0-9]{16}$")) {
             result.rejectValue("nid", "error.beneficiaries", "National ID must be exactly 16 digits");
         }
-
         if (beneficiaries.getPhone() != null && !beneficiaries.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
             result.rejectValue("phone", "error.beneficiaries", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
-
         if (locationId == null) {
             result.reject("error.location", "Location is required");
         }
-
         if (beneficiaries.getRepresentativeIdValue() == null || beneficiaries.getRepresentativeIdValue().trim().isEmpty()) {
             result.rejectValue("representativeIdValue", "error.beneficiaries", "Representative is required");
         }
@@ -321,22 +304,20 @@ public class BeneficiaryController {
             String errorMessages = result.getFieldErrors().stream()
                     .map(FieldError::getDefaultMessage)
                     .collect(Collectors.joining(", "));
-
             model.addAttribute("error", errorMessages);
-            List<Representative> representativesList = representativesAbororaService.getAll();
-            model.addAttribute("representativesList", representativesList);
+            model.addAttribute("representativesList", representativesAbororaService.getByStatus("ACTIVE"));
             model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-edit";
         }
 
         try {
-            // Capture "before" as a JSON string NOW, before update() mutates the managed entity
             String beforeSnapshot = beneficiariesAmatungoService.getById(id)
                     .map(auditLogService::snapshot)
                     .orElse(null);
 
             if (beneficiaries.getRepresentativeIdValue() != null && !beneficiaries.getRepresentativeIdValue().trim().isEmpty()) {
-                Representative representative = representativesAbororaService.getById(UUID.fromString(beneficiaries.getRepresentativeIdValue()))
+                Representative representative = representativesAbororaService
+                        .getById(UUID.fromString(beneficiaries.getRepresentativeIdValue()))
                         .orElseThrow(() -> new IllegalArgumentException("Representative not found"));
                 beneficiaries.setRepresentative(representative);
             }
@@ -361,18 +342,13 @@ public class BeneficiaryController {
             return "redirect:/beneficiaries/list";
         } catch (Exception e) {
             model.addAttribute("error", "Error updating beneficiary: " + e.getMessage());
-            List<Representative> representativesList = representativesAbororaService.getAll();
-            model.addAttribute("representativesList", representativesList);
+            model.addAttribute("representativesList", representativesAbororaService.getByStatus("ACTIVE"));
             model.addAttribute("provinces", locationService.getLocationsByType("PROVINCE"));
             return "beneficiaries-edit";
         }
     }
 
-    // ── STATUS TOGGLE (NEW) ─────────────────────────────────────────────────
-    // Separate, explicit endpoint for activating/deactivating a beneficiary.
-    // Kept out of the update() flow on purpose: status changes are a distinct,
-    // auditable action a user takes deliberately (e.g. from a confirm dialog),
-    // not a side effect of saving an edited name or phone number.
+    // ─── STATUS TOGGLE ──────────────────────────────────────────────────────
     @PostMapping("/status/{id}")
     public String toggleStatus(@PathVariable("id") UUID id,
                                @RequestParam(value = "redirectTo", required = false) String redirectTo,
@@ -409,7 +385,7 @@ public class BeneficiaryController {
         return "redirect:/beneficiaries/list";
     }
 
-    // ── DELETE ────────────────────────────────────────────────────────────
+    // ─── DELETE ─────────────────────────────────────────────────────────────
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id,
                          RedirectAttributes redirectAttributes) {
@@ -418,7 +394,6 @@ public class BeneficiaryController {
 
         if (beneficiaryOpt.isPresent()) {
             Beneficiary beneficiary = beneficiaryOpt.get();
-
             auditLogService.log(
                     "beneficiary",
                     id,
@@ -441,7 +416,6 @@ public class BeneficiaryController {
         if (beneficiariesOpt.isEmpty()) {
             return "redirect:/beneficiaries/list";
         }
-
         model.addAttribute("beneficiaries", beneficiariesOpt.get());
         return "beneficiaries-view";
     }

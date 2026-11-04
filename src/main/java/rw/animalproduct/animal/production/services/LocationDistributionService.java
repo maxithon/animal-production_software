@@ -315,8 +315,9 @@ public class LocationDistributionService {
             return Collections.emptyMap();
         }
 
-        // Then get all births for these livestock
-        List<LivestockBirth> births = birthRepository.findByLivestockIdInAndIsDeletedFalse(livestockIds);
+        // Then get all births for these livestock.
+        // LivestockBirth has no isDeleted flag (births are hard-deleted), so no filter is needed.
+        List<LivestockBirth> births = birthRepository.findByLivestockIdIn(livestockIds);
 
         // Group births by location (using the livestock's location)
         Map<UUID, List<LivestockBirth>> birthsByLocation = new HashMap<>();

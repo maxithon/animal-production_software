@@ -8,7 +8,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import rw.animalproduct.animal.production.entity.Location;
 import rw.animalproduct.animal.production.entity.Veterinarian;
 import rw.animalproduct.animal.production.repository.LocationRepository;
 import rw.animalproduct.animal.production.services.AuditLogService;
@@ -41,9 +43,18 @@ public class VeterinarianController {
         return "veterinarians-list";
     }
 
+    @GetMapping("/view/{id}")
+    public String viewDetails(@PathVariable("id") UUID id, Model model) {
+        Optional<Veterinarian> opt = veterinarianService.getById(id);
+        if (opt.isEmpty()) return "redirect:/veterinarians";
+        model.addAttribute("vet", opt.get());
+        return "veterinarian-view";
+    }
+
     @PostMapping("/new")
     public String save(@Valid @ModelAttribute("vet") Veterinarian vet,
                        BindingResult result,
+                       @RequestParam(value = "photoFile", required = false) MultipartFile photoFile,
                        Model model,
                        RedirectAttributes ra) {
 
@@ -52,35 +63,78 @@ public class VeterinarianController {
             model.addAttribute("locations", locationRepository.findAll());
             return "veterinarians-list";
         }
-        resolveLocation(vet);
-        Veterinarian saved = veterinarianService.addNew(vet);
 
-        auditLogService.log(
-                "veterinarian",
-                saved.getId(),
-                "CREATE",
-                getCurrentUsername(),
-                null,
-                saved,
-                "Registered veterinarian: " + saved.getFullName()
-        );
+        try {
+            resolveLocation(vet);
+            Veterinarian saved = veterinarianService.addNew(vet, photoFile);
 
-        ra.addFlashAttribute("success", "Veterinarian registered successfully!");
-        return "redirect:/veterinarians";
+            auditLogService.log("veterinarian", saved.getId(), "CREATE", getCurrentUsername(),
+                    null, saved, "Registered veterinarian: " + saved.getFullName());
+
+            ra.addFlashAttribute("success", "Veterinarian registered successfully! Notification email sent.");
+            return "redirect:/veterinarians";
+
+        } catch (IllegalStateException dup) {
+            result.rejectValue("licenseNumber", "duplicate", dup.getMessage());
+            model.addAttribute("vets",      veterinarianService.getAll());
+            model.addAttribute("locations", locationRepository.findAll());
+            return "veterinarians-list";
+        }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════
+    //  EDIT FORM
+    //  Pre-computes every level of the location chain in Java, so the
+    //  template only needs simple ${} expressions — no th:inline="javascript"
+    //  multi-line expressions, no JS parsing issues.
+    // ═══════════════════════════════════════════════════════════════════════
     @GetMapping("/edit/{id}")
     public String editForm(@PathVariable UUID id, Model model) {
         Optional<Veterinarian> opt = veterinarianService.getById(id);
         if (opt.isEmpty()) return "redirect:/veterinarians";
 
         Veterinarian vet = opt.get();
+        model.addAttribute("vet", vet);
+        model.addAttribute("locations", locationRepository.findAll());
+
+        // Default all selected ids to "" so the template never has to guard nulls
+        String selectedProvince = "";
+        String selectedDistrict = "";
+        String selectedSector   = "";
+        String selectedCell     = "";
+        String selectedVillage  = "";
+
         if (vet.getLocation() != null) {
-            vet.setLocationIdValue(vet.getLocation().getId().toString());
+            Location cur = vet.getLocation();
+            selectedVillage = cur.getId().toString();
+
+            Location parent = cur.getParent();
+            if (parent != null) {
+                selectedCell = parent.getId().toString();
+
+                Location grandParent = parent.getParent();
+                if (grandParent != null) {
+                    selectedSector = grandParent.getId().toString();
+
+                    Location greatGrand = grandParent.getParent();
+                    if (greatGrand != null) {
+                        selectedDistrict = greatGrand.getId().toString();
+
+                        Location greatGreatGrand = greatGrand.getParent();
+                        if (greatGreatGrand != null) {
+                            selectedProvince = greatGreatGrand.getId().toString();
+                        }
+                    }
+                }
+            }
         }
 
-        model.addAttribute("vet",       vet);
-        model.addAttribute("locations", locationRepository.findAll());
+        model.addAttribute("selectedProvince", selectedProvince);
+        model.addAttribute("selectedDistrict", selectedDistrict);
+        model.addAttribute("selectedSector",   selectedSector);
+        model.addAttribute("selectedCell",     selectedCell);
+        model.addAttribute("selectedVillage",  selectedVillage);
+
         return "veterinarian-edit";
     }
 
@@ -88,34 +142,37 @@ public class VeterinarianController {
     public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute("vet") Veterinarian vet,
                          BindingResult result,
+                         @RequestParam(value = "photoFile", required = false) MultipartFile photoFile,
                          Model model,
                          RedirectAttributes ra) {
+
         if (result.hasErrors()) {
             model.addAttribute("locations", locationRepository.findAll());
             return "veterinarian-edit";
         }
 
-        String beforeSnapshot = veterinarianService.getById(id)
-                .map(auditLogService::snapshot)
-                .orElse(null);
+        try {
+            String beforeSnapshot = veterinarianService.getById(id)
+                    .map(auditLogService::snapshot)
+                    .orElse(null);
 
-        resolveLocation(vet);
-        veterinarianService.update(id, vet);
+            resolveLocation(vet);
+            veterinarianService.update(id, vet, photoFile);
 
-        Veterinarian after = veterinarianService.getById(id).orElse(null);
+            Veterinarian after = veterinarianService.getById(id).orElse(null);
 
-        auditLogService.log(
-                "veterinarian",
-                id,
-                "UPDATE",
-                getCurrentUsername(),
-                beforeSnapshot,
-                after,
-                "Updated veterinarian: " + vet.getFirstName() + " " + vet.getLastName()
-        );
+            auditLogService.log("veterinarian", id, "UPDATE", getCurrentUsername(),
+                    beforeSnapshot, after,
+                    "Updated veterinarian: " + vet.getFirstName() + " " + vet.getLastName());
 
-        ra.addFlashAttribute("success", "Veterinarian updated successfully!");
-        return "redirect:/veterinarians";
+            ra.addFlashAttribute("success", "Veterinarian updated successfully! Notification email sent.");
+            return "redirect:/veterinarians";
+
+        } catch (IllegalStateException dup) {
+            result.rejectValue("licenseNumber", "duplicate", dup.getMessage());
+            model.addAttribute("locations", locationRepository.findAll());
+            return "veterinarian-edit";
+        }
     }
 
     @PostMapping("/delete/{id}")
@@ -125,19 +182,12 @@ public class VeterinarianController {
 
             if (vetOpt.isPresent()) {
                 Veterinarian vet = vetOpt.get();
-                auditLogService.log(
-                        "veterinarian",
-                        id,
-                        "DELETE",
-                        getCurrentUsername(),
-                        vet,
-                        null,
-                        "Deleted veterinarian: " + vet.getFullName()
-                );
+                auditLogService.log("veterinarian", id, "SOFT_DELETE", getCurrentUsername(),
+                        vet, null, "Deleted veterinarian: " + vet.getFullName());
             }
 
             veterinarianService.delete(id);
-            ra.addFlashAttribute("success", "Veterinarian deleted.");
+            ra.addFlashAttribute("success", "Veterinarian deleted. Notification email sent.");
         } catch (Exception e) {
             ra.addFlashAttribute("error", "Cannot delete: " + e.getMessage());
         }
@@ -146,13 +196,23 @@ public class VeterinarianController {
 
     @PostMapping("/toggle-active/{id}")
     public String toggleActive(@PathVariable UUID id, RedirectAttributes ra) {
-        Optional<Veterinarian> opt = veterinarianService.getById(id);
-        if (opt.isPresent()) {
-            Veterinarian vet = opt.get();
-            vet.setIsActive(!Boolean.TRUE.equals(vet.getIsActive()));
-            veterinarianService.update(id, vet);
+        Optional<Veterinarian> beforeOpt = veterinarianService.getById(id);
+        if (beforeOpt.isEmpty()) {
+            ra.addFlashAttribute("error", "Veterinarian not found");
+            return "redirect:/veterinarians";
+        }
+
+        String beforeSnapshot = auditLogService.snapshot(beforeOpt.get());
+        Veterinarian updated = veterinarianService.toggleStatus(id);
+
+        if (updated != null) {
+            auditLogService.log("veterinarian", id, "STATUS_CHANGE", getCurrentUsername(),
+                    beforeSnapshot, updated,
+                    "Changed status to " + (Boolean.TRUE.equals(updated.getIsActive()) ? "ACTIVE" : "INACTIVE")
+                            + " for: " + updated.getFullName());
             ra.addFlashAttribute("success",
-                    "Veterinarian " + (vet.getIsActive() ? "activated" : "deactivated") + ".");
+                    "Veterinarian " + (Boolean.TRUE.equals(updated.getIsActive()) ? "activated" : "deactivated")
+                            + ". Notification email sent.");
         }
         return "redirect:/veterinarians";
     }
@@ -163,7 +223,6 @@ public class VeterinarianController {
             @RequestParam(value = "q", required = false) String query) {
 
         List<Veterinarian> vets = veterinarianService.search(query);
-
         if (vets.size() > 20) {
             vets = vets.subList(0, 20);
         }
@@ -187,9 +246,7 @@ public class VeterinarianController {
 
     @PostMapping("/quick-add")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> quickAdd(
-            @RequestBody Map<String, String> payload) {
-
+    public ResponseEntity<Map<String, Object>> quickAdd(@RequestBody Map<String, String> payload) {
         Map<String, Object> response = new LinkedHashMap<>();
 
         String firstName = payload.getOrDefault("firstName", "").trim();
@@ -209,17 +266,10 @@ public class VeterinarianController {
             vet.setLicenseNumber(payload.getOrDefault("licenseNumber", "").trim());
             vet.setIsActive(true);
 
-            Veterinarian saved = veterinarianService.addNew(vet);
+            Veterinarian saved = veterinarianService.addNew(vet, null);
 
-            auditLogService.log(
-                    "veterinarian",
-                    saved.getId(),
-                    "CREATE",
-                    getCurrentUsername(),
-                    null,
-                    saved,
-                    "Quick-added veterinarian: " + saved.getFullName()
-            );
+            auditLogService.log("veterinarian", saved.getId(), "CREATE", getCurrentUsername(),
+                    null, saved, "Quick-added veterinarian: " + saved.getFullName());
 
             Map<String, Object> vetMap = new LinkedHashMap<>();
             vetMap.put("id",            saved.getId());
@@ -230,7 +280,6 @@ public class VeterinarianController {
             response.put("success", true);
             response.put("vet", vetMap);
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", e.getMessage());
@@ -243,8 +292,6 @@ public class VeterinarianController {
         if (locId != null && !locId.trim().isEmpty()) {
             locationRepository.findById(UUID.fromString(locId))
                     .ifPresent(vet::setLocation);
-        } else {
-            vet.setLocation(null);
         }
     }
 

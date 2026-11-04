@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Livestock Overview</title>
+    <title th:text="${mode == 'deleted'} ? 'Removed Livestock' : 'Livestock Overview'">Livestock Overview</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -23,15 +23,17 @@
 
         body { background: #f0f4f8; font-family: 'DM Sans', sans-serif; color: var(--ink-900); }
 
-        /* ───────────── ORIGINAL HEADER (unchanged) ───────────── */
+        /* ───────────── HEADER (variants by mode) ───────────── */
         .page-header {
             background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
             color: white;
             padding: 24px 32px;
             margin-bottom: 24px;
         }
+        .page-header.mode-deleted {
+            background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+        }
 
-        /* ───────────── ORIGINAL CARDS (unchanged) ───────────── */
         .card-panel {
             background: white;
             border-radius: 12px;
@@ -56,11 +58,9 @@
             font-weight: 600; margin-top: 2px;
         }
 
-        /* ───────────── FILTER BAR (unchanged) ───────────── */
         .filter-bar .form-select,
         .filter-bar .form-control { font-size: .85rem; }
 
-        /* ───────────── NEW TABLE STYLES ───────────── */
         .table-wrap { overflow-x: auto; }
         .table { margin: 0; }
         .table thead th {
@@ -91,6 +91,9 @@
             background: linear-gradient(135deg, #1a5f7a, #2e8b9e);
             display: grid; place-items: center; color: #fff; font-size: .95rem;
         }
+        .thumb-placeholder.mode-deleted {
+            background: linear-gradient(135deg, #7f1d1d, #b91c1c);
+        }
         .animal-tag { font-weight: 700; color: var(--ink-900); font-size: .86rem; }
         .animal-meta { font-size: .72rem; color: #64748b; margin-top: 2px; }
 
@@ -120,6 +123,7 @@
         .beneficiary-cell .phone i { margin-right: 3px; }
 
         .value-cell { font-weight: 700; color: #1a5f7a; white-space: nowrap; }
+        .value-cell.mode-deleted { color: #7f1d1d; }
 
         .action-btn {
             width: 32px; height: 32px; padding: 0;
@@ -131,8 +135,10 @@
         .action-btn:hover {
             background: #1a5f7a; border-color: #1a5f7a; color: #fff;
         }
+        .action-btn.mode-deleted:hover {
+            background: #7f1d1d; border-color: #7f1d1d;
+        }
 
-        /* ───────────── EMPTY STATE ───────────── */
         .empty-state {
             text-align: center; padding: 48px 20px; color: #64748b;
         }
@@ -143,41 +149,200 @@
         .empty-state h6 { color: var(--ink-700); font-weight: 700; margin: 0 0 6px; }
         .empty-state p { font-size: .85rem; margin: 0; }
 
-        /* ───────────── PAGINATION ───────────── */
-        .pagination { margin: 20px 0 0; }
-        .page-link {
-            border: 1px solid #f1f5f9;
-            color: #334155; font-size: .82rem;
-            padding: 6px 11px; border-radius: 8px !important;
-            margin: 0 3px;
-        }
-        .page-link:hover { background: #e6f2f5; border-color: #2e8b9e; color: #1a5f7a; }
-        .page-item.active .page-link { background: #1a5f7a; border-color: #1a5f7a; color: #fff; }
-        .page-item.disabled .page-link { color: #cbd5e1; background: #fafbfc; }
-
         .results-count {
             font-size: .78rem; color: #64748b; font-weight: 500;
             text-transform: none; letter-spacing: 0;
         }
 
-        /* ───────────── RESPONSIVE ───────────── */
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION
+           ══════════════════════════════════════════════════════════════ */
+        .pagination-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding-top: 14px;
+            border-top: 1.5px solid #f0f2f5;
+            margin-top: 8px;
+        }
+        .pagination-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .showing-text { font-size: .8rem; color: #64748b; }
+        .showing-text strong { color: #0f172a; font-weight: 700; }
+
+        .page-size-wrap { display: flex; align-items: center; gap: 6px; }
+        .page-size-label { font-size: .75rem; font-weight: 600; color: #64748b; }
+        .page-size-select {
+            padding: 4px 9px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: .78rem;
+            font-weight: 600;
+            color: #334155;
+            cursor: pointer;
+            background: #fafcff;
+        }
+        .page-size-select:hover { border-color: #1a5f7a; }
+        .page-size-select:focus { outline: none; border-color: #1a5f7a; box-shadow: 0 0 0 3px rgba(26,95,122,0.1); }
+
+        .pagination-list {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        .pg-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 6px;
+            font-size: .8rem;
+            font-weight: 600;
+            color: #475569;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            text-decoration: none;
+            transition: all .12s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .pg-btn:hover {
+            background: #e0f2fe;
+            border-color: #0284c7;
+            color: #0369a1;
+        }
+        .pg-active .pg-btn {
+            background: #1a5f7a;
+            color: #fff;
+            border-color: #1a5f7a;
+            pointer-events: none;
+            cursor: default;
+            box-shadow: 0 2px 6px rgba(26,95,122,.25);
+        }
+        .pg-active .pg-btn:hover { background: #1a5f7a; color: #fff; }
+        li.disabled .pg-btn {
+            opacity: .35;
+            pointer-events: none;
+            cursor: not-allowed;
+            background: #fafbfc;
+        }
+
+        /* Edge buttons (First / Prev / Next / Last) — icon + visible label */
+        .pg-btn.pg-edge {
+            min-width: auto;
+            padding: 0 12px;
+            gap: 6px;
+            background: #f8fafc;
+            color: #334155;
+            font-weight: 700;
+        }
+        .pg-btn.pg-edge:hover {
+            background: #1a5f7a;
+            border-color: #1a5f7a;
+            color: #fff;
+        }
+        .pg-btn.pg-edge i { font-size: .85rem; line-height: 1; }
+        .pg-btn.pg-edge .pg-label {
+            display: inline-block;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .pg-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 34px;
+            color: #94a3b8;
+            font-size: .85rem;
+            font-weight: 700;
+            user-select: none;
+            letter-spacing: .1em;
+        }
+
+        .goto-page {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: .75rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+        .goto-page input {
+            width: 56px;
+            height: 34px;
+            padding: 0 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: .8rem;
+            font-weight: 600;
+            text-align: center;
+            color: #0f172a;
+            background: #fff;
+            transition: all .12s;
+        }
+        .goto-page input:focus {
+            outline: none;
+            border-color: #1a5f7a;
+            box-shadow: 0 0 0 3px rgba(26,95,122,.1);
+        }
+        .goto-page input::-webkit-outer-spin-button,
+        .goto-page input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .goto-page input[type=number] { -moz-appearance: textfield; }
+
         @media (max-width: 767.98px) {
             .page-header { padding: 16px; }
             .page-header .d-flex { flex-direction: column; gap: 12px; align-items: flex-start !important; }
+            .pagination-wrap { flex-direction: column; align-items: stretch; }
+            .pagination-meta { justify-content: space-between; width: 100%; }
+            .pagination-list { justify-content: center; width: 100%; }
+            .goto-page {
+                justify-content: center;
+                width: 100%;
+                padding-top: 6px;
+                border-top: 1px dashed #e2e8f0;
+                margin-top: 4px;
+            }
+            .pg-btn.pg-edge .pg-label { display: none; }
         }
     </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════ ORIGINAL HEADER ═══════════════════════════ -->
-<div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<div class="page-header" th:classappend="${mode == 'deleted'} ? 'mode-deleted' : ''">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
-            <h4 class="mb-1"><i class="bi bi-box2-heart me-2"></i>Livestock Overview</h4>
-            <small style="opacity:.85" th:text="${totalItems} + ' animals total'">0 animals total</small>
+            <h4 class="mb-1" th:if="${mode == 'deleted'}">
+                <i class="bi bi-archive me-2"></i>Removed Livestock
+            </h4>
+            <h4 class="mb-1" th:unless="${mode == 'deleted'}">
+                <i class="bi bi-box2-heart me-2"></i>Livestock Overview
+            </h4>
+            <small style="opacity:.85"
+                   th:text="${totalItems} + ' animals ' + (${mode == 'deleted'} ? 'removed from the active herd' : 'total')">0 animals total</small>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a th:href="@{/livestock/register}" class="btn btn-light btn-sm">
+            <a th:if="${mode == 'deleted'}"
+               th:href="@{/livestock/overview}" class="btn btn-light btn-sm">
+                <i class="bi bi-grid me-1"></i>Overview
+            </a>
+            <a th:if="${mode != 'deleted'}"
+               th:href="@{/livestock/deleted}" class="btn btn-light btn-sm">
+                <i class="bi bi-archive me-1"></i>Removed
+            </a>
+            <a th:unless="${mode == 'deleted'}"
+               th:href="@{/livestock/register}" class="btn btn-light btn-sm">
                 <i class="bi bi-plus-circle me-1"></i>Add Animal
             </a>
         </div>
@@ -196,7 +361,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 
-    <!-- ═══════════════════════ ORIGINAL STAT CARDS ═══════════════════════ -->
+    <!-- ═══════════════════════ STAT CARDS ═══════════════════════ -->
     <div class="row g-3 mb-3">
         <div class="col-12 col-md-4">
             <div class="card-panel py-3">
@@ -247,7 +412,9 @@
 
     <!-- ═══════════════════════════ FILTER BAR ═══════════════════════════ -->
     <div class="card-panel">
-        <form method="get" th:action="@{/livestock/overview}" class="row g-2 align-items-end filter-bar">
+        <form method="get"
+              th:action="${mode == 'deleted'} ? @{/livestock/deleted} : @{/livestock/overview}"
+              class="row g-2 align-items-end filter-bar">
             <div class="col-6 col-md-3">
                 <label class="form-label small fw-semibold mb-1">Search</label>
                 <input type="text" class="form-control form-control-sm" name="search"
@@ -266,12 +433,21 @@
                 <label class="form-label small fw-semibold mb-1">Status</label>
                 <select class="form-select form-select-sm" name="status">
                     <option value="ALL">All</option>
-                    <option th:each="entry : ${statusStats}"
-                            th:value="${entry.key}" th:text="${entry.key}"
-                            th:selected="${entry.key == selectedStatus}"></option>
+                    <!-- Overview mode: all statuses -->
+                    <th:block th:if="${mode != 'deleted'}">
+                        <option th:each="entry : ${statusStats}"
+                                th:value="${entry.key}" th:text="${entry.key}"
+                                th:selected="${entry.key == selectedStatus}"></option>
+                    </th:block>
+                    <!-- Deleted mode: only SOLD / DEAD / TRANSFERRED -->
+                    <th:block th:if="${mode == 'deleted'}">
+                        <option value="SOLD"        th:selected="${selectedStatus == 'SOLD'}">SOLD</option>
+                        <option value="DEAD"        th:selected="${selectedStatus == 'DEAD'}">DEAD</option>
+                        <option value="TRANSFERRED" th:selected="${selectedStatus == 'TRANSFERRED'}">TRANSFERRED</option>
+                    </th:block>
                 </select>
             </div>
-            <div class="col-6 col-md-2">
+            <div class="col-6 col-md-2" th:if="${mode != 'deleted'}">
                 <label class="form-label small fw-semibold mb-1">Stage</label>
                 <select class="form-select form-select-sm" name="stage">
                     <option value="ALL">All</option>
@@ -296,20 +472,25 @@
         </form>
     </div>
 
-    <!-- ═══════════════════════════ NEW TABLE ═══════════════════════════ -->
+    <!-- ═══════════════════════════ TABLE ═══════════════════════════ -->
     <div class="card-panel">
         <div class="section-head d-flex justify-content-between align-items-center">
-            <span>Animals</span>
+            <span th:text="${mode == 'deleted'} ? 'Removed Animals' : 'Animals'">Animals</span>
             <span class="results-count"
                   th:text="${totalItems} + ' record' + (${totalItems == 1} ? '' : 's')">0 records</span>
         </div>
 
         <!-- Empty state -->
         <div th:if="${livestockList == null or livestockList.empty}" class="empty-state">
-            <i class="bi bi-inbox"></i>
-            <h6>No animals found</h6>
-            <p>Try adjusting your filters, or register a new animal to get started.</p>
-            <a th:href="@{/livestock/register}" class="btn btn-sm btn-primary mt-3">
+            <i class="bi" th:classappend="${mode == 'deleted'} ? 'bi-archive' : 'bi-inbox'"></i>
+            <h6 th:text="${mode == 'deleted'} ? 'No removed livestock' : 'No animals found'">No animals found</h6>
+            <p th:text="${mode == 'deleted'}
+                        ? 'Animals marked as SOLD, DEAD, or TRANSFERRED will appear here.'
+                        : 'Try adjusting your filters, or register a new animal to get started.'">
+                Try adjusting your filters.
+            </p>
+            <a th:unless="${mode == 'deleted'}"
+               th:href="@{/livestock/register}" class="btn btn-sm btn-primary mt-3">
                 <i class="bi bi-plus-circle me-1"></i>Register Animal
             </a>
         </div>
@@ -339,8 +520,9 @@
                             <img th:if="${animal.photo != null and !animal.photo.isEmpty()}"
                                  th:src="${animal.photo}" th:alt="${animal.tagNumber}" class="thumb">
                             <div th:unless="${animal.photo != null and !animal.photo.isEmpty()}"
-                                 class="thumb-placeholder">
-                                <i class="bi bi-box2-heart"></i>
+                                 class="thumb-placeholder"
+                                 th:classappend="${mode == 'deleted'} ? 'mode-deleted' : ''">
+                                <i class="bi" th:classappend="${mode == 'deleted'} ? 'bi-archive' : 'bi-box2-heart'"></i>
                             </div>
                             <div>
                                 <div class="animal-tag" th:text="${animal.tagNumber}">TAG-000</div>
@@ -386,7 +568,8 @@
                     <td th:text="${animal.ageDisplay}">—</td>
 
                     <!-- Value -->
-                    <td class="text-end value-cell">
+                    <td class="text-end value-cell"
+                        th:classappend="${mode == 'deleted'} ? 'mode-deleted' : ''">
                         <span th:if="${animal.currentValue != null}"
                               th:text="${#numbers.formatInteger(animal.currentValue, 0, 'COMMA')} + ' RWF'">
                             0 RWF
@@ -428,7 +611,9 @@
                     <!-- Actions: View only -->
                     <td class="text-end">
                         <a th:href="@{/livestock/view/{id}(id=${animal.id})}"
-                           class="action-btn" title="View details"
+                           class="action-btn"
+                           th:classappend="${mode == 'deleted'} ? 'mode-deleted' : ''"
+                           title="View details"
                            aria-label="View details">
                             <i class="bi bi-arrow-right-short" style="font-size:1.1rem;"></i>
                         </a>
@@ -438,33 +623,180 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        <nav th:if="${totalPages != null and totalPages > 1}" aria-label="Pagination">
-            <ul class="pagination pagination-sm justify-content-center">
-                <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled' : ''">
-                    <a class="page-link" aria-label="Previous"
-                       th:href="@{/livestock/overview(page=${currentPage - 1}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
-                        <i class="bi bi-chevron-left"></i>
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION — ALWAYS VISIBLE
+             Layout:
+               [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             Both modes supported — links resolve to overview vs deleted.
+             Preserves: size, stage, status, category, gender, search
+             ═════════════════════════════════════════════════════════════ -->
+        <div class="pagination-wrap"
+             th:with="
+                 total=${totalPages != null and totalPages > 0 ? totalPages : 1},
+                 current=${currentPage != null ? currentPage : 0},
+                 size=${pageSize != null ? pageSize : 10},
+                 items=${totalItems != null ? totalItems : 0},
+                 start=${items == 0 ? 0 : (current * size) + 1},
+                 end=${items == 0 ? 0 : ((current * size) + size > items ? items : (current * size) + size)},
+                 showFrom=${current - 2 < 1 ? 1 : current - 2},
+                 showTo=${current + 2 > total ? total : current + 2}
+             ">
+
+            <div class="pagination-meta">
+                <span class="showing-text">
+                    Showing <strong th:text="${start}">0</strong>–<strong th:text="${end}">0</strong>
+                    of <strong th:text="${items}">0</strong>
+                </span>
+                <div class="page-size-wrap">
+                    <span class="page-size-label">Rows per page:</span>
+                    <select class="page-size-select" onchange="changePageSize(this.value)">
+                        <option value="10"  th:selected="${pageSize == 10}">10</option>
+                        <option value="25"  th:selected="${pageSize == 25}">25</option>
+                        <option value="50"  th:selected="${pageSize == 50}">50</option>
+                        <option value="100" th:selected="${pageSize == 100}">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <ul class="pagination-list">
+
+                <!-- ─── FIRST page button (icon + label) ─────────────── -->
+                <li th:classappend="${current == 0} ? 'disabled'">
+                    <a th:if="${current > 0}"
+                       class="pg-btn pg-edge"
+                       th:title="'First page'"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=0, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=0, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
                     </a>
+                    <span th:if="${current == 0}" class="pg-btn pg-edge">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </span>
                 </li>
-                <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
-                    th:classappend="${i == currentPage} ? 'active' : ''">
-                    <a class="page-link"
-                       th:href="@{/livestock/overview(page=${i}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}"
-                       th:text="${i + 1}">1</a>
+
+                <!-- ─── PREVIOUS page button (icon + label) ──────────── -->
+                <li th:classappend="${current == 0} ? 'disabled'">
+                    <a th:if="${current > 0}"
+                       class="pg-btn pg-edge"
+                       th:title="'Previous page'"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=${current - 1}, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=${current - 1}, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </a>
+                    <span th:if="${current == 0}" class="pg-btn pg-edge">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </span>
                 </li>
-                <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled' : ''">
-                    <a class="page-link" aria-label="Next"
-                       th:href="@{/livestock/overview(page=${currentPage + 1}, size=${pageSize}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+
+                <!-- ─── First number if window slid past it ──────────── -->
+                <li th:if="${showFrom > 1}">
+                    <a class="pg-btn"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=0, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=0, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">1</a>
+                </li>
+                <li th:if="${showFrom > 2}" class="pg-ellipsis">…</li>
+
+                <!-- ─── Window of page numbers ──────────────────────── -->
+                <li th:each="i : ${#numbers.sequence(showFrom, showTo)}"
+                    th:classappend="${i - 1 == current} ? 'pg-active'">
+                    <a class="pg-btn"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=${i - 1}, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=${i - 1}, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}"
+                       th:text="${i}">1</a>
+                </li>
+
+                <!-- ─── Trailing ellipsis + last number ─────────────── -->
+                <li th:if="${showTo < total - 1}" class="pg-ellipsis">…</li>
+                <li th:if="${showTo < total}">
+                    <a class="pg-btn"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=${total - 1}, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=${total - 1}, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}"
+                       th:text="${total}">1</a>
+                </li>
+
+                <!-- ─── NEXT page button (icon + label) ─────────────── -->
+                <li th:classappend="${current + 1 >= total} ? 'disabled'">
+                    <a th:if="${current + 1 < total}"
+                       class="pg-btn pg-edge"
+                       th:title="'Next page'"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=${current + 1}, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=${current + 1}, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <span class="pg-label">Next</span>
                         <i class="bi bi-chevron-right"></i>
                     </a>
+                    <span th:if="${current + 1 >= total}" class="pg-btn pg-edge">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+
+                <!-- ─── LAST page button (icon + label) ─────────────── -->
+                <li th:classappend="${current + 1 >= total} ? 'disabled'">
+                    <a th:if="${current + 1 < total}"
+                       class="pg-btn pg-edge"
+                       th:title="'Last page'"
+                       th:href="${mode == 'deleted'}
+                                ? @{/livestock/deleted(page=${total - 1}, size=${size}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}
+                                : @{/livestock/overview(page=${total - 1}, size=${size}, stage=${selectedStage}, status=${selectedStatus}, category=${selectedCategory}, gender=${selectedGender}, search=${searchQuery})}">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </a>
+                    <span th:if="${current + 1 >= total}" class="pg-btn pg-edge">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </span>
                 </li>
             </ul>
-        </nav>
+
+            <!-- Jump-to-page -->
+            <div class="goto-page">
+                <label for="gotoPageInput">Go to page:</label>
+                <input type="number"
+                       id="gotoPageInput"
+                       min="1"
+                       th:max="${total}"
+                       th:value="${current + 1}"
+                       onkeydown="if(event.key==='Enter'){gotoPage(this.value)}"
+                       onblur="gotoPage(this.value)">
+                <span th:text="'/ ' + ${total}">/ 1</span>
+            </div>
+        </div>
     </div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    /* Read mode from the DOM — injected by Thymeleaf so it's always correct. */
+    var MODE = /*[[${mode}]]*/ 'overview';
+    var BASE_PATH = (MODE === 'deleted') ? '/livestock/deleted' : '/livestock/overview';
+
+    function changePageSize(size) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', '0');
+        url.searchParams.set('size', size);
+        window.location.href = url.toString();
+    }
+    function gotoPage(pageNum) {
+        var input = document.getElementById('gotoPageInput');
+        var total = parseInt(input.getAttribute('max'), 10) || 1;
+        var p = parseInt(pageNum, 10);
+        if (isNaN(p) || p < 1) p = 1;
+        if (p > total) p = total;
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', p - 1);
+        window.location.href = url.toString();
+    }
+</script>
 </body>
 </html>

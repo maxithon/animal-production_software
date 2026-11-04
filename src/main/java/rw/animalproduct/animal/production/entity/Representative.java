@@ -5,7 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.UUID;
 
 @Entity
@@ -50,10 +52,10 @@ public class Representative {
     @Column(name = "occupation")
     private String occupation;
 
-    @Column(name = "contract_agreement")
+    @Column(name = "contract_agreement", length = 1000)
     private String contractAgreement;
 
-    @Column(name = "photo")
+    @Column(name = "photo", length = 1000)
     private String photo;
 
     @ManyToOne
@@ -80,140 +82,109 @@ public class Representative {
     public Representative() {
     }
 
-    public UUID getId() {
-        return id;
+    // ── Standard getters / setters ───────────────────────────────────────────
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
+
+    public String getMaritialStatus() { return maritialStatus; }
+    public void setMaritialStatus(String maritialStatus) { this.maritialStatus = maritialStatus; }
+
+    public String getNid() { return nid; }
+    public void setNid(String nid) { this.nid = nid; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getOccupation() { return occupation; }
+    public void setOccupation(String occupation) { this.occupation = occupation; }
+
+    public String getContractAgreement() { return contractAgreement; }
+    public void setContractAgreement(String contractAgreement) { this.contractAgreement = contractAgreement; }
+
+    public String getPhoto() { return photo; }
+    public void setPhoto(String photo) { this.photo = photo; }
+
+    public Location getLocation() { return location; }
+    public void setLocation(Location location) { this.location = location; }
+
+    public Date getCreatedDate() { return createdDate; }
+    public void setCreatedDate(Date createdDate) { this.createdDate = createdDate; }
+
+    public Users getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Users createdBy) { this.createdBy = createdBy; }
+
+    public Boolean getIsDeleted() { return isDeleted; }
+    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getLocationIdValue() { return locationIdValue; }
+    public void setLocationIdValue(String locationIdValue) { this.locationIdValue = locationIdValue; }
+
+    // ── Derived / helper getters ─────────────────────────────────────────────
+    @Transient
+    public String getFullLocationPath() {
+        if (location == null) return "N/A";
+        LinkedList<String> parts = new LinkedList<>();
+        Location cur = location;
+        int guard = 0;
+        while (cur != null && guard++ < 10) {
+            if (cur.getName() != null && !cur.getName().isBlank()) {
+                parts.addFirst(cur.getName().trim());
+            }
+            cur = cur.getParent();
+        }
+        return parts.isEmpty() ? "N/A" : String.join(" › ", parts);
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    @Transient
+    public String getLocationShort() {
+        if (location == null) return "N/A";
+        LinkedList<String> parts = new LinkedList<>();
+        Location cur = location;
+        int taken = 0;
+        while (cur != null && taken < 2) {
+            if (cur.getName() != null && !cur.getName().isBlank()) {
+                parts.addFirst(cur.getName().trim());
+                taken++;
+            }
+            cur = cur.getParent();
+        }
+        return parts.isEmpty() ? "N/A" : String.join(" › ", parts);
     }
 
-    public String getFirstName() {
-        return firstName;
+    @Transient
+    public String getPhotoUrl() {
+        return normaliseAssetUrl(photo);
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    @Transient
+    public String getContractUrl() {
+        return normaliseAssetUrl(contractAgreement);
     }
 
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getMaritialStatus() {
-        return maritialStatus;
-    }
-
-    public void setMaritialStatus(String maritialStatus) {
-        this.maritialStatus = maritialStatus;
-    }
-
-    public String getNid() {
-        return nid;
-    }
-
-    public void setNid(String nid) {
-        this.nid = nid;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getOccupation() {
-        return occupation;
-    }
-
-    public void setOccupation(String occupation) {
-        this.occupation = occupation;
-    }
-
-    public String getContractAgreement() {
-        return contractAgreement;
-    }
-
-    public void setContractAgreement(String contractAgreement) {
-        this.contractAgreement = contractAgreement;
-    }
-
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
-    }
-
-    public Location getLocation() {
-        return location;
-    }
-
-    public void setLocation(Location location) {
-        this.location = location;
-    }
-
-    public Date getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public Users getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(Users createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getLocationIdValue() {
-        return locationIdValue;
-    }
-
-    public void setLocationIdValue(String locationIdValue) {
-        this.locationIdValue = locationIdValue;
+    private static String normaliseAssetUrl(String value) {
+        if (value == null) return null;
+        String v = value.trim();
+        if (v.isEmpty()) return null;
+        if (v.startsWith("http://") || v.startsWith("https://")
+                || v.startsWith("data:") || v.startsWith("/")) {
+            return v;
+        }
+        return "/" + v;
     }
 
     @Override

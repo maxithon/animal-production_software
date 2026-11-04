@@ -197,7 +197,8 @@ public class LivestockSaleController {
         model.addAttribute("totalGrossProfit", totalGrossProfit);
         model.addAttribute("totalSalesCount", saleRepository.countActive());
 
-        model.addAttribute("allCategories", categoryRepository.findAllActiveOrderByName());
+        // ✅ FIXED: changed findAllActiveOrderByName() to findAllByOrderByNameAsc()
+        model.addAttribute("allCategories", categoryRepository.findAllByOrderByNameAsc());
         model.addAttribute("allBuyers", buyerService.getActive());
         model.addAttribute("selectedCategoryId", categoryId);
         model.addAttribute("selectedBuyerId", buyerId);
@@ -679,7 +680,8 @@ public class LivestockSaleController {
         model.addAttribute("maxPrice", maxPrice);
         model.addAttribute("selectedPaymentStatus", paymentStatus);
 
-        model.addAttribute("allCategories", categoryRepository.findAllActiveOrderByName());
+        // ✅ FIXED: changed findAllActiveOrderByName() to findAllByOrderByNameAsc()
+        model.addAttribute("allCategories", categoryRepository.findAllByOrderByNameAsc());
         model.addAttribute("allBuyers", buyerService.getActive());
         model.addAttribute("allGenders", Arrays.asList("MALE", "FEMALE"));
         model.addAttribute("allPaymentStatuses", Arrays.asList(

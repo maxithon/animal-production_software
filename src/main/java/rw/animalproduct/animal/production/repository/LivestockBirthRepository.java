@@ -16,72 +16,36 @@ import java.util.UUID;
 @Repository
 public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, UUID> {
 
-    // ── Paginated list — only non-deleted ────────────────────────────────────
-    Page<LivestockBirth> findByIsDeletedFalseOrderByBirthDateDesc(Pageable pageable);
+    Page<LivestockBirth> findAllByOrderByBirthDateDesc(Pageable pageable);
+    List<LivestockBirth> findAllByOrderByBirthDateDesc();
 
-    // ── All non-deleted ───────────────────────────────────────────────────────
-    List<LivestockBirth> findByIsDeletedFalseOrderByBirthDateDesc();
-
-    // ── By mother ─────────────────────────────────────────────────────────────
-    List<LivestockBirth> findByLivestockIdAndIsDeletedFalse(UUID livestockId);
-
-    // ── Legacy — kept for backward compat ────────────────────────────────────
     List<LivestockBirth> findByLivestockId(UUID livestockId);
+    List<LivestockBirth> findByLivestockIdOrderByBirthDateAsc(UUID livestockId);
+    List<LivestockBirth> findByLivestockIdIn(List<UUID> livestockIds);
 
-    @Query("SELECT b FROM LivestockBirth b WHERE b.livestockId IN :livestockIds AND b.isDeleted = false")
-    List<LivestockBirth> findByLivestockIdInAndIsDeletedFalse(@Param("livestockIds") List<UUID> livestockIds);
-    Optional<LivestockBirth> findFirstByLivestockIdAndIsDeletedFalseOrderByBirthDateDesc(UUID livestockId);
+    Optional<LivestockBirth> findFirstByLivestockIdOrderByBirthDateDesc(UUID livestockId);
 
-    // ── Find birth event for a child animal ──────────────────────────────────
+    List<LivestockBirth> findByBirthDateBetween(LocalDate startDate, LocalDate endDate);
+
+    long countByLivestockId(UUID livestockId);
+
+    boolean existsByBreedingId(UUID breedingId);
+
+    long countByCompletedAtIsNull();
+    long countByCompletedAtIsNotNull();
+
     @Query("""
            SELECT b FROM LivestockBirth b
            JOIN b.children o
            WHERE o.childLivestock.id = :animalId
-             AND b.isDeleted = false
            """)
     Optional<LivestockBirth> findByChildAnimalId(@Param("animalId") UUID animalId);
 
-    // ── Births in a date range ────────────────────────────────────────────────
-    @Query("""
-           SELECT b FROM LivestockBirth b
-           WHERE b.isDeleted  = false
-             AND b.birthDate >= :from
-             AND b.birthDate <= :to
-           ORDER BY b.birthDate DESC
-           """)
-    List<LivestockBirth> findByBirthDateBetween(
-            @Param("from") LocalDate from,
-            @Param("to")   LocalDate to);
-
-    // ── Births in a date range with isDeleted flag ─────────────────────────────
-    List<LivestockBirth> findByBirthDateBetweenAndIsDeletedFalse(
-            LocalDate startDate,
-            LocalDate endDate);
-
-    // ── Count births for a mother ─────────────────────────────────────────────
-    long countByLivestockIdAndIsDeletedFalse(UUID livestockId);
-
-    // ── Births ordered by birth date ascending for calving interval ──────────
-    List<LivestockBirth> findByLivestockIdAndIsDeletedFalseOrderByBirthDateAsc(UUID livestockId);
-
-    // ── Births with breeding relationship loaded (for performance) ───────────
     @Query("""
            SELECT b FROM LivestockBirth b
            LEFT JOIN FETCH b.breeding
            WHERE b.livestockId = :livestockId
-             AND b.isDeleted = false
            ORDER BY b.birthDate ASC
            """)
     List<LivestockBirth> findByLivestockIdWithBreeding(@Param("livestockId") UUID livestockId);
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // ✅ NEW — VERIFY / LOCK LIFECYCLE STATS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // Backs a "pending verification" stat on the births list page — how many
-    // non-deleted birth records have never been Completed/locked.
-    long countByIsDeletedFalseAndCompletedAtIsNull();
-
-    // Backs a "locked / finalized" stat on the births list page.
-    long countByIsDeletedFalseAndCompletedAtIsNotNull();
 }

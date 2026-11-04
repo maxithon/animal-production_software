@@ -43,7 +43,7 @@ public interface ReadyToBreedReportRepository extends JpaRepository<Livestock, U
             FROM a_location a
             WHERE a.id IN (
                 SELECT DISTINCT l.location_id FROM livestock l
-                WHERE l.location_id IS NOT NULL AND l.is_deleted = false
+                WHERE l.location_id IS NOT NULL 
                   AND l.gender = 'FEMALE' AND l.status = 'ACTIVE'
             )
             UNION ALL
@@ -65,25 +65,22 @@ public interface ReadyToBreedReportRepository extends JpaRepository<Livestock, U
         last_breeding AS (
             SELECT DISTINCT ON (livestock_id) livestock_id, breeding_date AS last_breeding_date
             FROM livestock_breeding
-            WHERE is_deleted = false
             ORDER BY livestock_id, breeding_date DESC
         ),
         active_breeding AS (
             -- NEW: any female with a PENDING breeding record is not ready
             SELECT DISTINCT livestock_id
             FROM livestock_breeding
-            WHERE is_deleted = false AND status = 'PENDING'
+            WHERE status = 'PENDING'
         ),
         last_birth AS (
             SELECT DISTINCT ON (livestock_id) livestock_id, birth_date AS last_birth_date
             FROM livestock_births
-            WHERE is_deleted = false
             ORDER BY livestock_id, birth_date DESC
         ),
         birth_counts AS (
             SELECT livestock_id, COUNT(*) AS births
             FROM livestock_births
-            WHERE is_deleted = false
             GROUP BY livestock_id
         ),
         base AS (
@@ -129,10 +126,8 @@ public interface ReadyToBreedReportRepository extends JpaRepository<Livestock, U
             LEFT JOIN beneficiaries b ON b.id = l.beneficiary_id
             LEFT JOIN a_location bloc ON bloc.id = b.location_id
             LEFT JOIN loc_chain lc ON lc.origin_id = l.location_id
-            WHERE l.is_deleted = false
-              AND l.gender = 'FEMALE'
+            WHERE l.gender = 'FEMALE'
               AND l.status = 'ACTIVE'
-              AND c.is_deleted = false
               AND (:categoryId IS NULL OR l.livestock_category_id = :categoryId)
               AND (:search IS NULL OR l.tag_number ILIKE CONCAT('%', :search, '%'))
         ),

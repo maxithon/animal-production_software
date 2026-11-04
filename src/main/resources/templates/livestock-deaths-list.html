@@ -7,140 +7,245 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --primary-red: #e11d48;
+            --danger-red: #dc2626;
+            --danger-bg: #fee2e2;
+        }
+
         body {
-            background: #f8f9fa;
-            padding: 20px;
-            font-family: 'DM Sans', sans-serif;
+            background-color: var(--bg-body);
+            font-family: 'Inter', sans-serif;
             font-size: 0.875rem;
+            color: var(--text-main);
+            padding: 1.5rem;
         }
 
         .page-card {
-            background: white; border-radius: 12px; padding: 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid var(--border-color);
         }
-        .page-card h3 { font-size: 1.25rem; font-weight: 700; margin-bottom: 2px; }
-        .page-card p.text-muted { font-size: 0.8rem; }
 
-        .form-label { font-size: 0.78rem; font-weight: 600; margin-bottom: 4px; }
-        .form-control, .form-select { font-size: 0.85rem; padding: 0.45rem 0.65rem; }
-        .btn { font-size: 0.8rem; }
-        .btn-sm { font-size: 0.75rem; }
-        .form-text { font-size: 0.72rem; }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+        .page-header h3 { font-weight: 700; font-size: 1.25rem; margin-bottom: 0.25rem; }
+        .page-header p { color: var(--text-muted); font-size: 0.875rem; margin: 0; }
 
-        .summary-stats { margin-bottom: 20px; }
+        .summary-stats { margin-bottom: 1.5rem; }
         .stat-card {
             background: #fff;
-            border: 1px solid #edf0f3;
+            border: 1px solid var(--border-color);
             border-radius: 10px;
-            padding: 14px 16px;
+            padding: 1rem;
             display: flex;
             align-items: center;
-            gap: 12px;
-            height: 100%;
+            gap: 1rem;
         }
         .stat-icon {
-            width: 36px; height: 36px;
+            width: 40px; height: 40px;
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; flex-shrink: 0;
+            font-size: 1.1rem;
         }
         .stat-icon.total  { background: #f1f5f9; color: #475569; }
         .stat-icon.month  { background: #fff7ed; color: #ea580c; }
-        .stat-icon.cause  { background: #fee2e2; color: #dc2626; }
-        .stat-icon.unique { background: #f5f3ff; color: #7c3aed; }
-        .stat-value { font-size: 1.05rem; font-weight: 700; color: #1e293b; line-height: 1.2; }
-        .stat-label {
-            font-size: 0.68rem; font-weight: 600; color: #94a3b8;
-            text-transform: uppercase; letter-spacing: 0.04em;
-        }
+        .stat-icon.cause  { background: #fef2f2; color: #dc2626; }
+        .stat-icon.unique { background: #f3e8ff; color: #9333ea; }
+        .stat-value { font-size: 1.25rem; font-weight: 700; line-height: 1.2; color: #0f172a; }
+        .stat-label { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
 
         .add-form-section {
-            background: #fdf2f8;
-            border-left: 4px solid #dc2626;
-            border-radius: 10px; padding: 18px; margin-bottom: 22px;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
         }
-        .add-form-section h5 { color: #991b1b; font-weight: 700; font-size: 0.95rem; }
+        .add-form-section h6 { color: var(--text-main); font-weight: 600; margin-bottom: 1rem; }
 
-        /* Live search wrapper */
+        .table-responsive { margin: 0 -1.5rem; padding: 0 1.5rem; }
+        .table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; }
+        .table th {
+            background: #f8fafc;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+        .table tbody tr:hover { background-color: #f8fafc; }
+
+        .animal-tag { font-weight: 700; font-size: 0.95rem; color: #0f172a; }
+        .category-pill {
+            background: #06b6d4; color: white;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem; font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .beneficiary-name { font-weight: 600; font-size: 0.85rem; }
+        .beneficiary-phone { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+        .beneficiary-name i, .beneficiary-phone i { color: #8b5cf6; }
+
+        .location-text { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+        .location-text i { color: var(--danger-red); font-size: 0.9rem; }
+        .location-path { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 2px;}
+        .location-path span { color: var(--text-muted); font-size: 0.75rem; }
+        .location-path .arrow { font-size: 0.6rem; color: #cbd5e1; }
+
+        .date-badge { font-weight: 600; font-size: 0.85rem; color: var(--text-main); }
+        .cause-chip {
+            display: inline-flex; align-items: center;
+            background: #f1f5f9; color: #334155;
+            border: 1px solid #e2e8f0;
+            padding: 0.25rem 0.6rem; border-radius: 6px;
+            font-size: 0.75rem; font-weight: 500;
+        }
+
+        .status-pill {
+            display: inline-flex; align-items: center;
+            background: var(--danger-bg); color: #991b1b;
+            border: 1px solid #fca5a5;
+            padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
+        }
+
+        .action-btn {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-history { background: #f1f5f9; color: #334155; }
+        .btn-history:hover { background: #e2e8f0; }
+        .btn-edit { background: #facc15; color: #422006; }
+        .btn-edit:hover { background: #eab308; }
+        .btn-delete { background: #ef4444; color: white; }
+        .btn-delete:hover { background: #dc2626; }
+
         .search-wrapper-live { position: relative; }
         .search-wrapper-live #animalResults {
-            position: absolute;
-            top: 100%; left: 0; right: 0;
-            background: white;
-            border: 1.5px solid #dc2626;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 280px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid var(--border-color);
+            border-radius: 8px; max-height: 280px; overflow-y: auto;
+            z-index: 1000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .search-wrapper-live #animalResults .result-item {
-            padding: 10px 14px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.15s;
+            padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .search-wrapper-live #animalResults .result-item:hover {
-            background: #fef2f2;
-        }
+        .search-wrapper-live #animalResults .result-item:hover { background: #f8fafc; }
 
-        .badge-dead {
-            display: inline-flex; align-items: center; gap: 4px;
-            background: #fee2e2; color: #991b1b;
-            border: 1px solid #fca5a5; border-radius: 20px;
-            padding: 3px 10px; font-size: 0.7rem; font-weight: 700;
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION (server-side)
+           ══════════════════════════════════════════════════════════════ */
+        .pager-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px; margin-top: 20px;
+            padding-top: 16px; border-top: 1.5px solid #f0f2f5;
+            font-size: 0.85rem; color: var(--text-muted);
         }
+        .pager-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .pager-info { font-size: 0.85rem; color: var(--text-muted); }
+        .pager-info strong { color: #0f172a; font-weight: 700; }
 
-        .table { font-size: 0.82rem; }
-        .table th {
-            font-weight: 700; font-size: 0.72rem;
-            text-transform: uppercase; letter-spacing: 0.04em; color: #64748b;
+        .pager-pagesize { display: flex; align-items: center; gap: 6px; }
+        .pager-pagesize label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+        .pager-pagesize select {
+            padding: 4px 9px; border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 0.82rem; font-weight: 600; color: #0f172a;
+            cursor: pointer; background: #fff;
         }
-        .table tbody tr { border-bottom: 1px solid #f0f2f5; }
-        .table tbody tr:hover { background: #fff5f5 !important; }
-        .table tbody tr td { vertical-align: middle; padding: 0.55rem 0.65rem; }
-        .badge { font-size: 0.65rem; }
+        .pager-pagesize select:hover { border-color: var(--danger-red); }
+        .pager-pagesize select:focus { outline: none; border-color: var(--danger-red); box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
 
-        .cause-chip {
-            display: inline-flex; align-items: center; gap: 5px;
-            background: #f1f5f9; border: 1px solid #e2e8f0;
-            padding: 3px 10px; border-radius: 20px;
-            font-size: 0.74rem; color: #475569; font-weight: 500;
+        .pager-list {
+            display: flex; align-items: center; gap: 4px;
+            list-style: none; margin: 0; padding: 0; flex-wrap: wrap;
         }
+        .pg-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            min-width: 34px; height: 34px; padding: 0 10px;
+            border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+            color: var(--text-main); background: #fff; border: 1px solid var(--border-color);
+            text-decoration: none; transition: all .12s ease;
+            cursor: pointer; white-space: nowrap; font-family: inherit;
+        }
+        .pg-btn:hover { background: #fef2f2; border-color: var(--danger-red); color: var(--danger-red); }
+        .pg-btn.active {
+            background: var(--danger-red); color: #fff; border-color: var(--danger-red);
+            pointer-events: none; cursor: default;
+            box-shadow: 0 2px 6px rgba(220,38,38,.25);
+        }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity: .35; pointer-events: none; cursor: not-allowed; background: #fafbfc;
+        }
+        .pg-btn.pg-edge {
+            min-width: auto; padding: 0 12px; gap: 6px;
+            background: #f8fafc; color: #334155; font-weight: 700;
+        }
+        .pg-btn.pg-edge:hover { background: var(--danger-red); border-color: var(--danger-red); color: #fff; }
+        .pg-btn.pg-edge i { font-size: 12px; line-height: 1; }
+        .pg-btn.pg-edge .pg-label {
+            display: inline-block; font-size: 0.72rem;
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        .pg-ellipsis {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 34px; color: #94a3b8;
+            font-size: 0.85rem; font-weight: 700; user-select: none; letter-spacing: .1em;
+        }
+        .pager-goto {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 0.78rem; color: var(--text-muted); font-weight: 600;
+        }
+        .pager-goto input {
+            width: 56px; height: 34px; padding: 0 8px;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 0.82rem; font-weight: 600; text-align: center;
+            color: #0f172a; background: #fff; transition: all .12s; font-family: inherit;
+        }
+        .pager-goto input:focus { outline: none; border-color: var(--danger-red); box-shadow: 0 0 0 3px rgba(220,38,38,.12); }
+        .pager-goto input::-webkit-outer-spin-button,
+        .pager-goto input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .pager-goto input[type=number] { -moz-appearance: textfield; }
 
-        .search-wrap { position: relative; }
-        .search-wrap .bi-search {
-            position: absolute; left: 12px; top: 50%;
-            transform: translateY(-50%); color: #94a3b8; font-size: 0.85rem;
-        }
-        .search-input {
-            padding-left: 36px; border: 1.5px solid #e2e8f0;
-            border-radius: 8px; font-size: 0.85rem;
-        }
-        .search-input:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); outline: none; }
-
-        .pagination .page-link {
-            font-size: 0.8rem;
-            padding: 0.35rem 0.7rem;
-        }
-        .pagination .active .page-link {
-            background-color: #0d6efd;
-            border-color: #0d6efd;
-            color: white;
-        }
-        .sort-link {
-            text-decoration: none;
-            color: #212529;
-        }
-        .sort-link:hover {
-            color: #0d6efd;
+        @media (max-width: 900px) {
+            .pager-bar { flex-direction: column; align-items: stretch; }
+            .pager-meta { justify-content: space-between; width: 100%; }
+            .pager-list { justify-content: center; width: 100%; }
+            .pager-goto {
+                justify-content: center; width: 100%;
+                padding-top: 6px; border-top: 1px dashed var(--border-color); margin-top: 4px;
+            }
+            .pg-btn.pg-edge .pg-label { display: none; }
         }
     </style>
 </head>
@@ -149,18 +254,16 @@
     <div class="page-card">
 
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="page-header">
             <div>
-                <h3 class="mb-1">
-                    <i class="bi bi-x-circle-fill text-danger me-2"></i>Livestock Deaths
-                </h3>
-                <p class="text-muted mb-0">Record and manage death events</p>
+                <h3>Livestock Deaths</h3>
+                <p>Record, manage, and track mortality events across the herd</p>
             </div>
             <div class="d-flex gap-2">
-                <a href="/livestock/deaths-report" class="btn btn-outline-danger btn-sm">
+                <a href="/livestock/deaths-report" class="btn btn-outline-danger btn-sm fw-semibold">
                     <i class="bi bi-bar-chart-fill me-1"></i> Death Report
                 </a>
-                <a href="/livestock/list" class="btn btn-outline-secondary btn-sm">
+                <a href="/livestock/list" class="btn btn-outline-secondary btn-sm fw-semibold">
                     <i class="bi bi-arrow-left me-1"></i> Back to Livestock
                 </a>
             </div>
@@ -179,7 +282,7 @@
         </div>
 
         <!-- Quick Summary -->
-        <div class="row g-2 summary-stats"
+        <div class="row g-3 summary-stats"
              th:with="totalCount=${deaths == null ? 0 : deaths.size()},
                        thisMonthCount=${deaths == null ? 0 : deaths.?[deathDate != null
                                          and #temporals.month(deathDate) == #temporals.month(#temporals.createNow())
@@ -223,44 +326,30 @@
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════════════════
-             ADD FORM — with live search for Animal
-             ═══════════════════════════════════════════════════════════ -->
+        <!-- Add Form Section -->
         <div class="add-form-section">
-            <h5 class="mb-3">
-                <i class="bi bi-plus-circle me-1"></i> Record New Death
-            </h5>
+            <h6><i class="bi bi-plus-circle me-1 text-danger"></i> Record New Death</h6>
             <form th:action="@{/livestock/deaths/new}" th:object="${death}" method="post" id="deathForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                 <div class="row g-3 align-items-end">
 
-                    <!-- ── ANIMAL — Live Search ── -->
                     <div class="col-md-4">
-                        <label class="form-label">Animal (Tag) *</label>
+                        <label class="form-label fw-semibold text-muted" style="font-size:0.75rem;">Animal (Tag) *</label>
                         <div class="search-wrapper-live">
-                            <input type="text" id="animalSearch" class="form-control"
-                                   placeholder="Type animal tag or category to search..."
-                                   autocomplete="off">
-                            <input type="hidden" name="livestockIdValue" id="selectedAnimalId"
-                                   th:field="*{livestockIdValue}" required>
+                            <input type="text" id="animalSearch" class="form-control" placeholder="Search tag or category..." autocomplete="off">
+                            <input type="hidden" name="livestockIdValue" id="selectedAnimalId" th:field="*{livestockIdValue}" required>
                             <div id="animalResults"></div>
                         </div>
                         <div id="selectedAnimalDisplay"></div>
-                        <div class="form-text text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Start typing to search by tag number or category.
-                        </div>
                     </div>
 
-                    <!-- ── DEATH DATE ── -->
                     <div class="col-md-3">
-                        <label class="form-label">Death Date *</label>
+                        <label class="form-label fw-semibold text-muted" style="font-size:0.75rem;">Death Date *</label>
                         <input type="date" class="form-control" th:field="*{deathDate}" required>
                     </div>
 
-                    <!-- ── CAUSE OF DEATH ── -->
                     <div class="col-md-4">
-                        <label class="form-label">Cause of Death</label>
+                        <label class="form-label fw-semibold text-muted" style="font-size:0.75rem;">Cause of Death</label>
                         <select class="form-select" id="causeSelect" th:field="*{causeOfDeath}" onchange="toggleOtherCause(this)">
                             <option value="">Select cause...</option>
                             <option value="Disease">Disease</option>
@@ -273,16 +362,11 @@
                             <option value="Unknown">Unknown</option>
                             <option value="Other">Other</option>
                         </select>
-                        <input type="text" name="otherCauseDetail" id="otherCauseInput"
-                               class="form-control mt-2 d-none"
-                               placeholder="Please describe the cause...">
+                        <input type="text" name="otherCauseDetail" id="otherCauseInput" class="form-control mt-2 d-none" placeholder="Please describe...">
                     </div>
 
-                    <!-- ── SUBMIT ── -->
                     <div class="col-md-1">
-                        <button type="submit" class="btn btn-danger w-100">
-                            <i class="bi bi-plus-circle"></i> Add
-                        </button>
+                        <button type="submit" class="btn btn-danger w-100 fw-semibold">Add</button>
                     </div>
                 </div>
             </form>
@@ -290,149 +374,125 @@
 
         <!-- Search Bar -->
         <div class="row mb-3">
-            <div class="col-md-6">
+            <div class="col-md-5">
                 <form method="get" action="/livestock/deaths" class="d-flex gap-2">
                     <input type="hidden" name="size" th:value="${pageSize}"/>
                     <input type="hidden" name="sort" th:value="${sort}"/>
                     <input type="hidden" name="direction" th:value="${direction}"/>
-                    <div class="search-wrap flex-grow-1">
-                        <i class="bi bi-search"></i>
-                        <input type="text" name="search" class="form-control search-input"
-                               placeholder="Search by tag, category, cause..."
-                               th:value="${search}"/>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Search by tag, cause, beneficiary..." th:value="${search}"/>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="bi bi-search"></i> Search
-                    </button>
-                    <a th:if="${search != null and !search.isEmpty()}"
-                       th:href="@{/livestock/deaths(page=0, size=${pageSize}, sort=${sort}, direction=${direction})}"
-                       class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </a>
+                    <button type="submit" class="btn btn-primary fw-semibold">Search</button>
+                    <a th:if="${search != null and !search.isEmpty()}" th:href="@{/livestock/deaths(page=0, size=${pageSize}, sort=${sort}, direction=${direction})}" class="btn btn-light border fw-semibold">Clear</a>
                 </form>
             </div>
         </div>
 
-        <!-- Table -->
+        <!-- Professional Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle" id="deathTable">
-                <thead class="table-light">
+            <table class="table">
+                <thead>
                 <tr>
-                    <th>#</th>
-                    <th>
-                        <a th:href="@{/livestock/deaths(page=${currentPage}, size=${pageSize}, search=${search}, sort='livestock.tagNumber', direction=${direction == 'asc' ? 'desc' : 'asc'})}"
-                           class="sort-link">
-                            Animal Tag
-                            <i th:if="${sort == 'livestock.tagNumber' and direction == 'asc'}" class="bi bi-arrow-up"></i>
-                            <i th:if="${sort == 'livestock.tagNumber' and direction == 'desc'}" class="bi bi-arrow-down"></i>
-                        </a>
-                    </th>
-                    <th>Category</th>
+                    <th style="width: 50px;">#</th>
+                    <th>Animal</th>
+                    <th>Beneficiary</th>
+                    <th>Location</th>
+                    <th>Reported</th>
+                    <th>Cause</th>
                     <th>Status</th>
-                    <th>
-                        <a th:href="@{/livestock/deaths(page=${currentPage}, size=${pageSize}, search=${search}, sort='deathDate', direction=${direction == 'asc' ? 'desc' : 'asc'})}"
-                           class="sort-link">
-                            Death Date
-                            <i th:if="${sort == 'deathDate' and direction == 'asc'}" class="bi bi-arrow-up"></i>
-                            <i th:if="${sort == 'deathDate' and direction == 'desc'}" class="bi bi-arrow-down"></i>
-                        </a>
-                    </th>
-                    <th>Cause of Death</th>
-                    <th>Actions</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
 
-                <tr th:if="${deaths == null or deaths.empty}">
-                    <td colspan="7" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        No death records yet
+                <tr th:if="${deathViews == null or deathViews.empty}">
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                        No death records found.
                     </td>
                 </tr>
 
-                <tr th:each="d, i : ${deaths}">
-                    <td class="text-muted" th:text="${deathPage.number * deathPage.size + i.index + 1}"></td>
+                <tr th:each="v, i : ${deathViews}" th:with="d=${v.death}">
+                    <td class="text-muted fw-semibold" th:text="${deathPage.number * deathPage.size + i.index + 1}"></td>
 
                     <td>
-                        <strong th:text="${d.livestock != null ? d.livestock.tagNumber : 'N/A'}"></strong>
-                        <div th:if="${d.livestock?.gender != null}">
-                            <span th:if="${d.livestock.gender == 'MALE'}"
-                                  class="badge bg-primary">
-                                <i class="bi bi-gender-male"></i> Male
-                            </span>
-                            <span th:if="${d.livestock.gender == 'FEMALE'}"
-                                  class="badge bg-danger">
-                                <i class="bi bi-gender-female"></i> Female
-                            </span>
+                        <div class="d-flex align-items-center">
+                            <span class="animal-tag" th:text="${d.livestock != null ? d.livestock.tagNumber : 'N/A'}"></span>
+                            <span th:if="${d.livestock?.livestockCategory != null}" class="category-pill" th:text="${d.livestock.livestockCategory.name}"></span>
                         </div>
                     </td>
 
                     <td>
-                        <span th:if="${d.livestock?.livestockCategory != null}"
-                              class="badge bg-info text-dark"
-                              th:text="${d.livestock.livestockCategory.name}"></span>
-                        <span th:if="${d.livestock?.livestockCategory == null}"
-                              class="text-muted">—</span>
+                        <div class="beneficiary-name">
+                            <i class="bi bi-person-fill"></i> <span th:text="${v.beneficiaryFullName}"></span>
+                        </div>
+                        <div class="beneficiary-phone" th:if="${v.beneficiaryPhone != '—'}">
+                            <i class="bi bi-telephone-fill"></i> <span th:text="${v.beneficiaryPhone}"></span>
+                        </div>
                     </td>
 
                     <td>
-                        <span class="badge-dead">
-                            <i class="bi bi-x-circle-fill"></i> Dead
+                        <div class="location-path">
+                            <i class="bi bi-geo-alt-fill location-text"></i>
+                            <span th:text="${v.district}"></span>
+                            <i class="bi bi-chevron-right arrow"></i>
+                            <span th:text="${v.sector}"></span>
+                            <i class="bi bi-chevron-right arrow"></i>
+                            <span th:text="${v.cell}"></span>
+                            <i class="bi bi-chevron-right arrow"></i>
+                            <span th:text="${v.province}"></span>
+                        </div>
+                    </td>
+
+                    <td>
+                        <span class="date-badge" th:text="${#temporals.format(d.deathDate, 'dd-MM-yyyy')}"></span>
+                    </td>
+
+                    <td>
+                        <span th:if="${d.causeOfDeath != null and d.causeOfDeath != ''}" class="cause-chip">
+                            <i class="bi bi-clipboard2-x me-1"></i> <span th:text="${d.causeOfDeath}"></span>
                         </span>
+                        <span th:if="${d.causeOfDeath == null or d.causeOfDeath == ''}" class="text-muted">—</span>
                     </td>
 
                     <td>
-                        <span th:text="${#temporals.format(d.deathDate, 'dd-MM-yyyy')}"></span>
+                        <span class="status-pill">Dead</span>
                     </td>
 
-                    <td>
-                        <span th:if="${d.causeOfDeath != null and d.causeOfDeath != ''}"
-                              class="cause-chip">
-                            <i class="bi bi-clipboard2-pulse"></i>
-                            <span th:text="${d.causeOfDeath}"></span>
-                        </span>
-                        <span th:if="${d.causeOfDeath == null or d.causeOfDeath == ''}"
-                              class="text-muted">—</span>
-                    </td>
-
-                    <td>
-                        <div class="d-flex gap-1">
-                            <a th:href="@{/livestock/deaths/edit/{id}(id=${d.id})}"
-                               class="btn btn-sm btn-warning" title="Edit">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn btn-sm btn-danger" title="Delete"
+                    <td style="text-align: right;">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a th:href="@{/livestock/deaths/edit/{id}(id=${d.id})}" class="btn action-btn btn-history">History</a>
+                            <a th:href="@{/livestock/deaths/edit/{id}(id=${d.id})}" class="btn action-btn btn-edit">Edit</a>
+                            <button class="btn action-btn btn-delete"
                                     data-bs-toggle="modal"
                                     th:data-bs-target="'#del' + ${d.id}">
-                                <i class="bi bi-trash"></i>
+                                Delete
                             </button>
                         </div>
 
+                        <!-- Delete Modal -->
                         <div class="modal fade" th:id="'del' + ${d.id}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title text-danger" style="font-size:1rem;">
-                                            <i class="bi bi-exclamation-triangle me-1"></i> Confirm Delete
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow">
+                                    <div class="modal-header border-0 pb-0">
+                                        <h5 class="modal-title text-danger fw-bold" style="font-size:1.1rem;">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Delete
                                         </h5>
-                                        <button class="btn-close" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <div class="modal-body" style="font-size:0.85rem;">
-                                        <p>Delete death record for
-                                            <strong th:text="${d.livestock != null ? d.livestock.tagNumber : 'this animal'}"></strong>?
-                                        </p>
-                                        <div class="alert alert-warning py-2 small mb-0">
+                                    <div class="modal-body text-start">
+                                        <p class="mb-2">Are you sure you want to delete the death record for <strong th:text="${d.livestock != null ? d.livestock.tagNumber : 'this animal'}"></strong>?</p>
+                                        <div class="alert alert-warning py-2 small mb-0 border-0">
                                             <i class="bi bi-arrow-counterclockwise me-1"></i>
-                                            <strong>Note:</strong> Deleting this record will restore the animal's
-                                            status back to <strong>ACTIVE</strong>.
+                                            Deleting this record will restore the animal's status back to <strong>ACTIVE</strong>.
                                         </div>
                                     </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/livestock/deaths/delete/{id}(id=${d.id})}"
-                                              method="post" class="d-inline">
+                                    <div class="modal-footer border-0 pt-0">
+                                        <button type="button" class="btn btn-light fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                                        <form th:action="@{/livestock/deaths/delete/{id}(id=${d.id})}" method="post" class="d-inline">
                                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <button class="btn btn-danger btn-sm">
+                                            <button type="submit" class="btn btn-danger fw-semibold">
                                                 <i class="bi bi-trash me-1"></i> Delete
                                             </button>
                                         </form>
@@ -447,70 +507,138 @@
             </table>
         </div>
 
-        <!-- ===== PAGINATION ===== -->
-        <div th:if="${deathPage != null and deathPage.totalPages > 0}" class="d-flex justify-content-between align-items-center mt-4">
-            <div class="text-muted small">
-                Showing
-                <span th:text="${deathPage.number * deathPage.size + 1}">1</span>
-                to
-                <span th:text="${deathPage.number * deathPage.size + deathPage.numberOfElements}">10</span>
-                of
-                <span th:text="${deathPage.totalElements}">0</span>
-                entries
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION (SERVER-SIDE)
+             [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             Preserves: search, sort, direction, size
+             ═════════════════════════════════════════════════════════════ -->
+        <div class="pager-bar"
+             th:if="${deathPage != null and deathPage.totalElements > 0}"
+             th:with="
+                 total=${deathPage.totalPages},
+                 current=${deathPage.number},
+                 size=${deathPage.size},
+                 items=${deathPage.totalElements},
+                 start=${items == 0 ? 0 : (current * size) + 1},
+                 end=${items == 0 ? 0 : ((current * size) + size > items ? items : (current * size) + size)},
+                 showFrom=${current - 2 < 0 ? 0 : current - 2},
+                 showTo=${current + 2 > total - 1 ? total - 1 : current + 2}
+             ">
+
+            <div class="pager-meta">
+                <span class="pager-info">
+                    Showing <strong th:text="${start}">1</strong>–<strong th:text="${end}">10</strong>
+                    of <strong th:text="${items}">0</strong>
+                </span>
+                <div class="pager-pagesize">
+                    <label for="sizeSelect">Rows per page:</label>
+                    <select id="sizeSelect"
+                            onchange="changePageSize(this.value)">
+                        <option value="10"  th:selected="${size == 10}">10</option>
+                        <option value="25"  th:selected="${size == 25}">25</option>
+                        <option value="50"  th:selected="${size == 50}">50</option>
+                        <option value="100" th:selected="${size == 100}">100</option>
+                    </select>
+                </div>
             </div>
 
-            <nav aria-label="Page navigation">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" th:classappend="${!deathPage.hasPrevious()} ? 'disabled' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/deaths(page=${currentPage - 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
-                           th:if="${deathPage.hasPrevious()}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                        <span class="page-link" th:unless="${deathPage.hasPrevious()}">
-                            <i class="bi bi-chevron-left"></i>
-                        </span>
-                    </li>
+            <ul class="pager-list">
 
-                    <li th:each="pageNum : ${pageNumbers}"
-                        th:with="isActive=${pageNum - 1 == currentPage}"
-                        class="page-item" th:classappend="${isActive} ? 'active' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/deaths(page=${pageNum - 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
-                           th:text="${pageNum}"></a>
-                    </li>
+                <!-- ⏮ First -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'First page'"
+                       th:href="@{/livestock/deaths(page=0, size=${size}, search=${search}, sort=${sort}, direction=${direction})}">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </button>
+                </li>
 
-                    <li class="page-item" th:classappend="${!deathPage.hasNext()} ? 'disabled' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/deaths(page=${currentPage + 1}, size=${pageSize}, search=${search}, sort=${sort}, direction=${direction})}"
-                           th:if="${deathPage.hasNext()}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                        <span class="page-link" th:unless="${deathPage.hasNext()}">
-                            <i class="bi bi-chevron-right"></i>
-                        </span>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+                <!-- ‹ Prev -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'Previous page'"
+                       th:href="@{/livestock/deaths(page=${current - 1}, size=${size}, search=${search}, sort=${sort}, direction=${direction})}">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </button>
+                </li>
 
-        <!-- Page size selector -->
-        <div class="d-flex justify-content-between align-items-center mt-2">
-            <div>
-                <label class="text-muted small me-2">Rows per page:</label>
-                <select class="form-select form-select-sm d-inline-block w-auto"
-                        onchange="window.location.href=this.value">
-                    <option value="/livestock/deaths?page=0&size=5&search=&sort=deathDate&direction=desc" th:selected="${pageSize == 5}">5</option>
-                    <option value="/livestock/deaths?page=0&size=10&search=&sort=deathDate&direction=desc" th:selected="${pageSize == 10}">10</option>
-                    <option value="/livestock/deaths?page=0&size=20&search=&sort=deathDate&direction=desc" th:selected="${pageSize == 20}">20</option>
-                    <option value="/livestock/deaths?page=0&size=50&search=&sort=deathDate&direction=desc" th:selected="${pageSize == 50}">50</option>
-                </select>
-            </div>
-            <div th:if="${search != null and !search.isEmpty()}" class="text-muted small">
-                <i class="bi bi-search"></i> Search: "<span th:text="${search}"></span>"
-                <a th:href="@{/livestock/deaths(page=0, size=${pageSize}, sort=${sort}, direction=${direction})}" class="text-decoration-none ms-2">
-                    <i class="bi bi-x-circle"></i> Clear
-                </a>
+                <!-- Leading 1 + ellipsis -->
+                <li th:if="${showFrom > 0}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/deaths(page=0, size=${size}, search=${search}, sort=${sort}, direction=${direction})}">1</a>
+                </li>
+                <li th:if="${showFrom > 1}" class="pg-ellipsis">…</li>
+
+                <!-- Window of page numbers (0-based internally) -->
+                <li th:each="i : ${#numbers.sequence(showFrom, showTo)}"
+                    th:classappend="${i == current} ? 'active-page' : ''">
+                    <a class="pg-btn"
+                       th:classappend="${i == current} ? 'active' : ''"
+                       th:href="@{/livestock/deaths(page=${i}, size=${size}, search=${search}, sort=${sort}, direction=${direction})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+
+                <!-- Trailing ellipsis + last -->
+                <li th:if="${showTo < total - 2}" class="pg-ellipsis">…</li>
+                <li th:if="${showTo < total - 1}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/deaths(page=${total - 1}, size=${size}, search=${search}, sort=${sort}, direction=${direction})}"
+                       th:text="${total}">1</a>
+                </li>
+
+                <!-- › Next -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Next page'"
+                       th:href="@{/livestock/deaths(page=${current + 1}, size=${size}, search=${search}, sort=${sort}, direction=${direction})}">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+
+                <!-- ⏭ Last -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Last page'"
+                       th:href="@{/livestock/deaths(page=${total - 1}, size=${size}, search=${search}, sort=${sort}, direction=${direction})}">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Go to page -->
+            <div class="pager-goto">
+                <label for="gotoInput">Go to page:</label>
+                <input type="number" id="gotoInput"
+                       min="1"
+                       th:max="${total}"
+                       th:value="${current + 1}"
+                       onkeydown="if(event.key==='Enter'){gotoPage(this.value)}"
+                       onblur="gotoPage(this.value)">
+                <span th:text="'/ ' + ${total}">/ 1</span>
             </div>
         </div>
 
@@ -519,17 +647,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     LIVE SEARCH + OTHER CAUSE TOGGLE
-     ═══════════════════════════════════════════════════════════════════ -->
-<script>
+<script th:inline="javascript">
     (function() {
         'use strict';
 
-        // ─── LIVE SEARCH: ANIMALS ──────────────────────────────────────
-        const animalSearch        = document.getElementById('animalSearch');
-        const animalResults       = document.getElementById('animalResults');
-        const selectedAnimalId    = document.getElementById('selectedAnimalId');
+        // ── Pagination helpers (server-side) ───────────────────────
+        window.changePageSize = function(size) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('page', '0');
+            url.searchParams.set('size', size);
+            window.location.href = url.toString();
+        };
+        window.gotoPage = function(p) {
+            var input = document.getElementById('gotoInput');
+            var total = parseInt(input.getAttribute('max'), 10) || 1;
+            p = parseInt(p, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > total) p = total;
+            var url = new URL(window.location.href);
+            url.searchParams.set('page', p - 1);
+            window.location.href = url.toString();
+        };
+
+        // ── Live animal search (unchanged) ─────────────────────────
+        const animalSearch          = document.getElementById('animalSearch');
+        const animalResults         = document.getElementById('animalResults');
+        const selectedAnimalId      = document.getElementById('selectedAnimalId');
         const selectedAnimalDisplay = document.getElementById('selectedAnimalDisplay');
         let timeout;
 
@@ -561,9 +704,9 @@
                                 div.innerHTML = `
                                     <div>
                                         <div style="font-weight:600; color:#0f172a; font-size:.85rem;">${animal.tagNumber}</div>
-                                        <div style="font-size:.72rem; color:#64748b;">${animal.category || '—'} · ${animal.gender || '—'} · ${animal.status || '—'}</div>
+                                        <div style="font-size:.72rem; color:#64748b;">${animal.category || '—'} · ${animal.gender || '—'}</div>
                                     </div>
-                                    <span style="background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; padding:2px 8px; border-radius:12px; font-size:.62rem; font-weight:600;">${animal.healthStatus || 'HEALTHY'}</span>
+                                    <span style="background:#f1f5f9; color:#334155; padding:2px 8px; border-radius:4px; font-size:.65rem; font-weight:600;">${animal.status || 'ACTIVE'}</span>
                                 `;
                                 div.addEventListener('click', () => selectAnimal(animal));
                                 animalResults.appendChild(div);
@@ -582,11 +725,10 @@
             animalSearch.value = animal.tagNumber + ' (' + (animal.category || 'Uncategorized') + ')';
             animalResults.style.display = 'none';
             selectedAnimalDisplay.innerHTML = `
-                <div style="display:inline-flex; align-items:center; gap:8px; background:#fef2f2; border:1.5px solid #dc2626; border-radius:20px; padding:3px 12px; margin-top:6px; font-weight:600; color:#991b1b; font-size:.78rem;">
-                    <i class="bi bi-tag-fill"></i>
+                <div style="display:inline-flex; align-items:center; gap:8px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:4px 10px; margin-top:8px; font-weight:600; color:#1e293b; font-size:.75rem;">
+                    <i class="bi bi-tag-fill text-primary"></i>
                     <span>${animal.tagNumber}</span>
-                    <span style="font-weight:400; color:#64748b; font-size:.72rem;">· ${animal.category || '—'}</span>
-                    <span class="remove" style="cursor:pointer; color:#94a3b8; font-size:1.1rem; line-height:1; margin-left:4px;" onclick="clearAnimalSelection()">✕</span>
+                    <span class="remove" style="cursor:pointer; color:#94a3b8; font-size:1.1rem; line-height:1; margin-left:4px;" onclick="clearAnimalSelection()">×</span>
                 </div>
             `;
         }
@@ -598,14 +740,12 @@
             animalResults.style.display = 'none';
         };
 
-        // Close dropdown when clicking outside
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.search-wrapper-live')) {
                 if (animalResults) animalResults.style.display = 'none';
             }
         });
 
-        // Validate on form submit
         const form = document.getElementById('deathForm');
         if (form) {
             form.addEventListener('submit', function(e) {
@@ -618,7 +758,6 @@
             });
         }
 
-        // ─── OTHER CAUSE TOGGLE ────────────────────────────────────────
         window.toggleOtherCause = function(select) {
             const otherInput = document.getElementById('otherCauseInput');
             if (select.value === 'Other') {
@@ -630,7 +769,6 @@
                 otherInput.value = '';
             }
         };
-
     })();
 </script>
 </body>

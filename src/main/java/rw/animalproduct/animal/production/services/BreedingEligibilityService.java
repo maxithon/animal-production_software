@@ -52,8 +52,10 @@ public class BreedingEligibilityService {
         if (female == null || female.getId() == null) {
             return null;
         }
+        // LivestockBirth has no isDeleted flag (births are hard-deleted),
+        // so the plain "latest by birth date" query is the correct one.
         return birthRepository
-                .findFirstByLivestockIdAndIsDeletedFalseOrderByBirthDateDesc(female.getId())
+                .findFirstByLivestockIdOrderByBirthDateDesc(female.getId())
                 .map(LivestockBirth::getBirthDate)
                 .orElse(female.getLastBirthDate());
     }

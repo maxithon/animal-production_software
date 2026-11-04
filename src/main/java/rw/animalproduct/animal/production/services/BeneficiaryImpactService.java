@@ -39,8 +39,8 @@ public class BeneficiaryImpactService {
                 .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
                 .collect(Collectors.toList());
 
+        // ✅ FIXED: removed getIsDeleted() filter — Livestock no longer has that field
         List<Livestock> allLivestock = livestockRepository.findAll().stream()
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> l.getBeneficiary() != null)
                 .collect(Collectors.toList());
 
@@ -88,10 +88,10 @@ public class BeneficiaryImpactService {
                     new BeneficiaryImpactReportDto.BeneficiaryRow();
             row.setBeneficiaryId(b.getId().toString());
             row.setFullName(b.getFullName());
-            row.setPhone(b.getPhone());                                   // ✅ phone
+            row.setPhone(b.getPhone());
             row.setLocationName(b.getLocation() != null
-                    ? b.getLocation().getName() : "—");                   // leaf (kept)
-            row.setFullLocation(buildFullLocation(b.getLocation()));      // ✅ full breadcrumb
+                    ? b.getLocation().getName() : "—");
+            row.setFullLocation(buildFullLocation(b.getLocation()));
             row.setStatus(b.isActive() ? "ACTIVE" : "INACTIVE");
             rowByBeneficiary.put(b.getId(), row);
         }
@@ -215,13 +215,10 @@ public class BeneficiaryImpactService {
         }
 
         // ── 6. Breakdowns ──────────────────────────────────────────────
-        // ✅ Location breakdown now uses the FULL breadcrumb
         r.setByLocation(buildBreakdown(
                 allBeneficiaries,
                 b -> buildFullLocation(b.getLocation()),
                 r.getTotalBeneficiaries()));
-
-        // ✅ Representative breakdown removed — never populated
 
         r.setByGender(buildBreakdown(
                 allBeneficiaries,
@@ -272,11 +269,6 @@ public class BeneficiaryImpactService {
         return s != null && !s.trim().isEmpty();
     }
 
-    /**
-     * ✅ NEW — Walk the Location parent chain and produce a full breadcrumb:
-     *     Province › District › Sector › Cell › Village
-     * Null-safe, cycle-safe, never returns null.
-     */
     private String buildFullLocation(Location location) {
         if (location == null) return "Unspecified";
         LinkedList<String> chain = new LinkedList<>();
@@ -321,7 +313,7 @@ public class BeneficiaryImpactService {
 
             String name  = b.getFullName();
             String phone = b.getPhone();
-            String loc   = buildFullLocation(b.getLocation());   // ✅ full location
+            String loc   = buildFullLocation(b.getLocation());
             String id    = b.getId().toString();
 
             if (!notBlank(b.getContractAgreement())) {

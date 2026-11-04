@@ -62,7 +62,8 @@ public class LivestockWeightDashboardController {
                 safePage, safeSize,
                 Sort.by(Sort.Direction.ASC, "tagNumber"));
 
-        Page<Livestock> animalPage = livestockRepository.findByIsDeletedFalse(pageable);
+        // ✅ FIXED: findByIsDeletedFalse(pageable) → findAll(pageable)
+        Page<Livestock> animalPage = livestockRepository.findAll(pageable);
         List<Livestock> animalsOnPage = animalPage.getContent();
 
         // Latest weight for the animals on THIS page only.

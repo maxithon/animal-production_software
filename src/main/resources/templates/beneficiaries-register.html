@@ -3,21 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register beneficiaires</title>
+    <title>Register Beneficiaries</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        html {
-            font-size: 16px;
-        }
+        html { font-size: 16px; }
         body { background: #f8f9fa; padding: 20px; }
         .register-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden; }
         .register-card h3 { font-size: 1.2rem; }
         .register-card h5 { font-size: 0.9rem; }
         .form-label { font-weight: 500; color: #333; font-size: 0.8rem; }
-        .form-control, .form-select, .form-text, textarea.form-control {
-            font-size: 0.8rem;
-        }
+        .form-control, .form-select, .form-text, textarea.form-control { font-size: 0.8rem; }
         .form-control, .form-select { padding: 0.4rem 0.6rem; }
         .btn { font-size: 0.82rem; }
         .btn-sm { font-size: 0.72rem; padding: 0.2rem 0.45rem; }
@@ -25,69 +21,17 @@
         .btn-register:hover { background: linear-gradient(135deg, #2e8b9e 0%, #3aa5bb 100%); }
         .btn-register:disabled { opacity: 0.75; }
 
-        /* ── Placeholder styling: deliberately muted + italic so a placeholder
-           never reads like real, already-entered data. Applied globally to
-           every text/tel input on this form. ── */
-        .form-control::placeholder {
-            color: #adb5bd;
-            font-style: italic;
-            letter-spacing: 0.02em;
-        }
-        .field-hint {
-            font-size: 0.7rem;
-            color: #888;
-            margin-top: 3px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .form-control::placeholder { color: #adb5bd; font-style: italic; letter-spacing: 0.02em; }
+        .field-hint { font-size: 0.7rem; color: #888; margin-top: 3px; display: flex; align-items: center; gap: 4px; }
         .field-hint i { font-size: 0.75rem; }
 
-        /* ── Progress bar ── */
-        .progress-track {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            height: 6px;
-            background: #eef1f3;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-bottom: 18px;
-        }
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #2e8b9e, #1a5f7a);
-            transition: width 0.35s ease;
-            border-radius: 6px;
-        }
-        .progress-caption {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.72rem;
-            color: #888;
-            margin-top: -12px;
-            margin-bottom: 14px;
-        }
+        .progress-track { position: sticky; top: 0; z-index: 20; height: 6px; background: #eef1f3; border-radius: 6px; overflow: hidden; margin-bottom: 18px; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2e8b9e, #1a5f7a); transition: width 0.35s ease; border-radius: 6px; }
+        .progress-caption { display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #888; margin-top: -12px; margin-bottom: 14px; }
         .progress-caption strong { color: #1a5f7a; }
 
-        .photo-preview {
-            width: 170px;
-            height: 170px;
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-        .photo-preview img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+        .photo-preview { width: 170px; height: 170px; border: 2px dashed #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 10px; }
+        .photo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .photo-preview .placeholder { text-align: center; color: #999; font-size: 0.78rem; }
         .upload-btn { cursor: pointer; }
         .pdf-preview { padding: 12px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; display: none; font-size: 0.8rem; }
@@ -96,9 +40,7 @@
         .location-section { background-color: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
         .location-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
         .location-row.full { grid-template-columns: 1fr; }
-        @media (max-width: 768px) {
-            .location-row { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .location-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -107,7 +49,6 @@
         <div class="col-lg-10">
             <div class="register-card">
 
-                <!-- Completion progress bar -->
                 <div class="progress-track">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
@@ -130,7 +71,6 @@
 
                 <form th:action="@{/beneficiaries/register/new}" th:object="${beneficiaries}" method="post" id="registrationForm" novalidate>
 
-                    <!-- Photo Upload Section -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-camera"></i> Photo</h5>
                     <div class="row mb-4">
                         <div class="col-md-12">
@@ -149,7 +89,6 @@
                         </div>
                     </div>
 
-                    <!-- Personal Information -->
                     <h5 class="mb-3 text-primary"><i class="bi bi-person"></i> Personal Information</h5>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -189,8 +128,6 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="nid" class="form-label">National ID *</label>
-                            <!-- Placeholder uses X's, never real-looking digits, so it can
-                                 never be mistaken for a prefilled/real National ID. -->
                             <input type="text" class="form-control tracked-field" id="nid" th:field="*{nid}" required
                                    maxlength="16" pattern="[0-9]{16}"
                                    oninput="validateNID(this)"
@@ -200,12 +137,10 @@
                         </div>
                     </div>
 
-                    <!-- Contact Information -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-telephone"></i> Contact Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="phone" class="form-label">Phone Number *</label>
-                            <!-- Same principle: masked with X's, not a real-looking number. -->
                             <input type="tel" class="form-control tracked-field" id="phone" th:field="*{phone}" required
                                    pattern="(078|079|072|073)[0-9]{7}" maxlength="10"
                                    oninput="validatePhone(this)"
@@ -215,15 +150,11 @@
                         </div>
                     </div>
 
-                    <!-- Location Selection - Cascading dropdowns -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-geo-alt"></i> Location</h5>
                     <div class="location-section">
                         <div class="location-row">
                             <div class="form-group">
                                 <label for="province" class="form-label">Province *</label>
-                                <!-- NEW: rendered server-side via Thymeleaf instead of being
-                                     fetched over AJAX after page load, so this dropdown is
-                                     usable the instant the page paints. -->
                                 <select class="form-select tracked-field" id="province" required onchange="loadDistrictsAbaragizwa()">
                                     <option value="">Select province...</option>
                                     <option th:each="province : ${provinces}" th:value="${province.id}" th:text="${province.name}"></option>
@@ -262,11 +193,10 @@
                         </div>
                     </div>
 
-                    <!-- Representative Assignment -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-person-badge"></i> Representative Assignment</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label for="representatives" class="form-label">Representative *</label>
+                            <label for="representatives" class="form-label">Representative * <small class="text-muted">(active only)</small></label>
                             <select class="form-select tracked-field" id="representatives" th:field="*{representativeIdValue}" required>
                                 <option value="">Select representative...</option>
                                 <option th:each="rep : ${representativesList}"
@@ -275,11 +205,10 @@
                                         th:selected="${rep.id.toString() == beneficiaries.representativeIdValue}">
                                 </option>
                             </select>
-                            <div class="form-text">Select the representative who will supervise this beneficiary</div>
+                            <div class="form-text">Only ACTIVE representatives are shown. Select the one who will supervise this beneficiary.</div>
                         </div>
                     </div>
 
-                    <!-- Contract/Agreement PDF Upload -->
                     <h5 class="mb-3 mt-4 text-primary"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                     <div class="row">
                         <div class="col-md-12 mb-3">
@@ -301,7 +230,6 @@
                         </div>
                     </div>
 
-                    <!-- Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <a th:href="@{/beneficiaries/list}" class="btn btn-secondary me-2">
                             <i class="bi bi-x-circle"></i> Cancel
@@ -321,51 +249,30 @@
     function validateName(input) {
         const value = input.value;
         const isValid = /^[A-Za-z\s]{2,50}$/.test(value);
-
         if (value.length === 0) {
             input.classList.remove('is-invalid', 'is-valid');
         } else if (isValid) {
-            input.classList.remove('is-invalid');
-            input.classList.add('is-valid');
+            input.classList.remove('is-invalid'); input.classList.add('is-valid');
         } else {
-            input.classList.remove('is-valid');
-            input.classList.add('is-invalid');
+            input.classList.remove('is-valid'); input.classList.add('is-invalid');
         }
     }
+    function validateNID(input) { input.value = input.value.replace(/\D/g, '').slice(0, 16); }
+    function validatePhone(input) { input.value = input.value.replace(/\D/g, '').slice(0, 10); }
 
-    function validateNID(input) {
-        input.value = input.value.replace(/\D/g, '').slice(0, 16);
-    }
-
-    function validatePhone(input) {
-        input.value = input.value.replace(/\D/g, '').slice(0, 10);
-    }
-
-    // ── Registration progress bar ───────────────────────────────────────────
-    // Tracks every field flagged with .tracked-field (required inputs/selects
-    // plus the hidden PDF-url field) and fills the bar proportionally. Cheap
-    // event-delegated listener, no framework needed.
     function updateProgress() {
         const fields = document.querySelectorAll('.tracked-field');
         let filled = 0;
-        fields.forEach(f => {
-            if (f.value && f.value.trim() !== '') filled++;
-        });
+        fields.forEach(f => { if (f.value && f.value.trim() !== '') filled++; });
         const percent = fields.length ? Math.round((filled / fields.length) * 100) : 0;
         document.getElementById('progressFill').style.width = percent + '%';
         document.getElementById('progressPercent').textContent = percent + '%';
     }
+    document.addEventListener('input', e => { if (e.target.classList.contains('tracked-field')) updateProgress(); });
+    document.addEventListener('change', e => { if (e.target.classList.contains('tracked-field')) updateProgress(); });
 
-    document.addEventListener('input', function (e) {
-        if (e.target.classList.contains('tracked-field')) updateProgress();
-    });
-    document.addEventListener('change', function (e) {
-        if (e.target.classList.contains('tracked-field')) updateProgress();
-    });
-
-    document.getElementById('registrationForm').addEventListener('submit', function(event) {
+    document.getElementById('registrationForm').addEventListener('submit', function (event) {
         const pdfUrl = document.getElementById('pdfUrl').value;
-
         if (!pdfUrl || pdfUrl.trim() === '') {
             event.preventDefault();
             const errorDiv = document.getElementById('pdfError');
@@ -374,19 +281,14 @@
             alert('Please upload a contract PDF before submitting');
             return false;
         }
-
         const form = event.target;
         if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
+            event.preventDefault(); event.stopPropagation();
             form.classList.add('was-validated');
             return false;
         }
         form.classList.add('was-validated');
 
-        // Immediate save-state feedback: fill the bar to 100%, disable the
-        // button, swap in a spinner. Prevents double-submits and makes the
-        // form feel instant even while the request is still in flight.
         document.getElementById('progressFill').style.width = '100%';
         document.getElementById('progressPercent').textContent = '100%';
         const submitBtn = document.getElementById('submitBtn');
@@ -395,100 +297,50 @@
             '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
     });
 
-    // Province list now arrives server-rendered (see th:each above), so there's
-    // no initial fetch here anymore — only the dependent levels are AJAX-driven.
-
     function loadDistrictsAbaragizwa() {
         const provinceId = document.getElementById('province').value;
         const districtSelect = document.getElementById('district');
-
-        if (!provinceId) {
-            districtSelect.disabled = true;
-            resetSelectsAbaragizwa(['district', 'sector', 'cell', 'village']);
-            return;
-        }
-
-        fetch(`/api/locations/districts/${provinceId}`)
-            .then(response => response.json())
-            .then(data => {
-                districtSelect.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(item => {
-                    districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                districtSelect.disabled = false;
-                resetSelectsAbaragizwa(['sector', 'cell', 'village']);
-            })
-            .catch(error => console.error('Error loading districts:', error));
+        if (!provinceId) { districtSelect.disabled = true; resetSelectsAbaragizwa(['district', 'sector', 'cell', 'village']); return; }
+        fetch(`/api/locations/districts/${provinceId}`).then(r => r.json()).then(data => {
+            districtSelect.innerHTML = '<option value="">Select district...</option>';
+            data.forEach(item => { districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            districtSelect.disabled = false;
+            resetSelectsAbaragizwa(['sector', 'cell', 'village']);
+        }).catch(err => console.error('Error loading districts:', err));
     }
-
     function loadSectorsAbaragizwa() {
         const districtId = document.getElementById('district').value;
         const sectorSelect = document.getElementById('sector');
-
-        if (!districtId) {
-            sectorSelect.disabled = true;
-            resetSelectsAbaragizwa(['sector', 'cell', 'village']);
-            return;
-        }
-
-        fetch(`/api/locations/sectors/${districtId}`)
-            .then(response => response.json())
-            .then(data => {
-                sectorSelect.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(item => {
-                    sectorSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                sectorSelect.disabled = false;
-                resetSelectsAbaragizwa(['cell', 'village']);
-            })
-            .catch(error => console.error('Error loading sectors:', error));
+        if (!districtId) { sectorSelect.disabled = true; resetSelectsAbaragizwa(['sector', 'cell', 'village']); return; }
+        fetch(`/api/locations/sectors/${districtId}`).then(r => r.json()).then(data => {
+            sectorSelect.innerHTML = '<option value="">Select sector...</option>';
+            data.forEach(item => { sectorSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            sectorSelect.disabled = false;
+            resetSelectsAbaragizwa(['cell', 'village']);
+        }).catch(err => console.error('Error loading sectors:', err));
     }
-
     function loadCellsAbaragizwa() {
         const sectorId = document.getElementById('sector').value;
         const cellSelect = document.getElementById('cell');
-
-        if (!sectorId) {
-            cellSelect.disabled = true;
-            resetSelectsAbaragizwa(['cell', 'village']);
-            return;
-        }
-
-        fetch(`/api/locations/cells/${sectorId}`)
-            .then(response => response.json())
-            .then(data => {
-                cellSelect.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(item => {
-                    cellSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                cellSelect.disabled = false;
-                resetSelectsAbaragizwa(['village']);
-            })
-            .catch(error => console.error('Error loading cells:', error));
+        if (!sectorId) { cellSelect.disabled = true; resetSelectsAbaragizwa(['cell', 'village']); return; }
+        fetch(`/api/locations/cells/${sectorId}`).then(r => r.json()).then(data => {
+            cellSelect.innerHTML = '<option value="">Select cell...</option>';
+            data.forEach(item => { cellSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            cellSelect.disabled = false;
+            resetSelectsAbaragizwa(['village']);
+        }).catch(err => console.error('Error loading cells:', err));
     }
-
     function loadVillagesAbaragizwa() {
         const cellId = document.getElementById('cell').value;
         const villageSelect = document.getElementById('village');
-
-        if (!cellId) {
-            villageSelect.disabled = true;
-            return;
-        }
-
-        fetch(`/api/locations/villages/${cellId}`)
-            .then(response => response.json())
-            .then(data => {
-                villageSelect.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(item => {
-                    villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-                villageSelect.disabled = false;
-                updateProgress();
-            })
-            .catch(error => console.error('Error loading villages:', error));
+        if (!cellId) { villageSelect.disabled = true; return; }
+        fetch(`/api/locations/villages/${cellId}`).then(r => r.json()).then(data => {
+            villageSelect.innerHTML = '<option value="">Select village...</option>';
+            data.forEach(item => { villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
+            villageSelect.disabled = false;
+            updateProgress();
+        }).catch(err => console.error('Error loading villages:', err));
     }
-
     function resetSelectsAbaragizwa(selectIds) {
         selectIds.forEach(id => {
             const select = document.getElementById(id);
@@ -501,62 +353,35 @@
     function uploadPhoto() {
         const fileInput = document.getElementById('photoFile');
         const file = fileInput.files[0];
-
         if (!file) return;
-
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file');
-            return;
-        }
-
-        if (file.size > 5 * 1024 * 1024) {
-            alert('File size must be less than 5MB');
-            return;
-        }
+        if (!file.type.startsWith('image/')) { alert('Please select an image file'); return; }
+        if (file.size > 5 * 1024 * 1024) { alert('File size must be less than 5MB'); return; }
 
         const preview = document.getElementById('photoPreview');
         preview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
-
         const formData = new FormData();
         formData.append('file', file);
 
-        fetch('/api/upload/photo', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                preview.innerHTML = `<img src="${data.url}" alt="Photo">`;
-                document.getElementById('photoUrl').value = data.url;
-            } else {
-                alert('Upload failed: ' + data.message);
-                preview.innerHTML = '<div class="placeholder"><i class="bi bi-camera" style="font-size: 2.4rem;"></i><p class="small mt-2">Upload failed</p></div>';
-            }
-        })
-        .catch(error => {
-            console.error('Error uploading photo:', error);
-            alert('Error uploading photo');
-        });
+        fetch('/api/upload/photo', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    preview.innerHTML = `<img src="${data.url}" alt="Photo">`;
+                    document.getElementById('photoUrl').value = data.url;
+                } else {
+                    alert('Upload failed: ' + data.message);
+                    preview.innerHTML = '<div class="placeholder"><i class="bi bi-camera" style="font-size: 2.4rem;"></i><p class="small mt-2">Upload failed</p></div>';
+                }
+            })
+            .catch(err => { console.error('Error uploading photo:', err); alert('Error uploading photo'); });
     }
 
     function uploadPdf() {
         const fileInput = document.getElementById('pdfFile');
         const file = fileInput.files[0];
-
         if (!file) return;
-
-        if (!file.name.toLowerCase().endsWith('.pdf')) {
-            alert('Please select a valid PDF file');
-            fileInput.value = '';
-            return;
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-            alert('PDF file size must be less than 10MB');
-            fileInput.value = '';
-            return;
-        }
+        if (!file.name.toLowerCase().endsWith('.pdf')) { alert('Please select a valid PDF file'); fileInput.value = ''; return; }
+        if (file.size > 10 * 1024 * 1024) { alert('PDF file size must be less than 10MB'); fileInput.value = ''; return; }
 
         const preview = document.getElementById('pdfPreview');
         preview.innerHTML = '<div class="spinner-border text-danger" role="status"><span class="visually-hidden">Uploading...</span></div>';
@@ -565,46 +390,35 @@
         const formData = new FormData();
         formData.append('file', file);
 
-        fetch('/api/upload/pdf', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                document.getElementById('pdfUrl').value = data.url;
-                document.getElementById('pdfError').style.display = 'none';
-
-                preview.innerHTML = `
-                    <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
-                    <strong class="ms-2">${data.originalName || file.name}</strong>
-                    <span class="badge bg-success ms-2">✓ Uploaded</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
-                        <i class="bi bi-x-circle"></i> Remove
-                    </button>
-                `;
-                updateProgress();
-            } else {
-                throw new Error(data.message || 'Upload failed');
-            }
-        })
-        .catch(error => {
-            console.error('PDF upload error:', error);
-            const errorDiv = document.getElementById('pdfError');
-            errorDiv.textContent = 'Error uploading PDF: ' + error.message;
-            errorDiv.style.display = 'block';
-            alert('Error uploading PDF: ' + error.message);
-            preview.classList.remove('show');
-            preview.innerHTML = '';
-            fileInput.value = '';
-        });
+        fetch('/api/upload/pdf', { method: 'POST', body: formData })
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('pdfUrl').value = data.url;
+                    document.getElementById('pdfError').style.display = 'none';
+                    preview.innerHTML = `
+                        <i class="bi bi-file-pdf text-danger" style="font-size: 1.6rem;"></i>
+                        <strong class="ms-2">${data.originalName || file.name}</strong>
+                        <span class="badge bg-success ms-2">✓ Uploaded</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-3" onclick="removePdf()">
+                            <i class="bi bi-x-circle"></i> Remove
+                        </button>`;
+                    updateProgress();
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+            })
+            .catch(err => {
+                console.error('PDF upload error:', err);
+                const errorDiv = document.getElementById('pdfError');
+                errorDiv.textContent = 'Error uploading PDF: ' + err.message;
+                errorDiv.style.display = 'block';
+                alert('Error uploading PDF: ' + err.message);
+                preview.classList.remove('show');
+                preview.innerHTML = '';
+                fileInput.value = '';
+            });
     }
-
     function removePdf() {
         document.getElementById('pdfUrl').value = '';
         document.getElementById('pdfPreview').classList.remove('show');
@@ -614,7 +428,6 @@
         updateProgress();
     }
 
-    // Initial paint
     document.addEventListener('DOMContentLoaded', updateProgress);
 </script>
 </body>

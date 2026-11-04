@@ -3,125 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View representatives</title>
+    <title>View Representative</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        html {
-            font-size: 12px;
-        }
-        body {
-            background: #f8f9fa;
-            padding: 20px;
-        }
-        .view-card {
-            background: white;
-            border-radius: 12px;
-            padding: 18px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .view-card h3 {
-            font-size: 1.2rem;
-        }
-        .view-card h4 {
-            font-size: 1rem;
-            margin-bottom: 2px;
-        }
-        .view-card p.text-muted {
-            font-size: 0.8rem;
-        }
-        .info-section {
-            margin-bottom: 16px;
-        }
-        .info-label {
-            font-weight: 600;
-            color: #777;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            margin-bottom: 2px;
-        }
-        .info-value {
-            font-size: 0.8rem;
-            color: #333;
-            margin-bottom: 6px;
-        }
-        .profile-photo {
-            width: 90px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 3px solid #2e8b9e;
-        }
-        .section-title {
-            color: #1a5f7a;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-bottom: 2px solid #2e8b9e;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
-        }
-        .location-hierarchy,
-        .representative-card {
-            background: #f0f8ff;
-            border-left: 4px solid #2e8b9e;
-            padding: 8px 10px;
-            border-radius: 8px;
-            margin-top: 5px;
-            font-size: 0.78rem;
-        }
-        .contract-section {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-        }
-        .badge {
-            font-size: 0.68rem;
-        }
-        .btn-sm {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-        }
-        .btn {
-            font-size: 0.82rem;
-        }
+        html { font-size: 12px; }
+        body { background: #f8f9fa; padding: 20px; }
+        .view-card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .view-card h3 { font-size: 1.2rem; }
+        .view-card h4 { font-size: 1rem; margin-bottom: 2px; }
+        .info-label { font-weight: 600; color: #777; font-size: 0.7rem;
+                      text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 2px; }
+        .info-value { font-size: 0.8rem; color: #333; margin-bottom: 6px; }
+        .profile-photo { width: 120px; height: 120px; object-fit: cover;
+                         border-radius: 10px; border: 3px solid #2e8b9e; }
+        .profile-placeholder { width: 120px; height: 120px;
+                               display: inline-flex; align-items: center; justify-content: center;
+                               background: #f1f3f5; border-radius: 10px;
+                               border: 3px dashed #ced4da; color: #adb5bd; font-size: 3.5rem; }
+        .section-title { color: #1a5f7a; font-size: 0.85rem; font-weight: 600;
+                         border-bottom: 2px solid #2e8b9e; padding-bottom: 5px; margin-bottom: 10px; }
+        .location-hierarchy { background: #f0f8ff; border-left: 4px solid #2e8b9e;
+                              padding: 8px 10px; border-radius: 8px; margin-top: 5px; font-size: 0.78rem; }
+        .contract-section { background: #fff3cd; border-left: 4px solid #ffc107;
+                            padding: 8px 10px; border-radius: 8px; font-size: 0.78rem; }
+        .badge { font-size: 0.68rem; }
+        .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+        .btn { font-size: 0.82rem; }
+        .table-sm td, .table-sm th { font-size: 0.78rem; padding: 0.35rem 0.5rem; }
 
-        /* Mini beneficiaries table inside representatives-view.html */
-        .table-sm td,
-        .table-sm th {
-            font-size: 0.78rem;
-            padding: 0.35rem 0.5rem;
+        /* ── Gender badge — bigger, clearer text ─────────────────────── */
+        .gender-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            line-height: 1.4;
         }
+        .gender-badge i { font-size: 1rem; }
+        .gender-male    { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .gender-female  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .gender-unknown { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
 
-        /* NEW: print button + print-only stylesheet */
-        .no-print {
-            /* marker class, actual hiding happens in @media print below */
-        }
+        /* Slightly smaller in the compact beneficiaries table */
+        .table-sm .gender-badge { font-size: 0.75rem; padding: 3px 10px; }
+        .table-sm .gender-badge i { font-size: 0.85rem; }
 
         @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            .no-print,
-            .btn,
-            .modal,
-            nav {
-                display: none !important;
-            }
-            .view-card {
-                box-shadow: none;
-                border-radius: 0;
-                padding: 0;
-            }
-            .table-responsive {
-                overflow: visible !important;
-            }
-            a[href]::after {
-                content: none !important; /* no ugly printed URLs from browser default styles */
-            }
+            body { background: white; padding: 0; }
+            .no-print, .btn, .modal, nav { display: none !important; }
+            .view-card { box-shadow: none; border-radius: 0; padding: 0; }
+            .table-responsive { overflow: visible !important; }
         }
     </style>
 </head>
@@ -134,8 +70,6 @@
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h3><i class="bi bi-person-badge"></i> Representative Details</h3>
                     <div class="no-print">
-                        <!-- NEW: Print button. Uses window.print() + the @media print rules
-                             above so only the profile content is printed, no buttons/chrome. -->
                         <button type="button" class="btn btn-outline-dark me-2" onclick="window.print()">
                             <i class="bi bi-printer"></i> Print
                         </button>
@@ -150,19 +84,21 @@
                 </div>
 
                 <div class="row">
-                    <!-- Left Column: Photo and Basic Info -->
+                    <!-- Photo -->
                     <div class="col-md-4 text-center mb-4">
-                        <img th:if="${representatives.photo != null and !representatives.photo.isEmpty()}"
-                             th:src="${representatives.photo}"
+                        <img th:if="${representatives.photoUrl != null}"
+                             th:src="${representatives.photoUrl}"
                              class="profile-photo mb-3"
-                             alt="Profile Photo">
-                        <div th:if="${representatives.photo == null or representatives.photo.isEmpty()}"
-                             class="profile-photo mb-3 d-flex align-items-center justify-content-center bg-light">
-                            <i class="bi bi-person-circle" style="font-size: 5rem; color: #ccc;"></i>
+                             alt="Profile Photo"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                        <div class="profile-placeholder mb-3"
+                             th:style="${representatives.photoUrl != null} ? 'display:none;' : 'display:inline-flex;'">
+                            <i class="bi bi-person-circle"></i>
                         </div>
+
                         <h4 th:text="${representatives.firstName + ' ' + representatives.lastName}">Full Name</h4>
-                        <p class="text-muted" th:text="${representatives.nid}">NID</p>
-                        <!-- NEW: status badge shown here too, useful context on the printed sheet -->
+                        <p class="text-muted mb-1" th:text="${representatives.nid}">NID</p>
+
                         <span th:if="${representatives.status == null or representatives.status == 'ACTIVE'}"
                               class="badge bg-success">
                             <i class="bi bi-check-circle"></i> Active
@@ -173,10 +109,10 @@
                         </span>
                     </div>
 
-                    <!-- Right Column: Detailed Information -->
+                    <!-- Details -->
                     <div class="col-md-8">
                         <!-- Personal Information -->
-                        <div class="info-section">
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-person"></i> Personal Information</h5>
                             <div class="row">
                                 <div class="col-md-6">
@@ -187,18 +123,26 @@
                                     <div class="info-label">Last Name</div>
                                     <div class="info-value" th:text="${representatives.lastName}">-</div>
                                 </div>
+
+                                <!-- ★ Gender — bigger text -->
                                 <div class="col-md-6">
                                     <div class="info-label">Gender</div>
                                     <div class="info-value">
-                                        <span th:if="${representatives.gender == 'MALE'}" class="badge bg-primary">
+                                        <span th:if="${representatives.gender == 'MALE'}"
+                                              class="gender-badge gender-male">
                                             <i class="bi bi-gender-male"></i> Male
                                         </span>
-                                        <span th:if="${representatives.gender == 'FEMALE'}" class="badge bg-danger">
+                                        <span th:if="${representatives.gender == 'FEMALE'}"
+                                              class="gender-badge gender-female">
                                             <i class="bi bi-gender-female"></i> Female
                                         </span>
-                                        <span th:if="${representatives.gender == null}">-</span>
+                                        <span th:if="${representatives.gender == null or representatives.gender == ''}"
+                                              class="gender-badge gender-unknown">
+                                            N/A
+                                        </span>
                                     </div>
                                 </div>
+
                                 <div class="col-md-6">
                                     <div class="info-label">Marital Status</div>
                                     <div class="info-value">
@@ -208,6 +152,7 @@
                                         <span th:if="${representatives.maritialStatus == null}">-</span>
                                     </div>
                                 </div>
+
                                 <div class="col-md-12">
                                     <div class="info-label">National ID</div>
                                     <div class="info-value" th:text="${representatives.nid}">-</div>
@@ -216,7 +161,7 @@
                         </div>
 
                         <!-- Contact Information -->
-                        <div class="info-section">
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-telephone"></i> Contact Information</h5>
                             <div class="row">
                                 <div class="col-md-6">
@@ -237,7 +182,7 @@
                         </div>
 
                         <!-- Professional Information -->
-                        <div class="info-section">
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-briefcase"></i> Professional Information</h5>
                             <div class="info-label">Occupation (What they do)</div>
                             <div class="info-value">
@@ -245,45 +190,23 @@
                             </div>
                         </div>
 
-                        <!-- Location Information -->
-                        <div class="info-section">
+                        <!-- Location -->
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-geo-alt"></i> Location Information</h5>
                             <div th:if="${representatives.location != null}" class="location-hierarchy">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="info-label">Current Location</div>
+                                    <div class="col-md-8">
+                                        <div class="info-label">Full Location Path</div>
                                         <div class="info-value">
-                                            <i class="bi bi-geo-alt-fill text-danger"></i>
-                                            <span th:text="${representatives.location.name}"></span>
+                                            <i class="bi bi-diagram-3"></i>
+                                            <span th:text="${representatives.fullLocationPath}">-</span>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="info-label">Location Type</div>
                                         <div class="info-value">
-                                            <span class="badge bg-info" th:text="${representatives.location.locationType}"></span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Location Hierarchy -->
-                                <div class="row mt-3" th:if="${representatives.location.parent != null}">
-                                    <div class="col-md-12">
-                                        <div class="info-label">Location Hierarchy</div>
-                                        <div class="info-value" style="font-size: 0.95rem;">
-                                            <i class="bi bi-diagram-3"></i>
-                                            <span th:if="${representatives.location.parent.parent.parent.parent != null}"
-                                                  th:text="${representatives.location.parent.parent.parent.parent.name}"></span>
-                                            <span th:text="${representatives.location.parent.parent.parent.parent != null ? '→' : ''}"></span>
-                                            <span th:if="${representatives.location.parent.parent.parent != null}"
-                                                  th:text="${representatives.location.parent.parent.parent.name}"></span>
-                                            <span th:text="${representatives.location.parent.parent.parent != null ? '→' : ''}"></span>
-                                            <span th:if="${representatives.location.parent.parent != null}"
-                                                  th:text="${representatives.location.parent.parent.name}"></span>
-                                            <span th:text="${representatives.location.parent.parent != null ? '→' : ''}"></span>
-                                            <span th:if="${representatives.location.parent != null}"
-                                                  th:text="${representatives.location.parent.name}"></span>
-                                            <span th:text="${representatives.location.parent != null ? '→' : ''}"></span>
-                                            <strong th:text="${representatives.location.name}"></strong>
+                                            <span class="badge bg-info"
+                                                  th:text="${representatives.location.locationType}">-</span>
                                         </div>
                                     </div>
                                 </div>
@@ -293,10 +216,11 @@
                             </div>
                         </div>
 
-                        <!-- Beneficiaries Managed -->
-                        <div class="info-section no-print">
+                        <!-- Beneficiaries -->
+                        <div class="mb-3 no-print">
                             <h5 class="section-title d-flex justify-content-between align-items-center">
-                                <span><i class="bi bi-people"></i> Beneficiaries Managed
+                                <span>
+                                    <i class="bi bi-people"></i> Beneficiaries Managed
                                     <span class="badge bg-primary ms-2" th:text="${beneficiariesCount}">0</span>
                                 </span>
                                 <div>
@@ -332,19 +256,17 @@
                                     <tr th:each="b : ${beneficiariesList}">
                                         <td th:text="${b.firstName + ' ' + b.lastName}">Name</td>
                                         <td>
-                                            <span th:if="${b.gender == 'MALE'}" class="badge bg-primary">
-                                                <i class="bi bi-gender-male"></i>
+                                            <span th:if="${b.gender == 'MALE'}" class="gender-badge gender-male">
+                                                <i class="bi bi-gender-male"></i> Male
                                             </span>
-                                            <span th:if="${b.gender == 'FEMALE'}" class="badge bg-danger">
-                                                <i class="bi bi-gender-female"></i>
+                                            <span th:if="${b.gender == 'FEMALE'}" class="gender-badge gender-female">
+                                                <i class="bi bi-gender-female"></i> Female
                                             </span>
-                                            <span th:if="${b.gender == null}">-</span>
+                                            <span th:if="${b.gender == null}" class="gender-badge gender-unknown">N/A</span>
                                         </td>
                                         <td th:text="${b.nid}">-</td>
                                         <td th:text="${b.phone != null ? b.phone : 'N/A'}">-</td>
-                                        <td>
-                                            <small th:text="${b.location != null ? b.location.name : 'N/A'}">-</small>
-                                        </td>
+                                        <td><small th:text="${b.location != null ? b.location.name : 'N/A'}">-</small></td>
                                         <td>
                                             <a th:href="@{/beneficiaries/view/{id}(id=${b.id})}"
                                                class="btn btn-sm btn-info" title="View Beneficiary">
@@ -355,7 +277,6 @@
                                     </tbody>
                                 </table>
 
-                                <!-- pagination for the beneficiaries table -->
                                 <div th:if="${totalPages > 1}" class="d-flex justify-content-between align-items-center mt-2">
                                     <small class="text-muted">
                                         Page <strong th:text="${currentPage + 1}"></strong> of <strong th:text="${totalPages}"></strong>
@@ -369,23 +290,23 @@
                                                    th:if="${currentPage > 0}">
                                                     <i class="bi bi-chevron-left"></i>
                                                 </a>
-                                                <span class="page-link" th:if="${currentPage == 0}"><i class="bi bi-chevron-left"></i></span>
+                                                <span class="page-link" th:if="${currentPage == 0}">
+                                                    <i class="bi bi-chevron-left"></i></span>
                                             </li>
-
                                             <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
                                                 th:classappend="${i == currentPage ? 'active' : ''}">
                                                 <a class="page-link"
                                                    th:href="@{/representatives/view/{id}(id=${representatives.id}, page=${i}, size=${pageSize})}"
                                                    th:text="${i + 1}"></a>
                                             </li>
-
                                             <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
                                                 <a class="page-link"
                                                    th:href="@{/representatives/view/{id}(id=${representatives.id}, page=${currentPage + 1}, size=${pageSize})}"
                                                    th:if="${currentPage < totalPages - 1}">
                                                     <i class="bi bi-chevron-right"></i>
                                                 </a>
-                                                <span class="page-link" th:if="${currentPage == totalPages - 1}"><i class="bi bi-chevron-right"></i></span>
+                                                <span class="page-link" th:if="${currentPage == totalPages - 1}">
+                                                    <i class="bi bi-chevron-right"></i></span>
                                             </li>
                                         </ul>
                                     </nav>
@@ -393,30 +314,32 @@
                             </div>
                         </div>
 
-                        <!-- Contract Information -->
-                        <div class="info-section">
+                        <!-- Contract -->
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-file-pdf"></i> Contract Information</h5>
                             <div class="contract-section">
-                                <div th:if="${representatives.contractAgreement != null and !representatives.contractAgreement.isEmpty()}">
+                                <div th:if="${representatives.contractUrl != null}">
                                     <i class="bi bi-file-pdf text-danger" style="font-size: 1.5rem;"></i>
                                     <strong class="ms-2">Amasezerano (Contract)</strong>
                                     <div class="mt-2 no-print">
-                                        <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                        <a th:href="${representatives.contractUrl}" target="_blank"
+                                           class="btn btn-sm btn-outline-danger">
                                             <i class="bi bi-file-pdf"></i> Download PDF
                                         </a>
-                                        <a th:href="${representatives.contractAgreement}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <a th:href="${representatives.contractUrl}" target="_blank"
+                                           class="btn btn-sm btn-outline-primary">
                                             <i class="bi bi-eye"></i> View in Browser
                                         </a>
                                     </div>
                                 </div>
-                                <div th:if="${representatives.contractAgreement == null or representatives.contractAgreement.isEmpty()}">
-                                    <p class="text-muted">No contract PDF available</p>
+                                <div th:if="${representatives.contractUrl == null}">
+                                    <p class="text-muted mb-0">No contract PDF available</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- System Information -->
-                        <div class="info-section">
+                        <div class="mb-3">
                             <h5 class="section-title"><i class="bi bi-info-circle"></i> System Information</h5>
                             <div class="row">
                                 <div class="col-md-6">
@@ -438,7 +361,7 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
+                <!-- Action buttons -->
                 <div class="d-flex justify-content-end mt-4 pt-3 border-top no-print">
                     <a th:href="@{/representatives/list}" class="btn btn-secondary me-2">
                         <i class="bi bi-arrow-left"></i> Back to List
@@ -448,8 +371,7 @@
                         <i class="bi bi-pencil"></i> Edit
                     </a>
                     <button type="button" class="btn btn-danger"
-                            data-bs-toggle="modal"
-                            data-bs-target="#deleteModal">
+                            data-bs-toggle="modal" data-bs-target="#deleteModal">
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
@@ -458,7 +380,7 @@
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
+<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -467,8 +389,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to delete
-                <strong th:text="${representatives.firstName + ' ' + representatives.lastName}">this representative</strong>?
+                Delete <strong th:text="${representatives.firstName + ' ' + representatives.lastName}">this representative</strong>?
                 <br><small class="text-danger">This action cannot be undone.</small>
             </div>
             <div class="modal-footer">

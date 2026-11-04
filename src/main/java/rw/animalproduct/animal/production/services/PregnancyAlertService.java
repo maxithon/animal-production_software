@@ -52,7 +52,11 @@ public class PregnancyAlertService {
 
         List<LivestockBreeding> active;
         try {
-            active = breedingRepository.findByStatusInAndIsDeletedFalse(
+            // is_deleted was removed from livestock_breeding; the modern
+            // repository method is findByStatusIn(...). Deleted records no
+            // longer exist in the table (they are hard-deleted and captured
+            // in audit_log), so no filter is needed here.
+            active = breedingRepository.findByStatusIn(
                     List.of(LivestockBreeding.STATUS_CONFIRMED_PREGNANT,
                             LivestockBreeding.STATUS_PREGNANT));
         } catch (Exception e) {

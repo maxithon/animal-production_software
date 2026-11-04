@@ -53,10 +53,14 @@ public class RepresentativeController {
         List<Representative> list = (status != null && !status.isEmpty())
                 ? representativesAbororaService.getByStatus(status)
                 : representativesAbororaService.getAll();
+
         Map<UUID, Long> beneficiaryCounts = beneficiaryService.getBeneficiaryCountsByRepresentative();
+        Map<UUID, Long> activeBeneficiaryCounts =
+                beneficiaryService.getActiveBeneficiaryCountsByRepresentative();
 
         model.addAttribute("representativesList", list);
         model.addAttribute("beneficiaryCounts", beneficiaryCounts);
+        model.addAttribute("activeBeneficiaryCounts", activeBeneficiaryCounts);
         model.addAttribute("selectedStatus", status);
         return "representatives-list";
     }
@@ -69,7 +73,6 @@ public class RepresentativeController {
         return "representatives-register";
     }
 
-    // ── CREATE (now logged) ─────────────────────────────────────────────────
     @PostMapping("/register/new")
     public String register(@Valid @ModelAttribute("representatives") Representative representatives,
                            BindingResult result,
@@ -80,15 +83,12 @@ public class RepresentativeController {
         if (existingOpt.isPresent()) {
             result.rejectValue("nid", "error.representatives", "NID already exists");
         }
-
         if (representatives.getNid() != null && !representatives.getNid().matches("^[0-9]{16}$")) {
             result.rejectValue("nid", "error.representatives", "National ID must be exactly 16 digits");
         }
-
         if (representatives.getPhone() != null && !representatives.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
             result.rejectValue("phone", "error.representatives", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
-
         if (representatives.getEmail() != null && !representatives.getEmail().isEmpty()) {
             if (!representatives.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
                 result.rejectValue("email", "error.representatives", "Please provide a valid email address");
@@ -99,24 +99,16 @@ public class RepresentativeController {
             String errorMessages = result.getFieldErrors().stream()
                     .map(FieldError::getDefaultMessage)
                     .collect(Collectors.joining(", "));
-
             model.addAttribute("error", errorMessages);
-            List<Location> locations = locationService.getAllLocations();
-            model.addAttribute("locations", locations);
+            model.addAttribute("locations", locationService.getAllLocations());
             return "representatives-register";
         }
 
         Representative saved = representativesAbororaService.addNew(representatives);
 
-        auditLogService.log(
-                "representative",
-                saved.getId(),
-                "CREATE",
-                getCurrentUsername(),
-                null,
-                saved,
-                "Registered representative: " + saved.getFirstName() + " " + saved.getLastName()
-        );
+        auditLogService.log("representative", saved.getId(), "CREATE",
+                getCurrentUsername(), null, saved,
+                "Registered representative: " + saved.getFirstName() + " " + saved.getLastName());
 
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora registered successfully!");
         return "redirect:/representatives/list";
@@ -125,9 +117,7 @@ public class RepresentativeController {
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable("id") UUID id, Model model) {
         Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
-        if (representativesOpt.isEmpty()) {
-            return "redirect:/representatives/list";
-        }
+        if (representativesOpt.isEmpty()) return "redirect:/representatives/list";
 
         Representative representatives = representativesOpt.get();
         List<Location> locations = locationService.getAllLocations();
@@ -135,10 +125,7 @@ public class RepresentativeController {
         model.addAttribute("representatives", representatives);
         model.addAttribute("locations", locations);
 
-        Location parent = null;
-        Location grandParent = null;
-        Location greatGrandParent = null;
-        Location greatGreatGrandParent = null;
+        Location parent = null, grandParent = null, greatGrandParent = null, greatGreatGrandParent = null;
 
         if (representatives.getLocation() != null) {
             Location currentLocation = representatives.getLocation();
@@ -175,15 +162,12 @@ public class RepresentativeController {
         }
         if (parent != null) {
             model.addAttribute("cells", locationService.getChildLocations(parent.getId()));
-        }
-        if (parent != null) {
             model.addAttribute("villages", locationService.getChildLocations(parent.getId()));
         }
 
         return "representatives-edit";
     }
 
-    // ── UPDATE (now logged) ─────────────────────────────────────────────────
     @PostMapping("/update/{id}")
     public String update(@PathVariable("id") UUID id,
                          @Valid @ModelAttribute("representatives") Representative representatives,
@@ -195,15 +179,12 @@ public class RepresentativeController {
         if (existingOpt.isPresent() && !existingOpt.get().getId().equals(id)) {
             result.rejectValue("nid", "error.representatives", "NID already exists");
         }
-
         if (representatives.getNid() != null && !representatives.getNid().matches("^[0-9]{16}$")) {
             result.rejectValue("nid", "error.representatives", "National ID must be exactly 16 digits");
         }
-
         if (representatives.getPhone() != null && !representatives.getPhone().matches("^(078|079|072|073)[0-9]{7}$")) {
             result.rejectValue("phone", "error.representatives", "Phone number must be 10 digits starting with 078, 079, 072, or 073");
         }
-
         if (representatives.getEmail() != null && !representatives.getEmail().isEmpty()) {
             if (!representatives.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
                 result.rejectValue("email", "error.representatives", "Please provide a valid email address");
@@ -214,63 +195,63 @@ public class RepresentativeController {
             String errorMessages = result.getFieldErrors().stream()
                     .map(FieldError::getDefaultMessage)
                     .collect(Collectors.joining(", "));
-
             model.addAttribute("error", errorMessages);
-            List<Location> locations = locationService.getAllLocations();
-            model.addAttribute("locations", locations);
+            model.addAttribute("locations", locationService.getAllLocations());
             return "representatives-edit";
         }
 
-        // Capture "before" as a JSON string NOW, before update() mutates the managed entity
         String beforeSnapshot = representativesAbororaService.getById(id)
                 .map(auditLogService::snapshot)
                 .orElse(null);
 
         Representative updated = representativesAbororaService.update(id, representatives);
 
-        auditLogService.log(
-                "representative",
-                id,
-                "UPDATE",
-                getCurrentUsername(),
-                beforeSnapshot,
-                updated,
-                "Updated representative: " + representatives.getFirstName() + " " + representatives.getLastName()
-        );
+        auditLogService.log("representative", id, "UPDATE", getCurrentUsername(),
+                beforeSnapshot, updated,
+                "Updated representative: " + representatives.getFirstName() + " " + representatives.getLastName());
 
         redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora updated successfully!");
         return "redirect:/representatives/list";
     }
 
-    // ── DELETE ────────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
+    //  DELETE — service throws when beneficiaries are assigned; controller
+    //  catches it and shows the message as a flash error.
+    // ═══════════════════════════════════════════════════════════════════════
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") UUID id,
                          RedirectAttributes redirectAttributes) {
 
         Optional<Representative> representativeOpt = representativesAbororaService.getById(id);
-
-        if (representativeOpt.isPresent()) {
-            Representative representative = representativeOpt.get();
-
-            auditLogService.log(
-                    "representative",
-                    id,
-                    "DELETE",
-                    getCurrentUsername(),
-                    representative,
-                    null,
-                    "Deleted representative: " + representative.getFirstName() + " " + representative.getLastName()
-            );
+        if (representativeOpt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Representative not found.");
+            return "redirect:/representatives/list";
         }
 
-        representativesAbororaService.delete(id);
-        redirectAttributes.addFlashAttribute("success", "Uhagarariye aborora deleted successfully!");
+        Representative representative = representativeOpt.get();
+
+        try {
+            representativesAbororaService.delete(id);
+
+            auditLogService.log("representative", id, "DELETE", getCurrentUsername(),
+                    representative, null,
+                    "Deleted representative: " + representative.getFirstName() + " " + representative.getLastName());
+
+            redirectAttributes.addFlashAttribute("success",
+                    "Uhagarariye aborora deleted successfully!");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
         return "redirect:/representatives/list";
     }
 
-    // ── TOGGLE STATUS (NEW) ──────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════════════
+    //  TOGGLE STATUS — same guard pattern
+    // ═══════════════════════════════════════════════════════════════════════
     @PostMapping("/toggle-status/{id}")
     public String toggleStatus(@PathVariable("id") UUID id,
+                               @RequestParam(value = "returnStatus", required = false) String returnStatus,
                                RedirectAttributes redirectAttributes) {
 
         Optional<Representative> beforeOpt = representativesAbororaService.getById(id);
@@ -280,22 +261,24 @@ public class RepresentativeController {
         }
 
         String beforeSnapshot = auditLogService.snapshot(beforeOpt.get());
-        Representative updated = representativesAbororaService.toggleStatus(id);
 
-        if (updated != null) {
-            auditLogService.log(
-                    "representative",
-                    id,
-                    "STATUS_CHANGE",
-                    getCurrentUsername(),
-                    beforeSnapshot,
-                    updated,
-                    "Changed status to " + updated.getStatus() + " for: " + updated.getFirstName() + " " + updated.getLastName()
-            );
+        try {
+            Representative updated = representativesAbororaService.toggleStatus(id);
+
+            auditLogService.log("representative", id, "STATUS_CHANGE", getCurrentUsername(),
+                    beforeSnapshot, updated,
+                    "Changed status to " + updated.getStatus() + " for: "
+                            + updated.getFirstName() + " " + updated.getLastName());
+
             redirectAttributes.addFlashAttribute("success",
                     "Status changed to " + updated.getStatus() + " successfully!");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
 
+        if (returnStatus != null && !returnStatus.isEmpty()) {
+            return "redirect:/representatives/list?status=" + returnStatus;
+        }
         return "redirect:/representatives/list";
     }
 
@@ -305,9 +288,7 @@ public class RepresentativeController {
                               @RequestParam(value = "size", defaultValue = "5") int size,
                               Model model) {
         Optional<Representative> representativesOpt = representativesAbororaService.getById(id);
-        if (representativesOpt.isEmpty()) {
-            return "redirect:/representatives/list";
-        }
+        if (representativesOpt.isEmpty()) return "redirect:/representatives/list";
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("firstName").ascending());
         Page<Beneficiary> beneficiariesPage = beneficiaryService.getByUhagarariyePaginated(id, pageable);

@@ -70,24 +70,24 @@ public class BusinessOverviewService {
         if (months > MAX_MONTHS) months = MAX_MONTHS;
 
         List<Livestock> allLivestock = safe(livestockRepository.findAll()).stream()
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .collect(Collectors.toList());
 
+        // LivestockSale still uses is_deleted — keep the filter
         List<LivestockSale> sales = safe(saleService.getAll()).stream()
                 .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
                 .collect(Collectors.toList());
 
+        // LivestockDeath no longer has is_deleted (managed via audit_log)
         List<LivestockDeath> deaths = safe(deathService.getAll()).stream()
-                .filter(d -> !Boolean.TRUE.equals(d.getIsDeleted()))
                 .collect(Collectors.toList());
 
+        // LivestockTreatment no longer has is_deleted (managed via audit_log) — no filter needed
         List<LivestockTreatment> treatments = safe(treatmentService.getAll()).stream()
-                .filter(t -> !Boolean.TRUE.equals(t.getIsDeleted()))
                 .collect(Collectors.toList());
 
+        // LivestockSick no longer has is_deleted either
         List<LivestockSick> sickRecords = safe(sickService.getAll()).stream()
-                .filter(s -> !Boolean.TRUE.equals(s.getIsDeleted()))
                 .collect(Collectors.toList());
 
         List<LivestockBirth> births = safe(birthService.getAll());

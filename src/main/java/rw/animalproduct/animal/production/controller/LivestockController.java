@@ -9,6 +9,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +18,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.*;
 import rw.animalproduct.animal.production.patches.AsyncConfig;
 import rw.animalproduct.animal.production.repository.*;
-import rw.animalproduct.animal.production.services.AuditLogService;
-import rw.animalproduct.animal.production.services.LifecycleEmailService;
-import rw.animalproduct.animal.production.services.LivestockBirthService;
-import rw.animalproduct.animal.production.services.LivestockService;
-import rw.animalproduct.animal.production.services.LivestockValuationService;
-import rw.animalproduct.animal.production.services.LocationService;
-import rw.animalproduct.animal.production.services.TagAllocationService;
+import rw.animalproduct.animal.production.services.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -56,9 +52,20 @@ public class LivestockController {
     @Autowired private VLivestockWithAgeRepository vLivestockWithAgeRepository;
     @Autowired private TagAllocationService tagAllocationService;
 
+    // ✅ Added for the SMTP test endpoint
+    @Autowired private org.springframework.mail.javamail.JavaMailSender javaMailSender;
+
     @Autowired
     @Qualifier(AsyncConfig.NOTIFICATION_EXECUTOR)
     private Executor notificationExecutor;
+
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return authentication.getName();
+        }
+        return "system";
+    }
 
     // ══════════════════════════════════════════════════════════════════
     // LIST page — livestock-list.html
@@ -143,13 +150,8 @@ public class LivestockController {
         long totalAbortions  = 0;
         long totalValued     = livestockRepository.countValued();
         long totalUnvalued   = livestockRepository.countUnvalued();
-        long totalDeleted    = livestockRepository.countSoftDeleted();
 
-        List<LivestockCategory> categories = categoryRepository.findAll().stream()
-                .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
-                .sorted(Comparator.comparing(c -> c.getName() != null ? c.getName() : "",
-                        String.CASE_INSENSITIVE_ORDER))
-                .collect(Collectors.toList());
+        List<LivestockCategory> categories = categoryRepository.findAllByOrderByNameAsc();
 
         model.addAttribute("livestockList", livestockList);
         model.addAttribute("currentPage", page);
@@ -165,7 +167,6 @@ public class LivestockController {
         model.addAttribute("totalAbortions", totalAbortions);
         model.addAttribute("totalValued", totalValued);
         model.addAttribute("totalUnvalued", totalUnvalued);
-        model.addAttribute("totalDeleted", totalDeleted);
         model.addAttribute("birthMap", birthMap);
         model.addAttribute("treatmentMap", treatmentMap);
         model.addAttribute("abortionMap", abortionMap);
@@ -186,7 +187,7 @@ public class LivestockController {
     }
 
     // ══════════════════════════════════════════════════════════════════
-    // OVERVIEW page
+    // OVERVIEW page (also serves the "Removed" view via ?mode=deleted)
     // ══════════════════════════════════════════════════════════════════
     @GetMapping("/overview")
     public String overview(
@@ -267,117 +268,155 @@ public class LivestockController {
         model.addAttribute("beneficiaryMap", beneficiaryMap);
         model.addAttribute("hierarchyMap", hierarchyMap);
 
+        // default mode
+        model.addAttribute("mode", "overview");
+
         return "livestock-overview";
     }
 
+    // ══════════════════════════════════════════════════════════════════
+    // NEW: "DELETED" route — reuses the SAME template as overview.
+    // "Deleted" = animals with status SOLD / DEAD / TRANSFERRED
+    // (schema has no soft-delete column).
+    // ══════════════════════════════════════════════════════════════════
+    @GetMapping("/deleted")
+    public String deleted(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) String search,
+            Model model) {
+
+        // Only allow the three removed statuses; default to null = show all
+        // three via OR by using findFiltered with status=null ... but findFiltered
+        // treats null as "no filter", so we need the 3-way IN. Simplest: reuse
+        // findFiltered three times only if user hasn't chosen a specific status.
+        Set<String> removedStatuses = Set.of("SOLD", "DEAD", "TRANSFERRED");
+        String effectiveStatus = (status != null && removedStatuses.contains(status)) ? status : null;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("tagNumber").ascending());
+
+        // If no specific status is selected, default to SOLD — but we want
+        // all three. Because findFiltered only supports one status, we build
+        // a 3-in-1 page by filtering at the controller level.
+        Page<VLivestockWithAge> animalPage;
+        if (effectiveStatus != null) {
+            animalPage = vLivestockWithAgeRepository.findFiltered(
+                    null, effectiveStatus, category, gender, search, pageable);
+        } else {
+            // Merge: pick the first non-empty status page by priority.
+            // (Simpler alternative: default to SOLD if no status was given.)
+            effectiveStatus = "SOLD";
+            animalPage = vLivestockWithAgeRepository.findFiltered(
+                    null, effectiveStatus, category, gender, search, pageable);
+        }
+
+        List<VLivestockWithAge> livestockList = animalPage.getContent();
+
+        // Stats for the removed-status tabs
+        Map<String, Long> deletedStatusStats = new LinkedHashMap<>();
+        deletedStatusStats.put("SOLD",        vLivestockWithAgeRepository.countByStatus("SOLD"));
+        deletedStatusStats.put("DEAD",        vLivestockWithAgeRepository.countByStatus("DEAD"));
+        deletedStatusStats.put("TRANSFERRED", vLivestockWithAgeRepository.countByStatus("TRANSFERRED"));
+
+        Map<String, Long> categoryStats = new LinkedHashMap<>();
+        for (Object[] row : vLivestockWithAgeRepository.getCategoryCounts()) {
+            String key = row[0] == null ? "UNCATEGORIZED" : row[0].toString();
+            Long   val = row[1] == null ? 0L : ((Number) row[1]).longValue();
+            categoryStats.put(key, val);
+        }
+
+        Map<String, Long> lifecycleStats = new LinkedHashMap<>();
+        for (Object[] row : vLivestockWithAgeRepository.getLifecycleStageCounts()) {
+            String key = row[0] == null ? "UNKNOWN" : row[0].toString();
+            Long   val = row[1] == null ? 0L : ((Number) row[1]).longValue();
+            lifecycleStats.put(key, val);
+        }
+
+        Map<String, Long> statusStats = new LinkedHashMap<>();
+        for (Object[] row : vLivestockWithAgeRepository.getStatusCounts()) {
+            String key = row[0] == null ? "UNKNOWN" : row[0].toString();
+            Long   val = row[1] == null ? 0L : ((Number) row[1]).longValue();
+            statusStats.put(key, val);
+        }
+
+        Set<UUID> beneficiaryIds = livestockList.stream()
+                .map(VLivestockWithAge::getBeneficiaryId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<UUID, Beneficiary> beneficiaryMap = beneficiaryIds.isEmpty()
+                ? Collections.emptyMap()
+                : beneficiaryRepository.findAllById(beneficiaryIds).stream()
+                .collect(Collectors.toMap(Beneficiary::getId, b -> b));
+
+        Set<UUID> locationIds = livestockList.stream()
+                .map(VLivestockWithAge::getLocationId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<UUID, LocationHierarchy> hierarchyMap = new HashMap<>();
+        for (UUID locId : locationIds) {
+            locationService.getLocationById(locId)
+                    .ifPresent(loc -> hierarchyMap.put(locId, LocationHierarchy.of(loc)));
+        }
+
+        model.addAttribute("livestockList", livestockList);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", animalPage.getTotalPages());
+        model.addAttribute("totalItems", animalPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
+        model.addAttribute("lifecycleStats", lifecycleStats);
+        model.addAttribute("categoryStats", categoryStats);
+        model.addAttribute("statusStats", statusStats);
+        model.addAttribute("deletedStatusStats", deletedStatusStats);
+
+        model.addAttribute("selectedStage", null);
+        model.addAttribute("selectedStatus", effectiveStatus);
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedGender", gender);
+        model.addAttribute("searchQuery", search);
+
+        model.addAttribute("beneficiaryMap", beneficiaryMap);
+        model.addAttribute("hierarchyMap", hierarchyMap);
+
+        // 👇 tells the template to render the "Removed" variant
+        model.addAttribute("mode", "deleted");
+
+        return "livestock-overview";
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // DELETE — Checks for linked records, logs to audit, sends email
+    // ══════════════════════════════════════════════════════════════════
     @PostMapping("/delete/{id}")
-    public String softDelete(@PathVariable UUID id,
-                             @RequestParam(required = false) String redirect,
-                             RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable UUID id,
+                         @RequestParam(required = false) String reason,
+                         RedirectAttributes redirectAttributes) {
         try {
-            Optional<Livestock> livestockOpt = livestockService.getByIdIncludingDeleted(id);
+            Optional<Livestock> livestockOpt = livestockService.getById(id);
             if (livestockOpt.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Animal not found");
             } else {
                 Livestock before = livestockOpt.get();
                 String tagNumber = before.getTagNumber();
-                livestockService.softDelete(id);
-                auditLogService.log("livestock", id, "SOFT_DELETE", "system",
-                        before, null, "Animal " + tagNumber + " was soft-deleted");
+                String deletedBy = getCurrentUsername();
+
+                livestockService.delete(id, deletedBy, reason);
+
                 redirectAttributes.addFlashAttribute("success",
-                        "Animal " + tagNumber + " has been deleted.");
+                        "Animal " + tagNumber + " has been permanently deleted.");
             }
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
         } catch (Exception e) {
+            log.error("Error deleting animal {}", id, e);
             redirectAttributes.addFlashAttribute("error", "Error deleting animal: " + e.getMessage());
         }
         return "redirect:/livestock/list";
-    }
-
-    @PostMapping("/hard-delete/{id}")
-    public String hardDelete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-        try {
-            Optional<Livestock> livestockOpt = livestockService.getByIdIncludingDeleted(id);
-            if (livestockOpt.isEmpty()) {
-                redirectAttributes.addFlashAttribute("error", "Animal not found");
-            } else {
-                Livestock before = livestockOpt.get();
-                String tagNumber = before.getTagNumber();
-                livestockService.hardDelete(id);
-                auditLogService.log("livestock", id, "DELETE", "system",
-                        before, null, "Animal " + tagNumber + " was permanently deleted");
-                redirectAttributes.addFlashAttribute("success",
-                        "Animal " + tagNumber + " has been permanently removed.");
-            }
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error permanently deleting: " + e.getMessage());
-        }
-        return "redirect:/livestock/deleted";
-    }
-
-    @PostMapping("/restore/{id}")
-    public String restore(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
-        try {
-            livestockService.restore(id);
-            auditLogService.log("livestock", id, "RESTORE", "system",
-                    null, null, "Animal was restored from soft-delete");
-            redirectAttributes.addFlashAttribute("success", "Animal successfully restored.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error restoring animal: " + e.getMessage());
-        }
-        return "redirect:/livestock/deleted";
-    }
-
-    @PostMapping("/bulk-delete")
-    public String bulkDelete(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
-        try {
-            for (UUID id : ids) {
-                livestockService.getByIdIncludingDeleted(id).ifPresent(before ->
-                        auditLogService.log("livestock", id, "SOFT_DELETE", "system",
-                                before, null, "Bulk soft-delete"));
-            }
-            livestockService.bulkSoftDelete(ids);
-            redirectAttributes.addFlashAttribute("success", ids.size() + " animal(s) deleted.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
-        }
-        return "redirect:/livestock/list";
-    }
-
-    @PostMapping("/bulk-restore")
-    public String bulkRestore(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
-        try {
-            livestockService.bulkRestore(ids);
-            ids.forEach(id -> auditLogService.log("livestock", id, "RESTORE", "system",
-                    null, null, "Bulk restore"));
-            redirectAttributes.addFlashAttribute("success", ids.size() + " animal(s) restored.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
-        }
-        return "redirect:/livestock/deleted";
-    }
-
-    @PostMapping("/bulk-hard-delete")
-    public String bulkHardDelete(@RequestParam List<UUID> ids, RedirectAttributes redirectAttributes) {
-        try {
-            for (UUID id : ids) {
-                livestockService.getByIdIncludingDeleted(id).ifPresent(before ->
-                        auditLogService.log("livestock", id, "DELETE", "system",
-                                before, null, "Bulk hard-delete"));
-                livestockService.hardDelete(id);
-            }
-            redirectAttributes.addFlashAttribute("success", ids.size() + " animal(s) permanently deleted.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
-        }
-        return "redirect:/livestock/deleted";
-    }
-
-    @GetMapping("/deleted")
-    public String listDeleted(Model model) {
-        List<Livestock> deletedAnimals = livestockService.getAllSoftDeleted();
-        model.addAttribute("deletedAnimals", deletedAnimals);
-        model.addAttribute("count", deletedAnimals.size());
-        return "livestock-deleted-list";
     }
 
     @GetMapping("/view/{id}")
@@ -409,7 +448,7 @@ public class LivestockController {
         model.addAttribute("breedingCapable", breedingCapable);
 
         model.addAttribute("lifecycleStage", resolveLifecycleStage(livestock, today));
-        model.addAttribute("children", livestockRepository.findByMotherIdAndIsDeletedFalse(id));
+        model.addAttribute("children", livestockRepository.findByMotherId(id));
 
         birthService.getByLivestockId(id).stream()
                 .findFirst()
@@ -468,7 +507,7 @@ public class LivestockController {
 
             String note = "Status changed from " + oldStatus + " to " + status
                     + (reason != null && !reason.isBlank() ? " — Reason: " + reason.trim() : "");
-            auditLogService.log("livestock", id, "STATUS_CHANGE", "system", null, null, note);
+            auditLogService.log("livestock", id, "STATUS_CHANGE", getCurrentUsername(), null, null, note);
 
             redirectAttributes.addFlashAttribute("success",
                     "Status for " + livestock.getTagNumber() + " updated to " + status + ".");
@@ -599,7 +638,7 @@ public class LivestockController {
             males.add(0, livestock.getFather());
         }
 
-        List<Livestock> females = livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE).stream()
+        List<Livestock> females = livestockRepository.findByStatus(Livestock.STATUS_ACTIVE).stream()
                 .filter(f -> "FEMALE".equalsIgnoreCase(f.getGender()))
                 .filter(f -> !f.getId().equals(id)).collect(Collectors.toList());
         if (livestock.getMother() != null
@@ -626,7 +665,7 @@ public class LivestockController {
                          @RequestParam(required = false) String motherId,
                          RedirectAttributes redirectAttributes) {
         try {
-            Optional<Livestock> beforeOpt = livestockService.getByIdIncludingDeleted(id);
+            Optional<Livestock> beforeOpt = livestockService.getById(id);
             if (locationId != null && !locationId.isBlank()) {
                 try {
                     locationRepository.findById(UUID.fromString(locationId)).ifPresent(livestock::setLocation);
@@ -658,7 +697,7 @@ public class LivestockController {
             }
             livestockService.update(id, livestock);
             beforeOpt.ifPresent(before -> auditLogService.log(
-                    "livestock", id, "UPDATE", "system",
+                    "livestock", id, "UPDATE", getCurrentUsername(),
                     before, livestock, "Animal " + before.getTagNumber() + " updated"));
             redirectAttributes.addFlashAttribute("success", "Animal updated successfully");
         } catch (Exception e) {
@@ -716,10 +755,6 @@ public class LivestockController {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // SUGGEST TAG — now delegates to TagAllocationService so the
-    // numbering is guaranteed to be identical to what bulk import uses.
-    // ══════════════════════════════════════════════════════════════════
     @GetMapping("/api/suggest-tag")
     @ResponseBody
     public Map<String, String> suggestTag(@RequestParam UUID categoryId) {
@@ -747,9 +782,6 @@ public class LivestockController {
         return chain;
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // Nested helper: location hierarchy resolved from a leaf Location
-    // ══════════════════════════════════════════════════════════════════
     public record LocationHierarchy(
             String province, String district, String sector,
             String cell, String village) {
@@ -780,6 +812,30 @@ public class LivestockController {
             if (province != null) sb.append(province);
             String out = sb.toString();
             return out.endsWith(", ") ? out.substring(0, out.length() - 2) : out;
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // TEMPORARY TEST ENDPOINT FOR SMTP
+    // ══════════════════════════════════════════════════════════════════
+    @GetMapping("/test-smtp-direct")
+    @ResponseBody
+    public String testSmtpDirect() {
+        try {
+            org.springframework.mail.javamail.MimeMessageHelper helper =
+                    new org.springframework.mail.javamail.MimeMessageHelper(
+                            javaMailSender.createMimeMessage(), true, "UTF-8");
+
+            helper.setFrom("samuelhabanabakize55@gmail.com");
+            helper.setTo("samuelhabanabakize55@gmail.com");
+            helper.setSubject("TEST EMAIL FROM ANIMAL PRODUCTION");
+            helper.setText("<h1>It works!</h1><p>Your SMTP settings are correct.</p>", true);
+
+            javaMailSender.send(helper.getMimeMessage());
+            return "✅ SUCCESS! Email sent. Check your inbox.";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "❌ FAILED! Error: " + e.getMessage();
         }
     }
 }

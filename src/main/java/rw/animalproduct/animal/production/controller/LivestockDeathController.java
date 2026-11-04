@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import rw.animalproduct.animal.production.dto.LivestockDeathView;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockDeath;
 import rw.animalproduct.animal.production.repository.LivestockDeathRepository;
@@ -30,8 +31,8 @@ import java.util.stream.IntStream;
 @RequestMapping("/livestock")
 public class LivestockDeathController {
 
-    private final LivestockDeathService deathService;
-    private final LivestockRepository livestockRepository;
+    private final LivestockDeathService    deathService;
+    private final LivestockRepository      livestockRepository;
     private final LivestockDeathRepository deathRepository;
 
     private static final int DEFAULT_PAGE_SIZE = 10;
@@ -40,14 +41,12 @@ public class LivestockDeathController {
     public LivestockDeathController(LivestockDeathService deathService,
                                     LivestockRepository livestockRepository,
                                     LivestockDeathRepository deathRepository) {
-        this.deathService = deathService;
+        this.deathService        = deathService;
         this.livestockRepository = livestockRepository;
-        this.deathRepository = deathRepository;
+        this.deathRepository     = deathRepository;
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // LIST
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ LIST ═════════════
     @GetMapping("/deaths")
     public String listDeaths(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -63,15 +62,13 @@ public class LivestockDeathController {
         Sort.Direction dir = direction.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(dir, sort));
 
-        Page<LivestockDeath> deathPage;
-        if (search != null && !search.trim().isEmpty()) {
-            deathPage = deathRepository.searchDeaths(search.trim(), pageable);
-        } else {
-            deathPage = deathRepository.findAllActive(pageable);
-        }
+        Page<LivestockDeath> deathPage = (search != null && !search.trim().isEmpty())
+                ? deathRepository.searchDeaths(search.trim(), pageable)
+                : deathRepository.findAllWithOwner(pageable);
 
-        List<String> excludedStatuses = Arrays.asList("DEAD", "SOLD");
-        List<Livestock> livestockList = livestockRepository.findByStatusNotIn(excludedStatuses);
+        List<LivestockDeathView> deathViews = deathPage.getContent().stream()
+                .map(LivestockDeathView::new)
+                .toList();
 
         LivestockDeath death = new LivestockDeath();
         death.setDeathDate(LocalDate.now());
@@ -79,24 +76,22 @@ public class LivestockDeathController {
         int totalPages = deathPage.getTotalPages();
         List<Integer> pageNumbers = IntStream.rangeClosed(1, totalPages).boxed().collect(Collectors.toList());
 
-        model.addAttribute("deaths", deathPage.getContent());
-        model.addAttribute("deathPage", deathPage);
+        model.addAttribute("deaths",      deathPage.getContent());
+        model.addAttribute("deathViews",  deathViews);
+        model.addAttribute("deathPage",   deathPage);
         model.addAttribute("currentPage", page);
-        model.addAttribute("totalPages", totalPages);
-        model.addAttribute("pageSize", size);
+        model.addAttribute("totalPages",  totalPages);
+        model.addAttribute("pageSize",    size);
         model.addAttribute("pageNumbers", pageNumbers);
-        model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
-        model.addAttribute("direction", direction);
-        model.addAttribute("livestockList", livestockList);
-        model.addAttribute("death", death);
+        model.addAttribute("search",      search);
+        model.addAttribute("sort",        sort);
+        model.addAttribute("direction",   direction);
+        model.addAttribute("death",       death);
 
         return "livestock-deaths-list";
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // API: LIVE SEARCH ANIMALS (for the death form)
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ LIVE SEARCH API ═════════════
     @GetMapping("/deaths/api/search-animals")
     @ResponseBody
     public List<Map<String, Object>> searchAnimalsForDeath(
@@ -133,9 +128,7 @@ public class LivestockDeathController {
         }).collect(Collectors.toList());
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // CREATE
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ CREATE ═════════════
     @PostMapping("/deaths/new")
     public String createDeath(
             @RequestParam("livestockIdValue") String livestockIdStr,
@@ -151,7 +144,6 @@ public class LivestockDeathController {
             death.setLivestockIdValue(livestockIdStr);
             death.setDeathDate(deathDate);
             death.setCauseOfDeath(resolvedCause);
-            death.setIsDeleted(false);
 
             LivestockDeath saved = deathService.addNew(death);
 
@@ -159,34 +151,34 @@ public class LivestockDeathController {
             redirectAttributes.addFlashAttribute("success",
                     "Death recorded successfully for animal: " + animalTag +
                             (resolvedCause != null && !resolvedCause.isEmpty() ? " | Cause: " + resolvedCause : ""));
-
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
                     "Failed to record death: " + e.getMessage());
         }
-
         return "redirect:/livestock/deaths";
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // EDIT FORM
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ EDIT FORM ═════════════
     @GetMapping("/deaths/edit/{id}")
     public String editDeathForm(@PathVariable UUID id, Model model) {
         LivestockDeath death = deathService.getById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid death ID: " + id));
 
         List<Livestock> livestockList = livestockRepository.findAll();
+        if (death.getLivestock() != null
+                && livestockList.stream().noneMatch(ls -> ls.getId().equals(death.getLivestock().getId()))) {
+            livestockList.add(0, death.getLivestock());
+        }
+        if (death.getLivestock() != null) {
+            death.setLivestockIdValue(death.getLivestock().getId().toString());
+        }
 
         model.addAttribute("death", death);
         model.addAttribute("livestockList", livestockList);
-
         return "livestock-death-edit";
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // UPDATE
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ UPDATE ═════════════
     @PostMapping("/deaths/update/{id}")
     public String updateDeath(
             @PathVariable UUID id,
@@ -207,20 +199,15 @@ public class LivestockDeathController {
             existing.setCauseOfDeath(resolvedCause);
 
             deathService.update(id, existing);
-            redirectAttributes.addFlashAttribute("success",
-                    "Death record updated successfully");
-
+            redirectAttributes.addFlashAttribute("success", "Death record updated successfully");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error",
                     "Failed to update death: " + e.getMessage());
         }
-
         return "redirect:/livestock/deaths";
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // DELETE
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ DELETE ═════════════
     @PostMapping("/deaths/delete/{id}")
     public String deleteDeath(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
         try {
@@ -234,9 +221,7 @@ public class LivestockDeathController {
         return "redirect:/livestock/deaths";
     }
 
-    // ═════════════════════════════════════════════════════════════════
-    // REPORT — fixes the 404 on /livestock/deaths-report
-    // ═════════════════════════════════════════════════════════════════
+    // ═════════════ REPORT ═════════════
     @GetMapping("/deaths-report")
     public String deathsReport(
             @RequestParam(required = false)
@@ -250,20 +235,17 @@ public class LivestockDeathController {
 
         List<LivestockDeath> allDeaths = deathRepository.findByDeathDateBetween(fromDate, toDate);
 
-        long totalDeaths = allDeaths.size();
-
+        long totalDeaths    = allDeaths.size();
         long thisMonthCount = allDeaths.stream()
                 .filter(d -> d.getDeathDate() != null
                         && d.getDeathDate().getMonthValue() == LocalDate.now().getMonthValue()
                         && d.getDeathDate().getYear() == LocalDate.now().getYear())
                 .count();
-
         long distinctAnimals = allDeaths.stream()
                 .filter(d -> d.getLivestock() != null)
                 .map(d -> d.getLivestock().getId())
                 .distinct()
                 .count();
-
         long withCauseCount = allDeaths.stream()
                 .filter(d -> d.getCauseOfDeath() != null && !d.getCauseOfDeath().isBlank())
                 .count();
@@ -271,15 +253,12 @@ public class LivestockDeathController {
         Map<String, Long> causeBreakdown = allDeaths.stream()
                 .filter(d -> d.getCauseOfDeath() != null && !d.getCauseOfDeath().isBlank())
                 .collect(Collectors.groupingBy(
-                        d -> normaliseCause(d.getCauseOfDeath()),
-                        Collectors.counting()));
+                        d -> normaliseCause(d.getCauseOfDeath()), Collectors.counting()));
 
         Map<String, Long> categoryBreakdown = allDeaths.stream()
-                .filter(d -> d.getLivestock() != null
-                        && d.getLivestock().getLivestockCategory() != null)
+                .filter(d -> d.getLivestock() != null && d.getLivestock().getLivestockCategory() != null)
                 .collect(Collectors.groupingBy(
-                        d -> d.getLivestock().getLivestockCategory().getName(),
-                        Collectors.counting()));
+                        d -> d.getLivestock().getLivestockCategory().getName(), Collectors.counting()));
 
         Map<String, Long> monthlyTrend = new LinkedHashMap<>();
         for (int i = 11; i >= 0; i--) {
@@ -293,21 +272,19 @@ public class LivestockDeathController {
             monthlyTrend.put(key, count);
         }
 
-        model.addAttribute("fromDate", fromDate);
-        model.addAttribute("toDate", toDate);
-        model.addAttribute("deaths", allDeaths);
-        model.addAttribute("totalDeaths", totalDeaths);
-        model.addAttribute("thisMonthCount", thisMonthCount);
-        model.addAttribute("distinctAnimals", distinctAnimals);
-        model.addAttribute("withCauseCount", withCauseCount);
-        model.addAttribute("causeBreakdown", causeBreakdown);
+        model.addAttribute("fromDate",          fromDate);
+        model.addAttribute("toDate",            toDate);
+        model.addAttribute("deaths",            allDeaths);
+        model.addAttribute("totalDeaths",       totalDeaths);
+        model.addAttribute("thisMonthCount",    thisMonthCount);
+        model.addAttribute("distinctAnimals",   distinctAnimals);
+        model.addAttribute("withCauseCount",    withCauseCount);
+        model.addAttribute("causeBreakdown",    causeBreakdown);
         model.addAttribute("categoryBreakdown", categoryBreakdown);
-        model.addAttribute("monthlyTrend", monthlyTrend);
+        model.addAttribute("monthlyTrend",      monthlyTrend);
 
         return "livestock-deaths-report";
     }
-
-    // ── helper ───────────────────────────────────────────────────────
 
     private String resolveCause(String causeOfDeath, String otherCauseDetail) {
         if ("Other".equals(causeOfDeath) && otherCauseDetail != null && !otherCauseDetail.trim().isEmpty()) {

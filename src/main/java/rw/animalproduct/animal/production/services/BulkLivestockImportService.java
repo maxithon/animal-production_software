@@ -47,7 +47,7 @@ public class BulkLivestockImportService {
     private final BeneficiaryRepository            beneficiaryRepository;
     private final LivestockImportBatchRepository   importBatchRepository;
     private final TagAllocationService             tagAllocationService;
-    private final LifecycleEmailService            emailService;   // ✅ NEW
+    private final LifecycleEmailService            emailService;
 
     public BulkLivestockImportService(LivestockRepository livestockRepository,
                                       LivestockCategoryRepository categoryRepository,
@@ -55,14 +55,14 @@ public class BulkLivestockImportService {
                                       BeneficiaryRepository beneficiaryRepository,
                                       LivestockImportBatchRepository importBatchRepository,
                                       TagAllocationService tagAllocationService,
-                                      LifecycleEmailService emailService) {   // ✅ NEW
+                                      LifecycleEmailService emailService) {
         this.livestockRepository   = livestockRepository;
         this.categoryRepository    = categoryRepository;
         this.locationRepository    = locationRepository;
         this.beneficiaryRepository = beneficiaryRepository;
         this.importBatchRepository = importBatchRepository;
         this.tagAllocationService  = tagAllocationService;
-        this.emailService          = emailService;   // ✅ NEW
+        this.emailService          = emailService;
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -137,8 +137,8 @@ public class BulkLivestockImportService {
             }
 
             Set<String> existingTags = new HashSet<>();
+            // ✅ FIXED: removed the getIsDeleted() check
             for (Livestock a : livestockRepository.findAll()) {
-                if (Boolean.TRUE.equals(a.getIsDeleted())) continue;
                 String t = a.getTagNumber();
                 if (t != null) existingTags.add(t.trim());
             }
@@ -147,7 +147,6 @@ public class BulkLivestockImportService {
             Map<String, LivestockCategory> byCode = new HashMap<>();
             Map<String, LivestockCategory> byName = new HashMap<>();
             for (LivestockCategory c : allCategories) {
-                if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
                 if (c.getCode() != null) byCode.putIfAbsent(c.getCode().toUpperCase(Locale.ROOT), c);
                 if (c.getName() != null) byName.putIfAbsent(c.getName().toUpperCase(Locale.ROOT), c);
             }
@@ -456,7 +455,7 @@ public class BulkLivestockImportService {
     }
 
     // ════════════════════════════════════════════════════════════════════════
-    // CONFIRM IMPORT — now sends the summary email
+    // CONFIRM IMPORT — sends summary email
     // ════════════════════════════════════════════════════════════════════════
 
     @Transactional
@@ -480,7 +479,6 @@ public class BulkLivestockImportService {
         Map<String, LivestockCategory> byCode = new HashMap<>();
         Map<String, LivestockCategory> byName = new HashMap<>();
         for (LivestockCategory c : allCategories) {
-            if (Boolean.TRUE.equals(c.getIsDeleted())) continue;
             if (c.getCode() != null) byCode.putIfAbsent(c.getCode().toUpperCase(Locale.ROOT), c);
             if (c.getName() != null) byName.putIfAbsent(c.getName().toUpperCase(Locale.ROOT), c);
         }
@@ -521,8 +519,8 @@ public class BulkLivestockImportService {
 
             boolean tagTaken = false;
             if (tag != null) {
+                // ✅ FIXED: removed the getIsDeleted() check
                 for (Livestock other : livestockRepository.findAll()) {
-                    if (Boolean.TRUE.equals(other.getIsDeleted())) continue;
                     String ot = other.getTagNumber();
                     if (ot != null && tag.equalsIgnoreCase(ot.trim())) {
                         tagTaken = true;
@@ -550,7 +548,7 @@ public class BulkLivestockImportService {
             l.setReproductiveStatus(normalizeRepro(r.getReproductiveStatus()));
             l.setStatus(Livestock.STATUS_ACTIVE);
             l.setIsDraft(false);
-            l.setIsDeleted(false);
+            // ✅ FIXED: removed l.setIsDeleted(false);
             l.setCreatedBy(importedBy);
             l.setCreatedAt(LocalDateTime.now());
 
@@ -610,8 +608,6 @@ public class BulkLivestockImportService {
         log.info("[bulk-import] created {} livestock records (batch {})",
                 created, saved.getId());
 
-        // ✅ NEW: send the summary email. Wrapped in try/catch so a mail
-        // outage never rolls back a successful import.
         try {
             String uploadedBy = (importedBy != null) ? importedBy.toString() : "system";
             emailService.sendBulkImportCompletedNotification(

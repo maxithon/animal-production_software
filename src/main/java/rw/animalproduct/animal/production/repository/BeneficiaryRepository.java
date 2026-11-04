@@ -17,33 +17,26 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
 
     List<Beneficiary> findByRepresentativeId(UUID representativesAbororaId);
 
-    // NEW: paginated version to support the representative-filtered list view
     Page<Beneficiary> findByRepresentativeId(UUID representativesAbororaId, Pageable pageable);
 
     List<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName);
 
-    // Find all beneficiaries by location
     List<Beneficiary> findByLocationId(UUID locationId);
 
-    // Find beneficiaries by location with a custom query (alternative method)
     @Query("SELECT a FROM Beneficiary a WHERE a.location.id = :locationId")
     List<Beneficiary> findBeneficiariesByLocation(@Param("locationId") UUID locationId);
 
-    // Find beneficiaries by representative and location
     @Query("SELECT a FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.location.id = :locationId")
     List<Beneficiary> findByUhagarariyeAndLocation(@Param("representativesId") UUID representativesId,
                                                    @Param("locationId") UUID locationId);
 
-    // Count beneficiaries by location
     @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.location.id = :locationId")
     long countByLocation(@Param("locationId") UUID locationId);
 
-    // Count beneficiaries by representative and location
     @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.location.id = :locationId")
     long countByUhagarariyeAndLocation(@Param("representativesId") UUID representativesId,
                                        @Param("locationId") UUID locationId);
 
-    // Pagination support
     Page<Beneficiary> findAll(Pageable pageable);
 
     Page<Beneficiary> findByLocationId(UUID locationId, Pageable pageable);
@@ -56,14 +49,12 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
     Page<Beneficiary> findByFirstNameContainingOrLastNameContaining(String firstName, String lastName, Pageable pageable);
 
     @Query("""
-    SELECT a.representative.id, COUNT(a)
-    FROM Beneficiary a
-    WHERE a.representative IS NOT NULL
-    GROUP BY a.representative.id
-""")
+        SELECT a.representative.id, COUNT(a)
+        FROM Beneficiary a
+        WHERE a.representative IS NOT NULL
+        GROUP BY a.representative.id
+    """)
     List<Object[]> countByEachSupervisor();
-
-    // ---- Added to support /livestock/beneficiary-impact-report ----
 
     @Query("SELECT a.gender, COUNT(a) FROM Beneficiary a GROUP BY a.gender")
     List<Object[]> countByGenderGrouped();
@@ -74,14 +65,10 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
     @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.contractAgreement IS NOT NULL AND a.contractAgreement <> ''")
     long countWithContractAgreement();
 
-    // ---- Added to support /livestock/location-distribution-report ----
-
     @Query("SELECT a FROM Beneficiary a " +
             "WHERE a.location.id IN :locationIds " +
             "AND (a.isDeleted = false OR a.isDeleted IS NULL)")
     List<Beneficiary> findByLocationIdInAndIsDeletedFalse(@Param("locationIds") List<UUID> locationIds);
-
-    // ---- NEW: active/inactive status support ----
 
     Page<Beneficiary> findByStatus(String status, Pageable pageable);
 
@@ -92,4 +79,22 @@ public interface BeneficiaryRepository extends JpaRepository<Beneficiary, UUID> 
     @Query("SELECT COUNT(a) FROM Beneficiary a WHERE a.representative.id = :representativesId AND a.status = :status")
     long countByUhagarariyeAndStatus(@Param("representativesId") UUID representativesId,
                                      @Param("status") String status);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  ★ Dependency counts — used by RepresentativeService.delete()/toggleStatus()
+    // ═══════════════════════════════════════════════════════════════════════
+
+    long countByRepresentativeId(UUID representativeId);
+
+    long countByRepresentativeIdAndStatus(UUID representativeId, String status);
+
+    @Query("""
+        SELECT b.representative.id, COUNT(b)
+        FROM Beneficiary b
+        WHERE b.representative IS NOT NULL
+          AND b.status = 'ACTIVE'
+          AND (b.isDeleted = false OR b.isDeleted IS NULL)
+        GROUP BY b.representative.id
+    """)
+    List<Object[]> countActiveByEachRepresentative();
 }

@@ -17,26 +17,16 @@ import java.util.stream.Collectors;
 
 /**
  * Service for managing livestock lifecycle stages and notifications.
- *
- * This service handles:
- * - Determining the lifecycle stage of an animal based on age and category
- * - Sending notifications when animals transition between stages
- * - Tracking pregnancy timelines and due dates
- *
- * @author HABANABAKIZE & NDAYIZEYE
- * @version 1.0.0
  */
 @Service
 public class LivestockLifecycleService {
 
     private static final Logger logger = LoggerFactory.getLogger(LivestockLifecycleService.class);
 
-    // Stage transition thresholds (in months)
     public static final int NEWBORN_THRESHOLD_DAYS = 30;
     public static final int YOUNG_THRESHOLD_MONTHS = 6;
     public static final int PRE_BREEDING_THRESHOLD_MONTHS = 12;
 
-    // Pregnancy timeline constants
     public static final int UPCOMING_BIRTH_LEAD_DAYS = 30;
     public static final int BIRTH_PREPARATION_LEAD_DAYS = 14;
     public static final int BIRTH_DUE_SOON_LEAD_DAYS = 7;
@@ -57,25 +47,17 @@ public class LivestockLifecycleService {
     // STAGE DETERMINATION
     // =====================================================================
 
-    /**
-     * Determine the current lifecycle stage of an animal.
-     */
     public String getCurrentStage(Livestock animal) {
         if (animal == null) {
             return "UNKNOWN";
         }
 
-        // Check pregnancy first
         if (Livestock.REPRO_PREGNANT.equals(animal.getReproductiveStatus())) {
             return "PREGNANT";
         }
-
-        // Check if animal is nursing
         if (Livestock.REPRO_NURSING.equals(animal.getReproductiveStatus())) {
             return "NURSING";
         }
-
-        // Check if animal is in breeding
         if (Livestock.REPRO_BRED.equals(animal.getReproductiveStatus())) {
             return "IN_BREEDING";
         }
@@ -88,7 +70,6 @@ public class LivestockLifecycleService {
         long ageDays = getAgeInDays(animal);
         long ageMonths = getAgeInMonths(animal);
 
-        // Determine stage based on age
         if (ageDays <= NEWBORN_THRESHOLD_DAYS) {
             return "NEWBORN";
         }
@@ -97,7 +78,6 @@ public class LivestockLifecycleService {
             return "YOUNG";
         }
 
-        // Check if animal is ready to breed or in pre-breeding
         Integer minBreedingAge = getMinBreedingAge(animal);
         Integer maxBreedingAge = getMaxBreedingAge(animal);
 
@@ -109,7 +89,6 @@ public class LivestockLifecycleService {
             if (maxBreedingAge != null && ageMonths > maxBreedingAge) {
                 return "RETIRED";
             }
-            // Only return READY_TO_BREED if not pregnant and not in breeding
             if (!Livestock.REPRO_PREGNANT.equals(animal.getReproductiveStatus())
                     && !Livestock.REPRO_BRED.equals(animal.getReproductiveStatus())) {
                 return "READY_TO_BREED";
@@ -120,9 +99,6 @@ public class LivestockLifecycleService {
         return "MATURE";
     }
 
-    /**
-     * Get the next milestone for an animal.
-     */
     public String getNextMilestone(Livestock animal) {
         if (animal == null || animal.getBirthDate() == null) {
             return null;
@@ -224,12 +200,10 @@ public class LivestockLifecycleService {
         String currentStage = getCurrentStage(animal);
         String previousStage = animal.getLastLifecycleStage();
 
-        // If stage has changed, send notification
         if (currentStage != null && !currentStage.equals(previousStage)) {
             animal.setLastLifecycleStage(currentStage);
             livestockRepository.save(animal);
 
-            // Send notification for stage change
             try {
                 sendStageNotification(currentStage, animal);
             } catch (Exception e) {
@@ -241,10 +215,6 @@ public class LivestockLifecycleService {
         }
     }
 
-    /**
-     * Send notification for a stage change.
-     * ✅ FIXED: Using the correct method names from LifecycleEmailService
-     */
     private void sendStageNotification(String stage, Livestock animal) {
         switch (stage) {
             case "NEWBORN":
@@ -260,7 +230,6 @@ public class LivestockLifecycleService {
                 emailService.sendReadyToBreedNotification(animal);
                 break;
             case "PREGNANT":
-                // Find the breeding record and send pregnancy notification
                 breedingRepository.findByLivestockIdAndIsDeletedFalse(animal.getId())
                         .stream()
                         .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus()))
@@ -275,15 +244,12 @@ public class LivestockLifecycleService {
                         });
                 break;
             case "NURSING":
-                // Optional: send nursing notification
                 logger.debug("Animal {} entered nursing stage", animal.getTagNumber());
                 break;
             case "IN_BREEDING":
-                // Optional: send in-breeding notification
                 logger.debug("Animal {} entered in-breeding stage", animal.getTagNumber());
                 break;
             default:
-                // No specific notification for other stages
                 logger.debug("No specific notification for stage: {}", stage);
                 break;
         }
@@ -294,11 +260,13 @@ public class LivestockLifecycleService {
     // =====================================================================
 
     public Livestock getAnimalById(UUID id) {
-        return livestockRepository.findByIdAndIsDeletedFalse(id).orElse(null);
+        // ✅ FIXED: findByIdAndIsDeletedFalse(id) → findById(id)
+        return livestockRepository.findById(id).orElse(null);
     }
 
     public List<Livestock> getActiveAnimals() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE);
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE);
     }
 
     public List<Livestock> getActiveAnimalsByAgeRange(int minDays, int maxDays) {
@@ -306,7 +274,8 @@ public class LivestockLifecycleService {
         LocalDate minDate = today.minusDays(maxDays);
         LocalDate maxDate = today.minusDays(minDays);
 
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> !a.getBirthDate().isBefore(minDate))
@@ -315,7 +284,8 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getOffspring(UUID motherId) {
-        return livestockRepository.findByMotherIdAndIsDeletedFalse(motherId);
+        // ✅ FIXED
+        return livestockRepository.findByMotherId(motherId);
     }
 
     // ─── COUNTS ────────────────────────────────────────────────────────────────
@@ -326,7 +296,8 @@ public class LivestockLifecycleService {
 
     public long countNewborns() {
         LocalDate threshold = LocalDate.now().minusDays(NEWBORN_THRESHOLD_DAYS);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> !a.getBirthDate().isBefore(threshold))
@@ -336,7 +307,8 @@ public class LivestockLifecycleService {
     public long countYoung() {
         LocalDate threshold = LocalDate.now().minusMonths(YOUNG_THRESHOLD_MONTHS);
         LocalDate newbornThreshold = LocalDate.now().minusDays(NEWBORN_THRESHOLD_DAYS);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> !a.getBirthDate().isAfter(threshold))
@@ -347,7 +319,8 @@ public class LivestockLifecycleService {
     }
 
     public long countPreBreeding() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> {
@@ -359,7 +332,8 @@ public class LivestockLifecycleService {
     }
 
     public long countReadyToBreed() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> {
@@ -376,7 +350,8 @@ public class LivestockLifecycleService {
     }
 
     public long countInBreeding() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> Livestock.REPRO_BRED.equals(a.getReproductiveStatus()))
                 .count();
@@ -390,7 +365,8 @@ public class LivestockLifecycleService {
     public long countDueSoon(int days) {
         LocalDate today = LocalDate.now();
         LocalDate threshold = today.plusDays(days);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getExpectedDueDate() != null)
                 .filter(a -> !a.getExpectedDueDate().isBefore(today))
@@ -407,7 +383,8 @@ public class LivestockLifecycleService {
 
     public List<Livestock> getRecentlyBorn(int days) {
         LocalDate threshold = LocalDate.now().minusDays(days);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> !a.getBirthDate().isBefore(threshold))
@@ -417,7 +394,8 @@ public class LivestockLifecycleService {
 
     public List<Livestock> getYoungFemales() {
         LocalDate threshold = LocalDate.now().minusMonths(YOUNG_THRESHOLD_MONTHS);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> "FEMALE".equalsIgnoreCase(a.getGender()))
                 .filter(a -> a.getBirthDate() != null)
@@ -428,7 +406,8 @@ public class LivestockLifecycleService {
 
     public List<Livestock> getYoungMales() {
         LocalDate threshold = LocalDate.now().minusMonths(YOUNG_THRESHOLD_MONTHS);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> "MALE".equalsIgnoreCase(a.getGender()))
                 .filter(a -> a.getBirthDate() != null)
@@ -438,7 +417,8 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getApproachingBreedingAge() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> {
@@ -453,7 +433,8 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getReadyToBreed() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getBirthDate() != null)
                 .filter(a -> {
@@ -471,21 +452,24 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getAllMales() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> "MALE".equalsIgnoreCase(a.getGender()))
                 .collect(Collectors.toList());
     }
 
     public List<Livestock> getAllFemales() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> "FEMALE".equalsIgnoreCase(a.getGender()))
                 .collect(Collectors.toList());
     }
 
     public List<Livestock> getMalesReadyToBreed() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> "MALE".equalsIgnoreCase(a.getGender()))
                 .filter(a -> a.getBirthDate() != null)
@@ -498,7 +482,8 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getPregnantAnimals() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> Livestock.REPRO_PREGNANT.equals(a.getReproductiveStatus()))
                 .sorted(Comparator.comparing(Livestock::getExpectedDueDate, Comparator.nullsLast(Comparator.naturalOrder())))
@@ -506,7 +491,8 @@ public class LivestockLifecycleService {
     }
 
     public List<Livestock> getNursingAnimals() {
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> Livestock.REPRO_NURSING.equals(a.getReproductiveStatus()))
                 .collect(Collectors.toList());
@@ -515,7 +501,8 @@ public class LivestockLifecycleService {
     public List<Livestock> getDueSoon(int days) {
         LocalDate today = LocalDate.now();
         LocalDate threshold = today.plusDays(days);
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getExpectedDueDate() != null)
                 .filter(a -> !a.getExpectedDueDate().isBefore(today))
@@ -526,7 +513,8 @@ public class LivestockLifecycleService {
 
     public List<Livestock> getOverdue() {
         LocalDate today = LocalDate.now();
-        return livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE)
+        // ✅ FIXED
+        return livestockRepository.findByStatus(Livestock.STATUS_ACTIVE)
                 .stream()
                 .filter(a -> a.getExpectedDueDate() != null)
                 .filter(a -> a.getExpectedDueDate().isBefore(today))
@@ -555,7 +543,8 @@ public class LivestockLifecycleService {
         Map<String, Long> bands = new LinkedHashMap<>();
         LocalDate today = LocalDate.now();
 
-        List<Livestock> allActive = livestockRepository.findByStatusAndIsDeletedFalse(Livestock.STATUS_ACTIVE);
+        // ✅ FIXED
+        List<Livestock> allActive = livestockRepository.findByStatus(Livestock.STATUS_ACTIVE);
 
         bands.put("0-3 months", allActive.stream()
                 .filter(a -> a.getBirthDate() != null)
@@ -611,7 +600,6 @@ public class LivestockLifecycleService {
         List<Livestock> males = getMalesReadyToBreed();
         stats.put("totalMales", males.size());
 
-        // Get breeding success rate for each male
         Map<String, Object> maleDetails = new LinkedHashMap<>();
         for (Livestock male : males) {
             Map<String, Object> detail = new LinkedHashMap<>();
@@ -620,7 +608,6 @@ public class LivestockLifecycleService {
             detail.put("category", male.getLivestockCategory() != null
                     ? male.getLivestockCategory().getName() : "Unknown");
 
-            // Count successful breedings for this male
             long successful = breedingRepository.findByIsDeletedFalse()
                     .stream()
                     .filter(b -> b.getMale() != null && b.getMale().getId().equals(male.getId()))
@@ -657,6 +644,4 @@ public class LivestockLifecycleService {
 
         return (double) successful / allBreedings.size() * 100;
     }
-
-    // ─── END OF CLASS ──────────────────────────────────────────────────────────
 }

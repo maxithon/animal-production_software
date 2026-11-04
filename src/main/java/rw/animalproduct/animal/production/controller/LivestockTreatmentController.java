@@ -11,10 +11,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Livestock;
+import rw.animalproduct.animal.production.entity.LivestockSick;
 import rw.animalproduct.animal.production.entity.LivestockTreatment;
 import rw.animalproduct.animal.production.entity.LivestockTreatmentPayment;
 import rw.animalproduct.animal.production.entity.Veterinarian;
 import rw.animalproduct.animal.production.repository.LivestockRepository;
+import rw.animalproduct.animal.production.repository.LivestockSickRepository;
 import rw.animalproduct.animal.production.repository.MedicationRepository;
 import rw.animalproduct.animal.production.repository.VeterinarianRepository;
 import rw.animalproduct.animal.production.services.LivestockTreatmentService;
@@ -34,6 +36,7 @@ public class LivestockTreatmentController {
 
     private final LivestockTreatmentService treatmentService;
     private final LivestockRepository livestockRepository;
+    private final LivestockSickRepository livestockSickRepository;
     private final MedicationRepository medicationRepository;
     private final VeterinarianRepository veterinarianRepository;
     private final TreatmentEmailService emailService;
@@ -41,80 +44,70 @@ public class LivestockTreatmentController {
     public LivestockTreatmentController(
             LivestockTreatmentService treatmentService,
             LivestockRepository livestockRepository,
+            LivestockSickRepository livestockSickRepository,
             MedicationRepository medicationRepository,
             VeterinarianRepository veterinarianRepository,
             TreatmentEmailService emailService) {
         this.treatmentService = treatmentService;
         this.livestockRepository = livestockRepository;
+        this.livestockSickRepository = livestockSickRepository;
         this.medicationRepository = medicationRepository;
         this.veterinarianRepository = veterinarianRepository;
         this.emailService = emailService;
-
-        System.out.println("✅ LivestockTreatmentController initialized");
     }
 
-    // ─── API: Live Search Animals ──────────────────────────────
-
+    // ─── API: Live Search Animals ──────────────────────────────────────
     @GetMapping("/api/animals/search")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> searchAnimals(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "10") int limit) {
-
         List<Livestock> animals;
         if (q != null && !q.trim().isEmpty()) {
             animals = livestockRepository.searchByTagNumber(q.trim(), PageRequest.of(0, limit));
         } else {
-            animals = livestockRepository.findByIsDeletedFalse().stream().limit(limit).collect(Collectors.toList());
+            animals = livestockRepository.findAll().stream().limit(limit).collect(Collectors.toList());
         }
-
-        return ResponseEntity.ok(animals.stream().map(animal -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", animal.getId().toString());
-            map.put("tagNumber", animal.getTagNumber());
-            map.put("category", animal.getLivestockCategory() != null ?
-                    animal.getLivestockCategory().getName() : "Uncategorized");
-            map.put("gender", animal.getGender());
-            map.put("healthStatus", animal.getHealthStatus());
-            map.put("status", animal.getStatus());
-            map.put("location", animal.getLocation() != null ?
-                    animal.getLocation().getName() : "Unknown");
-            return map;
+        return ResponseEntity.ok(animals.stream().map(a -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", a.getId().toString());
+            m.put("tagNumber", a.getTagNumber());
+            m.put("category", a.getLivestockCategory() != null ? a.getLivestockCategory().getName() : "Uncategorized");
+            m.put("gender", a.getGender());
+            m.put("healthStatus", a.getHealthStatus());
+            m.put("status", a.getStatus());
+            m.put("location", a.getLocation() != null ? a.getLocation().getName() : "Unknown");
+            return m;
         }).collect(Collectors.toList()));
     }
 
-    // ─── API: Live Search Veterinarians ─────────────────────────
-
+    // ─── API: Live Search Vets ─────────────────────────────────────────
     @GetMapping("/api/veterinarians/search")
     @ResponseBody
     public ResponseEntity<List<Map<String, Object>>> searchVeterinarians(
             @RequestParam(required = false) String q,
             @RequestParam(defaultValue = "10") int limit) {
-
         List<Veterinarian> vets;
         if (q != null && !q.trim().isEmpty()) {
             vets = veterinarianRepository.findAll().stream()
-                    .filter(v -> v.getFullName().toLowerCase().contains(q.toLowerCase()) ||
-                            (v.getLicenseNumber() != null && v.getLicenseNumber().toLowerCase().contains(q.toLowerCase())))
-                    .limit(limit)
-                    .collect(Collectors.toList());
+                    .filter(v -> v.getFullName().toLowerCase().contains(q.toLowerCase())
+                            || (v.getLicenseNumber() != null && v.getLicenseNumber().toLowerCase().contains(q.toLowerCase())))
+                    .limit(limit).collect(Collectors.toList());
         } else {
             vets = veterinarianRepository.findAll().stream().limit(limit).collect(Collectors.toList());
         }
-
-        return ResponseEntity.ok(vets.stream().map(vet -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("id", vet.getId().toString());
-            map.put("fullName", vet.getFullName());
-            map.put("licenseNumber", vet.getLicenseNumber());
-            map.put("clinicName", vet.getClinicName());
-            map.put("phone", vet.getPhone());
-            return map;
+        return ResponseEntity.ok(vets.stream().map(v -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", v.getId().toString());
+            m.put("fullName", v.getFullName());
+            m.put("licenseNumber", v.getLicenseNumber());
+            m.put("clinicName", v.getClinicName());
+            m.put("phone", v.getPhone());
+            return m;
         }).collect(Collectors.toList()));
     }
 
-    // ─── LIST ──────────────────────────────────────────────────
-
+    // ─── LIST (with last-recorded-first sorting) ──────────────────────
     @GetMapping
     public String list(
             @RequestParam(defaultValue = "0") int page,
@@ -128,18 +121,18 @@ public class LivestockTreatmentController {
             @RequestParam(required = false) String search,
             Model model) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "treatmentDate"));
-        Page<LivestockTreatment> treatmentPage;
+        // 🔥 NEW SORT: latest treatment date first, then latest created record first
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(Sort.Direction.DESC, "treatmentDate")
+                        .and(Sort.by(Sort.Direction.DESC, "createdAt")));
 
-        if (search != null && !search.isEmpty()) {
-            treatmentPage = treatmentService.search(search, pageable);
-        } else {
-            treatmentPage = treatmentService.getFiltered(status, type, livestockId, fromDate, toDate, isPaid, search, pageable);
-        }
+        Page<LivestockTreatment> treatmentPage = treatmentService.getFiltered(
+                status, type, livestockId, fromDate, toDate, isPaid, search, pageable);
 
         model.addAttribute("treatments", treatmentPage.getContent());
         model.addAttribute("treatmentPage", treatmentPage);
         model.addAttribute("currentPage", page);
+        model.addAttribute("pageSize", size);
         model.addAttribute("totalPages", treatmentPage.getTotalPages());
         model.addAttribute("totalElements", treatmentPage.getTotalElements());
 
@@ -151,9 +144,14 @@ public class LivestockTreatmentController {
         model.addAttribute("filterIsPaid", isPaid);
         model.addAttribute("filterSearch", search);
 
-        model.addAttribute("livestockList", livestockRepository.findByIsDeletedFalse());
         model.addAttribute("medicationList", medicationRepository.findAll());
         model.addAttribute("veterinarianList", veterinarianRepository.findAll());
+
+        boolean hasAnimals = livestockRepository.count() > 0;
+        model.addAttribute("hasAnimals", hasAnimals);
+        model.addAttribute("livestockList", hasAnimals
+                ? livestockRepository.findAll()
+                : java.util.Collections.emptyList());
 
         model.addAttribute("totalTreatments", treatmentService.countTotal());
         model.addAttribute("ongoingCount", treatmentService.countByStatus(LivestockTreatment.TreatmentStatus.ONGOING));
@@ -164,15 +162,16 @@ public class LivestockTreatmentController {
         model.addAttribute("statuses", LivestockTreatment.TreatmentStatus.values());
         model.addAttribute("types", LivestockTreatment.TreatmentCategory.values());
 
-        LivestockTreatment treatment = new LivestockTreatment();
-        treatment.setTreatmentDate(LocalDate.now());
-        model.addAttribute("treatment", treatment);
+        if (!model.containsAttribute("treatment")) {
+            LivestockTreatment treatment = new LivestockTreatment();
+            treatment.setTreatmentDate(LocalDate.now());
+            model.addAttribute("treatment", treatment);
+        }
 
         return "livestock-treatments-list";
     }
 
-    // ─── NEW FORM ──────────────────────────────────────────────
-
+    // ─── NEW FORM ──────────────────────────────────────────────────────
     @GetMapping("/new")
     public String newForm(Model model) {
         if (!model.containsAttribute("treatment")) {
@@ -180,143 +179,154 @@ public class LivestockTreatmentController {
             treatment.setTreatmentDate(LocalDate.now());
             model.addAttribute("treatment", treatment);
         }
-        model.addAttribute("medicationList", medicationRepository.findAll());
-        model.addAttribute("veterinarianList", veterinarianRepository.findAll());
+        prepareFormModel(model, null);
         return "livestock-treatments-form";
     }
 
-    // ─── CREATE ─────────────────────────────────────────────────
-
+    // ─── CREATE ────────────────────────────────────────────────────────
     @PostMapping("/new")
-    public String create(@ModelAttribute LivestockTreatment treatment, RedirectAttributes redirectAttributes) {
+    public String create(@ModelAttribute LivestockTreatment treatment, RedirectAttributes ra) {
         try {
-            System.out.println("📝 Creating treatment for animal: " + treatment.getLivestockIdValue());
-
             if (treatment.getTreatmentDate() != null && treatment.getTreatmentDate().isAfter(LocalDate.now())) {
-                redirectAttributes.addFlashAttribute("error", "Treatment date cannot be in the future.");
-                redirectAttributes.addFlashAttribute("treatment", treatment);
-                return "redirect:/livestock/treatments/new";
+                ra.addFlashAttribute("error", "Treatment date cannot be in the future.");
+                ra.addFlashAttribute("treatment", treatment);
+                return "redirect:/livestock/treatments";
             }
-
-            if (treatment.getTreatmentCost() != null && treatment.getAmountPaid() != null &&
-                    treatment.getAmountPaid().compareTo(treatment.getTreatmentCost()) > 0) {
-                redirectAttributes.addFlashAttribute("error", "Amount paid cannot exceed treatment cost.");
-                redirectAttributes.addFlashAttribute("treatment", treatment);
-                return "redirect:/livestock/treatments/new";
+            if (treatment.getTreatmentCost() != null && treatment.getAmountPaid() != null
+                    && treatment.getAmountPaid().compareTo(treatment.getTreatmentCost()) > 0) {
+                ra.addFlashAttribute("error", "Amount paid cannot exceed treatment cost.");
+                ra.addFlashAttribute("treatment", treatment);
+                return "redirect:/livestock/treatments";
             }
-
             LivestockTreatment saved = treatmentService.create(treatment);
-            System.out.println("✅ Treatment saved with ID: " + saved.getId());
-
-            redirectAttributes.addFlashAttribute("success", "Treatment created successfully! Email notification sent.");
+            ra.addFlashAttribute("success",
+                    "Treatment " + saved.getTreatmentReference() + " created. Email notification sent.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            ra.addFlashAttribute("treatment", treatment);
+            return "redirect:/livestock/treatments";
         } catch (Exception e) {
-            System.err.println("❌ Error creating treatment: " + e.getMessage());
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
-            redirectAttributes.addFlashAttribute("treatment", treatment);
-            return "redirect:/livestock/treatments/new";
+            ra.addFlashAttribute("error", "Could not save treatment: " + e.getMessage());
+            ra.addFlashAttribute("treatment", treatment);
+            return "redirect:/livestock/treatments";
         }
         return "redirect:/livestock/treatments";
     }
 
-    // ─── EDIT FORM ─────────────────────────────────────────────
-
+    // ─── EDIT FORM ─────────────────────────────────────────────────────
     @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable UUID id, Model model) {
-        LivestockTreatment treatment = treatmentService.getById(id)
-                .orElseThrow(() -> new RuntimeException("Treatment not found"));
-
-        if (treatment.getLivestock() != null) {
+    public String editForm(@PathVariable UUID id, Model model, RedirectAttributes ra) {
+        LivestockTreatment treatment = treatmentService.getById(id).orElse(null);
+        if (treatment == null) {
+            ra.addFlashAttribute("error", "Treatment not found.");
+            return "redirect:/livestock/treatments";
+        }
+        if (treatment.getLivestock() != null)
             treatment.setLivestockIdValue(treatment.getLivestock().getId().toString());
-        }
-        if (treatment.getMedication() != null) {
+        if (treatment.getMedication() != null)
             treatment.setMedicationIdValue(treatment.getMedication().getId().toString());
-        }
-        if (treatment.getVeterinarian() != null) {
+        if (treatment.getVeterinarian() != null)
             treatment.setVeterinarianIdValue(treatment.getVeterinarian().getId().toString());
-        }
 
         model.addAttribute("treatment", treatment);
-        model.addAttribute("medicationList", medicationRepository.findAll());
-        model.addAttribute("veterinarianList", veterinarianRepository.findAll());
+        prepareFormModel(model, id);
         return "livestock-treatments-form";
     }
 
-    // ─── UPDATE ─────────────────────────────────────────────────
-
+    // ─── UPDATE ────────────────────────────────────────────────────────
     @PostMapping("/update/{id}")
-    public String update(@PathVariable UUID id, @ModelAttribute LivestockTreatment treatment, RedirectAttributes redirectAttributes) {
+    public String update(@PathVariable UUID id, @ModelAttribute LivestockTreatment treatment, RedirectAttributes ra) {
         try {
             if (treatment.getTreatmentDate() != null && treatment.getTreatmentDate().isAfter(LocalDate.now())) {
-                redirectAttributes.addFlashAttribute("error", "Treatment date cannot be in the future.");
+                ra.addFlashAttribute("error", "Treatment date cannot be in the future.");
                 return "redirect:/livestock/treatments/edit/" + id;
             }
-
-            if (treatment.getTreatmentCost() != null && treatment.getAmountPaid() != null &&
-                    treatment.getAmountPaid().compareTo(treatment.getTreatmentCost()) > 0) {
-                redirectAttributes.addFlashAttribute("error", "Amount paid cannot exceed treatment cost.");
+            if (treatment.getTreatmentCost() != null && treatment.getAmountPaid() != null
+                    && treatment.getAmountPaid().compareTo(treatment.getTreatmentCost()) > 0) {
+                ra.addFlashAttribute("error", "Amount paid cannot exceed treatment cost.");
                 return "redirect:/livestock/treatments/edit/" + id;
             }
-
             treatmentService.update(id, treatment);
-            redirectAttributes.addFlashAttribute("success", "Treatment updated successfully!");
+            ra.addFlashAttribute("success", "Treatment updated. Email notification sent.");
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+            return "redirect:/livestock/treatments/edit/" + id;
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
+            return "redirect:/livestock/treatments/edit/" + id;
         }
         return "redirect:/livestock/treatments";
     }
 
-    // ─── VIEW DETAILS ──────────────────────────────────────────
-
+    // ─── DETAILS ──────────────────────────────────────────────────────
     @GetMapping("/details/{id}")
     public String details(@PathVariable UUID id, Model model) {
         LivestockTreatment treatment = treatmentService.getById(id)
                 .orElseThrow(() -> new RuntimeException("Treatment not found"));
-
         List<LivestockTreatmentPayment> payments = treatmentService.getPayments(id);
         BigDecimal totalPaid = treatmentService.getTotalPaid(id);
-
         model.addAttribute("treatment", treatment);
         model.addAttribute("payments", payments);
         model.addAttribute("totalPaid", totalPaid);
         model.addAttribute("remainingBalance", treatment.getRemainingBalance());
-
+        model.addAttribute("canPayRemaining",
+                treatment.getRemainingBalance() != null
+                        && treatment.getRemainingBalance().signum() > 0);
         return "livestock-treatments-details";
     }
 
-    // ─── RECORD PAYMENT ────────────────────────────────────────
-
+    // ─── PAYMENT ──────────────────────────────────────────────────────
     @PostMapping("/payment/{id}")
     public String recordPayment(@PathVariable UUID id,
                                 @RequestParam BigDecimal amount,
                                 @RequestParam(required = false) String paymentMethod,
                                 @RequestParam(required = false) String paymentReference,
                                 @RequestParam(required = false) String notes,
-                                RedirectAttributes redirectAttributes) {
+                                RedirectAttributes ra) {
         try {
-            treatmentService.recordPayment(id, amount, paymentMethod, paymentReference, notes);
-            redirectAttributes.addFlashAttribute("success", "Payment of " + amount + " recorded successfully!");
+            LivestockTreatmentPayment p = treatmentService.recordPayment(
+                    id, amount, paymentMethod, paymentReference, notes);
+            ra.addFlashAttribute("success",
+                    "Payment of " + amount + " RWF recorded. Ref: " + p.getPaymentReference());
+            LivestockTreatment t = treatmentService.getById(id).orElseThrow();
+            if (t.getRemainingBalance() != null && t.getRemainingBalance().signum() > 0
+                    && (notes == null || notes.isBlank())) {
+                ra.addFlashAttribute("askPartialReason", true);
+                ra.addFlashAttribute("lastPaymentId", p.getId());
+            }
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/livestock/treatments/details/" + id;
     }
 
-    // ─── DELETE ─────────────────────────────────────────────────
+    @PostMapping("/payment/note/{pid}")
+    public String updatePaymentNote(@PathVariable UUID pid,
+                                    @RequestParam String notes,
+                                    RedirectAttributes ra) {
+        try {
+            LivestockTreatmentPayment p = treatmentService.updatePaymentNotes(pid, notes);
+            ra.addFlashAttribute("success", "Payment note saved.");
+            return "redirect:/livestock/treatments/details/" + p.getTreatment().getId();
+        } catch (Exception e) {
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
+            return "redirect:/livestock/treatments";
+        }
+    }
 
+    // ─── DELETE ────────────────────────────────────────────────────────
     @PostMapping("/delete/{id}")
-    public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
+    public String delete(@PathVariable UUID id, RedirectAttributes ra) {
         try {
             treatmentService.delete(id);
-            redirectAttributes.addFlashAttribute("success", "Treatment deleted successfully!");
+            ra.addFlashAttribute("success", "Treatment deleted. Audit trail preserved. Email sent.");
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Error: " + e.getMessage());
+            ra.addFlashAttribute("error", "Error: " + e.getMessage());
         }
         return "redirect:/livestock/treatments";
     }
 
-    // ─── REPORT ─────────────────────────────────────────────────
-
+    // ─── REPORT ───────────────────────────────────────────────────────
     @GetMapping("/report")
     public String report(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -329,155 +339,96 @@ public class LivestockTreatmentController {
             @RequestParam(defaultValue = "20") int size,
             Model model) {
 
-        // Set default dates
-        if (fromDate == null) {
-            fromDate = LocalDate.now().minusMonths(3);
-        }
-        if (toDate == null) {
-            toDate = LocalDate.now();
-        }
+        if (fromDate == null) fromDate = LocalDate.now().minusMonths(3);
+        if (toDate == null) toDate = LocalDate.now();
 
-        // Get all treatments
-        List<LivestockTreatment> allTreatments = treatmentService.getAll();
+        List<LivestockTreatment> all = treatmentService.getAll();
 
-        // Apply status filter
-        if (status != null && !status.isEmpty()) {
-            List<LivestockTreatment> filtered = new java.util.ArrayList<>();
-            for (LivestockTreatment t : allTreatments) {
-                if (t.getTreatmentStatus() != null && t.getTreatmentStatus().name().equals(status)) {
-                    filtered.add(t);
-                }
-            }
-            allTreatments = filtered;
-        }
-
-        // Apply type filter
-        if (type != null && !type.isEmpty()) {
-            List<LivestockTreatment> filtered = new java.util.ArrayList<>();
-            for (LivestockTreatment t : allTreatments) {
-                if (t.getTreatmentType() != null && t.getTreatmentType().name().equals(type)) {
-                    filtered.add(t);
-                }
-            }
-            allTreatments = filtered;
-        }
-
-        // Apply payment status filter
-        if (paymentStatus != null && !paymentStatus.isEmpty()) {
-            List<LivestockTreatment> filtered = new java.util.ArrayList<>();
-            for (LivestockTreatment t : allTreatments) {
-                if (t.getPaymentStatus() != null && t.getPaymentStatus().name().equals(paymentStatus)) {
-                    filtered.add(t);
-                }
-            }
-            allTreatments = filtered;
-        }
-
-        // Apply search filter
+        if (status != null && !status.isEmpty())
+            all = all.stream().filter(t -> t.getTreatmentStatus() != null
+                    && t.getTreatmentStatus().name().equals(status)).collect(Collectors.toList());
+        if (type != null && !type.isEmpty())
+            all = all.stream().filter(t -> t.getTreatmentType() != null
+                    && t.getTreatmentType().name().equals(type)).collect(Collectors.toList());
+        if (paymentStatus != null && !paymentStatus.isEmpty())
+            all = all.stream().filter(t -> t.getPaymentStatus() != null
+                    && t.getPaymentStatus().name().equals(paymentStatus)).collect(Collectors.toList());
         if (search != null && !search.isEmpty()) {
-            String searchLower = search.toLowerCase();
-            List<LivestockTreatment> filtered = new java.util.ArrayList<>();
-            for (LivestockTreatment t : allTreatments) {
-                String tagNumber = t.getLivestock() != null && t.getLivestock().getTagNumber() != null
+            String s = search.toLowerCase();
+            all = all.stream().filter(t -> {
+                String tag = t.getLivestock() != null && t.getLivestock().getTagNumber() != null
                         ? t.getLivestock().getTagNumber().toLowerCase() : "";
-                String medicationName = t.getMedication() != null && t.getMedication().getName() != null
+                String med = t.getMedication() != null && t.getMedication().getName() != null
                         ? t.getMedication().getName().toLowerCase() : "";
-                String diagnosisName = t.getDiagnosisName() != null
-                        ? t.getDiagnosisName().toLowerCase() : "";
-                if (tagNumber.contains(searchLower) ||
-                        medicationName.contains(searchLower) ||
-                        diagnosisName.contains(searchLower)) {
-                    filtered.add(t);
-                }
-            }
-            allTreatments = filtered;
+                String dx = t.getDiagnosisName() != null ? t.getDiagnosisName().toLowerCase() : "";
+                return tag.contains(s) || med.contains(s) || dx.contains(s);
+            }).collect(Collectors.toList());
         }
 
-        // Filter by date range
-        List<LivestockTreatment> dateFiltered = new java.util.ArrayList<>();
-        for (LivestockTreatment t : allTreatments) {
-            if (t.getTreatmentDate() != null &&
-                    !t.getTreatmentDate().isBefore(fromDate) &&
-                    !t.getTreatmentDate().isAfter(toDate)) {
-                dateFiltered.add(t);
-            }
-        }
-        allTreatments = dateFiltered;
+        LocalDate fFrom = fromDate, fTo = toDate;
+        all = all.stream().filter(t -> t.getTreatmentDate() != null
+                && !t.getTreatmentDate().isBefore(fFrom)
+                && !t.getTreatmentDate().isAfter(fTo)).collect(Collectors.toList());
 
-        // Pagination
-        int total = allTreatments.size();
+        int total = all.size();
         int start = Math.min(page * size, total);
         int end = Math.min(start + size, total);
-        List<LivestockTreatment> pagedTreatments = allTreatments.subList(start, end);
+        List<LivestockTreatment> paged = all.subList(start, end);
 
-        // ─── Model Data ──────────────────────────────────────────────
-        model.addAttribute("treatments", pagedTreatments);
+        model.addAttribute("treatments", paged);
         model.addAttribute("totalTreatments", total);
         model.addAttribute("currentPage", page);
         model.addAttribute("pageSize", size);
         model.addAttribute("totalPages", (int) Math.ceil((double) total / size));
-
         model.addAttribute("fromDate", fromDate);
         model.addAttribute("toDate", toDate);
         model.addAttribute("filterStatus", status);
         model.addAttribute("filterType", type);
         model.addAttribute("filterPaymentStatus", paymentStatus);
         model.addAttribute("filterSearch", search);
-
-        // ─── Enums for dropdowns ──────────────────────────────────────
         model.addAttribute("statusOptions", LivestockTreatment.TreatmentStatus.values());
         model.addAttribute("typeOptions", LivestockTreatment.TreatmentCategory.values());
         model.addAttribute("paymentStatusOptions", LivestockTreatment.PaymentStatus.values());
 
-        // ─── Report Data ──────────────────────────────────────────────
-        model.addAttribute("financialSummary", treatmentService.getFinancialSummary(allTreatments));
-        model.addAttribute("typeAnalysis", treatmentService.getTypeAnalysis(allTreatments));
-        model.addAttribute("medicationAnalysis", treatmentService.getMedicationAnalysis(allTreatments));
-        model.addAttribute("outcomeAnalysis", treatmentService.getOutcomeAnalysis(allTreatments));
-        model.addAttribute("successRate", treatmentService.getSuccessRate(allTreatments));
-        model.addAttribute("costTrends", treatmentService.getCostTrends(allTreatments));
-        model.addAttribute("recurringDiseases", treatmentService.getRecurringDiseases(allTreatments));
+        model.addAttribute("financialSummary", treatmentService.getFinancialSummary(all));
+        model.addAttribute("typeAnalysis", treatmentService.getTypeAnalysis(all));
+        model.addAttribute("medicationAnalysis", treatmentService.getMedicationAnalysis(all));
+        model.addAttribute("outcomeAnalysis", treatmentService.getOutcomeAnalysis(all));
+        model.addAttribute("successRate", treatmentService.getSuccessRate(all));
+        model.addAttribute("costTrends", treatmentService.getCostTrends(all));
+        model.addAttribute("recurringDiseases", treatmentService.getRecurringDiseases(all));
+        model.addAttribute("topMedicationName", treatmentService.getTopMedicationName(all));
+        model.addAttribute("topExpensiveMedicationName", treatmentService.getTopExpensiveMedicationName(all));
+        model.addAttribute("curativeStats", treatmentService.getTypeStats(all, "CURATIVE"));
+        model.addAttribute("preventiveStats", treatmentService.getTypeStats(all, "PREVENTIVE"));
 
-        // ─── Top Medication (safe, pre-computed — avoids Map.get(0) crash in template) ──
-        model.addAttribute("topMedicationName", treatmentService.getTopMedicationName(allTreatments));
-        model.addAttribute("topExpensiveMedicationName", treatmentService.getTopExpensiveMedicationName(allTreatments));
-
-        // ─── Type Stats ──────────────────────────────────────────────────
-        model.addAttribute("curativeStats", treatmentService.getTypeStats(allTreatments, "CURATIVE"));
-        model.addAttribute("preventiveStats", treatmentService.getTypeStats(allTreatments, "PREVENTIVE"));
-
-        // ─── Alerts ────────────────────────────────────────────────────
-        List<LivestockTreatment> overdueFollowUps = treatmentService.getFollowUpBetween(LocalDate.now());
+        List<LivestockTreatment> overdueFollow = treatmentService.getFollowUpBetween(LocalDate.now());
         List<LivestockTreatment> activeWithdrawals = treatmentService.getActiveWithdrawals();
-        model.addAttribute("overdueFollowUps", overdueFollowUps != null ? overdueFollowUps : new java.util.ArrayList<>());
+        model.addAttribute("overdueFollowUps", overdueFollow != null ? overdueFollow : new java.util.ArrayList<>());
         model.addAttribute("activeWithdrawals", activeWithdrawals != null ? activeWithdrawals : new java.util.ArrayList<>());
 
-        // ─── Medication List for Filter ───────────────────────────────
         model.addAttribute("medicationList", medicationRepository.findAll());
 
         return "livestock-treatment-report";
     }
 
-    // ─── TEST EMAIL ENDPOINT ────────────────────────────────────
+    // ─── Helpers ──────────────────────────────────────────────────────
+    private void prepareFormModel(Model model, UUID editingId) {
+        model.addAttribute("formAction", editingId != null
+                ? "/livestock/treatments/update/" + editingId
+                : "/livestock/treatments/new");
 
-    @GetMapping("/test-email/{id}")
-    @ResponseBody
-    public ResponseEntity<String> testEmail(@PathVariable UUID id) {
-        try {
-            System.out.println("📧 Testing email for treatment ID: " + id);
+        model.addAttribute("medicationList", medicationRepository.findAll());
+        model.addAttribute("veterinarianList", veterinarianRepository.findAll());
 
-            LivestockTreatment treatment = treatmentService.getById(id)
-                    .orElseThrow(() -> new RuntimeException("Treatment not found"));
+        List<Livestock> livestock = livestockRepository.findAll();
+        model.addAttribute("livestockList", livestock);
 
-            System.out.println("📧 Treatment found: " + treatment.getTreatmentReference());
-
-            emailService.sendTreatmentCreatedNotification(treatment);
-
-            return ResponseEntity.ok("✅ Email sent successfully for treatment: " + treatment.getTreatmentReference());
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("❌ Error: " + e.getMessage());
-        }
+        List<LivestockSick> sick = livestockSickRepository.findAll().stream()
+                .filter(s -> s.getStatus() != null
+                        && !"RECOVERED".equals(s.getStatus().name())
+                        && !"DEAD".equals(s.getStatus().name()))
+                .collect(Collectors.toList());
+        model.addAttribute("sickAnimals", sick);
     }
 }

@@ -1,137 +1,142 @@
 package rw.animalproduct.animal.production.services;
 
-import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockSick;
+import rw.animalproduct.animal.production.notification.LifecycleNotificationType;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class SickAnimalNotificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(SickAnimalNotificationService.class);
-    private static final DateTimeFormatter DISPLAY_DATE_FMT = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    private static final Logger logger = LoggerFactory.getLogger(SickAnimalNotificationService.class);
 
-    private final JavaMailSender mailSender;
-    private final TemplateEngine templateEngine;
+    private final LifecycleEmailService emailService;
 
-    @Value("${app.notifications.recipients:}")
-    private String recipientsCsv;
-
-    @Value("${app.notifications.from:no-reply@animalproduction.rw}")
-    private String fromAddress;
-
-    @Value("${app.notifications.enabled:true}")
-    private boolean notificationEnabled;
-
-    public SickAnimalNotificationService(JavaMailSender mailSender, TemplateEngine templateEngine) {
-        this.mailSender = mailSender;
-        this.templateEngine = templateEngine;
-        log.info("✅ SickAnimalNotificationService initialized");
+    public SickAnimalNotificationService(LifecycleEmailService emailService) {
+        this.emailService = emailService;
     }
 
-    @Async("notificationExecutor")
-    public void sendSickRecordedEmail(LivestockSick sick) {
-        if (sick == null) return;
-        if (!notificationEnabled) {
-            log.info("⛔ Notifications disabled — skipping sick email");
-            return;
+    @Async("emailTaskExecutor")
+    public CompletableFuture<Void> sendSickRecordedEmail(LivestockSick sick) {
+        if (sick == null) return CompletableFuture.completedFuture(null);
+
+        Livestock animal = sick.getLivestock();
+        String tag = animal != null ? animal.getTagNumber() : "Unknown";
+
+        logger.info("📧 QUEUED: Sick record created email for: {}", tag);
+
+        List<DetailRow> rows = new ArrayList<>();
+        rows.add(new DetailRow("Tag Number", tag));
+        rows.add(new DetailRow("Category", animal != null && animal.getLivestockCategory() != null
+                ? animal.getLivestockCategory().getName() : "—"));
+        rows.add(new DetailRow("Reported Date",
+                sick.getReportedDate() != null ? sick.getReportedDate().toString() : "—"));
+        rows.add(new DetailRow("Status",
+                sick.getStatus() != null ? sick.getStatus().name() : "—"));
+        rows.add(new DetailRow("Severity",
+                sick.getSeverityLevel() != null ? sick.getSeverityLevel().name() : "—"));
+        rows.add(new DetailRow("Symptoms",
+                sick.getSymptoms() != null ? sick.getSymptoms() : "—"));
+        if (sick.getVeterinarian() != null) {
+            rows.add(new DetailRow("Veterinarian",
+                    sick.getVeterinarian().getFirstName() + " " + sick.getVeterinarian().getLastName()));
         }
 
-        List<String> recipients = getRecipients();
-        if (recipients.isEmpty()) {
-            log.error("❌ No recipients configured — skipping sick email");
-            return;
+        send(LifecycleNotificationType.STAGE_CHANGED,
+                "Sick record created — " + tag,
+                "A new sick record has been created for " + tag
+                        + ". Please review the animal's condition.",
+                rows);
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("emailTaskExecutor")
+    public CompletableFuture<Void> sendSickRecordUpdatedEmail(LivestockSick sick) {
+        if (sick == null) return CompletableFuture.completedFuture(null);
+
+        Livestock animal = sick.getLivestock();
+        String tag = animal != null ? animal.getTagNumber() : "Unknown";
+
+        logger.info("📧 QUEUED: Sick record updated email for: {}", tag);
+
+        List<DetailRow> rows = new ArrayList<>();
+        rows.add(new DetailRow("Tag Number", tag));
+        rows.add(new DetailRow("Category", animal != null && animal.getLivestockCategory() != null
+                ? animal.getLivestockCategory().getName() : "—"));
+        rows.add(new DetailRow("Reported Date",
+                sick.getReportedDate() != null ? sick.getReportedDate().toString() : "—"));
+        rows.add(new DetailRow("Status",
+                sick.getStatus() != null ? sick.getStatus().name() : "—"));
+        rows.add(new DetailRow("Severity",
+                sick.getSeverityLevel() != null ? sick.getSeverityLevel().name() : "—"));
+        rows.add(new DetailRow("Treatment Notes",
+                sick.getTreatmentNotes() != null ? sick.getTreatmentNotes() : "—"));
+        if (sick.getVeterinarian() != null) {
+            rows.add(new DetailRow("Veterinarian",
+                    sick.getVeterinarian().getFirstName() + " " + sick.getVeterinarian().getLastName()));
+        }
+
+        send(LifecycleNotificationType.STAGE_CHANGED,
+                "Sick record updated — " + tag,
+                "The sick record for " + tag + " has been updated.",
+                rows);
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    @Async("emailTaskExecutor")
+    public CompletableFuture<Void> sendSickRecordDeletedEmail(LivestockSick sick) {
+        if (sick == null) return CompletableFuture.completedFuture(null);
+
+        Livestock animal = sick.getLivestock();
+        String tag = animal != null ? animal.getTagNumber() : "Unknown";
+
+        logger.info("📧 QUEUED: Sick record deleted email for: {}", tag);
+
+        List<DetailRow> rows = new ArrayList<>();
+        rows.add(new DetailRow("Tag Number", tag));
+        rows.add(new DetailRow("Category", animal != null && animal.getLivestockCategory() != null
+                ? animal.getLivestockCategory().getName() : "—"));
+        rows.add(new DetailRow("Reported Date",
+                sick.getReportedDate() != null ? sick.getReportedDate().toString() : "—"));
+        rows.add(new DetailRow("Status at Deletion",
+                sick.getStatus() != null ? sick.getStatus().name() : "—"));
+        rows.add(new DetailRow("Severity at Deletion",
+                sick.getSeverityLevel() != null ? sick.getSeverityLevel().name() : "—"));
+        rows.add(new DetailRow("Deleted On", java.time.LocalDate.now().toString()));
+
+        send(LifecycleNotificationType.ANIMAL_DELETED,
+                "Sick record deleted — " + tag,
+                "The sick record for " + tag + " has been permanently deleted.",
+                rows);
+
+        return CompletableFuture.completedFuture(null);
+    }
+
+    private void send(LifecycleNotificationType type,
+                      String subject,
+                      String message,
+                      List<DetailRow> rows) {
+        List<LifecycleEmailService.DetailRow> lifecycleRows = new ArrayList<>();
+        for (DetailRow row : rows) {
+            lifecycleRows.add(new LifecycleEmailService.DetailRow(row.label(), row.value()));
         }
 
         try {
-            Livestock animal = sick.getLivestock();
-
-            Context ctx = new Context();
-            ctx.setVariable("title", "Sick Animal Recorded");
-            ctx.setVariable("emoji", "🐄🩺");
-            ctx.setVariable("subtitle", "Automatic animal health notification");
-
-            ctx.setVariable("tagNumber",    animal != null ? animal.getTagNumber() : "N/A");
-            ctx.setVariable("category",     (animal != null && animal.getLivestockCategory() != null)
-                    ? animal.getLivestockCategory().getName() : "—");
-            ctx.setVariable("gender",       animal != null ? animal.getGender() : "—");
-            ctx.setVariable("healthStatus", animal != null ? animal.healthStatusLabel() : "—");
-
-            if (animal != null && animal.getBeneficiary() != null) {
-                ctx.setVariable("beneficiaryName",  animal.getBeneficiary().getFullName());
-                ctx.setVariable("beneficiaryPhone", animal.getBeneficiary().getPhoneNumber());
-            } else {
-                ctx.setVariable("beneficiaryName",  "Not assigned");
-                ctx.setVariable("beneficiaryPhone", "—");
-            }
-
-            ctx.setVariable("locationPath", buildLocationPath(animal));
-
-            ctx.setVariable("reportedDate", sick.getReportedDate() != null
-                    ? sick.getReportedDate().format(DISPLAY_DATE_FMT) : "—");
-            ctx.setVariable("status",       sick.getStatus() != null ? sick.getStatus().name() : "—");
-            ctx.setVariable("severity",     sick.getSeverityLevel() != null
-                    ? sick.getSeverityLevel().name() : "—");
-            ctx.setVariable("temperature",  sick.getTemperature() != null
-                    ? sick.getTemperature() + " °C" : "—");
-            ctx.setVariable("symptoms",     sick.getSymptoms() != null && !sick.getSymptoms().isBlank()
-                    ? sick.getSymptoms() : "Not recorded");
-            ctx.setVariable("diagnosis",    sick.getDiagnosis() != null && !sick.getDiagnosis().isBlank()
-                    ? sick.getDiagnosis() : "Pending");
-            ctx.setVariable("vetName",      sick.getVeterinarian() != null
-                    ? sick.getVeterinarian().getFullName() : "Not assigned");
-
-            ctx.setVariable("today", LocalDate.now().format(DISPLAY_DATE_FMT));
-
-            String html = templateEngine.process("email-sick-recorded", ctx);
-
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, false, "UTF-8");
-            helper.setFrom(fromAddress);
-            helper.setTo(recipients.toArray(new String[0]));
-            helper.setSubject("🐄🩺 Sick Animal Recorded — " +
-                    (animal != null ? animal.getTagNumber() : "Unknown"));
-            helper.setText(html, true);
-
-            mailSender.send(message);
-            log.info("✅ Sick email sent to {} recipient(s)", recipients.size());
-
+            emailService.sendGeneric(type, subject, message, lifecycleRows);
+            logger.info("✅ SUCCESS: Sent {} notification.", type);
         } catch (Exception e) {
-            log.error("❌ Failed to send sick email: {}", e.getMessage(), e);
+            logger.error("❌ FAILED to send {} notification: {}", type, e.getMessage(), e);
         }
     }
 
-    private String buildLocationPath(Livestock animal) {
-        if (animal == null || animal.getLocation() == null) return "—";
-        List<String> parts = new ArrayList<>();
-        rw.animalproduct.animal.production.entity.Location loc = animal.getLocation();
-        while (loc != null) {
-            parts.add(loc.getName());
-            loc = loc.getParent();
-        }
-        Collections.reverse(parts);
-        return String.join(" › ", parts);
-    }
-
-    private List<String> getRecipients() {
-        if (recipientsCsv == null || recipientsCsv.isBlank()) return List.of();
-        return java.util.Arrays.stream(recipientsCsv.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isBlank())
-                .toList();
-    }
+    public record DetailRow(String label, String value) {}
 }

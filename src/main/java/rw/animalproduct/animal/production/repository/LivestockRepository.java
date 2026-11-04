@@ -17,114 +17,80 @@ import java.util.UUID;
 @Repository
 public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
-    // ✅ NEW: used by bulk import auto-tag
     boolean existsByTagNumber(String tagNumber);
 
-    List<Livestock> findByStatusAndIsDeletedFalse(String status);
-    List<Livestock> findByLivestockCategoryIdAndStatusAndIsDeletedFalse(UUID categoryId, String status);
-    Page<Livestock> findByStatusAndIsDeletedFalse(String status, Pageable pageable);
-    Optional<Livestock> findByIdAndIsDeletedFalse(UUID id);
-    List<Livestock> findByIsDeletedFalse();
-    List<Livestock> findByLivestockCategoryIdAndIsDeletedFalse(UUID categoryId);
+    List<Livestock> findByStatus(String status);
+    List<Livestock> findByLivestockCategoryIdAndStatus(UUID categoryId, String status);
+    Page<Livestock> findByStatus(String status, Pageable pageable);
     List<Livestock> findByLivestockCategoryId(UUID categoryId);
-    Page<Livestock> findByLivestockCategoryIdAndIsDeletedFalse(UUID categoryId, Pageable pageable);
-    Page<Livestock> findByLivestockCategoryIdAndStatusAndIsDeletedFalse(UUID categoryId, String status, Pageable pageable);
-    List<Livestock> findByBeneficiaryIdAndIsDeletedFalse(UUID beneficiaryId);
+    Page<Livestock> findByLivestockCategoryId(UUID categoryId, Pageable pageable);
+    Page<Livestock> findByLivestockCategoryIdAndStatus(UUID categoryId, String status, Pageable pageable);
     List<Livestock> findByBeneficiaryId(UUID beneficiaryId);
-    Page<Livestock> findByBeneficiaryIdAndIsDeletedFalse(UUID beneficiaryId, Pageable pageable);
-    List<Livestock> findByMotherIdAndIsDeletedFalse(UUID motherId);
+    Page<Livestock> findByBeneficiaryId(UUID beneficiaryId, Pageable pageable);
     List<Livestock> findByMotherId(UUID motherId);
 
-    @Query("SELECT l FROM Livestock l WHERE l.status NOT IN :statuses AND l.isDeleted = false")
+    @Query("SELECT l FROM Livestock l WHERE l.status NOT IN :statuses")
     List<Livestock> findByStatusNotIn(@Param("statuses") List<String> statuses);
-
-    @Query("SELECT l FROM Livestock l WHERE l.isDeleted = false")
-    Page<Livestock> findAllNonDeleted(Pageable pageable);
-
-    Page<Livestock> findByIsDeletedFalse(Pageable pageable);
-
-    @Query("SELECT l FROM Livestock l WHERE l.isDeleted = true")
-    List<Livestock> findAllSoftDeleted();
-
-    @Query("SELECT l FROM Livestock l WHERE l.isDeleted = true")
-    Page<Livestock> findAllSoftDeleted(Pageable pageable);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.gender = :gender " +
             "AND l.status = :status " +
-            "AND l.reproductiveStatus = :reproductiveStatus " +
-            "AND l.isDeleted = false")
-    List<Livestock> findByGenderAndStatusAndReproductiveStatusAndIsDeletedFalse(
+            "AND l.reproductiveStatus = :reproductiveStatus")
+    List<Livestock> findByGenderAndStatusAndReproductiveStatus(
             @Param("gender") String gender,
             @Param("status") String status,
             @Param("reproductiveStatus") String reproductiveStatus);
 
     List<Livestock> findByReproductiveStatus(String reproductiveStatus);
 
-    @Query("SELECT l FROM Livestock l WHERE l.isDraft = true AND l.isDeleted = false")
+    @Query("SELECT l FROM Livestock l WHERE l.isDraft = true")
     List<Livestock> findAllPendingDrafts();
 
     List<Livestock> findByDraftBirthEventIdAndIsDraftTrue(UUID draftBirthEventId);
 
-    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = :status AND l.isDeleted = false")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = :status")
     long countByStatus(@Param("status") String status);
 
-    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.healthStatus = :healthStatus AND l.isDeleted = false")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.healthStatus = :healthStatus")
     long countByHealthStatus(@Param("healthStatus") String healthStatus);
 
     @Query("SELECT COUNT(DISTINCT l) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND EXISTS (SELECT v FROM LivestockValuation v WHERE v.livestock.id = l.id)")
+            "WHERE EXISTS (SELECT v FROM LivestockValuation v WHERE v.livestock.id = l.id)")
     long countValued();
 
     @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND NOT EXISTS (SELECT v FROM LivestockValuation v WHERE v.livestock.id = l.id)")
+            "WHERE NOT EXISTS (SELECT v FROM LivestockValuation v WHERE v.livestock.id = l.id)")
     long countUnvalued();
-
-    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.isDeleted = true")
-    long countSoftDeleted();
 
     @Query("SELECT COUNT(l) FROM Livestock l " +
             "WHERE l.status = :status " +
-            "AND l.reproductiveStatus = :reproductiveStatus " +
-            "AND l.isDeleted = false")
+            "AND l.reproductiveStatus = :reproductiveStatus")
     long countByStatusAndReproductiveStatus(@Param("status") String status,
                                             @Param("reproductiveStatus") String reproductiveStatus);
 
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.livestockCategory.id = :categoryId " +
-            "AND l.isDeleted = false")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.livestockCategory.id = :categoryId")
     long countByCategoryId(@Param("categoryId") UUID categoryId);
 
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.livestockCategory.id = :categoryId " +
-            "AND l.isDeleted = false")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.livestockCategory.id = :categoryId")
     long countByCategory(@Param("categoryId") UUID categoryId);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.reproductiveStatus = 'PREGNANT' " +
-            "AND l.isDeleted = false " +
             "AND l.id NOT IN (SELECT b.livestock.id FROM LivestockBreeding b " +
-            "                 WHERE b.status IN ('CONFIRMED_PREGNANT', 'PENDING') " +
-            "                 AND b.isDeleted = false)")
+            "                 WHERE b.status IN ('CONFIRMED_PREGNANT', 'PENDING'))")
     List<Livestock> findPregnantWithoutBreedingRecord();
 
     @Query("SELECT DISTINCT l FROM Livestock l " +
             "WHERE l.reproductiveStatus = 'PREGNANT' " +
-            "AND l.isDeleted = false " +
             "AND EXISTS (SELECT b FROM LivestockBreeding b " +
             "            WHERE b.livestock = l " +
-            "            AND b.isDeleted = false " +
             "            AND b.expectedDueDate IS NOT NULL)")
     List<Livestock> findPregnantWithDueDate();
 
     @Query("SELECT DISTINCT l FROM Livestock l " +
             "WHERE l.reproductiveStatus = 'PREGNANT' " +
-            "AND l.isDeleted = false " +
             "AND EXISTS (SELECT b FROM LivestockBreeding b " +
             "            WHERE b.livestock = l " +
-            "            AND b.isDeleted = false " +
             "            AND b.expectedDueDate IS NOT NULL " +
             "            AND b.expectedDueDate BETWEEN :startDate AND :endDate)")
     List<Livestock> findPregnantDueWithinRange(@Param("startDate") LocalDate startDate,
@@ -137,10 +103,8 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
 
     @Query("SELECT DISTINCT l FROM Livestock l " +
             "WHERE l.reproductiveStatus = 'PREGNANT' " +
-            "AND l.isDeleted = false " +
             "AND EXISTS (SELECT b FROM LivestockBreeding b " +
             "            WHERE b.livestock = l " +
-            "            AND b.isDeleted = false " +
             "            AND b.expectedDueDate IS NOT NULL " +
             "            AND b.expectedDueDate < CURRENT_DATE)")
     List<Livestock> findOverduePregnant();
@@ -149,7 +113,6 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
             "WHERE l.gender = 'FEMALE' " +
             "AND l.status = 'ACTIVE' " +
             "AND l.reproductiveStatus = 'OPEN' " +
-            "AND l.isDeleted = false " +
             "AND l.birthDate IS NOT NULL " +
             "AND (l.livestockCategory.minBreedingAgeMonths IS NULL " +
             "     OR ((EXTRACT(YEAR FROM CURRENT_DATE) - EXTRACT(YEAR FROM l.birthDate)) * 12 " +
@@ -160,61 +123,52 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     @Query("SELECT COUNT(l) FROM Livestock l " +
             "WHERE l.gender = 'FEMALE' " +
             "AND l.status = 'ACTIVE' " +
-            "AND l.reproductiveStatus = 'OPEN' " +
-            "AND l.isDeleted = false")
+            "AND l.reproductiveStatus = 'OPEN'")
     long countReadyToBreedFemales();
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.gender = 'MALE' " +
-            "AND l.status = 'ACTIVE' " +
-            "AND l.isDeleted = false")
+            "AND l.status = 'ACTIVE'")
     List<Livestock> findAllBreedingMales();
 
     @Query("SELECT DISTINCT l.location.id FROM Livestock l " +
-            "WHERE l.location IS NOT NULL " +
-            "AND l.isDeleted = false")
+            "WHERE l.location IS NOT NULL")
     List<UUID> findDistinctLocationIdsWithLivestock();
 
     @Query("SELECT l FROM Livestock l " +
-            "WHERE l.location.id IN :locationIds " +
-            "AND l.isDeleted = false")
+            "WHERE l.location.id IN :locationIds")
     List<Livestock> findByLocationIdIn(@Param("locationIds") List<UUID> locationIds);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE LOWER(l.tagNumber) LIKE LOWER(CONCAT('%', :q, '%')) " +
-            "AND l.isDeleted = false " +
             "ORDER BY l.tagNumber")
     List<Livestock> searchByTagNumber(@Param("q") String q, Pageable pageable);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.beneficiary.id = :beneficiaryId " +
-            "AND l.status = :status " +
-            "AND l.isDeleted = false")
+            "AND l.status = :status")
     List<Livestock> findByBeneficiaryIdAndStatus(@Param("beneficiaryId") UUID beneficiaryId,
                                                  @Param("status") String status);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.beneficiary.id = :beneficiaryId " +
-            "AND l.livestockCategory.id = :categoryId " +
-            "AND l.isDeleted = false")
+            "AND l.livestockCategory.id = :categoryId")
     List<Livestock> findByBeneficiaryIdAndCategoryId(@Param("beneficiaryId") UUID beneficiaryId,
                                                      @Param("categoryId") UUID categoryId);
 
     @Query("select l from Livestock l join fetch l.livestockCategory c " +
-            "where l.status = 'ACTIVE' and l.isDeleted = false and c.isDeleted = false")
+            "where l.status = 'ACTIVE'")
     List<Livestock> findAllActiveWithCategory();
 
     @Query("SELECT l FROM Livestock l " +
-            "WHERE (l.isDeleted = false OR l.isDeleted IS NULL) " +
-            "AND l.status != 'SOLD' " +
+            "WHERE l.status != 'SOLD' " +
             "AND l.status != 'DEAD' " +
             "AND l.status != 'TRANSFERRED' " +
             "ORDER BY l.tagNumber")
     List<Livestock> findEligibleForSale();
 
     @Query("SELECT l FROM Livestock l " +
-            "WHERE (l.isDeleted = false OR l.isDeleted IS NULL) " +
-            "AND l.status != 'SOLD' " +
+            "WHERE l.status != 'SOLD' " +
             "AND l.status != 'DEAD' " +
             "AND l.status != 'TRANSFERRED' " +
             "AND (LOWER(l.tagNumber) LIKE LOWER(CONCAT('%', :query, '%')) " +
@@ -225,63 +179,86 @@ public interface LivestockRepository extends JpaRepository<Livestock, UUID> {
     @Query("SELECT l FROM Livestock l " +
             "WHERE LOWER(l.tagNumber) LIKE LOWER(CONCAT('%', :tag, '%')) " +
             "AND l.healthStatus = :healthStatus " +
-            "AND l.isDeleted = false " +
             "ORDER BY l.tagNumber ASC")
-    List<Livestock> findByTagNumberContainingIgnoreCaseAndHealthStatusAndIsDeletedFalse(
+    List<Livestock> findByTagNumberContainingIgnoreCaseAndHealthStatus(
             @Param("tag") String tag,
             @Param("healthStatus") String healthStatus);
 
     @Query("SELECT l FROM Livestock l " +
             "WHERE l.healthStatus = :healthStatus " +
-            "AND l.isDeleted = false " +
             "ORDER BY l.updatedAt DESC")
-    List<Livestock> findTop10ByHealthStatusAndIsDeletedFalseOrderByUpdatedAtDesc(
+    List<Livestock> findTop10ByHealthStatusOrderByUpdatedAtDesc(
             @Param("healthStatus") String healthStatus);
 
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.healthStatus = :healthStatus " +
-            "AND l.isDeleted = false")
-    long countByHealthStatusAndIsDeletedFalse(@Param("healthStatus") String healthStatus);
+    @Query("SELECT l FROM Livestock l WHERE l.healthStatus = :healthStatus")
+    List<Livestock> findByHealthStatus(@Param("healthStatus") String healthStatus);
 
-    @Query("SELECT l FROM Livestock l WHERE l.healthStatus = :healthStatus AND l.isDeleted = false")
-    List<Livestock> findByHealthStatusAndIsDeletedFalse(@Param("healthStatus") String healthStatus);
-
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.isDeleted = false AND l.acquisitionMethod = 'BIRTH'")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.acquisitionMethod = 'BIRTH'")
     long countBornOnFarm();
 
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.isDeleted = false AND l.status = 'SOLD'")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = 'SOLD'")
     long countSold();
 
-    @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.isDeleted = false AND l.status = 'DEAD'")
+    @Query("SELECT COUNT(l) FROM Livestock l WHERE l.status = 'DEAD'")
     long countDead();
 
     @Query("SELECT COALESCE(SUM(l.currentValue), 0) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED')")
+            "WHERE l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED')")
     BigDecimal sumCurrentValueForLive();
 
     @Query("SELECT COALESCE(SUM(l.currentValue), 0) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED') " +
+            "WHERE l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED') " +
             "AND UPPER(l.acquisitionMethod) = UPPER(:method)")
     BigDecimal sumCurrentValueForLiveByAcquisitionMethod(@Param("method") String method);
 
     @Query("SELECT COALESCE(SUM(l.currentValue), 0) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND UPPER(l.acquisitionMethod) = UPPER(:method)")
+            "WHERE UPPER(l.acquisitionMethod) = UPPER(:method)")
     BigDecimal sumCurrentValueByAcquisitionMethod(@Param("method") String method);
 
     @Query("SELECT COALESCE(SUM(l.currentValue), 0) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED') " +
+            "WHERE l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED') " +
             "AND l.beneficiary.id = :beneficiaryId")
     BigDecimal sumCurrentValueForLiveByBeneficiary(@Param("beneficiaryId") UUID beneficiaryId);
 
     @Query("SELECT COUNT(l) FROM Livestock l " +
-            "WHERE l.isDeleted = false " +
-            "AND l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED')")
+            "WHERE l.status NOT IN ('DEAD', 'SOLD', 'TRANSFERRED')")
     long countLive();
+
+    @Query("""
+           SELECT COUNT(l)
+           FROM Livestock l
+           WHERE l.livestockCategory.id = :categoryId
+           """)
+    long countAllByCategoryId(@Param("categoryId") UUID categoryId);
+
+    @Query("""
+           SELECT l.livestockCategory.id, COUNT(l)
+           FROM Livestock l
+           WHERE l.livestockCategory IS NOT NULL
+           GROUP BY l.livestockCategory.id
+           """)
+    List<Object[]> countGroupedByCategoryAll();
+
+    /**
+     * Counts the number of rows in every child table that reference this
+     * livestock record — used by LivestockService.delete() to refuse deletion
+     * of animals that still have historical records.
+     */
+    @Query("""
+           SELECT (
+               (SELECT COUNT(b)  FROM LivestockBreeding        b  WHERE b.livestock.id     = :id)
+             + (SELECT COUNT(bt) FROM LivestockBirth           bt WHERE bt.livestock.id    = :id)
+             + (SELECT COUNT(s)  FROM LivestockSale            s  WHERE s.livestock.id     = :id)
+             + (SELECT COUNT(t)  FROM LivestockTreatment       t  WHERE t.livestock.id     = :id)
+             + (SELECT COUNT(t)  FROM LivestockTreatment       t  WHERE t.sickLivestock.id = :id)
+             + (SELECT COUNT(sk) FROM LivestockSick            sk WHERE sk.livestock.id    = :id)
+             + (SELECT COUNT(d)  FROM LivestockDeath           d  WHERE d.livestock.id     = :id)
+             + (SELECT COUNT(w)  FROM LivestockWeightHistory   w  WHERE w.livestock.id     = :id)
+             + (SELECT COUNT(v)  FROM LivestockValuation       v  WHERE v.livestock.id     = :id)
+             + (SELECT COUNT(a)  FROM LivestockAbortion        a  WHERE a.livestock.id     = :id)
+             + (SELECT COUNT(l2) FROM Livestock                l2 WHERE l2.mother.id        = :id)
+             + (SELECT COUNT(l3) FROM Livestock                l3 WHERE l3.father.id        = :id)
+           )
+           """)
+    long countLinkedRecords(@Param("id") UUID id);
 }

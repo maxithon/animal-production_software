@@ -198,7 +198,8 @@ public class LivestockLifecycleController {
         // ── SOURCE 1: Full breeding records ───────────────────────────────────
         List<LivestockBreeding> allPregnant = breedingService.getAll().stream()
                 .filter(b -> LivestockBreeding.STATUS_CONFIRMED_PREGNANT.equals(b.getStatus()))
-                .filter(b -> !Boolean.TRUE.equals(b.getIsDeleted()))
+                // LivestockBreeding has no isDeleted flag; use isActive (null counts as active)
+                .filter(b -> !Boolean.FALSE.equals(b.getIsActive()))
                 .sorted(Comparator.comparingLong(b -> {
                     if (b.getExpectedDueDate() == null) return Long.MAX_VALUE;
                     return ChronoUnit.DAYS.between(today, b.getExpectedDueDate());
@@ -474,7 +475,7 @@ public class LivestockLifecycleController {
             }
             return Map.of("status", "error", "message", "Animal not found with ID: " + animalId);
         } catch (Exception e) {
-            return Map.of("status", "error", "message", e.getMessage());
+            return Map.of("status", "error", "message", String.valueOf(e.getMessage()));
         }
     }
 
@@ -489,7 +490,7 @@ public class LivestockLifecycleController {
             return Map.of("status", "success",
                     "message", "Due soon notification sent for " + dueSoon.size() + " animals");
         } catch (Exception e) {
-            return Map.of("status", "error", "message", e.getMessage());
+            return Map.of("status", "error", "message", String.valueOf(e.getMessage()));
         }
     }
 
@@ -522,7 +523,7 @@ public class LivestockLifecycleController {
             return Map.of("status", "success",
                     "message", "Overdue notification sent for " + overdue.size() + " animals");
         } catch (Exception e) {
-            return Map.of("status", "error", "message", e.getMessage());
+            return Map.of("status", "error", "message", String.valueOf(e.getMessage()));
         }
     }
 
@@ -538,7 +539,7 @@ public class LivestockLifecycleController {
             }
             return Map.of("status", "error", "message", "Animal not found");
         } catch (Exception e) {
-            return Map.of("status", "error", "message", e.getMessage());
+            return Map.of("status", "error", "message", String.valueOf(e.getMessage()));
         }
     }
 
@@ -554,7 +555,7 @@ public class LivestockLifecycleController {
             }
             return Map.of("status", "error", "message", "Animal not found");
         } catch (Exception e) {
-            return Map.of("status", "error", "message", e.getMessage());
+            return Map.of("status", "error", "message", String.valueOf(e.getMessage()));
         }
     }
 

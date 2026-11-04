@@ -29,11 +29,14 @@ public interface VeterinarianRepository extends JpaRepository<Veterinarian, UUID
 
     @Query("""
            SELECT v FROM Veterinarian v
+           LEFT JOIN v.location l
            WHERE v.isActive = true AND v.isDeleted = false
              AND ( LOWER(v.firstName)     LIKE LOWER(CONCAT('%', :q, '%'))
                 OR LOWER(v.lastName)      LIKE LOWER(CONCAT('%', :q, '%'))
                 OR LOWER(v.licenseNumber) LIKE LOWER(CONCAT('%', :q, '%'))
                 OR LOWER(v.clinicName)    LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(v.email)         LIKE LOWER(CONCAT('%', :q, '%'))
+                OR LOWER(l.name)          LIKE LOWER(CONCAT('%', :q, '%'))
                 OR v.phone LIKE CONCAT('%', :q, '%') )
            ORDER BY v.firstName, v.lastName
            """)
@@ -50,7 +53,14 @@ public interface VeterinarianRepository extends JpaRepository<Veterinarian, UUID
 
     /* ============================================================
      *  ONE QUERY — all per-vet aggregation done in the DB.
-     *  Uses your real field names.
+     *
+     *  ✅ FIXED:
+     *    - removed every `AND t.isDeleted = false` from the
+     *      LivestockTreatment subqueries — that field no longer
+     *      exists on LivestockTreatment (deletion is tracked in
+     *      audit_log).
+     *    - `v.isDeleted = false` on Veterinarian is KEPT because
+     *      Veterinarian still has its own soft-delete column.
      * ============================================================ */
     @Query("""
         SELECT new rw.animalproduct.animal.production.dto.VeterinarianActivityDtos$VetAggregate(
@@ -58,65 +68,54 @@ public interface VeterinarianRepository extends JpaRepository<Veterinarian, UUID
 
             (SELECT COUNT(t) FROM LivestockTreatment t
                 WHERE t.veterinarian = v
-                  AND t.treatmentDate BETWEEN :from AND :to
-                  AND t.isDeleted = false),
+                  AND t.treatmentDate BETWEEN :from AND :to),
 
             (SELECT COUNT(DISTINCT t.livestock.id) FROM LivestockTreatment t
                 WHERE t.veterinarian = v
-                  AND t.treatmentDate BETWEEN :from AND :to
-                  AND t.isDeleted = false),
+                  AND t.treatmentDate BETWEEN :from AND :to),
 
             (SELECT COALESCE(SUM(t.treatmentCost), 0) FROM LivestockTreatment t
                 WHERE t.veterinarian = v
-                  AND t.treatmentDate BETWEEN :from AND :to
-                  AND t.isDeleted = false),
+                  AND t.treatmentDate BETWEEN :from AND :to),
+
+            (SELECT COUNT(s) FROM LivestockSick s
+                WHERE s.veterinarian = v
+                  AND s.reportedDate BETWEEN :from AND :to),
 
             (SELECT COUNT(s) FROM LivestockSick s
                 WHERE s.veterinarian = v
                   AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false),
-
-            (SELECT COUNT(s) FROM LivestockSick s
-                WHERE s.veterinarian = v
-                  AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false
                   AND s.status = 'RECOVERED'),
 
             (SELECT COUNT(s) FROM LivestockSick s
                 WHERE s.veterinarian = v
                   AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false
                   AND s.status = 'RECOVERING'),
 
             (SELECT COUNT(s) FROM LivestockSick s
                 WHERE s.veterinarian = v
                   AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false
                   AND s.status = 'SICK'),
 
             (SELECT COUNT(s) FROM LivestockSick s
                 WHERE s.veterinarian = v
                   AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false
                   AND s.status = 'CRITICAL'),
 
             (SELECT COUNT(s) FROM LivestockSick s
                 WHERE s.veterinarian = v
                   AND s.reportedDate BETWEEN :from AND :to
-                  AND s.isDeleted = false
                   AND s.status = 'DEAD'),
 
             (SELECT COUNT(t) FROM LivestockTreatment t
                 WHERE t.veterinarian = v
                   AND t.followUpDate IS NOT NULL
-                  AND t.followUpDate BETWEEN :from AND :to
-                  AND t.isDeleted = false),
+                  AND t.followUpDate BETWEEN :from AND :to),
 
             (SELECT COUNT(t) FROM LivestockTreatment t
                 WHERE t.veterinarian = v
                   AND t.followUpDate IS NOT NULL
                   AND t.followUpDate < :from
-                  AND t.isDeleted = false
                   AND (t.treatmentStatus IS NULL
                        OR t.treatmentStatus NOT IN ('COMPLETED','CANCELLED')))
         )

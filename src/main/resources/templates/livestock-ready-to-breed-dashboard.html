@@ -11,7 +11,6 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#f0f3f8; font-family:'DM Sans',sans-serif; font-size:14px; color:#1a2233; }
         .mono { font-family:'DM Mono',monospace; }
-
         .page-header {
             background: linear-gradient(135deg,#7c3aed,#a855f7);
             color:white; padding:22px 32px; margin-bottom:24px;
@@ -51,10 +50,6 @@
             background:#fafafa; font-size:.72rem; text-transform:uppercase; color:#64748b;
             padding:12px 20px; white-space:nowrap; border-bottom:1px solid #e9ecef;
         }
-        .table th.sortable { cursor:pointer; user-select:none; }
-        .table th.sortable:hover { color:#1a2233; }
-        .table th.sortable .arrow { font-size:10px; opacity:.4; margin-left:3px; }
-        .table th.sortable.active .arrow { opacity:1; color:#7c3aed; }
         .table td { padding:13px 20px; vertical-align:middle; border-bottom:1px solid #f1f3f5; }
 
         .badge-soft { padding:4px 10px; border-radius:20px; font-size:.72rem; font-weight:700; }
@@ -80,7 +75,7 @@
         .btn-icon.primary-male { color:#1e40af; border-color:#bfdbfe; }
         .btn-icon.primary-male:hover { background:#dbeafe; }
 
-        /* ===== Toolbar: search + category chips + sort ===== */
+        /* ===== Toolbar ===== */
         .toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
         .dt-search { position:relative; min-width:190px; }
         .dt-search input {
@@ -122,23 +117,7 @@
         tr.dt-row.selected { background:#fdf2f8; }
         tr.dt-row.selected td:first-child { box-shadow:inset 3px 0 0 #db2777; }
 
-        /* ===== Pagination footer ===== */
-        .dt-footer {
-            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
-            padding:12px 22px; border-top:1px solid #f0f0f0; font-size:12.5px; color:#6c757d;
-        }
-        .dt-pagenav { display:flex; align-items:center; gap:6px; }
-        .dt-pagenav button {
-            border:1px solid #dee2e6; background:white; border-radius:6px; padding:5px 10px;
-            font-size:12.5px; cursor:pointer; color:#495057;
-        }
-        .dt-pagenav button:hover:not(:disabled) { background:#f8f9fa; }
-        .dt-pagenav button:disabled { opacity:.4; cursor:not-allowed; }
-        .dt-pagenav .pg-label { padding:0 6px; font-weight:600; color:#1a2233; }
-        .dt-pagesize select {
-            border:1px solid #dee2e6; border-radius:6px; padding:5px 8px; font-size:12.5px; font-family:inherit;
-        }
-
+        /* ===== Stat bar ===== */
         .stat-bar {
             display:flex; align-items:center; gap:16px; padding:12px 22px; border-bottom:1px solid #eee;
             background:#fafbfd; font-size:12.5px; color:#6c757d; flex-wrap:wrap;
@@ -146,10 +125,96 @@
         .stat-bar strong { color:#1a2233; font-size:13.5px; }
         .stat-bar .sep { color:#dee2e6; }
 
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION — shared across all three tables
+           ══════════════════════════════════════════════════════════════ */
+        .dt-footer {
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+            padding:14px 22px; border-top:1.5px solid #f0f2f5; font-size:12.5px; color:#6c757d;
+        }
+        .dt-footer-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .showing-text { font-size:12.5px; color:#64748b; }
+        .showing-text strong { color:#0f172a; font-weight:700; }
+
+        .dt-pagesize { display:flex; align-items:center; gap:6px; }
+        .page-size-label { font-size:11.5px; font-weight:600; color:#64748b; }
+        .dt-pagesize select {
+            border:1px solid #e2e8f0; border-radius:5px; padding:4px 9px;
+            font-size:12px; font-weight:600; color:#334155;
+            cursor:pointer; background:#fafcff;
+        }
+        .dt-pagesize select:hover { border-color:#7c3aed; }
+        .dt-pagesize select:focus { outline:none; border-color:#7c3aed; box-shadow:0 0 0 3px rgba(124,58,237,.1); }
+
+        .dt-pagenav { display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+        .pg-btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:5px;
+            min-width:34px; height:34px; padding:0 10px;
+            border-radius:6px; font-size:12px; font-weight:600;
+            color:#475569; background:#fff;
+            border:1px solid #e2e8f0; text-decoration:none;
+            transition:all .12s ease; cursor:pointer; white-space:nowrap;
+        }
+        .pg-btn:hover { background:#f3e8ff; border-color:#a855f7; color:#7c3aed; }
+        .pg-btn.active {
+            background:#7c3aed; color:#fff; border-color:#7c3aed;
+            pointer-events:none; cursor:default;
+            box-shadow:0 2px 6px rgba(124,58,237,.25);
+        }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity:.35; pointer-events:none; cursor:not-allowed; background:#fafbfc;
+        }
+
+        /* Edge buttons (First / Prev / Next / Last) — icon + visible label */
+        .pg-btn.pg-edge {
+            min-width:auto; padding:0 12px; gap:6px;
+            background:#f8fafc; color:#334155; font-weight:700;
+        }
+        .pg-btn.pg-edge:hover {
+            background:#7c3aed; border-color:#7c3aed; color:#fff;
+        }
+        .pg-btn.pg-edge i { font-size:12px; line-height:1; }
+        .pg-btn.pg-edge .pg-label {
+            display:inline-block; font-size:11px;
+            text-transform:uppercase; letter-spacing:.04em;
+        }
+
+        .pg-ellipsis {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:24px; height:34px; color:#94a3b8;
+            font-size:13px; font-weight:700; user-select:none; letter-spacing:.1em;
+        }
+
+        .goto-page {
+            display:flex; align-items:center; gap:5px;
+            font-size:11.5px; color:#64748b; font-weight:600;
+        }
+        .goto-page input {
+            width:56px; height:34px; padding:0 8px;
+            border:1px solid #e2e8f0; border-radius:5px;
+            font-size:12px; font-weight:600; text-align:center;
+            color:#0f172a; background:#fff; transition:all .12s;
+        }
+        .goto-page input:focus {
+            outline:none; border-color:#7c3aed;
+            box-shadow:0 0 0 3px rgba(124,58,237,.1);
+        }
+        .goto-page input::-webkit-outer-spin-button,
+        .goto-page input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .goto-page input[type=number] { -moz-appearance:textfield; }
+
         @media (max-width:768px) {
             .kpi-grid { grid-template-columns:repeat(2,1fr); }
             .container-fluid { padding:0 16px 24px; }
             .page-header { padding:18px 20px; }
+            .dt-footer { flex-direction:column; align-items:stretch; }
+            .dt-footer-meta { justify-content:space-between; width:100%; }
+            .dt-pagenav { justify-content:center; width:100%; }
+            .goto-page {
+                justify-content:center; width:100%;
+                padding-top:6px; border-top:1px dashed #e2e8f0; margin-top:4px;
+            }
+            .pg-btn.pg-edge .pg-label { display:none; }
         }
         @media (max-width:480px) {
             .kpi-grid { grid-template-columns:1fr; }
@@ -170,8 +235,7 @@
 </div>
 
 <div class="container-fluid">
-
-    <!-- Summary cards (spec C) -->
+    <!-- KPI cards -->
     <div class="kpi-grid">
         <div class="kpi-card">
             <div class="kpi-value" style="color:#db2777;" th:text="${femalesReadyCount}">0</div>
@@ -196,7 +260,7 @@
         <div class="card-header">
             <div class="card-header-title">
                 <i class="bi bi-gender-female" style="color:#db2777;"></i> Females Ready to Breed
-                <span class="badge b-purple" id="femalesTotalBadge" th:text="${femalesReadyCount}">0</span>
+                <span class="badge b-purple" th:text="${femalesReadyCount}">0</span>
             </div>
             <div class="toolbar" th:if="${femalesByCategory != null and !femalesByCategory.empty}">
                 <div class="dt-search"><i class="bi bi-search"></i><input type="text" id="femalesSearch" placeholder="Search tag…"></div>
@@ -242,7 +306,7 @@
                             <td class="mono" th:text="${f.lastBirthDate != null ? #temporals.format(f.lastBirthDate,'dd MMM yyyy') : 'Never'}">—</td>
                             <td><span class="badge-soft b-green">Open</span></td>
                             <td th:text="${f.postpartumRecoveryStatus}">—</td>
-                            <td><span class="badge-soft b-green" th:text="${f.readinessLabel}">🟢 Ready</span></td>
+                            <td><span class="badge-soft b-green" th:text="${f.readinessLabel}">Ready</span></td>
                             <td><a th:href="@{/livestock/breeding/form(livestockId=${f.livestockId})}" class="btn-icon primary-female" onclick="event.stopPropagation()"><i class="bi bi-heart-fill"></i> Start Breeding</a></td>
                         </tr>
                     </th:block>
@@ -250,22 +314,26 @@
                 </table>
             </div>
             <div class="no-match-state" id="femalesNoMatch"><i class="bi bi-search"></i> No females match your search/filter.</div>
-            <div class="dt-footer">
-                <div id="femalesShowing">Showing 0–0 of 0</div>
-                <div class="d-flex align-items-center gap-3">
+
+            <!-- PROFESSIONAL PAGINATION — Females -->
+            <div class="dt-footer" id="femalesFooter">
+                <div class="dt-footer-meta">
+                    <span class="showing-text" id="femalesShowing">Showing 0–0 of 0</span>
                     <div class="dt-pagesize">
+                        <span class="page-size-label">Rows per page:</span>
                         <select id="femalesPageSize">
-                            <option value="10">10 / page</option>
-                            <option value="25" selected>25 / page</option>
-                            <option value="50">50 / page</option>
-                            <option value="100">100 / page</option>
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
                     </div>
-                    <div class="dt-pagenav">
-                        <button id="femalesPrev">‹ Prev</button>
-                        <span class="pg-label" id="femalesPageLabel">1 / 1</span>
-                        <button id="femalesNext">Next ›</button>
-                    </div>
+                </div>
+                <div class="dt-pagenav" id="femalesPagenav"></div>
+                <div class="goto-page">
+                    <label for="femalesGotoInput">Go to page:</label>
+                    <input type="number" id="femalesGotoInput" min="1" value="1">
+                    <span id="femalesGotoTotal">/ 1</span>
                 </div>
             </div>
         </div>
@@ -281,7 +349,7 @@
         <div class="card-header">
             <div class="card-header-title">
                 <i class="bi bi-gender-male" style="color:#2563eb;"></i> Eligible Breeding Males
-                <span class="badge b-blue" id="malesTotalBadge" th:text="${malesEligibleCount}">0</span>
+                <span class="badge b-blue" th:text="${malesEligibleCount}">0</span>
             </div>
             <div class="toolbar" th:if="${malesByCategory != null and !malesByCategory.empty}">
                 <div class="dt-search"><i class="bi bi-search"></i><input type="text" id="malesSearch" placeholder="Search tag…"></div>
@@ -339,22 +407,26 @@
                 </table>
             </div>
             <div class="no-match-state" id="malesNoMatch"><i class="bi bi-search"></i> No males match your search/filter.</div>
-            <div class="dt-footer">
-                <div id="malesShowing">Showing 0–0 of 0</div>
-                <div class="d-flex align-items-center gap-3">
+
+            <!-- PROFESSIONAL PAGINATION — Males -->
+            <div class="dt-footer" id="malesFooter">
+                <div class="dt-footer-meta">
+                    <span class="showing-text" id="malesShowing">Showing 0–0 of 0</span>
                     <div class="dt-pagesize">
+                        <span class="page-size-label">Rows per page:</span>
                         <select id="malesPageSize">
-                            <option value="10">10 / page</option>
-                            <option value="25" selected>25 / page</option>
-                            <option value="50">50 / page</option>
-                            <option value="100">100 / page</option>
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
                     </div>
-                    <div class="dt-pagenav">
-                        <button id="malesPrev">‹ Prev</button>
-                        <span class="pg-label" id="malesPageLabel">1 / 1</span>
-                        <button id="malesNext">Next ›</button>
-                    </div>
+                </div>
+                <div class="dt-pagenav" id="malesPagenav"></div>
+                <div class="goto-page">
+                    <label for="malesGotoInput">Go to page:</label>
+                    <input type="number" id="malesGotoInput" min="1" value="1">
+                    <span id="malesGotoTotal">/ 1</span>
                 </div>
             </div>
         </div>
@@ -386,21 +458,25 @@
             </table>
         </div>
         <div class="no-match-state" id="attentionNoMatch"><i class="bi bi-search"></i> No matches.</div>
-        <div class="dt-footer">
-            <div id="attentionShowing">Showing 0–0 of 0</div>
-            <div class="d-flex align-items-center gap-3">
+
+        <!-- PROFESSIONAL PAGINATION — Attention -->
+        <div class="dt-footer" id="attentionFooter">
+            <div class="dt-footer-meta">
+                <span class="showing-text" id="attentionShowing">Showing 0–0 of 0</span>
                 <div class="dt-pagesize">
+                    <span class="page-size-label">Rows per page:</span>
                     <select id="attentionPageSize">
-                        <option value="10">10 / page</option>
-                        <option value="25" selected>25 / page</option>
-                        <option value="50">50 / page</option>
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
                     </select>
                 </div>
-                <div class="dt-pagenav">
-                    <button id="attentionPrev">‹ Prev</button>
-                    <span class="pg-label" id="attentionPageLabel">1 / 1</span>
-                    <button id="attentionNext">Next ›</button>
-                </div>
+            </div>
+            <div class="dt-pagenav" id="attentionPagenav"></div>
+            <div class="goto-page">
+                <label for="attentionGotoInput">Go to page:</label>
+                <input type="number" id="attentionGotoInput" min="1" value="1">
+                <span id="attentionGotoTotal">/ 1</span>
             </div>
         </div>
     </div>
@@ -409,30 +485,100 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     /*
-     * NOTE ON SCALE: this client-side controller works well for datasets up to a
-     * few thousand rows rendered server-side in one page load. If the herd grows
-     * beyond that, move search/filter/sort/pagination server-side (query params +
-     * Thymeleaf re-render or a JSON endpoint) and keep this same UI contract —
-     * the markup/CSS below does not need to change, only where `rows` comes from.
+     * PROFESSIONAL CLIENT-SIDE PAGINATION
+     * - First ⏮ | Prev ‹ | 1 … [N] … last | Next › | Last ⏭
+     * - Window of ±2 pages around the current one
+     * - Go-to-page input (Enter / blur to jump)
+     * - All state kept in JS; no server round-trip.
+     * - Preserves search, category chips, sort, and pairing filter.
+     *
+     * NOTE ON SCALE: this is client-side, so the whole dataset is rendered
+     * server-side in one page load. It's fine up to a few thousand rows. If
+     * the herd grows bigger, move filtering/paging server-side and keep the
+     * exact same markup/CSS — only `render()` changes to fetch from the server.
      */
+
+    var EDGE_ICONS = {
+        first: 'bi-chevron-bar-left',
+        prev:  'bi-chevron-left',
+        next:  'bi-chevron-right',
+        last:  'bi-chevron-bar-right'
+    };
+
+    function buildPaginationHTML(state, totalPages) {
+        if (totalPages <= 1) {
+            // still render disabled edges so the UI is consistent
+            return ''
+                + '<button class="pg-btn pg-edge" disabled><i class="bi ' + EDGE_ICONS.first + '"></i><span class="pg-label">First</span></button>'
+                + '<button class="pg-btn pg-edge" disabled><i class="bi ' + EDGE_ICONS.prev  + '"></i><span class="pg-label">Prev</span></button>'
+                + '<button class="pg-btn active">1</button>'
+                + '<button class="pg-btn pg-edge" disabled><span class="pg-label">Next</span><i class="bi ' + EDGE_ICONS.next + '"></i></button>'
+                + '<button class="pg-btn pg-edge" disabled><span class="pg-label">Last</span><i class="bi ' + EDGE_ICONS.last + '"></i></button>';
+        }
+
+        var current = state.page;
+        var showFrom = Math.max(1, current - 2);
+        var showTo   = Math.min(totalPages, current + 2);
+        var html = '';
+
+        // FIRST
+        html += '<button class="pg-btn pg-edge" ' + (current === 1 ? 'disabled' : '') +
+                ' data-nav="first"><i class="bi ' + EDGE_ICONS.first + '"></i><span class="pg-label">First</span></button>';
+        // PREV
+        html += '<button class="pg-btn pg-edge" ' + (current === 1 ? 'disabled' : '') +
+                ' data-nav="prev"><i class="bi ' + EDGE_ICONS.prev + '"></i><span class="pg-label">Prev</span></button>';
+
+        // Leading page + ellipsis
+        if (showFrom > 1) {
+            html += '<button class="pg-btn" data-page="1">1</button>';
+            if (showFrom > 2) html += '<span class="pg-ellipsis">…</span>';
+        }
+
+        // Window
+        for (var i = showFrom; i <= showTo; i++) {
+            html += '<button class="pg-btn' + (i === current ? ' active' : '') + '" data-page="' + i + '">' + i + '</button>';
+        }
+
+        // Trailing ellipsis + last page
+        if (showTo < totalPages) {
+            if (showTo < totalPages - 1) html += '<span class="pg-ellipsis">…</span>';
+            html += '<button class="pg-btn" data-page="' + totalPages + '">' + totalPages + '</button>';
+        }
+
+        // NEXT
+        html += '<button class="pg-btn pg-edge" ' + (current === totalPages ? 'disabled' : '') +
+                ' data-nav="next"><span class="pg-label">Next</span><i class="bi ' + EDGE_ICONS.next + '"></i></button>';
+        // LAST
+        html += '<button class="pg-btn pg-edge" ' + (current === totalPages ? 'disabled' : '') +
+                ' data-nav="last"><span class="pg-label">Last</span><i class="bi ' + EDGE_ICONS.last + '"></i></button>';
+
+        return html;
+    }
+
     function initDataTable(opts) {
         var table = document.getElementById(opts.tableId);
         if (!table) return;
         var allRows = Array.prototype.slice.call(table.querySelectorAll('tr.dt-row'));
         if (!allRows.length) return;
 
-        var searchInput = document.getElementById(opts.searchId);
-        var sortSelect = opts.sortId ? document.getElementById(opts.sortId) : null;
-        var chipsContainer = opts.chipsId ? document.getElementById(opts.chipsId) : null;
+        var searchInput    = document.getElementById(opts.searchId);
+        var sortSelect     = opts.sortId      ? document.getElementById(opts.sortId)      : null;
+        var chipsContainer = opts.chipsId     ? document.getElementById(opts.chipsId)     : null;
         var pageSizeSelect = document.getElementById(opts.pageSizeId);
-        var prevBtn = document.getElementById(opts.prevId);
-        var nextBtn = document.getElementById(opts.nextId);
-        var pageLabel = document.getElementById(opts.pageLabelId);
-        var showingLabel = document.getElementById(opts.showingId);
-        var noMatch = document.getElementById(opts.noMatchId);
-        var groupRows = Array.prototype.slice.call(table.querySelectorAll('tr.category-group'));
+        var pagenav        = document.getElementById(opts.pagenavId);
+        var pageLabelLegacy= opts.pageLabelId ? document.getElementById(opts.pageLabelId) : null; // may not exist anymore
+        var showingLabel   = document.getElementById(opts.showingId);
+        var noMatch        = document.getElementById(opts.noMatchId);
+        var gotoInput      = opts.gotoId      ? document.getElementById(opts.gotoId)      : null;
+        var gotoTotal      = opts.gotoTotalId ? document.getElementById(opts.gotoTotalId) : null;
+        var groupRows      = Array.prototype.slice.call(table.querySelectorAll('tr.category-group'));
 
-        var state = { page: 1, pageSize: pageSizeSelect ? parseInt(pageSizeSelect.value, 10) : 25, externalCategory: null };
+        var state = {
+            page: 1,
+            pageSize: pageSizeSelect ? parseInt(pageSizeSelect.value, 10) : 25,
+            externalCategory: null,
+            manualCategory: null
+        };
 
         // Build category chips dynamically from row data
         if (chipsContainer) {
@@ -484,7 +630,7 @@
                     var av = a.getAttribute(attr) || '', bv = b.getAttribute(attr) || '';
                     var an = parseFloat(av), bn = parseFloat(bv);
                     if (!isNaN(an) && !isNaN(bn) && /^-?\d/.test(av) && /^-?\d/.test(bv)) {
-                        return bn - an; // numeric: descending (highest first — success rate, breedings)
+                        return bn - an; // numeric: descending (highest first)
                     }
                     return av.localeCompare(bv);
                 });
@@ -501,32 +647,79 @@
             var visibleSet = filtered.slice(start, end);
             var visibleIds = new Set(visibleSet);
 
+            // show/hide rows
             allRows.forEach(function (r) { r.style.display = visibleIds.has(r) ? '' : 'none'; });
 
-            // toggle category group header rows based on whether any child is visible on this page
+            // show/hide category group headers
             groupRows.forEach(function (gr) {
                 var catName = gr.getAttribute('data-cat-group');
                 var hasVisible = visibleSet.some(function (r) { return r.getAttribute('data-category') === catName; });
                 gr.style.display = hasVisible ? '' : 'none';
             });
 
-            if (pageLabel) pageLabel.textContent = state.page + ' / ' + totalPages;
-            if (prevBtn) prevBtn.disabled = state.page <= 1;
-            if (nextBtn) nextBtn.disabled = state.page >= totalPages;
+            // footer text
             if (showingLabel) {
                 showingLabel.textContent = filtered.length === 0
                     ? 'Showing 0 of 0'
                     : 'Showing ' + (start + 1) + '–' + end + ' of ' + filtered.length;
             }
+
+            // nav buttons
+            if (pagenav) {
+                pagenav.innerHTML = buildPaginationHTML(state, totalPages);
+                bindNavEvents(pagenav, totalPages);
+            }
+            if (pageLabelLegacy) pageLabelLegacy.textContent = state.page + ' / ' + totalPages;
+
+            // go-to
+            if (gotoInput)  gotoInput.max = totalPages;
+            if (gotoInput)  gotoInput.value = state.page;
+            if (gotoTotal)  gotoTotal.textContent = '/ ' + totalPages;
+
+            // empty state
             if (noMatch) noMatch.style.display = filtered.length === 0 ? '' : 'none';
             table.style.display = filtered.length === 0 ? 'none' : '';
         }
 
+        function bindNavEvents(nav, totalPages) {
+            Array.prototype.forEach.call(nav.querySelectorAll('.pg-btn'), function (btn) {
+                btn.addEventListener('click', function () {
+                    if (btn.disabled) return;
+                    var target = btn.getAttribute('data-page');
+                    if (target) {
+                        state.page = parseInt(target, 10);
+                    } else {
+                        var nav = btn.getAttribute('data-nav');
+                        if (nav === 'first') state.page = 1;
+                        else if (nav === 'prev') state.page = Math.max(1, state.page - 1);
+                        else if (nav === 'next') state.page = Math.min(totalPages, state.page + 1);
+                        else if (nav === 'last') state.page = totalPages;
+                    }
+                    render();
+                });
+            });
+        }
+
+        // Wire up inputs
         if (searchInput) searchInput.addEventListener('input', function () { state.page = 1; render(); });
         if (sortSelect) sortSelect.addEventListener('change', function () { state.page = 1; render(); });
-        if (pageSizeSelect) pageSizeSelect.addEventListener('change', function () { state.pageSize = parseInt(pageSizeSelect.value, 10); state.page = 1; render(); });
-        if (prevBtn) prevBtn.addEventListener('click', function () { if (state.page > 1) { state.page--; render(); } });
-        if (nextBtn) nextBtn.addEventListener('click', function () { state.page++; render(); });
+        if (pageSizeSelect) pageSizeSelect.addEventListener('change', function () {
+            state.pageSize = parseInt(pageSizeSelect.value, 10);
+            state.page = 1;
+            render();
+        });
+        if (gotoInput) {
+            var jump = function () {
+                var total = parseInt(gotoInput.max, 10) || 1;
+                var p = parseInt(gotoInput.value, 10);
+                if (isNaN(p) || p < 1) p = 1;
+                if (p > total) p = total;
+                state.page = p;
+                render();
+            };
+            gotoInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); jump(); } });
+            gotoInput.addEventListener('blur', jump);
+        }
 
         render();
 
@@ -549,20 +742,23 @@
     document.addEventListener('DOMContentLoaded', function () {
         initDataTable({
             tableId: 'femalesTable', searchId: 'femalesSearch', sortId: 'femalesSort', chipsId: 'femalesChips',
-            pageSizeId: 'femalesPageSize', prevId: 'femalesPrev', nextId: 'femalesNext',
-            pageLabelId: 'femalesPageLabel', showingId: 'femalesShowing', noMatchId: 'femalesNoMatch'
+            pageSizeId: 'femalesPageSize', pagenavId: 'femalesPagenav',
+            showingId: 'femalesShowing', noMatchId: 'femalesNoMatch',
+            gotoId: 'femalesGotoInput', gotoTotalId: 'femalesGotoTotal'
         });
 
         var malesController = initDataTable({
             tableId: 'malesTable', searchId: 'malesSearch', sortId: 'malesSort', chipsId: 'malesChips',
-            pageSizeId: 'malesPageSize', prevId: 'malesPrev', nextId: 'malesNext',
-            pageLabelId: 'malesPageLabel', showingId: 'malesShowing', noMatchId: 'malesNoMatch'
+            pageSizeId: 'malesPageSize', pagenavId: 'malesPagenav',
+            showingId: 'malesShowing', noMatchId: 'malesNoMatch',
+            gotoId: 'malesGotoInput', gotoTotalId: 'malesGotoTotal'
         });
 
         initDataTable({
             tableId: 'attentionTable', searchId: 'attentionSearch',
-            pageSizeId: 'attentionPageSize', prevId: 'attentionPrev', nextId: 'attentionNext',
-            pageLabelId: 'attentionPageLabel', showingId: 'attentionShowing', noMatchId: 'attentionNoMatch'
+            pageSizeId: 'attentionPageSize', pagenavId: 'attentionPagenav',
+            showingId: 'attentionShowing', noMatchId: 'attentionNoMatch',
+            gotoId: 'attentionGotoInput', gotoTotalId: 'attentionGotoTotal'
         });
 
         // Female → Male pairing workflow

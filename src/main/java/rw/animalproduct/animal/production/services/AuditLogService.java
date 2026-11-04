@@ -7,9 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import rw.animalproduct.animal.production.entity.AuditLog;
 import rw.animalproduct.animal.production.repository.AuditLogRepository;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,9 +31,6 @@ public class AuditLogService {
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    /**
-     * Friendly display labels for entity types, shared by controllers and templates.
-     */
     public static final Map<String, String> ENTITY_LABELS = Map.ofEntries(
             Map.entry("representative",       "Representatives"),
             Map.entry("beneficiary",          "Beneficiaries"),
@@ -46,12 +46,6 @@ public class AuditLogService {
             Map.entry("livestock_treatment",  "Treatments")
     );
 
-    /**
-     * NEW: one Bootstrap Icon class per entity type, shared by controllers and templates
-     * so the audit-log views (tabs, live-count cards, filtered-page hero) don't need to
-     * hardcode a ternary chain per entity type. Add an entry here whenever a new
-     * auditable module is introduced and its icon will automatically show up everywhere.
-     */
     public static final Map<String, String> ENTITY_ICONS = Map.ofEntries(
             Map.entry("representative",       "bi bi-person-badge"),
             Map.entry("beneficiary",          "bi bi-people"),
@@ -77,13 +71,6 @@ public class AuditLogService {
         return ENTITY_ICONS.getOrDefault(entityType, "bi bi-folder2");
     }
 
-    /**
-     * Serialize an entity to JSON right now. Use this to capture a "before" snapshot
-     * BEFORE calling a service.update(...) method — Spring's open-in-view session means
-     * an entity fetched earlier in the same request can be the same managed instance
-     * that update() mutates in place, so it must be turned into a String immediately,
-     * not passed as a live object to be serialized later.
-     */
     public String snapshot(Object entity) {
         if (entity == null) return null;
         try {
@@ -94,8 +81,10 @@ public class AuditLogService {
     }
 
     /**
-     * Save an audit entry.
+     * Writes an audit row in a NEW transaction so the entry survives
+     * even if the caller's business transaction rolls back.
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void log(String entityType, UUID entityId, String action,
                     String changedBy, Object oldData, Object newData, String notes) {
         AuditLog log = new AuditLog();
@@ -104,16 +93,15 @@ public class AuditLogService {
         log.setAction(action);
         log.setChangedBy(changedBy != null ? changedBy : "system");
         log.setNotes(notes);
+        log.setChangedAt(LocalDateTime.now());
 
         try {
             if (oldData != null) {
-                log.setOldData(oldData instanceof String
-                        ? (String) oldData
+                log.setOldData(oldData instanceof String ? (String) oldData
                         : objectMapper.writeValueAsString(oldData));
             }
             if (newData != null) {
-                log.setNewData(newData instanceof String
-                        ? (String) newData
+                log.setNewData(newData instanceof String ? (String) newData
                         : objectMapper.writeValueAsString(newData));
             }
         } catch (Exception e) {
@@ -124,9 +112,25 @@ public class AuditLogService {
         auditLogRepository.save(log);
     }
 
+    public void logCreate(String entityType, UUID entityId, Object newSnapshot, String changedBy) {
+        log(entityType, entityId, AuditLog.ACTION_CREATE, changedBy, null, newSnapshot, "Created");
+    }
+
+    public void logUpdate(String entityType, UUID entityId,
+                          Object oldSnapshot, Object newSnapshot, String changedBy) {
+        log(entityType, entityId, AuditLog.ACTION_UPDATE, changedBy, oldSnapshot, newSnapshot, "Updated");
+    }
+
+    public void logDelete(String entityType, UUID entityId, Object snapshot, String changedBy) {
+        log(entityType, entityId, AuditLog.ACTION_DELETE, changedBy, snapshot, null, "Deleted");
+    }
+
+    public void logSoftDelete(String entityType, UUID entityId, Object snapshot, String changedBy) {
+        log(entityType, entityId, AuditLog.ACTION_SOFT_DELETE, changedBy, snapshot, null, "Soft-deleted");
+    }
+
     public List<AuditLog> getLogsForEntity(String entityType, UUID entityId) {
-        return auditLogRepository
-                .findByEntityTypeAndEntityIdOrderByChangedAtDesc(entityType, entityId);
+        return auditLogRepository.findByEntityTypeAndEntityIdOrderByChangedAtDesc(entityType, entityId);
     }
 
     public Page<AuditLog> getAllPaged(int page, int size) {
@@ -139,55 +143,28 @@ public class AuditLogService {
                 entityType, PageRequest.of(page, size, Sort.Direction.DESC, "changedAt"));
     }
 
-    // ── KPI totals ───────────────────────────────────────────────────────────
-
-    public long getTotalCount() {
-        return auditLogRepository.countByIsDeletedFalse();
-    }
-
-    public long getCountByAction(String action) {
-        return auditLogRepository.countByActionAndIsDeletedFalse(action);
-    }
-
-    public long getCountByEntityType(String entityType) {
-        return auditLogRepository.countByEntityTypeAndIsDeletedFalse(entityType);
-    }
-
+    public long getTotalCount() { return auditLogRepository.countByIsDeletedFalse(); }
+    public long getCountByAction(String action) { return auditLogRepository.countByActionAndIsDeletedFalse(action); }
+    public long getCountByEntityType(String entityType) { return auditLogRepository.countByEntityTypeAndIsDeletedFalse(entityType); }
     public long getCountByEntityTypeAndAction(String entityType, String action) {
         return auditLogRepository.countByEntityTypeAndActionAndIsDeletedFalse(entityType, action);
     }
-
-    /** DELETE + SOFT_DELETE combined, since Buyer soft-deletes instead of hard-deleting. */
-    public long getTotalDeleteCount() {
-        return getCountByAction("DELETE") + getCountByAction("SOFT_DELETE");
-    }
-
-    public long getDeleteCountForEntityType(String entityType) {
-        return getCountByEntityTypeAndAction(entityType, "DELETE")
-                + getCountByEntityTypeAndAction(entityType, "SOFT_DELETE");
-    }
-
-    // ── KPI breakdowns (category -> count), used on the "All Logs" view ────
+    public long getTotalDeleteCount() { return auditLogRepository.countAllDeletes(); }
+    public long getDeleteCountForEntityType(String entityType) { return auditLogRepository.countDeletesForEntityType(entityType); }
 
     private Map<String, Long> toMap(List<Object[]> rows) {
         Map<String, Long> map = new LinkedHashMap<>();
-        for (Object[] row : rows) {
-            map.put((String) row[0], (Long) row[1]);
-        }
+        for (Object[] row : rows) map.put((String) row[0], (Long) row[1]);
         return map;
     }
 
     public Map<String, Long> getBreakdownByEntityType() {
         return toMap(auditLogRepository.countAllGroupedByEntityType());
     }
-
     public Map<String, Long> getBreakdownByAction(String action) {
         return toMap(auditLogRepository.countGroupedByEntityTypeAndAction(action));
     }
-
     public Map<String, Long> getDeleteBreakdown() {
-        Map<String, Long> merged = new LinkedHashMap<>(getBreakdownByAction("DELETE"));
-        getBreakdownByAction("SOFT_DELETE").forEach((k, v) -> merged.merge(k, v, Long::sum));
-        return merged;
+        return toMap(auditLogRepository.countDeletesGroupedByEntityType());
     }
 }

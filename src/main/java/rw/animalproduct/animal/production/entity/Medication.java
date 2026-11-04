@@ -11,7 +11,6 @@ import java.util.UUID;
 @Table(name = "medications")
 public class Medication {
 
-    // ── Enums ──────────────────────────────────────────────────────────────────
     public enum MedicationCategory {
         ANTIBIOTIC, ANTIPARASITIC, VACCINE, VITAMIN, HORMONE,
         ANTI_INFLAMMATORY, ANTIFUNGAL, DEWORMER, OTHER
@@ -21,7 +20,6 @@ public class Medication {
         ml, mg, g, tablets, IU, cc
     }
 
-    // ── Fields ─────────────────────────────────────────────────────────────────
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -50,7 +48,7 @@ public class Medication {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
     @Column(name = "created_at", updatable = false)
@@ -63,13 +61,9 @@ public class Medication {
     @JoinColumn(name = "created_by", referencedColumnName = "user_id")
     private Users createdBy;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
     @OneToMany(mappedBy = "medication", fetch = FetchType.LAZY)
     private List<LivestockTreatment> treatments = new ArrayList<>();
 
-    // ── Lifecycle ─────────────────────────────────────────────────────────────
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -81,7 +75,11 @@ public class Medication {
         updatedAt = LocalDateTime.now();
     }
 
-    // ── Getters & Setters ─────────────────────────────────────────────────────
+    @Transient
+    public boolean isUsable() {
+        return Boolean.TRUE.equals(isActive);
+    }
+
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -117,9 +115,6 @@ public class Medication {
 
     public Users getCreatedBy() { return createdBy; }
     public void setCreatedBy(Users createdBy) { this.createdBy = createdBy; }
-
-    public Boolean getIsDeleted() { return isDeleted; }
-    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
 
     public List<LivestockTreatment> getTreatments() { return treatments; }
     public void setTreatments(List<LivestockTreatment> treatments) { this.treatments = treatments; }

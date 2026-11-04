@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Livestock Treatment Management</title>
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
@@ -9,549 +10,215 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
         * { box-sizing: border-box; }
-        body {
-            background: #f1f5f9;
-            padding: 20px;
-            font-family: 'DM Sans', system-ui, sans-serif;
-            font-size: 0.875rem;
-        }
-        .page-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-        }
-        .page-header h3 {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin: 0;
-            color: #0f172a;
-        }
-        .page-header .subtitle {
-            color: #64748b;
-            font-size: 0.85rem;
-            margin: 0;
+        body { background:#f1f5f9; padding:20px; font-family:'DM Sans',system-ui,sans-serif; font-size:0.875rem; }
+        .page-card { background:white; border-radius:16px; padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04); }
+        .page-header h3 { font-size:1.4rem; font-weight:700; margin:0; color:#0f172a; }
+        .page-header .subtitle { color:#64748b; font-size:0.85rem; margin:0; }
+
+        .empty-db-banner { background:linear-gradient(135deg,#eff6ff,#dbeafe); border:1px solid #93c5fd; border-left:4px solid #3b82f6; border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:12px; }
+        .empty-db-banner .icon { font-size:1.6rem; color:#2563eb; }
+        .empty-db-banner .text strong { color:#1e40af; }
+        .empty-db-banner .text { color:#1e3a8a; font-size:0.85rem; }
+        .empty-db-banner a { color:#1d4ed8; font-weight:700; text-decoration:underline; }
+
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin-bottom:20px; }
+        .stat-card { background:#fff; border:1px solid #e9edf2; border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:10px; transition:.15s ease; }
+        .stat-card:hover { border-color:#cbd5e1; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+        .stat-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+        .stat-icon.treatments { background:#ede9fe; color:#7c3aed; }
+        .stat-icon.ongoing { background:#dbeafe; color:#2563eb; }
+        .stat-icon.completed { background:#d1fae5; color:#059669; }
+        .stat-icon.failed { background:#fee2e2; color:#dc2626; }
+        .stat-icon.scheduled { background:#fef3c7; color:#d97706; }
+        .stat-value { font-size:1.05rem; font-weight:700; color:#0f172a; line-height:1.2; }
+        .stat-label { font-size:0.62rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+
+        .filter-section { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px; padding:12px 16px; background:#f8fafc; border-radius:10px; border:1px solid #e9edf2; }
+        .filter-group-label { font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; display:flex; align-items:center; margin-right:4px; }
+        .filter-pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+        .pill { padding:4px 14px; border-radius:20px; font-size:0.72rem; font-weight:600; text-decoration:none; border:2px solid transparent; transition:.15s ease; display:inline-flex; align-items:center; gap:4px; cursor:pointer; }
+        .pill:hover { transform:translateY(-1px); }
+        .pill.active { border-color:#8b5cf6; box-shadow:0 2px 8px rgba(139,92,246,0.15); background:#ede9fe; }
+        .pill.all { background:#f1f5f9; color:#475569; }
+        .pill.ongoing { background:#dbeafe; color:#1e40af; }
+        .pill.completed { background:#d1fae5; color:#065f46; }
+        .pill.failed { background:#fee2e2; color:#991b1b; }
+        .pill.scheduled { background:#fef3c7; color:#92400e; }
+        .pill .count { background:rgba(0,0,0,0.06); padding:0 6px; border-radius:12px; font-size:0.65rem; }
+        .filter-divider { width:1px; background:#e2e8f0; margin:0 4px; }
+
+        .add-form-section { background:#f8fafc; border-radius:12px; padding:18px 20px; margin-bottom:20px; border:1px solid #e9edf2; }
+        .add-form-section h5 { font-size:0.95rem; font-weight:700; margin-bottom:16px; color:#0f172a; }
+        .form-label { font-size:0.75rem; font-weight:600; margin-bottom:3px; color:#475569; }
+        .form-hint { font-size:0.65rem; color:#94a3b8; margin-top:2px; }
+        .form-control, .form-select { font-size:0.82rem; padding:0.4rem 0.6rem; border-radius:8px; border-color:#e2e8f0; }
+        .form-control:focus, .form-select:focus { border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,0.1); }
+        .form-control.locked-field { background:#f1f5f9; font-weight:600; color:#475569; cursor:not-allowed; }
+
+        .search-wrapper { position:relative; }
+        .search-wrapper .search-results { position:absolute; top:100%; left:0; right:0; background:white; border:2px solid #8b5cf6; border-top:none; border-radius:0 0 8px 8px; max-height:300px; overflow-y:auto; z-index:1050; display:none; box-shadow:0 4px 16px rgba(0,0,0,0.1); }
+        .search-wrapper .search-results .result-item { padding:10px 14px; cursor:pointer; border-bottom:1px solid #f0f0f0; transition:background .15s; display:flex; justify-content:space-between; align-items:center; }
+        .search-wrapper .search-results .result-item:hover { background:#f3f0ff; }
+        .search-wrapper .search-results .result-item .tag { font-weight:600; color:#1a202c; }
+        .search-wrapper .search-results .result-item .details { font-size:0.8rem; color:#6c757d; }
+        .search-wrapper .search-results .no-results { padding:20px; text-align:center; color:#94a3b8; }
+        .selected-chip { display:inline-flex; align-items:center; gap:8px; background:#ede9fe; border:2px solid #8b5cf6; border-radius:20px; padding:4px 12px 4px 16px; margin-top:6px; font-weight:600; color:#5b21b6; }
+        .selected-chip .remove { cursor:pointer; color:#94a3b8; font-size:1.1rem; line-height:1; }
+        .selected-chip .remove:hover { color:#dc2626; }
+
+        .add-vet-btn { background:#8b5cf6; color:white; border:none; border-radius:50%; width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; font-size:1.1rem; margin-left:8px; flex-shrink:0; }
+        .add-vet-btn:hover { background:#7c3aed; transform:scale(1.05); }
+
+        .table-responsive { overflow-x:auto; }
+        .table { font-size:0.75rem; margin-bottom:0; width:100%; border-collapse:separate; border-spacing:0; }
+        .table thead th { font-size:0.65rem; text-transform:uppercase; letter-spacing:.04em; color:#64748b; font-weight:700; padding:10px 8px; background:#f8fafc; border-bottom:2px solid #e9edf2; white-space:nowrap; }
+        .table td { padding:10px 8px; vertical-align:middle; border-bottom:1px solid #f1f5f9; font-size:0.75rem; white-space:nowrap; }
+        .table tbody tr:hover { background:#f8fafc; }
+
+        .td-location { max-width: 240px; white-space: normal !important; }
+        .td-location .loc-full { white-space: normal; word-break: break-word; line-height: 1.35; font-size: 0.72rem; color: #334155; }
+        .td-location .loc-full .sep { color:#94a3b8; margin:0 3px; }
+
+        .action-group { display:flex; gap:4px; justify-content:center; flex-wrap:nowrap; }
+        .action-group .btn { padding:0.25rem 0.4rem; font-size:0.72rem; border-radius:6px; display:inline-flex; align-items:center; justify-content:center; }
+
+        .badge-status { padding:3px 8px; border-radius:20px; font-size:0.65rem; font-weight:600; display:inline-flex; align-items:center; gap:3px; white-space:nowrap; }
+        .badge-ONGOING { background:#dbeafe; color:#1e40af; }
+        .badge-COMPLETED { background:#d1fae5; color:#065f46; }
+        .badge-FAILED { background:#fee2e2; color:#991b1b; }
+        .badge-SCHEDULED { background:#fef3c7; color:#92400e; }
+        .badge.bg-success { background:#d1fae5 !important; color:#065f46 !important; }
+        .badge.bg-danger { background:#fee2e2 !important; color:#991b1b !important; }
+        .badge.bg-warning { background:#fef3c7 !important; color:#92400e !important; }
+        .badge.bg-secondary { background:#e9edf2 !important; color:#475569 !important; }
+        .badge.bg-info { background:#dbeafe !important; color:#1e40af !important; }
+        .badge.bg-primary { background:#dbeafe !important; color:#1e40af !important; }
+
+        .text-truncate-custom { max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; cursor:pointer; }
+
+        @media (max-width:991px) {
+            .table-responsive { overflow-x:hidden; }
+            .table, .table thead, .table tbody, .table th, .table td, .table tr { display:block; width:100%; }
+            .table thead { display:none; }
+            .table tr { margin-bottom:15px; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.02); padding:10px; }
+            .table td { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; padding:8px 0; text-align:right; white-space:normal; }
+            .table td:last-child { border-bottom:none; padding-bottom:0; }
+            .table td::before { content:attr(data-label); font-weight:700; color:#64748b; font-size:0.7rem; text-transform:uppercase; text-align:left; margin-right:15px; flex-shrink:0; }
+            .text-truncate-custom { max-width:100%; text-align:right; }
+            .td-actions { flex-direction:column; align-items:flex-end; margin-top:10px; padding-top:10px; border-top:2px dashed #f1f5f9; }
+            .td-actions::before { margin-bottom:8px; }
+            .action-group { justify-content:flex-end; width:100%; }
+            .td-location { max-width:100%; }
+            .td-location .loc-full { text-align:right; }
         }
 
-        /* ─── GREEN RECORD TREATMENT BUTTON ──────────────────────────────── */
-        .btn-record-treatment {
-            background: #0d2d1a !important;
-            border-color: #22c55e !important;
-            color: white !important;
-            font-weight: 600 !important;
-            padding: 8px 20px !important;
-            border-radius: 8px !important;
-            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3) !important;
-            transition: all 0.2s ease !important;
-        }
-        .btn-record-treatment:hover {
-            background: #16a34a !important;
-            border-color: #16a34a !important;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4) !important;
-            transform: translateY(-1px);
-            color: white !important;
-        }
-        .btn-record-treatment i {
-            margin-right: 6px;
-        }
+        .empty-state { padding:60px 24px; text-align:center; background:linear-gradient(180deg,#fafbfc 0%,#f1f5f9 100%); border-radius:12px; margin:12px 0; }
+        .empty-state .empty-icon { width:88px; height:88px; border-radius:50%; background:linear-gradient(135deg,#ede9fe,#dbeafe); display:inline-flex; align-items:center; justify-content:center; font-size:2.4rem; color:#7c3aed; margin-bottom:18px; box-shadow:0 4px 20px rgba(124,58,237,0.15); }
+        .empty-state h4 { font-size:1.1rem; font-weight:700; color:#0f172a; margin-bottom:6px; }
+        .empty-state p { color:#64748b; font-size:0.88rem; margin-bottom:20px; max-width:420px; margin:0 auto 20px; }
+        .empty-state .empty-cta { display:inline-flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: #fff;
-            border: 1px solid #e9edf2;
-            border-radius: 12px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.15s ease;
-        }
-        .stat-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .stat-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-        }
-        .stat-icon.treatments { background: #ede9fe; color: #7c3aed; }
-        .stat-icon.ongoing { background: #dbeafe; color: #2563eb; }
-        .stat-icon.completed { background: #d1fae5; color: #059669; }
-        .stat-icon.failed { background: #fee2e2; color: #dc2626; }
-        .stat-icon.scheduled { background: #fef3c7; color: #d97706; }
-        .stat-value {
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: #0f172a;
-            line-height: 1.2;
-        }
-        .stat-label {
-            font-size: 0.62rem;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
+        .modal-content { border-radius:12px; }
+        .modal-header { border-bottom:1px solid #e9edf2; padding:16px 20px; }
+        .modal-body { padding:20px; }
+        .modal-footer { border-top:1px solid #e9edf2; padding:12px 20px; }
 
-        .filter-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 10px;
-            border: 1px solid #e9edf2;
-        }
-        .filter-group-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            display: flex;
-            align-items: center;
-            margin-right: 4px;
-        }
-        .filter-pills {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .pill {
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            text-decoration: none;
-            border: 2px solid transparent;
-            transition: 0.15s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            cursor: pointer;
-        }
-        .pill:hover { transform: translateY(-1px); }
-        .pill.active { border-color: #8b5cf6; box-shadow: 0 2px 8px rgba(139,92,246,0.15); background: #ede9fe; }
-        .pill.all       { background: #f1f5f9; color: #475569; }
-        .pill.ongoing   { background: #dbeafe; color: #1e40af; }
-        .pill.completed { background: #d1fae5; color: #065f46; }
-        .pill.failed    { background: #fee2e2; color: #991b1b; }
-        .pill.scheduled { background: #fef3c7; color: #92400e; }
-        .pill .count {
-            background: rgba(0,0,0,0.06);
-            padding: 0 6px;
-            border-radius: 12px;
-            font-size: 0.65rem;
-        }
-        .filter-divider {
-            width: 1px;
-            background: #e2e8f0;
-            margin: 0 4px;
-        }
+        .payment-summary-card { background:#f8fafc; border-radius:8px; padding:12px; text-align:center; }
+        .payment-summary-card .amount { font-size:1.2rem; font-weight:700; }
+        .payment-summary-card .label { font-size:0.65rem; color:#94a3b8; text-transform:uppercase; letter-spacing:.04em; }
+        .payment-summary-card.total .amount { color:#0f172a; }
+        .payment-summary-card.paid .amount { color:#059669; }
+        .payment-summary-card.balance .amount { color:#d97706; }
 
-        .add-form-section {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            border: 1px solid #e9edf2;
-        }
-        .add-form-section h5 {
-            font-size: 0.95rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #0f172a;
-        }
-        .form-label { font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; color: #475569; }
-        .form-hint { font-size: 0.65rem; color: #94a3b8; margin-top: 2px; }
-        .form-control, .form-select {
-            font-size: 0.82rem;
-            padding: 0.4rem 0.6rem;
-            border-radius: 8px;
-            border-color: #e2e8f0;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #8b5cf6;
-            box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
-        }
-        .form-control.locked-field {
-            background: #f1f5f9;
-            font-weight: 600;
-            color: #475569;
-            cursor: not-allowed;
-        }
+        [data-tooltip] { position:relative; cursor:help; }
+        [data-tooltip]:hover::after { content:attr(data-tooltip); position:absolute; bottom:100%; left:50%; transform:translateX(-50%); background:#0f172a; color:white; padding:4px 8px; border-radius:4px; font-size:0.65rem; white-space:nowrap; z-index:1000; max-width:300px; overflow:hidden; text-overflow:ellipsis; }
 
-        /* ─── Live Search Styles ────────────────────────────────────────── */
-        .search-wrapper { position: relative; }
-        .search-wrapper .search-results {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #8b5cf6;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            max-height: 300px;
-            overflow-y: auto;
-            z-index: 1050;
-            display: none;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION (server-side)
+           ══════════════════════════════════════════════════════════════ */
+        .pager-bar {
+            display:flex; align-items:center; justify-content:space-between;
+            flex-wrap:wrap; gap:14px; margin-top:22px;
+            padding-top:16px; border-top:1.5px solid #f0f2f5;
+            font-size:0.82rem; color:#64748b;
         }
-        .search-wrapper .search-results .result-item {
-            padding: 10px 14px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.15s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .search-wrapper .search-results .result-item:hover {
-            background: #f3f0ff;
-        }
-        .search-wrapper .search-results .result-item .tag {
-            font-weight: 600;
-            color: #1a202c;
-        }
-        .search-wrapper .search-results .result-item .details {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-        .search-wrapper .search-results .result-item .status-badge {
-            font-size: 0.65rem;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 600;
-        }
-        .search-wrapper .search-results .status-badge.sick {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .search-wrapper .search-results .status-badge.active {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .search-wrapper .search-results .no-results {
-            padding: 20px;
-            text-align: center;
-            color: #94a3b8;
-        }
-        .selected-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #ede9fe;
-            border: 2px solid #8b5cf6;
-            border-radius: 20px;
-            padding: 4px 12px 4px 16px;
-            margin-top: 6px;
-            font-weight: 600;
-            color: #5b21b6;
-        }
-        .selected-chip .remove {
-            cursor: pointer;
-            color: #94a3b8;
-            font-size: 1.1rem;
-            line-height: 1;
-            transition: color 0.2s;
-        }
-        .selected-chip .remove:hover { color: #dc2626; }
+        .pager-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .pager-info { font-size:0.82rem; color:#64748b; }
+        .pager-info strong { color:#0f172a; font-weight:700; }
 
-        .add-vet-btn {
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 1.1rem;
-            margin-left: 8px;
-            flex-shrink: 0;
+        .pager-pagesize { display:flex; align-items:center; gap:6px; }
+        .pager-pagesize label { font-size:0.75rem; font-weight:600; color:#64748b; }
+        .pager-pagesize select {
+            padding:4px 9px; border:1px solid #e2e8f0; border-radius:6px;
+            font-size:0.8rem; font-weight:600; color:#0f172a;
+            cursor:pointer; background:#fff;
         }
-        .add-vet-btn:hover { background: #7c3aed; transform: scale(1.05); }
+        .pager-pagesize select:hover { border-color:#8b5cf6; }
+        .pager-pagesize select:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.12); }
 
-        /* ─── TABLE - Optimized for readability ──────────────────────────── */
-        .table {
-            font-size: 0.75rem;
-            margin-bottom: 0;
-            width: 100%;
-            table-layout: auto;
+        .pager-list {
+            display:flex; align-items:center; gap:4px;
+            list-style:none; margin:0; padding:0; flex-wrap:wrap;
         }
-        .table thead th {
-            font-size: 0.62rem;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #64748b;
-            font-weight: 700;
-            padding: 8px 6px;
-            background: #f8fafc;
-            border-bottom: 2px solid #e9edf2;
-            white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        .pg-btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:5px;
+            min-width:34px; height:34px; padding:0 10px;
+            border-radius:8px; font-size:0.8rem; font-weight:600;
+            color:#1e293b; background:#fff; border:1px solid #e2e8f0;
+            text-decoration:none; transition:all .12s ease;
+            cursor:pointer; white-space:nowrap; font-family:inherit;
         }
-        .table td {
-            padding: 6px 6px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 0.75rem;
-            word-wrap: break-word;
-            max-width: 200px;
+        .pg-btn:hover { background:#f3f0ff; border-color:#8b5cf6; color:#6d28d9; }
+        .pg-btn.active {
+            background:#8b5cf6; color:#fff; border-color:#8b5cf6;
+            pointer-events:none; cursor:default;
+            box-shadow:0 2px 6px rgba(139,92,246,.28);
         }
-        .table tbody tr:hover { background: #f8fafc; }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity:.35; pointer-events:none; cursor:not-allowed; background:#fafbfc;
+        }
+        .pg-btn.pg-edge {
+            min-width:auto; padding:0 12px; gap:6px;
+            background:#f8fafc; color:#334155; font-weight:700;
+        }
+        .pg-btn.pg-edge:hover { background:#8b5cf6; border-color:#8b5cf6; color:#fff; }
+        .pg-btn.pg-edge i { font-size:12px; line-height:1; }
+        .pg-btn.pg-edge .pg-label {
+            display:inline-block; font-size:0.72rem;
+            text-transform:uppercase; letter-spacing:.04em;
+        }
+        .pg-ellipsis {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:24px; height:34px; color:#94a3b8;
+            font-size:0.85rem; font-weight:700; user-select:none; letter-spacing:.1em;
+        }
+        .pager-goto {
+            display:flex; align-items:center; gap:5px;
+            font-size:0.75rem; color:#64748b; font-weight:600;
+        }
+        .pager-goto input {
+            width:56px; height:34px; padding:0 8px;
+            border:1px solid #e2e8f0; border-radius:6px;
+            font-size:0.8rem; font-weight:600; text-align:center;
+            color:#0f172a; background:#fff; transition:all .12s; font-family:inherit;
+        }
+        .pager-goto input:focus { outline:none; border-color:#8b5cf6; box-shadow:0 0 0 3px rgba(139,92,246,.12); }
+        .pager-goto input::-webkit-outer-spin-button,
+        .pager-goto input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .pager-goto input[type=number] { -moz-appearance:textfield; }
 
-        /* Column width classes */
-        .col-ref { min-width: 40px; width: 4%; }
-        .col-reference { min-width: 100px; width: 8%; }
-        .col-animal { min-width: 80px; width: 6%; }
-        .col-beneficiary { min-width: 120px; width: 10%; }
-        .col-veterinarian { min-width: 120px; width: 10%; }
-        .col-location { min-width: 150px; width: 12%; }
-        .col-diagnosis { min-width: 80px; width: 6%; }
-        .col-medication { min-width: 80px; width: 6%; }
-        .col-date { min-width: 75px; width: 5%; }
-        .col-cost { min-width: 60px; width: 4%; }
-        .col-paid { min-width: 60px; width: 4%; }
-        .col-balance { min-width: 60px; width: 4%; }
-        .col-payment { min-width: 80px; width: 5%; }
-        .col-type { min-width: 70px; width: 4%; }
-        .col-status { min-width: 70px; width: 4%; }
-        .col-outcome { min-width: 70px; width: 4%; }
-        .col-actions { min-width: 160px; width: 10%; }
-
-        /* Text utilities */
-        .text-ellipsis {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 100%;
-        }
-        .text-wrap {
-            white-space: normal;
-            word-wrap: break-word;
-        }
-        .fw-600 { font-weight: 600; }
-
-        .badge-status {
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 0.6rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            white-space: nowrap;
-        }
-        .badge-ONGOING { background: #dbeafe; color: #1e40af; }
-        .badge-COMPLETED { background: #d1fae5; color: #065f46; }
-        .badge-FAILED { background: #fee2e2; color: #991b1b; }
-        .badge-SCHEDULED { background: #fef3c7; color: #92400e; }
-        .badge.bg-success { background: #d1fae5 !important; color: #065f46 !important; }
-        .badge.bg-danger { background: #fee2e2 !important; color: #991b1b !important; }
-        .badge.bg-warning { background: #fef3c7 !important; color: #92400e !important; }
-        .badge.bg-secondary { background: #e9edf2 !important; color: #475569 !important; }
-
-        .action-group {
-            display: flex;
-            gap: 2px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .action-group .btn {
-            padding: 0.15rem 0.35rem;
-            font-size: 0.6rem;
-            border-radius: 4px;
-        }
-
-        .payment-quick-form {
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-            border-radius: 6px;
-            padding: 2px 4px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .payment-quick-form .form-control-sm {
-            width: 50px;
-            font-size: 0.55rem;
-            padding: 0.1rem 0.2rem;
-            min-width: 40px;
-        }
-        .payment-quick-form .btn-sm {
-            padding: 0.1rem 0.25rem;
-            font-size: 0.55rem;
-        }
-        .btn-payment { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .btn-payment:hover { background: #a7f3d0; color: #064e3b; }
-
-        .location-badge {
-            display: inline-block;
-            background: #f1f5f9;
-            color: #475569;
-            font-size: 0.55rem;
-            padding: 1px 4px;
-            border-radius: 3px;
-            margin: 1px 1px;
-        }
-        .location-badge i {
-            font-size: 0.45rem;
-            margin-right: 1px;
-        }
-        .location-separator {
-            color: #94a3b8;
-            font-size: 0.45rem;
-            margin: 0 1px;
-        }
-
-        .pagination .page-link {
-            font-size: 0.78rem;
-            padding: 0.3rem 0.65rem;
-            border-radius: 6px;
-            color: #475569;
-        }
-        .pagination .active .page-link {
-            background-color: #8b5cf6;
-            border-color: #8b5cf6;
-            color: white;
-        }
-
-        .modal-content { border-radius: 12px; }
-        .modal-header { border-bottom: 1px solid #e9edf2; padding: 16px 20px; }
-        .modal-body { padding: 20px; }
-        .modal-footer { border-top: 1px solid #e9edf2; padding: 12px 20px; }
-
-        .payment-summary-card {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 12px;
-            text-align: center;
-        }
-        .payment-summary-card .amount {
-            font-size: 1.2rem;
-            font-weight: 700;
-        }
-        .payment-summary-card .label {
-            font-size: 0.65rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .payment-summary-card.total .amount { color: #0f172a; }
-        .payment-summary-card.paid .amount { color: #059669; }
-        .payment-summary-card.balance .amount { color: #d97706; }
-
-        .payment-history-table {
-            font-size: 0.78rem;
-        }
-        .payment-history-table thead th {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            color: #94a3b8;
-            font-weight: 700;
-            background: #f8fafc;
-        }
-        .payment-history-table td {
-            padding: 6px 8px;
-            vertical-align: middle;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .table { font-size: 0.68rem; }
-            .table td, .table th { padding: 4px 4px; }
-            .col-location { min-width: 120px; }
-            .col-beneficiary { min-width: 100px; }
-            .col-veterinarian { min-width: 100px; }
-            .col-reference { min-width: 80px; }
-        }
-        @media (max-width: 992px) {
-            .table { font-size: 0.62rem; }
-            .table td, .table th { padding: 3px 3px; }
-            .col-location { min-width: 100px; width: 14%; }
-            .col-beneficiary { min-width: 80px; }
-            .col-veterinarian { min-width: 80px; }
-            .col-actions { min-width: 120px; }
-            .action-group .btn { padding: 0.1rem 0.2rem; font-size: 0.5rem; }
-            .payment-quick-form .form-control-sm { width: 40px; font-size: 0.5rem; }
-        }
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: 1fr 1fr; }
-            .filter-section { flex-direction: column; gap: 8px; }
-            .filter-divider { display: none; }
-            .table-responsive {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+        @media (max-width:900px) {
+            .pager-bar { flex-direction:column; align-items:stretch; }
+            .pager-meta { justify-content:space-between; width:100%; }
+            .pager-list { justify-content:center; width:100%; }
+            .pager-goto {
+                justify-content:center; width:100%;
+                padding-top:6px; border-top:1px dashed #e2e8f0; margin-top:4px;
             }
-            .table {
-                font-size: 0.6rem;
-                min-width: 1100px;
-            }
-            .page-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-        }
-        @media (max-width: 480px) {
-            .stats-grid { grid-template-columns: 1fr; }
-            body { padding: 10px; }
-            .page-card { padding: 12px; }
-            .add-form-section { padding: 12px; }
-            .table { min-width: 1000px; }
-        }
-
-        .gap-1 { gap: 0.25rem; }
-        .gap-2 { gap: 0.5rem; }
-        .cursor-pointer { cursor: pointer; }
-        .text-success-dark { color: #065f46; }
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .table-responsive .table {
-            margin-bottom: 0;
-        }
-
-        /* Tooltip for long text */
-        [data-tooltip] {
-            position: relative;
-            cursor: help;
-        }
-        [data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #0f172a;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.65rem;
-            white-space: nowrap;
-            z-index: 1000;
-            max-width: 300px;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            .pg-btn.pg-edge .pg-label { display:none; }
         }
     </style>
 </head>
@@ -559,23 +226,29 @@
 <div class="container-fluid">
     <div class="page-card">
 
-        <!-- ==================== HEADER ==================== -->
+        <!-- HEADER -->
         <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
                 <h3><i class="bi bi-heart-pulse-fill" style="color:#8b5cf6;"></i> Treatment Management</h3>
                 <p class="subtitle">Track and manage all animal treatment records</p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <a href="/livestock/list" class="btn btn-secondary btn-sm">
-                    <i class="bi bi-arrow-left"></i> Back
-                </a>
-                <a href="/livestock/treatments/report" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-bar-chart"></i> Reports
-                </a>
+                <a th:href="@{/livestock/list}" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
+                <a th:href="@{/livestock/treatments/report}" class="btn btn-outline-primary btn-sm"><i class="bi bi-bar-chart"></i> Reports</a>
             </div>
         </div>
 
-        <!-- ==================== ALERTS ==================== -->
+        <!-- EMPTY-DB BANNER -->
+        <div th:if="${livestockList == null or livestockList.empty}" class="empty-db-banner">
+            <div class="icon"><i class="bi bi-info-circle-fill"></i></div>
+            <div class="text">
+                <strong>No animals in the system yet.</strong>
+                Before you can record a treatment, you need at least one animal.
+                <a th:href="@{/livestock/list}">Go to Livestock List →</a>
+            </div>
+        </div>
+
+        <!-- ALERTS -->
         <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2">
             <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -585,120 +258,76 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- ==================== STATS ==================== -->
+        <!-- STATS -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon treatments"><i class="bi bi-heart-pulse-fill"></i></div>
-                <div>
-                    <div class="stat-value" th:text="${totalTreatments != null ? totalTreatments : 0}">0</div>
-                    <div class="stat-label">Total Treatments</div>
-                </div>
+                <div><div class="stat-value" th:text="${totalTreatments != null ? totalTreatments : 0}">0</div><div class="stat-label">Total Treatments</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon ongoing"><i class="bi bi-arrow-repeat"></i></div>
-                <div>
-                    <div class="stat-value" th:text="${ongoingCount}">0</div>
-                    <div class="stat-label">Ongoing</div>
-                </div>
+                <div><div class="stat-value" th:text="${ongoingCount}">0</div><div class="stat-label">Ongoing</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon completed"><i class="bi bi-check-circle-fill"></i></div>
-                <div>
-                    <div class="stat-value" th:text="${completedCount}">0</div>
-                    <div class="stat-label">Completed</div>
-                </div>
+                <div><div class="stat-value" th:text="${completedCount}">0</div><div class="stat-label">Completed</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon failed"><i class="bi bi-x-circle-fill"></i></div>
-                <div>
-                    <div class="stat-value" th:text="${failedCount}">0</div>
-                    <div class="stat-label">Failed</div>
-                </div>
+                <div><div class="stat-value" th:text="${failedCount}">0</div><div class="stat-label">Failed</div></div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon scheduled"><i class="bi bi-clock-fill"></i></div>
-                <div>
-                    <div class="stat-value" th:text="${scheduledCount}">0</div>
-                    <div class="stat-label">Scheduled</div>
-                </div>
+                <div><div class="stat-value" th:text="${scheduledCount}">0</div><div class="stat-label">Scheduled</div></div>
             </div>
         </div>
 
-        <!-- ==================== STATUS FILTERS ==================== -->
+        <!-- FILTERS -->
         <div class="filter-section">
             <div>
                 <span class="filter-group-label"><i class="bi bi-tag"></i> Treatment Status</span>
                 <div class="filter-pills">
-                    <a th:href="@{/livestock/treatments}" class="pill all" th:classappend="${filterStatus == null and filterType == null} ? 'active' : ''">
-                        All
-                    </a>
-                    <a th:href="@{/livestock/treatments(status='ONGOING')}" class="pill ongoing" th:classappend="${filterStatus == 'ONGOING'} ? 'active' : ''">
-                        🔄 ONGOING <span class="count" th:text="${ongoingCount}">0</span>
-                    </a>
-                    <a th:href="@{/livestock/treatments(status='COMPLETED')}" class="pill completed" th:classappend="${filterStatus == 'COMPLETED'} ? 'active' : ''">
-                        ✅ COMPLETED <span class="count" th:text="${completedCount}">0</span>
-                    </a>
-                    <a th:href="@{/livestock/treatments(status='FAILED')}" class="pill failed" th:classappend="${filterStatus == 'FAILED'} ? 'active' : ''">
-                        ❌ FAILED <span class="count" th:text="${failedCount}">0</span>
-                    </a>
-                    <a th:href="@{/livestock/treatments(status='SCHEDULED')}" class="pill scheduled" th:classappend="${filterStatus == 'SCHEDULED'} ? 'active' : ''">
-                        📅 SCHEDULED <span class="count" th:text="${scheduledCount}">0</span>
-                    </a>
+                    <a th:href="@{/livestock/treatments}" class="pill all" th:classappend="${filterStatus == null and filterType == null} ? 'active' : ''">All</a>
+                    <a th:href="@{/livestock/treatments(status='ONGOING')}" class="pill ongoing" th:classappend="${filterStatus == 'ONGOING'} ? 'active' : ''">🔄 ONGOING <span class="count" th:text="${ongoingCount}">0</span></a>
+                    <a th:href="@{/livestock/treatments(status='COMPLETED')}" class="pill completed" th:classappend="${filterStatus == 'COMPLETED'} ? 'active' : ''">✅ COMPLETED <span class="count" th:text="${completedCount}">0</span></a>
+                    <a th:href="@{/livestock/treatments(status='FAILED')}" class="pill failed" th:classappend="${filterStatus == 'FAILED'} ? 'active' : ''">❌ FAILED <span class="count" th:text="${failedCount}">0</span></a>
+                    <a th:href="@{/livestock/treatments(status='SCHEDULED')}" class="pill scheduled" th:classappend="${filterStatus == 'SCHEDULED'} ? 'active' : ''">📅 SCHEDULED <span class="count" th:text="${scheduledCount}">0</span></a>
                 </div>
             </div>
             <div class="filter-divider"></div>
             <div>
                 <span class="filter-group-label"><i class="bi bi-capsule"></i> Treatment Type</span>
                 <div class="filter-pills">
-                    <a th:href="@{/livestock/treatments}" class="pill all" th:classappend="${filterType == null} ? 'active' : ''">
-                        All
-                    </a>
-                    <a th:href="@{/livestock/treatments(type='CURATIVE')}" class="pill all" th:classappend="${filterType == 'CURATIVE'} ? 'active' : ''">
-                        Curative
-                    </a>
-                    <a th:href="@{/livestock/treatments(type='PREVENTIVE')}" class="pill all" th:classappend="${filterType == 'PREVENTIVE'} ? 'active' : ''">
-                        Preventive
-                    </a>
-                    <a th:href="@{/livestock/treatments(type='VACCINATION')}" class="pill all" th:classappend="${filterType == 'VACCINATION'} ? 'active' : ''">
-                        Vaccination
-                    </a>
-                    <a th:href="@{/livestock/treatments(type='DEWORMING')}" class="pill all" th:classappend="${filterType == 'DEWORMING'} ? 'active' : ''">
-                        Deworming
-                    </a>
+                    <a th:href="@{/livestock/treatments}" class="pill all" th:classappend="${filterType == null} ? 'active' : ''">All</a>
+                    <a th:href="@{/livestock/treatments(type='CURATIVE')}" class="pill all" th:classappend="${filterType == 'CURATIVE'} ? 'active' : ''">Curative</a>
+                    <a th:href="@{/livestock/treatments(type='PREVENTIVE')}" class="pill all" th:classappend="${filterType == 'PREVENTIVE'} ? 'active' : ''">Preventive</a>
+                    <a th:href="@{/livestock/treatments(type='VACCINATION')}" class="pill all" th:classappend="${filterType == 'VACCINATION'} ? 'active' : ''">Vaccination</a>
+                    <a th:href="@{/livestock/treatments(type='DEWORMING')}" class="pill all" th:classappend="${filterType == 'DEWORMING'} ? 'active' : ''">Deworming</a>
                 </div>
             </div>
         </div>
 
-        <!-- ==================== ADD TREATMENT FORM ==================== -->
-        <div class="add-form-section" id="treatmentForm">
+        <!-- ADD TREATMENT FORM -->
+        <div class="add-form-section" th:if="${livestockList != null and !livestockList.empty}">
             <h5><i class="bi bi-plus-circle" style="color:#8b5cf6;"></i> Record New Treatment</h5>
-            <form th:action="@{/livestock/treatments/new}" th:object="${treatment}" method="post" id="treatmentForm">
+            <form th:action="@{/livestock/treatments/new}" th:object="${treatment}" method="post" id="treatmentCreateForm">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
                 <div class="row g-3">
-                    <!-- ===== REFERENCE (Auto-generated) ===== -->
                     <div class="col-md-2">
                         <label class="form-label">Reference</label>
-                        <input type="text" class="form-control locked-field" th:field="*{treatmentReference}"
-                               readonly placeholder="Auto-generated">
+                        <input type="text" class="form-control locked-field" th:field="*{treatmentReference}" readonly placeholder="Auto-generated">
                         <div class="form-hint">🔒 Auto-generated</div>
                     </div>
-
-                    <!-- ===== ANIMAL (Live Search) ===== -->
                     <div class="col-md-4">
                         <label class="form-label">Animal *</label>
                         <div class="search-wrapper">
-                            <input type="text" id="animalSearch" class="form-control"
-                                   placeholder="Search animal by tag..." autocomplete="off">
-                            <input type="hidden" name="livestockIdValue" id="selectedAnimalId"
-                                   th:field="*{livestockIdValue}" required>
+                            <input type="text" id="animalSearch" class="form-control" placeholder="Search animal by tag..." autocomplete="off">
+                            <input type="hidden" name="livestockIdValue" id="selectedAnimalId" th:field="*{livestockIdValue}" required>
                             <div class="search-results" id="animalResults"></div>
                         </div>
                         <div id="selectedAnimalDisplay"></div>
-                        <div class="form-hint"><i class="bi bi-info-circle"></i> Type to search for animals</div>
+                        <div class="form-hint"><i class="bi bi-info-circle"></i> Type to search, then click to select</div>
                     </div>
-
-                    <!-- ===== MEDICATION ===== -->
                     <div class="col-md-3">
                         <label class="form-label">Medication *</label>
                         <select class="form-select" th:field="*{medicationIdValue}" required>
@@ -706,16 +335,12 @@
                             <option th:each="m : ${medicationList}" th:value="${m.id}" th:text="${m.name}"></option>
                         </select>
                     </div>
-
-                    <!-- ===== VETERINARIAN (Live Search + Add) ===== -->
                     <div class="col-md-3">
                         <label class="form-label">Veterinarian</label>
                         <div class="d-flex align-items-center">
                             <div class="search-wrapper flex-grow-1">
-                                <input type="text" id="vetSearch" class="form-control"
-                                       placeholder="Search veterinarian..." autocomplete="off">
-                                <input type="hidden" name="veterinarianIdValue" id="selectedVetId"
-                                       th:field="*{veterinarianIdValue}">
+                                <input type="text" id="vetSearch" class="form-control" placeholder="Search veterinarian..." autocomplete="off">
+                                <input type="hidden" name="veterinarianIdValue" id="selectedVetId" th:field="*{veterinarianIdValue}">
                                 <div class="search-results" id="vetResults"></div>
                             </div>
                             <button type="button" class="add-vet-btn" onclick="openAddVetModal()" title="Add New Veterinarian">
@@ -725,8 +350,6 @@
                         <div id="selectedVetDisplay"></div>
                         <div class="form-hint"><i class="bi bi-info-circle"></i> Type to search or click + to add</div>
                     </div>
-
-                    <!-- ===== TREATMENT DETAILS ===== -->
                     <div class="col-md-2">
                         <label class="form-label">Treatment Date *</label>
                         <input type="date" class="form-control" th:field="*{treatmentDate}" required>
@@ -754,7 +377,6 @@
                             <option value="FAILED">Failed</option>
                         </select>
                     </div>
-
                     <div class="col-md-2">
                         <label class="form-label">Dosage</label>
                         <input type="text" class="form-control" th:field="*{dosage}" placeholder="e.g. 5">
@@ -791,12 +413,11 @@
                         <label class="form-label">Next Treatment</label>
                         <input type="date" class="form-control" th:field="*{nextTreatmentDate}">
                     </div>
-
                     <div class="col-12">
                         <label class="form-label">Notes</label>
-                        <input type="text" class="form-control" th:field="*{description}" placeholder="Optional notes...">
+                        <textarea class="form-control" th:field="*{description}" rows="3"
+                                  placeholder="Clinical notes, observations, follow-up instructions..."></textarea>
                     </div>
-
                     <div class="col-12 d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary px-4" style="background:#155d31; border-color:#155d31;">
                             <i class="bi bi-plus-circle me-1"></i> Save Treatment
@@ -806,7 +427,7 @@
             </form>
         </div>
 
-        <!-- ===== ADD VETERINARIAN MODAL ===== -->
+        <!-- ADD VET MODAL -->
         <div class="modal fade" id="addVetModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -818,30 +439,12 @@
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <div class="modal-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">First Name *</label>
-                                    <input type="text" class="form-control" name="firstName" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Last Name *</label>
-                                    <input type="text" class="form-control" name="lastName" required>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Phone</label>
-                                    <input type="text" class="form-control" name="phone">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">License Number</label>
-                                    <input type="text" class="form-control" name="licenseNumber">
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Specialization</label>
-                                    <input type="text" class="form-control" name="specialization">
-                                </div>
-                                <div class="col-md-12 mb-3">
-                                    <label class="form-label">Clinic Name</label>
-                                    <input type="text" class="form-control" name="clinicName">
-                                </div>
+                                <div class="col-md-6 mb-3"><label class="form-label">First Name *</label><input type="text" class="form-control" name="firstName" required></div>
+                                <div class="col-md-6 mb-3"><label class="form-label">Last Name *</label><input type="text" class="form-control" name="lastName" required></div>
+                                <div class="col-md-6 mb-3"><label class="form-label">Phone</label><input type="text" class="form-control" name="phone"></div>
+                                <div class="col-md-6 mb-3"><label class="form-label">License Number</label><input type="text" class="form-control" name="licenseNumber"></div>
+                                <div class="col-md-12 mb-3"><label class="form-label">Specialization</label><input type="text" class="form-control" name="specialization"></div>
+                                <div class="col-md-12 mb-3"><label class="form-label">Clinic Name</label><input type="text" class="form-control" name="clinicName"></div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -853,18 +456,20 @@
             </div>
         </div>
 
-        <!-- ==================== SEARCH BAR ==================== -->
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <form method="get" action="/livestock/treatments" class="d-flex gap-2">
+        <!-- SEARCH BAR -->
+        <div class="row mb-3 g-2">
+            <div class="col-md-7">
+                <form method="get" th:action="@{/livestock/treatments}" class="d-flex gap-2">
                     <input type="hidden" name="size" th:value="${pageSize}"/>
+                    <input type="hidden" name="status" th:value="${filterStatus}"/>
+                    <input type="hidden" name="type" th:value="${filterType}"/>
                     <input type="text" name="search" class="form-control form-control-sm"
                            placeholder="Search by tag, medication, diagnosis..." th:value="${filterSearch}"/>
                     <button type="submit" class="btn btn-primary btn-sm" style="background:#155d31; border-color:#155d31;">
                         <i class="bi bi-search"></i> Search
                     </button>
                     <a th:if="${filterSearch != null and !filterSearch.isEmpty()}"
-                       th:href="@{/livestock/treatments(page=0, size=${pageSize})}"
+                       th:href="@{/livestock/treatments(page=0, size=${pageSize}, status=${filterStatus}, type=${filterType})}"
                        class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-x-circle"></i> Clear
                     </a>
@@ -872,330 +477,145 @@
             </div>
         </div>
 
-        <!-- ==================== TREATMENTS TABLE ==================== -->
-        <div class="table-responsive">
+        <!-- EMPTY STATE -->
+        <div th:if="${treatments.empty and livestockList != null and !livestockList.empty}" class="empty-state">
+            <div class="empty-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+            <h4>No treatments recorded yet</h4>
+            <p>Fill in the form above and click <strong>Save Treatment</strong> to record your first treatment.</p>
+            <div class="empty-cta">
+                <a href="#" class="btn btn-primary" onclick="document.getElementById('animalSearch').focus();return false;"
+                   style="background:#155d31; border-color:#155d31;">
+                    <i class="bi bi-search me-1"></i> Select an Animal
+                </a>
+                <a th:href="@{/livestock/treatments/report}" class="btn btn-outline-secondary">
+                    <i class="bi bi-bar-chart me-1"></i> View Reports
+                </a>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive" th:if="${!treatments.empty}">
             <table class="table table-hover align-middle">
                 <thead>
                 <tr>
-                    <th class="col-ref">#</th>
-                    <th class="col-reference">Reference</th>
-                    <th class="col-animal">Animal</th>
-                    <th class="col-beneficiary">Beneficiary</th>
-                    <th class="col-veterinarian">Veterinarian</th>
-                    <th class="col-location">Location</th>
-                    <th class="col-diagnosis">Diagnosis</th>
-                    <th class="col-medication">Medication</th>
-                    <th class="col-date">Date</th>
-                    <th class="col-cost text-end">Cost</th>
-                    <th class="col-paid text-end">Paid</th>
-                    <th class="col-balance text-end">Balance</th>
-                    <th class="col-payment">Payment</th>
-                    <th class="col-type">Type</th>
-                    <th class="col-status">Status</th>
-                    <th class="col-outcome">Outcome</th>
-                    <th class="col-actions text-center">Actions</th>
+                    <th style="width: 3%;">#</th>
+                    <th>Animal</th>
+                    <th>Beneficiary</th>
+                    <th>Veterinarian</th>
+                    <th style="min-width:220px;">Location</th>
+                    <th>Diagnosis</th>
+                    <th>Medication</th>
+                    <th>Date</th>
+                    <th class="text-end">Cost (RWF)</th>
+                    <th class="text-end">Paid (RWF)</th>
+                    <th class="text-end">Balance (RWF)</th>
+                    <th>Payment</th>
+                    <th class="text-center">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:if="${treatments.empty}">
-                    <td colspan="17" class="text-center text-muted py-5">
-                        <i class="bi bi-heart-pulse fs-2 d-block mb-3"></i>
-                        No treatments recorded yet.
-                    </td>
-                </tr>
                 <tr th:each="t, i : ${treatments}">
-                    <!-- # -->
-                    <td class="col-ref text-center" th:text="${treatmentPage.number * treatmentPage.size + i.index + 1}">1</td>
+                    <td data-label="#" class="fw-600" th:text="${treatmentPage.number * treatmentPage.size + i.index + 1}">1</td>
 
-                    <!-- Reference -->
-                    <td class="col-reference">
-                        <span class="fw-600 text-ellipsis" th:text="${t.treatmentReference != null ? t.treatmentReference : 'N/A'}"
-                              data-tooltip="${t.treatmentReference != null ? t.treatmentReference : 'N/A'}">---</span>
-                    </td>
-
-                    <!-- Animal -->
-                    <td class="col-animal">
-                        <strong class="text-ellipsis" th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"
+                    <td data-label="Animal">
+                        <strong class="text-truncate-custom" th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"
                                 data-tooltip="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>
                     </td>
 
-                    <!-- COMBINED: Beneficiary Name + Phone -->
-                    <td class="col-beneficiary">
+                    <td data-label="Beneficiary">
                         <div th:if="${t.livestock != null and t.livestock.beneficiary != null}">
-                            <div class="fw-600 text-ellipsis" th:text="${t.livestock.beneficiary.fullName}"
+                            <div class="fw-600 text-truncate-custom" th:text="${t.livestock.beneficiary.fullName}"
                                  data-tooltip="${t.livestock.beneficiary.fullName}"></div>
-                            <div class="text-muted" style="font-size:0.6rem;">
+                            <div class="text-muted" style="font-size:0.65rem;">
                                 <i class="bi bi-phone"></i>
                                 <span th:text="${t.livestock.beneficiary.phoneNumber != null ? t.livestock.beneficiary.phoneNumber : '—'}"></span>
                             </div>
                         </div>
-                        <span th:if="${t.livestock == null or t.livestock.beneficiary == null}" class="text-muted" style="font-size:0.65rem;">—</span>
+                        <span th:if="${t.livestock == null or t.livestock.beneficiary == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- COMBINED: Veterinarian Name + Phone -->
-                    <td class="col-veterinarian">
+                    <td data-label="Veterinarian">
                         <div th:if="${t.veterinarian != null}">
-                            <div class="fw-600 text-ellipsis" th:text="${t.veterinarian.fullName}"
+                            <div class="fw-600 text-truncate-custom" th:text="${t.veterinarian.fullName}"
                                  data-tooltip="${t.veterinarian.fullName}"></div>
-                            <div class="text-muted" style="font-size:0.6rem;">
+                            <div class="text-muted" style="font-size:0.65rem;">
                                 <i class="bi bi-phone"></i>
                                 <span th:text="${t.veterinarian.phone != null ? t.veterinarian.phone : '—'}"></span>
                             </div>
                         </div>
-                        <span th:if="${t.veterinarian == null}" class="text-muted" style="font-size:0.65rem;">—</span>
+                        <span th:if="${t.veterinarian == null}" class="text-muted">—</span>
                     </td>
 
-                    <!-- FULL LOCATION PATH -->
-                    <td class="col-location">
-                        <div th:if="${t.locationPath != null and t.locationPath != '—'}">
-                            <span style="font-size:0.6rem; display:block; line-height:1.3;"
-                                  th:text="${t.locationPath}"
-                                  data-tooltip="${t.locationPath}"></span>
-                        </div>
+                    <td data-label="Location" class="td-location">
+                        <div th:if="${t.locationPath != null and t.locationPath != '—'}"
+                             class="loc-full" th:text="${t.locationPath}"></div>
                         <div th:if="${t.locationPath == null or t.locationPath == '—'}"
                              th:with="loc=${t.livestock != null ? t.livestock.location : null}">
-                            <div th:if="${loc != null}">
-                                <span style="font-size:0.6rem; display:block;"
-                                      th:text="${loc.name}"
-                                      data-tooltip="${loc.name}"></span>
-                            </div>
-                            <span th:if="${loc == null}" class="text-muted" style="font-size:0.65rem;">—</span>
+                            <span th:if="${loc != null}" class="loc-full" th:text="${loc.name}"></span>
+                            <span th:if="${loc == null}" class="text-muted">—</span>
                         </div>
                     </td>
 
-                    <!-- Diagnosis -->
-                    <td class="col-diagnosis">
-                        <span class="text-ellipsis" th:text="${t.diagnosisName != null ? t.diagnosisName : 'N/A'}"
+                    <td data-label="Diagnosis">
+                        <span class="text-truncate-custom" th:text="${t.diagnosisName != null ? t.diagnosisName : 'N/A'}"
                               data-tooltip="${t.diagnosisName != null ? t.diagnosisName : 'N/A'}"></span>
                     </td>
 
-                    <!-- Medication -->
-                    <td class="col-medication">
-                        <span class="text-ellipsis" th:text="${t.medication != null ? t.medication.name : 'N/A'}"
+                    <td data-label="Medication">
+                        <span class="text-truncate-custom" th:text="${t.medication != null ? t.medication.name : 'N/A'}"
                               data-tooltip="${t.medication != null ? t.medication.name : 'N/A'}"></span>
                     </td>
 
-                    <!-- Date -->
-                    <td class="col-date" th:text="${#temporals.format(t.treatmentDate, 'dd-MM-yyyy')}"></td>
+                    <td data-label="Date" th:text="${#temporals.format(t.treatmentDate, 'dd-MM-yyyy')}"></td>
 
-                    <!-- Cost -->
-                    <td class="col-cost text-end fw-600"
-                        th:text="${#numbers.formatDecimal(t.treatmentCost, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td data-label="Cost (RWF)" class="text-end fw-600"
+                        th:text="${#numbers.formatDecimal(t.treatmentCost, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0 RWF</td>
 
-                    <!-- Paid -->
-                    <td class="col-paid text-end"
-                        th:text="${#numbers.formatDecimal(t.amountPaid, 1, 'COMMA', 0, 'POINT')}">0</td>
+                    <td data-label="Paid (RWF)" class="text-end"
+                        th:text="${#numbers.formatDecimal(t.amountPaid, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0 RWF</td>
 
-                    <!-- Balance -->
-                    <td class="col-balance text-end fw-600"
+                    <td data-label="Balance (RWF)" class="text-end fw-600"
                         th:class="${t.remainingBalance > 0 ? 'text-danger' : 'text-success'}"
-                        th:text="${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT')}">0</td>
+                        th:text="${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0 RWF</td>
 
-                    <!-- Payment Status -->
-                    <td class="col-payment">
+                    <td data-label="Payment">
                         <span class="badge-status" th:class="${t.paymentStatusBadgeClass}">
                             <span th:text="${t.paymentStatusLabel}"></span>
                         </span>
                     </td>
 
-                    <!-- Treatment Type -->
-                    <td class="col-type">
-                        <span th:if="${t.treatmentType != null}" class="badge bg-secondary" th:text="${t.treatmentType}"></span>
-                        <span th:if="${t.treatmentType == null}" class="text-muted">—</span>
-                    </td>
-
-                    <!-- Status -->
-                    <td class="col-status">
-                        <span class="badge-status" th:class="${'badge-' + t.treatmentStatus.name()}">
-                            <span th:text="${t.treatmentStatus}"></span>
-                        </span>
-                    </td>
-
-                    <!-- Outcome -->
-                    <td class="col-outcome">
-                        <span th:if="${t.outcomeStatus != null}" class="badge"
-                              th:class="${t.outcomeStatus == 'RECOVERED' ? 'bg-success' : t.outcomeStatus == 'IMPROVING' ? 'bg-info' : t.outcomeStatus == 'FAILED' ? 'bg-danger' : 'bg-warning'}"
-                              th:text="${t.outcomeStatus}"></span>
-                        <span th:if="${t.outcomeStatus == null}" class="text-muted">—</span>
-                    </td>
-
-                    <!-- Actions -->
-                    <td class="col-actions text-center">
+                    <td data-label="Actions" class="td-actions">
                         <div class="action-group" role="group">
-                            <!-- View -->
                             <a th:href="@{/livestock/treatments/details/{id}(id=${t.id})}"
                                class="btn btn-outline-secondary btn-sm" title="View Details">
                                 <i class="bi bi-eye"></i>
                             </a>
-
-                            <!-- Edit -->
                             <a th:href="@{/livestock/treatments/edit/{id}(id=${t.id})}"
                                class="btn btn-outline-warning btn-sm" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
 
-                            <!-- Payment History -->
+                            <button th:if="${!t.isPaid and t.treatmentCost != null and t.treatmentCost > 0}"
+                                    class="btn btn-success btn-sm"
+                                    title="Record Payment (Method, Reference, Notes)"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#paymentModal' + ${t.id}">
+                                <i class="bi bi-cash-coin"></i> Pay
+                            </button>
+
                             <button class="btn btn-outline-info btn-sm" title="Payment History"
                                     data-bs-toggle="modal" th:data-bs-target="'#paymentModal' + ${t.id}">
                                 <i class="bi bi-cash-stack"></i>
                             </button>
 
-                            <!-- Record Payment - Quick inline form -->
-                            <div th:if="${!t.isPaid and t.treatmentCost != null and t.treatmentCost > 0}"
-                                 class="payment-quick-form no-print">
-                                <form th:action="@{/livestock/treatments/payment/{id}(id=${t.id})}"
-                                      method="post" class="d-flex align-items-center gap-1">
-                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <input type="number" name="amount" class="form-control form-control-sm"
-                                           placeholder="Amt" step="any" min="1"
-                                           th:max="${t.remainingBalance}" required
-                                           style="width:50px;"
-                                           th:title="|Max: ${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT')} RWF|">
-                                    <button type="submit" class="btn btn-payment btn-sm" title="Record Payment">
-                                        <i class="bi bi-cash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                            <span th:if="${t.isPaid}" class="badge bg-success" title="Fully Paid" style="font-size:0.55rem;">
+                            <span th:if="${t.isPaid}" class="badge bg-success" title="Fully Paid" style="font-size:0.6rem;">
                                 <i class="bi bi-check-circle-fill"></i>
                             </span>
 
-                            <!-- Delete -->
                             <button class="btn btn-outline-danger btn-sm" title="Delete"
                                     data-bs-toggle="modal" th:data-bs-target="'#delModal' + ${t.id}">
                                 <i class="bi bi-trash"></i>
                             </button>
-                        </div>
-
-                        <!-- ===== PAYMENT HISTORY MODAL ===== -->
-                        <div class="modal fade" th:id="'paymentModal' + ${t.id}" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header" style="background:#155d31; color:white;">
-                                        <h5 class="modal-title"><i class="bi bi-cash-stack"></i> Payment Management</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:brightness(0) invert(1);"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <!-- Payment Summary -->
-                                        <div class="row mb-3">
-                                            <div class="col-md-4">
-                                                <div class="payment-summary-card total">
-                                                    <div class="label">Total Cost</div>
-                                                    <div class="amount" th:text="${#numbers.formatDecimal(t.treatmentCost, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="payment-summary-card paid">
-                                                    <div class="label">Total Paid</div>
-                                                    <div class="amount" th:text="${#numbers.formatDecimal(t.amountPaid, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="payment-summary-card balance">
-                                                    <div class="label">Remaining Balance</div>
-                                                    <div class="amount" th:text="${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Payment History -->
-                                        <h6 class="border-bottom pb-2"><i class="bi bi-clock-history"></i> Payment History</h6>
-                                        <div class="table-responsive mb-3">
-                                            <table class="table table-sm payment-history-table">
-                                                <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th class="text-end">Amount</th>
-                                                    <th>Method</th>
-                                                    <th>Reference</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                                </thead>
-                                                <tbody>
-                                                <tr th:if="${t.payments == null or t.payments.isEmpty()}">
-                                                    <td colspan="5" class="text-center text-muted py-2">No payments recorded yet</td>
-                                                </tr>
-                                                <tr th:each="p : ${t.payments}">
-                                                    <td th:text="${#temporals.format(p.paymentDate, 'dd-MM-yyyy HH:mm')}"></td>
-                                                    <td class="text-end text-success" th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></td>
-                                                    <td th:text="${p.paymentMethod != null ? p.paymentMethod : 'N/A'}"></td>
-                                                    <td th:text="${p.paymentReference != null ? p.paymentReference : 'N/A'}"></td>
-                                                    <td><span class="badge bg-success">Completed</span></td>
-                                                </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        <!-- Record New Payment -->
-                                        <h6 class="border-bottom pb-2"><i class="bi bi-cash-coin"></i> Record New Payment</h6>
-                                        <form th:action="@{/livestock/treatments/payment/{id}(id=${t.id})}" method="post" class="row g-2 align-items-end">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <input type="hidden" name="returnUrl" th:value="${returnUrl}"/>
-
-                                            <div class="col-md-3">
-                                                <label class="form-label">Amount (RWF)</label>
-                                                <input type="number" name="amount" class="form-control form-control-sm"
-                                                       step="any" min="1" th:max="${t.remainingBalance}" required
-                                                       th:placeholder="|Max: ${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT')}|">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Payment Method</label>
-                                                <select name="paymentMethod" class="form-select form-select-sm">
-                                                    <option value="">Select</option>
-                                                    <option value="CASH">Cash</option>
-                                                    <option value="BANK_TRANSFER">Bank Transfer</option>
-                                                    <option value="MOBILE_MONEY">Mobile Money</option>
-                                                    <option value="CHEQUE">Cheque</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Reference</label>
-                                                <input type="text" name="paymentReference" class="form-control form-control-sm"
-                                                       placeholder="Transaction ID">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <button type="submit" class="btn btn-success btn-sm w-100">
-                                                    <i class="bi bi-plus-circle"></i> Record Payment
-                                                </button>
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label">Notes</label>
-                                                <input type="text" name="notes" class="form-control form-control-sm"
-                                                       placeholder="Payment notes...">
-                                            </div>
-                                        </form>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                                        <button type="button" class="btn btn-primary btn-sm" onclick="window.print()">
-                                            <i class="bi bi-printer"></i> Print
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ===== DELETE MODAL ===== -->
-                        <div class="modal fade" th:id="'delModal' + ${t.id}" tabindex="-1">
-                            <div class="modal-dialog modal-sm">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" style="font-size:0.95rem;">Confirm Delete</h5>
-                                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body" style="font-size:0.85rem;">
-                                        Delete treatment for <strong th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>?
-                                        <br><small class="text-danger">This action cannot be undone.</small>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/livestock/treatments/delete/{id}(id=${t.id})}" method="post" class="d-inline">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                            <button class="btn btn-danger btn-sm">Delete</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </td>
                 </tr>
@@ -1203,59 +623,285 @@
             </table>
         </div>
 
-        <!-- ==================== PAGINATION ==================== -->
-        <div th:if="${treatmentPage != null and treatmentPage.totalPages > 0}" class="d-flex flex-wrap justify-content-between align-items-center mt-4">
-            <div class="text-muted small">
-                Showing <span th:text="${treatmentPage.number * treatmentPage.size + 1}">1</span>
-                to <span th:text="${treatmentPage.number * treatmentPage.size + treatmentPage.numberOfElements}">10</span>
-                of <span th:text="${treatmentPage.totalElements}">0</span> entries
+        <!-- MODALS OUTSIDE TABLE -->
+        <th:block th:each="t : ${treatments}">
+
+            <div class="modal fade" th:id="'paymentModal' + ${t.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header" style="background:#155d31; color:white;">
+                            <h5 class="modal-title">
+                                <i class="bi bi-cash-stack"></i> Payment Management —
+                                <span th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></span>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    style="filter:brightness(0) invert(1);"></button>
+                        </div>
+                        <div class="modal-body">
+
+                            <div class="row mb-3">
+                                <div class="col-md-4"><div class="payment-summary-card total"><div class="label">Total Cost</div><div class="amount" th:text="${#numbers.formatDecimal(t.treatmentCost, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div></div></div>
+                                <div class="col-md-4"><div class="payment-summary-card paid"><div class="label">Total Paid</div><div class="amount" th:text="${#numbers.formatDecimal(t.amountPaid, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div></div></div>
+                                <div class="col-md-4"><div class="payment-summary-card balance"><div class="label">Remaining Balance</div><div class="amount" th:text="${#numbers.formatDecimal(t.remainingBalance, 1, 'COMMA', 0, 'POINT') + ' RWF'}">0</div></div></div>
+                            </div>
+
+                            <h6 class="border-bottom pb-2"><i class="bi bi-clock-history"></i> Payment History</h6>
+                            <div class="table-responsive mb-3">
+                                <table class="table table-sm payment-history-table">
+                                    <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Method</th>
+                                        <th>Reference</th>
+                                        <th>Notes</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:if="${t.payments == null or t.payments.isEmpty()}">
+                                        <td colspan="6" class="text-center text-muted py-3">
+                                            <i class="bi bi-inbox" style="font-size:1.5rem; display:block; margin-bottom:6px;"></i>
+                                            No payments recorded yet
+                                        </td>
+                                    </tr>
+                                    <tr th:each="p : ${t.payments}">
+                                        <td th:text="${p.paymentDate != null ? #temporals.format(p.paymentDate, 'dd-MM-yyyy') : '—'}"></td>
+                                        <td class="text-end text-success fw-600"
+                                            th:text="${#numbers.formatDecimal(p.amount, 1, 'COMMA', 0, 'POINT') + ' RWF'}"></td>
+                                        <td>
+                                            <span class="badge"
+                                                  th:classappend="${p.paymentMethodBadgeClass != null ? p.paymentMethodBadgeClass : 'bg-secondary'}"
+                                                  th:text="${p.paymentMethodLabel != null ? p.paymentMethodLabel : (p.paymentMethod != null ? p.paymentMethod : 'Not provided')}"></span>
+                                        </td>
+                                        <td>
+                                            <code th:if="${p.paymentReference != null}" th:text="${p.paymentReference}"></code>
+                                            <span th:if="${p.paymentReference == null}" class="text-muted">—</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${p.notes != null and !p.notes.isEmpty()}"
+                                                  class="text-truncate-custom" style="max-width:180px;"
+                                                  th:text="${p.notes}" th:title="${p.notes}"></span>
+                                            <span th:if="${p.notes == null or p.notes.isEmpty()}"
+                                                  class="text-muted fst-italic">No notes</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success"
+                                                  th:text="${p.paymentStatus != null ? p.paymentStatus : 'COMPLETED'}"></span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div th:if="${t.remainingBalance <= 0}" class="alert alert-success mb-0 mt-3">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                This treatment is fully paid. No further payment is required.
+                            </div>
+
+                            <div th:if="${t.remainingBalance > 0}">
+                                <h6 class="border-bottom pb-2"><i class="bi bi-cash-coin"></i> Record New Payment</h6>
+                                <form th:action="@{/livestock/treatments/payment/{id}(id=${t.id})}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <div class="row g-2">
+                                        <div class="col-md-2">
+                                            <label class="form-label">Amount (RWF) *</label>
+                                            <input type="number" name="amount" class="form-control form-control-sm"
+                                                   step="any" min="0.01" th:max="${t.remainingBalance}" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Payment Type *</label>
+                                            <select name="paymentMethod" class="form-select form-select-sm" required>
+                                                <option value="CASH">Cash</option>
+                                                <option value="BANK_TRANSFER">Bank Transfer</option>
+                                                <option value="MOBILE_MONEY">Mobile Money</option>
+                                                <option value="CHEQUE">Cheque</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">Reference</label>
+                                            <input type="text" name="paymentReference"
+                                                   class="form-control form-control-sm"
+                                                   placeholder="Auto if empty">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Notes / Reason</label>
+                                            <input type="text" name="notes" class="form-control form-control-sm"
+                                                   placeholder="e.g. Partial — balance promised next week">
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="submit" class="btn btn-success btn-sm w-100">
+                                                <i class="bi bi-plus-circle"></i> Save Payment
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <a th:href="@{/livestock/treatments/details/{id}(id=${t.id})}"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye"></i> View Full Details
+                            </a>
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" th:classappend="${!treatmentPage.hasPrevious()} ? 'disabled' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/treatments(page=${currentPage - 1}, size=${pageSize}, search=${filterSearch}, status=${filterStatus}, type=${filterType}, livestockId=${filterLivestockId}, fromDate=${filterFromDate}, toDate=${filterToDate}, isPaid=${filterIsPaid})}"
-                           th:if="${treatmentPage.hasPrevious()}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                        <span class="page-link" th:unless="${treatmentPage.hasPrevious()}">
-                            <i class="bi bi-chevron-left"></i>
-                        </span>
-                    </li>
 
-                    <li th:each="pageNum : ${#numbers.sequence(1, treatmentPage.totalPages)}"
-                        th:with="isActive=${pageNum - 1 == currentPage}"
-                        class="page-item" th:classappend="${isActive} ? 'active' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/treatments(page=${pageNum - 1}, size=${pageSize}, search=${filterSearch}, status=${filterStatus}, type=${filterType}, livestockId=${filterLivestockId}, fromDate=${filterFromDate}, toDate=${filterToDate}, isPaid=${filterIsPaid})}"
-                           th:text="${pageNum}"></a>
-                    </li>
+            <div class="modal fade" th:id="'delModal' + ${t.id}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-sm">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" style="font-size:0.95rem;">Confirm Delete</h5>
+                            <button class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" style="font-size:0.85rem;">
+                            Delete treatment for
+                            <strong th:text="${t.livestock != null ? t.livestock.tagNumber : 'N/A'}"></strong>?
+                            <br><small class="text-danger">This action cannot be undone.</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                            <form th:action="@{/livestock/treatments/delete/{id}(id=${t.id})}" method="post" class="d-inline">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                    <li class="page-item" th:classappend="${!treatmentPage.hasNext()} ? 'disabled' : ''">
-                        <a class="page-link"
-                           th:href="@{/livestock/treatments(page=${currentPage + 1}, size=${pageSize}, search=${filterSearch}, status=${filterStatus}, type=${filterType}, livestockId=${filterLivestockId}, fromDate=${filterFromDate}, toDate=${filterToDate}, isPaid=${filterIsPaid})}"
-                           th:if="${treatmentPage.hasNext()}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                        <span class="page-link" th:unless="${treatmentPage.hasNext()}">
-                            <i class="bi bi-chevron-right"></i>
-                        </span>
-                    </li>
-                </ul>
-            </nav>
-        </div>
+        </th:block>
 
-        <!-- ==================== PAGE SIZE ==================== -->
-        <div class="d-flex justify-content-between align-items-center mt-2">
-            <div>
-                <label class="text-muted small me-2">Rows per page:</label>
-                <select class="form-select form-select-sm d-inline-block w-auto"
-                        onchange="window.location.href=this.value">
-                    <option value="/livestock/treatments?page=0&size=5" th:selected="${pageSize == 5}">5</option>
-                    <option value="/livestock/treatments?page=0&size=10" th:selected="${pageSize == 10}">10</option>
-                    <option value="/livestock/treatments?page=0&size=20" th:selected="${pageSize == 20}">20</option>
-                    <option value="/livestock/treatments?page=0&size=50" th:selected="${pageSize == 50}">50</option>
-                </select>
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION (SERVER-SIDE)
+             [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             Preserves: search, status, type, size
+             ═════════════════════════════════════════════════════════════ -->
+        <div class="pager-bar" th:if="${!treatments.empty}"
+             th:with="
+                 total=${treatmentPage.totalPages},
+                 current=${treatmentPage.number},
+                 size=${treatmentPage.size},
+                 items=${treatmentPage.totalElements},
+                 start=${items == 0 ? 0 : (current * size) + 1},
+                 end=${items == 0 ? 0 : ((current * size) + size > items ? items : (current * size) + size)},
+                 showFrom=${current - 2 < 0 ? 0 : current - 2},
+                 showTo=${current + 2 > total - 1 ? total - 1 : current + 2}
+             ">
+
+            <div class="pager-meta">
+                <span class="pager-info">
+                    Showing <strong th:text="${start}">1</strong>–<strong th:text="${end}">10</strong>
+                    of <strong th:text="${items}">0</strong>
+                </span>
+                <div class="pager-pagesize">
+                    <label for="sizeSelect">Rows per page:</label>
+                    <select id="sizeSelect" onchange="changePageSize(this.value)">
+                        <option value="10"  th:selected="${size == 10}">10</option>
+                        <option value="25"  th:selected="${size == 25}">25</option>
+                        <option value="50"  th:selected="${size == 50}">50</option>
+                        <option value="100" th:selected="${size == 100}">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <ul class="pager-list">
+                <!-- First -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'First page'"
+                       th:href="@{/livestock/treatments(page=0, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </button>
+                </li>
+
+                <!-- Prev -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'Previous page'"
+                       th:href="@{/livestock/treatments(page=${current - 1}, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </button>
+                </li>
+
+                <!-- Leading 1 + ellipsis -->
+                <li th:if="${showFrom > 0}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/treatments(page=0, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}">1</a>
+                </li>
+                <li th:if="${showFrom > 1}" class="pg-ellipsis">…</li>
+
+                <!-- Window of page numbers -->
+                <li th:each="i : ${#numbers.sequence(showFrom, showTo)}">
+                    <a class="pg-btn"
+                       th:classappend="${i == current} ? 'active' : ''"
+                       th:href="@{/livestock/treatments(page=${i}, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}"
+                       th:text="${i + 1}">1</a>
+                </li>
+
+                <!-- Trailing ellipsis + last -->
+                <li th:if="${showTo < total - 2}" class="pg-ellipsis">…</li>
+                <li th:if="${showTo < total - 1}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/treatments(page=${total - 1}, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}"
+                       th:text="${total}">1</a>
+                </li>
+
+                <!-- Next -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Next page'"
+                       th:href="@{/livestock/treatments(page=${current + 1}, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+
+                <!-- Last -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Last page'"
+                       th:href="@{/livestock/treatments(page=${total - 1}, size=${size}, search=${filterSearch}, status=${filterStatus}, type=${filterType})}">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Go to page -->
+            <div class="pager-goto">
+                <label for="gotoInput">Go to page:</label>
+                <input type="number" id="gotoInput"
+                       min="1"
+                       th:max="${total}"
+                       th:value="${current + 1}"
+                       onkeydown="if(event.key==='Enter'){gotoPage(this.value)}"
+                       onblur="gotoPage(this.value)">
+                <span th:text="'/ ' + ${total}">/ 1</span>
             </div>
         </div>
 
@@ -1263,14 +909,29 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
     (function() {
         'use strict';
 
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
+        // ── Pagination helpers (server-side) ───────────────────────
+        window.changePageSize = function(size) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('page', '0');
+            url.searchParams.set('size', size);
+            window.location.href = url.toString();
+        };
+        window.gotoPage = function(p) {
+            var input = document.getElementById('gotoInput');
+            var total = parseInt(input.getAttribute('max'), 10) || 1;
+            p = parseInt(p, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > total) p = total;
+            var url = new URL(window.location.href);
+            url.searchParams.set('page', p - 1);
+            window.location.href = url.toString();
+        };
 
-        // ─── ANIMAL LIVE SEARCH ──────────────────────────────────────
+        // ── Live animal search (unchanged) ─────────────────────────
         const animalSearch = document.getElementById('animalSearch');
         const animalResults = document.getElementById('animalResults');
         const selectedAnimalId = document.getElementById('selectedAnimalId');
@@ -1300,9 +961,6 @@
                                 <div>
                                     <div class="tag">${animal.tagNumber}</div>
                                     <div class="details">${animal.category} · ${animal.gender || 'Unknown'} · ${animal.location || 'Unknown'}</div>
-                                </div>
-                                <div>
-                                    <span class="status-badge ${animal.healthStatus === 'SICK' ? 'sick' : 'active'}">${animal.healthStatus || 'UNKNOWN'}</span>
                                 </div>
                             `;
                             div.addEventListener('click', () => selectAnimal(animal));
@@ -1337,7 +995,6 @@
             animalResults.style.display = 'none';
         };
 
-        // ─── VETERINARIAN LIVE SEARCH ────────────────────────────────
         const vetSearch = document.getElementById('vetSearch');
         const vetResults = document.getElementById('vetResults');
         const selectedVetId = document.getElementById('selectedVetId');
@@ -1357,7 +1014,7 @@
                     .then(vets => {
                         vetResults.innerHTML = '';
                         if (!vets || vets.length === 0) {
-                            vetResults.innerHTML = '<div class="no-results"><i class="bi bi-search"></i> No veterinarians found <div class="text-muted small mt-1">Click the + button to add a new veterinarian.</div></div>';
+                            vetResults.innerHTML = '<div class="no-results"><i class="bi bi-search"></i> No veterinarians found</div>';
                             return;
                         }
                         vets.forEach(vet => {
@@ -1405,7 +1062,6 @@
             new bootstrap.Modal(document.getElementById('addVetModal')).show();
         };
 
-        // ─── CLOSE SEARCH ON CLICK OUTSIDE ──────────────────────────
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.search-wrapper')) {
                 animalResults.style.display = 'none';
@@ -1413,7 +1069,6 @@
             }
         });
 
-        // ─── SET DEFAULT DATE ───────────────────────────────────────
         const dateInput = document.querySelector('input[name="treatmentDate"]');
         if (dateInput && !dateInput.value) {
             const today = new Date().toISOString().split('T')[0];
@@ -1421,60 +1076,43 @@
             dateInput.setAttribute('max', today);
         }
 
-        // ─── PAYMENT VALIDATION ─────────────────────────────────────
-        document.querySelectorAll('.payment-quick-form form').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                const input = this.querySelector('input[name="amount"]');
-                const max = parseFloat(input.getAttribute('max'));
-                const value = parseFloat(input.value);
-
-                if (isNaN(value) || value <= 0) {
-                    e.preventDefault();
-                    alert('Please enter a valid payment amount greater than 0.');
+        document.getElementById('treatmentCreateForm')?.addEventListener('submit', function(e) {
+            const animalVal = document.getElementById('selectedAnimalId')?.value?.trim();
+            if (!animalVal) {
+                e.preventDefault();
+                const input = document.getElementById('animalSearch');
+                if (input) {
+                    input.style.borderColor = '#dc2626';
+                    input.style.boxShadow = '0 0 0 3px rgba(220,38,38,0.15)';
                     input.focus();
-                    return false;
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
-                if (value > max) {
-                    e.preventDefault();
-                    alert('Payment amount exceeds the remaining balance.');
-                    input.focus();
-                    return false;
-                }
-            });
-        });
-
-        // ─── PAYMENT MODAL VALIDATION ──────────────────────────────
-        document.querySelectorAll('#paymentModal .modal-body form').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                const input = this.querySelector('input[name="amount"]');
-                const max = parseFloat(input.getAttribute('max'));
-                const value = parseFloat(input.value);
-
-                if (isNaN(value) || value <= 0) {
-                    e.preventDefault();
-                    alert('Please enter a valid payment amount greater than 0.');
-                    input.focus();
-                    return false;
-                }
-                if (value > max) {
-                    e.preventDefault();
-                    alert('Payment amount exceeds the remaining balance.');
-                    input.focus();
-                    return false;
-                }
-            });
-        });
-
-        // ─── COST VALIDATION ────────────────────────────────────────
-        document.getElementById('treatmentForm')?.addEventListener('submit', function(e) {
+                alert('Please search and select an animal before saving.');
+                return false;
+            }
+            const medVal = this.querySelector('select[name="medicationIdValue"]')?.value?.trim();
+            if (!medVal) {
+                e.preventDefault();
+                this.querySelector('select[name="medicationIdValue"]')?.focus();
+                alert('Please select a medication before saving.');
+                return false;
+            }
             const cost = parseFloat(this.querySelector('input[name="treatmentCost"]')?.value) || 0;
             if (cost < 0) {
                 e.preventDefault();
                 alert('Treatment cost cannot be negative.');
                 return false;
             }
+            const dateVal = this.querySelector('input[name="treatmentDate"]')?.value;
+            if (dateVal) {
+                const today = new Date().toISOString().split('T')[0];
+                if (dateVal > today) {
+                    e.preventDefault();
+                    alert('Treatment date cannot be in the future.');
+                    return false;
+                }
+            }
         });
-
     })();
 </script>
 </body>

@@ -51,7 +51,8 @@ public class BreedingReadinessNotificationService {
         logger.info("Starting approaching breeding age check...");
 
         try {
-            List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatusAndIsDeletedFalse(
+            // ✅ FIXED: removed "AndIsDeletedFalse" from method name
+            List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatus(
                     "FEMALE", "ACTIVE", "OPEN"
             );
 
@@ -63,15 +64,12 @@ public class BreedingReadinessNotificationService {
                     continue;
                 }
 
-                // Fix: Convert Long to Integer properly
                 Long ageInMonthsLong = ChronoUnit.MONTHS.between(animal.getBirthDate(), today);
-                Integer ageInMonths = ageInMonthsLong.intValue(); // Convert Long to Integer
+                Integer ageInMonths = ageInMonthsLong.intValue();
 
                 Integer minBreedingAge = animal.getLivestockCategory().getMinBreedingAgeMonths();
 
-                // Check if animal is within 1 month of breeding age
                 if (minBreedingAge != null && ageInMonths >= minBreedingAge - 1 && ageInMonths < minBreedingAge) {
-                    // Send pre-breeding notification
                     emailService.sendPreBreedingNotification(animal);
                     approachingCount++;
                     logger.info("Sent pre-breeding notification for animal: {} ({} months old, will be ready in {} month)",
@@ -95,8 +93,8 @@ public class BreedingReadinessNotificationService {
         logger.info("Starting post-birth breeding readiness check...");
 
         try {
-            // Find all ACTIVE females
-            List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatusAndIsDeletedFalse(
+            // ✅ FIXED: removed "AndIsDeletedFalse" from method name
+            List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatus(
                     "FEMALE", "ACTIVE", "OPEN"
             );
 
@@ -108,16 +106,13 @@ public class BreedingReadinessNotificationService {
                     continue;
                 }
 
-                // Fix: Convert Long to Integer properly
                 Long monthsSinceLastBirthLong = ChronoUnit.MONTHS.between(animal.getLastBirthDate(), today);
-                Integer monthsSinceLastBirth = monthsSinceLastBirthLong.intValue(); // Convert Long to Integer
+                Integer monthsSinceLastBirth = monthsSinceLastBirthLong.intValue();
 
-                // Check if it's been at least 3 months since last birth
                 if (monthsSinceLastBirth >= 3) {
-                    // Check if animal meets minimum breeding age
                     if (animal.getBirthDate() != null && animal.getLivestockCategory() != null) {
                         Long ageInMonthsLong = ChronoUnit.MONTHS.between(animal.getBirthDate(), today);
-                        Integer ageInMonths = ageInMonthsLong.intValue(); // Convert Long to Integer
+                        Integer ageInMonths = ageInMonthsLong.intValue();
 
                         Integer minBreedingAge = animal.getLivestockCategory().getMinBreedingAgeMonths();
 
@@ -147,14 +142,7 @@ public class BreedingReadinessNotificationService {
     }
 
     /**
-     * Used by LivestockBreedingController's "/api/trigger-notifications"
-     * endpoint. Unlike checkReadyToBreedAnimals() (the scheduled job, which
-     * swallows exceptions and returns void), this variant lets exceptions
-     * propagate to the controller and returns the number of notifications
-     * actually sent, so the API response can report a real count back to
-     * the caller.
-     *
-     * @return the number of ready-to-breed notification emails queued
+     * Used by LivestockBreedingController's "/api/trigger-notifications" endpoint.
      */
     public int sendImmediateNotifications() {
         logger.info("Manual trigger: sending immediate breeding readiness notifications...");
@@ -162,17 +150,7 @@ public class BreedingReadinessNotificationService {
     }
 
     /**
-     * Used by LivestockBreedingController's "/api/check-ready/{id}"
-     * endpoint. Answers "is this specific animal ready to breed right now?"
-     * without sending any notification — a read-only check, unlike the
-     * scheduled/immediate methods above which send emails as a side effect.
-     *
-     * Mirrors the same eligibility rule used elsewhere in this class:
-     * female, birth date known, category known, and age in months >= the
-     * category's minimum breeding age.
-     *
-     * @param livestockId the animal to check
-     * @return true if the animal meets the breeding-readiness criteria
+     * Used by LivestockBreedingController's "/api/check-ready/{id}" endpoint.
      */
     public boolean isReadyToBreed(UUID livestockId) {
         return livestockRepository.findById(livestockId)
@@ -192,25 +170,11 @@ public class BreedingReadinessNotificationService {
 
     /**
      * Shared logic behind checkReadyToBreedAnimals() (scheduled) and
-     * sendImmediateNotifications() (manual/API). Finds all ACTIVE, OPEN
-     * females that meet their category's minimum breeding age and sends a
-     * ready-to-breed email for each.
-     *
-     * NOTE: LifecycleEmailService.sendReadyToBreedNotification() only takes
-     * a single Livestock argument in this codebase — there is no
-     * (animal, scheduled) overload, so the `scheduled` flag below is used
-     * only for logging, not passed to the email. If you want the email
-     * itself to distinguish scheduled vs. manual runs (the HTML template
-     * already has a ${scheduled} conditional for this), that requires
-     * adding an overload to LifecycleEmailService — paste me its current
-     * full contents and I'll add it cleanly.
-     *
-     * @param scheduled whether this run originated from the scheduled job
-     *                  (true) or a manual/API trigger (false)
-     * @return number of notifications sent
+     * sendImmediateNotifications() (manual/API).
      */
     private int notifyReadyToBreedFemales(boolean scheduled) {
-        List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatusAndIsDeletedFalse(
+        // ✅ FIXED: removed "AndIsDeletedFalse" from method name
+        List<Livestock> activeFemales = livestockRepository.findByGenderAndStatusAndReproductiveStatus(
                 "FEMALE", "ACTIVE", "OPEN"
         );
 

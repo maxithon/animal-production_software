@@ -3,6 +3,7 @@ package rw.animalproduct.animal.production.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.UUID;
 
 @Entity
@@ -34,7 +35,7 @@ public class Veterinarian {
     @Column(name = "email", length = 150)
     private String email;
 
-    @Column(name = "license_number", length = 100)
+    @Column(name = "license_number", length = 100, unique = true)
     private String licenseNumber;
 
     @Pattern(regexp = "^[0-9]{16}$", message = "NID must be exactly 16 digits")
@@ -46,6 +47,9 @@ public class Veterinarian {
 
     @Column(name = "clinic_name", length = 200)
     private String clinicName;
+
+    @Column(name = "photo", length = 1000)
+    private String photo;
 
     @ManyToOne
     @JoinColumn(name = "location_id", referencedColumnName = "id")
@@ -79,7 +83,7 @@ public class Veterinarian {
 
     public Veterinarian() {}
 
-    // Getters and Setters
+    // ── Getters / Setters ──────────────────────────────────────────────
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
 
@@ -112,6 +116,9 @@ public class Veterinarian {
     public String getClinicName() { return clinicName; }
     public void setClinicName(String clinicName) { this.clinicName = clinicName; }
 
+    public String getPhoto() { return photo; }
+    public void setPhoto(String photo) { this.photo = photo; }
+
     public Location getLocation() { return location; }
     public void setLocation(Location location) { this.location = location; }
 
@@ -133,6 +140,7 @@ public class Veterinarian {
     public String getLocationIdValue() { return locationIdValue; }
     public void setLocationIdValue(String locationIdValue) { this.locationIdValue = locationIdValue; }
 
+    // ── Derived getters ────────────────────────────────────────────────
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -173,6 +181,119 @@ public class Veterinarian {
                 && licenseNumber != null && !licenseNumber.isEmpty()
                 && nationalId != null && !nationalId.isEmpty()
                 && phone != null && !phone.isEmpty();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    //  LOCATION HELPERS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /**
+     * Breadcrumb style: "Kigali › Gasabo › Remera › Nyarutarama › Village X"
+     */
+    @Transient
+    public String getFullLocationPath() {
+        if (location == null) return "—";
+        LinkedList<String> parts = new LinkedList<>();
+        Location cur = location;
+        int guard = 0;
+        while (cur != null && guard++ < 10) {
+            if (cur.getName() != null && !cur.getName().isBlank()) {
+                parts.addFirst(cur.getName().trim());
+            }
+            cur = cur.getParent();
+        }
+        return parts.isEmpty() ? "—" : String.join(" › ", parts);
+    }
+
+    /**
+     * Comma separated: "Kigali, Gasabo, Remera, Nyarutarama, Village X"
+     */
+    @Transient
+    public String getFullLocationPathComma() {
+        if (location == null) return "—";
+        LinkedList<String> parts = new LinkedList<>();
+        Location cur = location;
+        int guard = 0;
+        while (cur != null && guard++ < 10) {
+            if (cur.getName() != null && !cur.getName().isBlank()) {
+                parts.addFirst(cur.getName().trim());
+            }
+            cur = cur.getParent();
+        }
+        return parts.isEmpty() ? "—" : String.join(", ", parts);
+    }
+
+    /**
+     * Village (self — the leaf node of the location chain).
+     * Returns null if no location is set.
+     */
+    @Transient
+    public String getVillageName() {
+        return levelName(0);
+    }
+
+    /**
+     * Cell — one step up from the leaf.
+     */
+    @Transient
+    public String getCellName() {
+        return levelName(1);
+    }
+
+    /**
+     * Sector — two steps up from the leaf.
+     */
+    @Transient
+    public String getSectorName() {
+        return levelName(2);
+    }
+
+    /**
+     * District — three steps up from the leaf.
+     */
+    @Transient
+    public String getDistrictName() {
+        return levelName(3);
+    }
+
+    /**
+     * Province — four steps up from the leaf.
+     */
+    @Transient
+    public String getProvinceName() {
+        return levelName(4);
+    }
+
+    /**
+     * Walk up the location tree {@code stepsUp} levels and return the name.
+     * 0 = village (the location itself), 1 = cell, 2 = sector, 3 = district, 4 = province.
+     * Returns null when the level does not exist or has a blank name.
+     */
+    private String levelName(int stepsUp) {
+        Location cur = location;
+        int i = 0;
+        while (cur != null && i < stepsUp) {
+            cur = cur.getParent();
+            i++;
+        }
+        return (cur != null && cur.getName() != null && !cur.getName().isBlank())
+                ? cur.getName().trim() : null;
+    }
+
+    @Transient
+    public String getPhotoUrl() {
+        return normaliseAssetUrl(photo);
+    }
+
+    private static String normaliseAssetUrl(String value) {
+        if (value == null) return null;
+        String v = value.trim();
+        if (v.isEmpty()) return null;
+        if (v.startsWith("http://") || v.startsWith("https://")
+                || v.startsWith("data:") || v.startsWith("/")) {
+            return v;
+        }
+        return "/" + v;
     }
 
     @Override

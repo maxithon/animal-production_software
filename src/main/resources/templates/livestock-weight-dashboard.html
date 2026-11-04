@@ -55,28 +55,74 @@
         .btn-act.add:hover  { background:#4338ca; color:#fff; border-color:#4338ca; }
         .empty-row td { padding:40px 0; text-align:center; color:#94a3b8; }
 
-        /* Pagination */
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION
+           ══════════════════════════════════════════════════════════════ */
         .pagination-wrap { display:flex; align-items:center; justify-content:space-between;
-                           flex-wrap:wrap; gap:10px; margin-top:16px;
+                           flex-wrap:wrap; gap:12px; margin-top:16px;
                            padding-top:14px; border-top:1.5px solid #f0f2f5; }
-        .pagination-info { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .pagination-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
         .showing-text { font-size:12px; color:#64748b; }
-        .page-size-wrap { display:flex; align-items:center; gap:5px; }
+        .showing-text strong { color:#0f172a; font-weight:700; }
+
+        .page-size-wrap { display:flex; align-items:center; gap:6px; }
         .page-size-label { font-size:11px; font-weight:600; color:#64748b; }
         .page-size-select { padding:4px 9px; border:1px solid #e2e8f0;
                             border-radius:5px; font-size:11px;
+                            font-weight:600; color:#334155;
                             cursor:pointer; background:#fafcff; }
-        .pagination-list { display:flex; align-items:center; gap:3px;
+        .page-size-select:hover { border-color:#1a5f7a; }
+        .page-size-select:focus { outline:none; border-color:#1a5f7a;
+                                  box-shadow:0 0 0 3px rgba(26,95,122,.1); }
+
+        .pagination-list { display:flex; align-items:center; gap:4px;
                            list-style:none; margin:0; padding:0; flex-wrap:wrap; }
-        .pg-btn { display:inline-flex; align-items:center; gap:3px;
-                  padding:5px 10px; border-radius:5px; font-size:11px;
-                  font-weight:600; color:#475569; background:#f8f9fb;
+        .pg-btn { display:inline-flex; align-items:center; justify-content:center;
+                  gap:5px; min-width:34px; height:34px; padding:0 10px;
+                  border-radius:6px; font-size:12px; font-weight:600;
+                  color:#475569; background:#fff;
                   border:1px solid #e2e8f0; text-decoration:none;
-                  transition:all .15s; cursor:pointer; }
-        .pg-btn:hover { background:#1a5f7a; color:#fff; border-color:#1a5f7a; }
-        .pg-active .pg-btn { background:#1a5f7a; color:#fff; border-color:#1a5f7a; }
-        li.disabled .pg-btn { opacity:.4; pointer-events:none; }
-        .pg-dots { padding:0 5px; font-size:12px; color:#94a3b8; }
+                  transition:all .12s ease; cursor:pointer; white-space:nowrap; }
+        .pg-btn:hover { background:#e0f2fe; border-color:#0284c7; color:#0369a1; }
+        .pg-active .pg-btn { background:#1a5f7a; color:#fff; border-color:#1a5f7a;
+                             pointer-events:none; cursor:default;
+                             box-shadow:0 2px 6px rgba(26,95,122,.25); }
+        .pg-active .pg-btn:hover { background:#1a5f7a; color:#fff; }
+        li.disabled .pg-btn { opacity:.35; pointer-events:none; cursor:not-allowed;
+                              background:#fafbfc; }
+
+        /* Edge buttons (First / Prev / Next / Last) — icon + visible label */
+        .pg-btn.pg-edge { min-width:auto; padding:0 12px; gap:6px;
+                          background:#f8fafc; color:#334155; font-weight:700; }
+        .pg-btn.pg-edge:hover { background:#1a5f7a; border-color:#1a5f7a; color:#fff; }
+        .pg-btn.pg-edge i { font-size:12px; line-height:1; }
+        .pg-btn.pg-edge .pg-label { display:inline-block; font-size:11px;
+                                    text-transform:uppercase; letter-spacing:.04em; }
+
+        .pg-ellipsis { display:inline-flex; align-items:center; justify-content:center;
+                       min-width:24px; height:34px; color:#94a3b8; font-size:13px;
+                       font-weight:700; user-select:none; letter-spacing:.1em; }
+
+        .goto-page { display:flex; align-items:center; gap:5px;
+                     font-size:11px; color:#64748b; font-weight:600; }
+        .goto-page input { width:56px; height:34px; padding:0 8px;
+                           border:1px solid #e2e8f0; border-radius:5px;
+                           font-size:12px; font-weight:600; text-align:center;
+                           color:#0f172a; background:#fff; transition:all .12s; }
+        .goto-page input:focus { outline:none; border-color:#1a5f7a;
+                                 box-shadow:0 0 0 3px rgba(26,95,122,.1); }
+        .goto-page input::-webkit-outer-spin-button,
+        .goto-page input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .goto-page input[type=number] { -moz-appearance:textfield; }
+
+        @media (max-width: 767.98px) {
+            .pagination-wrap { flex-direction:column; align-items:stretch; }
+            .pagination-meta { justify-content:space-between; width:100%; }
+            .pagination-list { justify-content:center; width:100%; }
+            .goto-page { justify-content:center; width:100%; padding-top:6px;
+                         border-top:1px dashed #e2e8f0; margin-top:4px; }
+            .pg-btn.pg-edge .pg-label { display:none; }
+        }
     </style>
 </head>
 <body>
@@ -177,17 +223,31 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="pagination-wrap" th:if="${totalPages > 1}">
-            <div class="pagination-info">
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION — ALWAYS VISIBLE
+             Layout:
+               [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             Preserves: size
+             ═════════════════════════════════════════════════════════════ -->
+        <div class="pagination-wrap"
+             th:with="
+                 total=${totalPages != null and totalPages > 0 ? totalPages : 1},
+                 current=${currentPage != null ? currentPage : 0},
+                 size=${pageSize != null ? pageSize : 10},
+                 items=${totalAnimals != null ? totalAnimals : 0},
+                 start=${items == 0 ? 0 : (current * size) + 1},
+                 end=${items == 0 ? 0 : ((current * size) + size > items ? items : (current * size) + size)},
+                 showFrom=${current - 2 < 1 ? 1 : current - 2},
+                 showTo=${current + 2 > total ? total : current + 2}
+             ">
+
+            <div class="pagination-meta">
                 <span class="showing-text">
-                    Page <strong th:text="${currentPage + 1}">1</strong>
-                    of <strong th:text="${totalPages}">1</strong>
-                    &nbsp;·&nbsp;
-                    <strong th:text="${totalAnimals}">0</strong> total animals
+                    Showing <strong th:text="${start}">0</strong>–<strong th:text="${end}">0</strong>
+                    of <strong th:text="${items}">0</strong>
                 </span>
                 <div class="page-size-wrap">
-                    <span class="page-size-label">Per page:</span>
+                    <span class="page-size-label">Rows per page:</span>
                     <select class="page-size-select" onchange="changePageSize(this.value)">
                         <option value="10"  th:selected="${pageSize == 10}">10</option>
                         <option value="25"  th:selected="${pageSize == 25}">25</option>
@@ -198,50 +258,110 @@
             </div>
 
             <ul class="pagination-list">
-                <li th:classappend="${currentPage == 0} ? 'disabled'">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/weight/dashboard(page=${currentPage - 1}, size=${pageSize})}">
-                        <i class="bi bi-chevron-left"></i> Prev
+
+                <!-- ─── FIRST page button (icon + label) ─────────────── -->
+                <li th:classappend="${current == 0} ? 'disabled'">
+                    <a th:if="${current > 0}"
+                       class="pg-btn pg-edge"
+                       th:title="'First page'"
+                       th:href="@{/livestock/weight/dashboard(page=0, size=${size})}">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
                     </a>
+                    <span th:if="${current == 0}" class="pg-btn pg-edge">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </span>
                 </li>
 
-                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[0] > 0}">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/weight/dashboard(page=0, size=${pageSize})}">1</a>
-                </li>
-                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[0] > 1}">
-                    <span class="pg-dots">…</span>
-                </li>
-
-                <li th:each="i : ${pageNumbers}"
-                    th:classappend="${i == currentPage} ? 'pg-active'">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/weight/dashboard(page=${i}, size=${pageSize})}"
-                       th:text="${i + 1}">1</a>
-                </li>
-
-                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[pageNumbers.size() - 1] < totalPages - 2}">
-                    <span class="pg-dots">…</span>
-                </li>
-                <li th:if="${pageNumbers != null and !pageNumbers.isEmpty() and pageNumbers[pageNumbers.size() - 1] < totalPages - 1}">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/weight/dashboard(page=${totalPages - 1}, size=${pageSize})}"
-                       th:text="${totalPages}">1</a>
-                </li>
-
-                <li th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
-                    <a class="pg-btn"
-                       th:href="@{/livestock/weight/dashboard(page=${currentPage + 1}, size=${pageSize})}">
-                        Next <i class="bi bi-chevron-right"></i>
+                <!-- ─── PREVIOUS page button (icon + label) ──────────── -->
+                <li th:classappend="${current == 0} ? 'disabled'">
+                    <a th:if="${current > 0}"
+                       class="pg-btn pg-edge"
+                       th:title="'Previous page'"
+                       th:href="@{/livestock/weight/dashboard(page=${current - 1}, size=${size})}">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
                     </a>
+                    <span th:if="${current == 0}" class="pg-btn pg-edge">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </span>
+                </li>
+
+                <!-- ─── First number if window slid past it ──────────── -->
+                <li th:if="${showFrom > 1}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=0, size=${size})}">1</a>
+                </li>
+                <li th:if="${showFrom > 2}" class="pg-ellipsis">…</li>
+
+                <!-- ─── Window of page numbers ──────────────────────── -->
+                <li th:each="i : ${#numbers.sequence(showFrom, showTo)}"
+                    th:classappend="${i - 1 == current} ? 'pg-active'">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${i - 1}, size=${size})}"
+                       th:text="${i}">1</a>
+                </li>
+
+                <!-- ─── Trailing ellipsis + last number ─────────────── -->
+                <li th:if="${showTo < total - 1}" class="pg-ellipsis">…</li>
+                <li th:if="${showTo < total}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/weight/dashboard(page=${total - 1}, size=${size})}"
+                       th:text="${total}">1</a>
+                </li>
+
+                <!-- ─── NEXT page button (icon + label) ─────────────── -->
+                <li th:classappend="${current + 1 >= total} ? 'disabled'">
+                    <a th:if="${current + 1 < total}"
+                       class="pg-btn pg-edge"
+                       th:title="'Next page'"
+                       th:href="@{/livestock/weight/dashboard(page=${current + 1}, size=${size})}">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <span th:if="${current + 1 >= total}" class="pg-btn pg-edge">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+
+                <!-- ─── LAST page button (icon + label) ─────────────── -->
+                <li th:classappend="${current + 1 >= total} ? 'disabled'">
+                    <a th:if="${current + 1 < total}"
+                       class="pg-btn pg-edge"
+                       th:title="'Last page'"
+                       th:href="@{/livestock/weight/dashboard(page=${total - 1}, size=${size})}">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </a>
+                    <span th:if="${current + 1 >= total}" class="pg-btn pg-edge">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </span>
                 </li>
             </ul>
+
+            <!-- Jump-to-page -->
+            <div class="goto-page">
+                <label for="gotoPageInput">Go to page:</label>
+                <input type="number"
+                       id="gotoPageInput"
+                       min="1"
+                       th:max="${total}"
+                       th:value="${current + 1}"
+                       onkeydown="if(event.key==='Enter'){gotoPage(this.value)}"
+                       onblur="gotoPage(this.value)">
+                <span th:text="'/ ' + ${total}">/ 1</span>
+            </div>
         </div>
 
     </div>
 </div>
 
-<script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
     document.getElementById('wtSearch').addEventListener('keyup', function() {
         var v = this.value.toLowerCase();
         document.querySelectorAll('table.wt tbody tr[data-search]').forEach(function(tr) {
@@ -253,6 +373,16 @@
         var url = new URL(window.location.href);
         url.searchParams.set('page', '0');
         url.searchParams.set('size', size);
+        window.location.href = url.toString();
+    }
+    function gotoPage(pageNum) {
+        var input = document.getElementById('gotoPageInput');
+        var total = parseInt(input.getAttribute('max'), 10) || 1;
+        var p = parseInt(pageNum, 10);
+        if (isNaN(p) || p < 1) p = 1;
+        if (p > total) p = total;
+        var url = new URL(window.location.href);
+        url.searchParams.set('page', p - 1);
         window.location.href = url.toString();
     }
 </script>

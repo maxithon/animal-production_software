@@ -69,10 +69,8 @@ public class HerdMovementController {
         HerdMovementReportDto report =
                 herdMovementService.generateReport(fromDate, toDate, selectedCategoryIds);
 
-        List<LivestockCategory> allCategories = livestockCategoryRepository.findAll().stream()
-                .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
-                .sorted(Comparator.comparing(LivestockCategory::getName))
-                .collect(Collectors.toList());
+        // ✅ FIXED: use the new repository method that avoids getIsDeleted()
+        List<LivestockCategory> allCategories = livestockCategoryRepository.findAllByOrderByNameAsc();
 
         String selectedCategoryName;
         if (selectedCategoryIds.isEmpty()) {

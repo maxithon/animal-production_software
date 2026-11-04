@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Sick Livestock</title>
-    <!-- CSRF meta tags - required for Spring Security -->
     <meta name="_csrf" th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
 
@@ -43,43 +42,9 @@
         .symptom-chip { display:inline-flex;align-items:center;gap:5px;background:#f1f5f9;border:1px solid #e2e8f0;padding:3px 10px;border-radius:20px;font-size:.78rem;color:#475569;font-weight:500; }
         .vet-chip-tbl { display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;border:1px solid #bbf7d0;padding:3px 9px;border-radius:20px;font-size:.75rem;color:#166534;font-weight:500; }
         .temp-chip { display:inline-flex;align-items:center;gap:4px;background:#fff7ed;border:1px solid #fed7aa;padding:3px 9px;border-radius:20px;font-size:.75rem;color:#c2410c;font-weight:600; }
-        .days-pill { font-size:.72rem; color:#64748b; font-weight:500; }
         .search-wrap { position:relative; }
         .search-wrap .bi-search { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8; }
         .search-input { padding-left:36px; border:1.5px solid #e2e8f0; border-radius:8px; font-size:.88rem; }
-        .btn-quick-recovering, .btn-quick-critical, .btn-quick-recovered { font-size:.7rem; padding:2px 8px; border-radius:20px; font-weight:700; cursor:pointer; text-decoration:none; }
-        .btn-quick-recovering { background:#f0fdf4; border:1px solid #bbf7d0; color:#166634; }
-        .btn-quick-critical { background:#fee2e2; border:1px solid #fca5a5; color:#991b1b; }
-        .btn-quick-recovered { background:#e0f2fe; border:1px solid #bae6fd; color:#0369a1; }
-
-        /* ── generic entity live-search widget (used for both Vet and Animal pickers) ── */
-        .entity-search-container { position: relative; }
-        .entity-search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
-        .entity-search-results.show { display: block; }
-        .entity-search-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.15s; }
-        .entity-search-item:hover { background: #f0fdf4; }
-        .entity-search-name { font-weight: 600; color: #1e293b; margin-bottom: 2px; display:flex; align-items:center; gap:8px; }
-        .entity-search-details { font-size: 0.8rem; color: #64748b; }
-        .loading-spinner { padding: 14px; text-align: center; color: #64748b; font-size:.85rem; }
-        .no-results { padding: 14px; text-align: center; color: #94a3b8; font-style: italic; font-size:.85rem; }
-        .selected-entity-display { display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 8px 12px; margin-top: 8px; }
-        .selected-entity-display.show { display: flex; align-items: center; justify-content: space-between; }
-        .selected-entity-name { font-weight: 600; color: #166534; font-size:.87rem; }
-        .clear-entity-btn { background: none; border: none; color: #dc2626; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-
-        .vet-search-container { position: relative; }
-        .vet-search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
-        .vet-search-results.show { display: block; }
-        .vet-search-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f1f5f9; transition: background 0.2s; }
-        .vet-search-item:hover { background: #f0fdf4; }
-        .vet-search-name { font-weight: 600; color: #1e293b; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-        .vet-search-details { font-size: 0.85rem; color: #64748b; }
-        .vet-add-new { background: #ecfdf5; color: #059669; font-weight: 600; border-top: 2px solid #10b981; }
-        #sickNewVetFields { display: none; }
-        .selected-vet-display { display: none; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px; padding: 10px 12px; margin-top: 8px; }
-        .selected-vet-display.show { display: flex; align-items: center; justify-content: space-between; }
-        .selected-vet-name { font-weight: 600; color: #166534; }
-        .clear-vet-btn { background: none; border: none; color: #dc2626; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
         .btn-history-toggle { display:inline-flex; align-items:center; gap:5px; background:#f1f5f9; border:1.5px solid #e2e8f0; color:#475569; font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:20px; cursor:pointer; }
         .history-panel { overflow:hidden; transition:max-height .35s; max-height:0; opacity:0; }
         .history-panel.open { max-height:600px; opacity:1; }
@@ -90,11 +55,186 @@
         .tl-time { font-size:.7rem; color:#94a3b8; margin-left:auto; white-space:nowrap; }
         .no-history { text-align:center; padding:18px 12px; color:#94a3b8; }
 
-        /* ── pagination ── */
-        .pager-bar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:16px; }
-        .pager-info { font-size:.82rem; color:#64748b; }
-        .pager-btns .page-item .page-link { font-size:.82rem; cursor:pointer; }
-        .pager-btns .page-item.disabled .page-link { pointer-events:none; }
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION
+           ══════════════════════════════════════════════════════════════ */
+        .pager-bar {
+            display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+            gap:14px; margin-top:18px; padding-top:16px;
+            border-top:1.5px solid #f0f2f5; font-size:.85rem; color:#64748b;
+        }
+        .pager-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+        .pager-info { font-size:.85rem; color:#64748b; }
+        .pager-info strong { color:#0f172a; font-weight:700; }
+        .pager-pagesize { display:flex; align-items:center; gap:6px; }
+        .pager-pagesize label { font-size:.78rem; font-weight:600; color:#64748b; }
+        .pager-pagesize select {
+            padding:4px 9px; border:1px solid #e2e8f0; border-radius:6px;
+            font-size:.82rem; font-weight:600; color:#0f172a;
+            cursor:pointer; background:#fff;
+        }
+        .pager-pagesize select:hover { border-color:#f59e0b; }
+        .pager-pagesize select:focus { outline:none; border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+
+        .pager-list {
+            display:flex; align-items:center; gap:4px;
+            list-style:none; margin:0; padding:0; flex-wrap:wrap;
+        }
+        .pg-btn {
+            display:inline-flex; align-items:center; justify-content:center; gap:5px;
+            min-width:34px; height:34px; padding:0 10px;
+            border-radius:8px; font-size:.82rem; font-weight:600;
+            color:#1e293b; background:#fff; border:1px solid #e2e8f0;
+            text-decoration:none; transition:all .12s ease;
+            cursor:pointer; white-space:nowrap; font-family:inherit;
+        }
+        .pg-btn:hover { background:#fffbeb; border-color:#f59e0b; color:#92400e; }
+        .pg-btn.active {
+            background:#f59e0b; color:#fff; border-color:#f59e0b;
+            pointer-events:none; cursor:default;
+            box-shadow:0 2px 6px rgba(245,158,11,.28);
+        }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity:.35; pointer-events:none; cursor:not-allowed; background:#fafbfc;
+        }
+        .pg-btn.pg-edge {
+            min-width:auto; padding:0 12px; gap:6px;
+            background:#f8fafc; color:#334155; font-weight:700;
+        }
+        .pg-btn.pg-edge:hover { background:#f59e0b; border-color:#f59e0b; color:#fff; }
+        .pg-btn.pg-edge i { font-size:12px; line-height:1; }
+        .pg-btn.pg-edge .pg-label {
+            display:inline-block; font-size:.72rem;
+            text-transform:uppercase; letter-spacing:.04em;
+        }
+        .pg-ellipsis {
+            display:inline-flex; align-items:center; justify-content:center;
+            min-width:24px; height:34px; color:#94a3b8;
+            font-size:.85rem; font-weight:700; user-select:none; letter-spacing:.1em;
+        }
+        .pager-goto {
+            display:flex; align-items:center; gap:5px;
+            font-size:.78rem; color:#64748b; font-weight:600;
+        }
+        .pager-goto input {
+            width:56px; height:34px; padding:0 8px;
+            border:1px solid #e2e8f0; border-radius:6px;
+            font-size:.82rem; font-weight:600; text-align:center;
+            color:#0f172a; background:#fff; transition:all .12s; font-family:inherit;
+        }
+        .pager-goto input:focus { outline:none; border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.15); }
+        .pager-goto input::-webkit-outer-spin-button,
+        .pager-goto input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+        .pager-goto input[type=number] { -moz-appearance:textfield; }
+
+        @media (max-width: 900px) {
+            .pager-bar { flex-direction:column; align-items:stretch; }
+            .pager-meta { justify-content:space-between; width:100%; }
+            .pager-list { justify-content:center; width:100%; }
+            .pager-goto {
+                justify-content:center; width:100%;
+                padding-top:6px; border-top:1px dashed #e2e8f0; margin-top:4px;
+            }
+            .pg-btn.pg-edge .pg-label { display:none; }
+        }
+
+        /* ════════════════════════════════════════════════════════════
+           LIVE-SEARCH WIDGET (unchanged)
+           ════════════════════════════════════════════════════════════ */
+        .live-search { position:relative; }
+        .live-search .ls-input-wrap { position:relative; }
+        .live-search .ls-input-wrap .bi-search-icon {
+            position:absolute; left:12px; top:50%; transform:translateY(-50%);
+            color:#94a3b8; font-size:.85rem; pointer-events:none;
+        }
+        .live-search .ls-input {
+            padding-left:34px; padding-right:34px;
+            border:1.5px solid #e2e8f0; border-radius:8px;
+            font-size:.87rem; height:36px;
+            transition:border-color .15s, box-shadow .15s;
+        }
+        .live-search .ls-input:focus {
+            outline:none; border-color:#f59e0b;
+            box-shadow:0 0 0 3px rgba(245,158,11,.15);
+        }
+        .live-search .ls-spinner {
+            position:absolute; right:12px; top:50%; transform:translateY(-50%);
+            width:14px; height:14px; border:2px solid #e2e8f0; border-top-color:#f59e0b;
+            border-radius:50%; animation:ls-spin .7s linear infinite; display:none;
+        }
+        .live-search.is-loading .ls-spinner { display:block; }
+        @keyframes ls-spin { to { transform:translateY(-50%) rotate(360deg); } }
+
+        .live-search .ls-dropdown {
+            position:absolute; left:0; right:0; top:calc(100% + 4px);
+            background:white; border:1px solid #e2e8f0; border-radius:10px;
+            box-shadow:0 6px 20px rgba(0,0,0,.1); max-height:320px;
+            overflow-y:auto; z-index:1050; display:none;
+        }
+        .live-search .ls-dropdown.open { display:block; }
+
+        .live-search .ls-item {
+            padding:9px 14px; cursor:pointer; border-bottom:1px solid #f1f5f9;
+            display:flex; align-items:center; gap:10px; transition:background .12s;
+        }
+        .live-search .ls-item:last-child { border-bottom:none; }
+        .live-search .ls-item:hover, .live-search .ls-item.active { background:#fffbeb; }
+        .live-search .ls-item .ls-item-icon {
+            width:26px; height:26px; border-radius:6px;
+            background:#fef3c7; color:#92400e;
+            display:flex; align-items:center; justify-content:center;
+            font-size:.78rem; flex-shrink:0;
+        }
+        .live-search .ls-item.vet-item .ls-item-icon { background:#ecfdf5; color:#065f46; }
+        .live-search .ls-item-body { flex:1; min-width:0; }
+        .live-search .ls-item-name {
+            font-weight:600; color:#1e293b; font-size:.86rem;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .live-search .ls-item-meta {
+            font-size:.72rem; color:#64748b;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .live-search .ls-item-meta .sep { margin:0 4px; color:#cbd5e1; }
+
+        .live-search .ls-empty {
+            padding:16px 14px; text-align:center;
+            color:#94a3b8; font-size:.82rem;
+        }
+        .live-search .ls-empty .bi { font-size:1.6rem; display:block; margin-bottom:6px; opacity:.4; }
+        .live-search .ls-add-inline {
+            display:inline-flex; align-items:center; justify-content:center;
+            background:#10b981; color:white; border:none;
+            width:28px; height:28px; border-radius:50%;
+            font-size:.9rem; cursor:pointer;
+            text-decoration:none; margin-left:6px;
+            transition:background .15s, transform .15s;
+            vertical-align:middle;
+        }
+        .live-search .ls-add-inline:hover { background:#059669; color:white; transform:scale(1.1); }
+
+        .live-search .ls-chip {
+            display:none; align-items:center; gap:8px;
+            background:#f0fdf4; border:1.5px solid #bbf7d0;
+            border-radius:8px; padding:6px 10px; margin-top:6px;
+            font-size:.83rem; font-weight:600; color:#065f46;
+        }
+        .live-search .ls-chip.show { display:flex; }
+        .live-search .ls-chip .bi-check-circle-fill { color:#10b981; }
+        .live-search .ls-chip .ls-chip-text {
+            flex:1; min-width:0;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .live-search .ls-chip .ls-chip-sub {
+            font-weight:400; color:#65a374; font-size:.76rem;
+        }
+        .live-search .ls-chip .ls-clear {
+            background:none; border:none; color:#dc2626;
+            width:24px; height:24px; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            cursor:pointer; font-size:.85rem; flex-shrink:0;
+        }
+        .live-search .ls-chip .ls-clear:hover { background:#fee2e2; }
     </style>
 </head>
 <body>
@@ -139,28 +279,29 @@
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
                     <div class="row g-3">
-                        <!-- ✅ REPLACED plain <select> with a live-search widget.
-                             With a large herd the old <select th:each="ls : ${livestockList}">
-                             rendered EVERY animal into the page on every load — slow to render,
-                             slow to submit, and painful to scroll through. This mirrors the
-                             veterinarian search pattern already used below, hitting
-                             GET /livestock/search?q= and returning only the top 20 matches. -->
                         <div class="col-md-3">
-                            <label class="form-label fw-semibold small">Animal (Tag) *</label>
-                            <div class="entity-search-container">
-                                <input type="text" class="form-control form-control-sm" id="sickAnimalSearch"
-                                       placeholder="Type tag number...(EX:GOA-001)" autocomplete="off" required>
-                                <input type="hidden" th:field="*{livestockIdValue}" id="sickAnimalIdField">
-                                <div class="entity-search-results" id="sickAnimalSearchResults"></div>
-                            </div>
-                            <div class="selected-entity-display" id="sickSelectedAnimalDisplay">
-                                <div>
-                                    <div class="selected-entity-name" id="sickSelectedAnimalName"></div>
-                                    <div class="entity-search-details" id="sickSelectedAnimalDetails"></div>
+                            <label class="form-label fw-semibold small">Animal (Tag) <span class="text-danger">*</span></label>
+                            <div class="live-search" id="lsAnimal">
+                                <div class="ls-input-wrap">
+                                    <i class="bi bi-search bi-search-icon"></i>
+                                    <input type="text" class="form-control ls-input"
+                                           id="lsAnimalSearch"
+                                           placeholder="Type tag number…" autocomplete="off">
+                                    <div class="ls-spinner"></div>
                                 </div>
-                                <button type="button" class="clear-entity-btn" id="sickClearAnimalBtn"><i class="bi bi-x-circle"></i></button>
+                                <input type="hidden" th:field="*{livestockIdValue}" id="lsAnimalId">
+                                <div class="ls-dropdown" id="lsAnimalDropdown"></div>
+                                <div class="ls-chip" id="lsAnimalChip">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span class="ls-chip-text" id="lsAnimalChipText"></span>
+                                    <span class="ls-chip-sub" id="lsAnimalChipSub"></span>
+                                    <button type="button" class="ls-clear" id="lsAnimalClear" title="Clear selection">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
                         <div class="col-md-2">
                             <label class="form-label fw-semibold small">Date Reported *</label>
                             <input type="date" class="form-control form-control-sm" th:field="*{reportedDate}" required>
@@ -197,7 +338,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label fw-semibold small">Diagnosis</label>
-                            <input type="text" class="form-control form-control-sm" th:field="*{diagnosis}" placeholder="e.g. Foot-and-mouth disease...">
+                            <input type="text" class="form-control form-control-sm" th:field="*{diagnosis}" placeholder="e.g. Foot-and-mouth...">
                         </div>
                         <div class="col-md-2">
                             <label class="form-label fw-semibold small">Temperature (°C)</label>
@@ -205,105 +346,24 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Veterinarian</label>
-                            <div class="vet-search-container">
-                                <input type="text" class="form-control form-control-sm" id="sickVetSearch" placeholder="Type name or license..." autocomplete="off">
-                                <input type="hidden" th:field="*{veterinarianIdValue}" id="sickVetIdField">
-                                <div class="vet-search-results" id="sickVetSearchResults"></div>
-                            </div>
-                            <div class="selected-vet-display" id="sickSelectedVetDisplay">
-                                <div class="selected-vet-info">
-                                    <div class="selected-vet-name" id="sickSelectedVetName"></div>
-                                    <div class="selected-vet-details" id="sickSelectedVetDetails"></div>
+                            <div class="live-search" id="lsVet">
+                                <div class="ls-input-wrap">
+                                    <i class="bi bi-person-badge bi-search-icon"></i>
+                                    <input type="text" class="form-control ls-input"
+                                           id="lsVetSearch"
+                                           placeholder="Type name, license, clinic…" autocomplete="off">
+                                    <div class="ls-spinner"></div>
                                 </div>
-                                <button type="button" class="clear-vet-btn" id="sickClearVetBtn"><i class="bi bi-x-circle"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="sickNewVetFields" class="mt-4" style="display:none;">
-                        <hr class="my-3">
-                        <h5 class="text-primary mb-3"><i class="bi bi-person-plus-fill"></i> Register New Veterinarian</h5>
-                        <div id="vetFormContainer">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">First Name *</label>
-                                    <input type="text" class="form-control" id="vetFirstName" placeholder="First name" maxlength="50">
+                                <input type="hidden" th:field="*{veterinarianIdValue}" id="lsVetId">
+                                <div class="ls-dropdown" id="lsVetDropdown"></div>
+                                <div class="ls-chip" id="lsVetChip">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span class="ls-chip-text" id="lsVetChipText"></span>
+                                    <span class="ls-chip-sub" id="lsVetChipSub"></span>
+                                    <button type="button" class="ls-clear" id="lsVetClear" title="Clear selection">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Last Name *</label>
-                                    <input type="text" class="form-control" id="vetLastName" placeholder="Last name" maxlength="50">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Phone *</label>
-                                    <input type="tel" class="form-control" id="vetPhone" placeholder="0781234567" maxlength="10">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Email</label>
-                                    <input type="email" class="form-control" id="vetEmail" placeholder="email@example.com">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">National ID</label>
-                                    <input type="text" class="form-control" id="vetNationalId" placeholder="16 digits" maxlength="16">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">License Number *</label>
-                                    <input type="text" class="form-control" id="vetLicenseNumber" placeholder="License #">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Specialization</label>
-                                    <input type="text" class="form-control" id="vetSpecialization" placeholder="e.g., Large Animal, Poultry">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label fw-semibold">Clinic Name</label>
-                                    <input type="text" class="form-control" id="vetClinicName" placeholder="Clinic/Hospital name">
-                                </div>
-
-                                <div class="col-md-12 mt-2">
-                                    <h6 class="text-secondary"><i class="bi bi-geo-alt"></i> Location Information</h6>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Province</label>
-                                    <select class="form-select" id="vetProvince" onchange="loadVetDistricts()">
-                                        <option value="">Select province...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">District</label>
-                                    <select class="form-select" id="vetDistrict" onchange="loadVetSectors()" disabled>
-                                        <option value="">Select district...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Sector</label>
-                                    <select class="form-select" id="vetSector" onchange="loadVetCells()" disabled>
-                                        <option value="">Select sector...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Cell</label>
-                                    <select class="form-select" id="vetCell" onchange="loadVetVillages()" disabled>
-                                        <option value="">Select cell...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label fw-semibold">Village</label>
-                                    <select class="form-select" id="vetVillage" disabled>
-                                        <option value="">Select village...</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-12 mt-2">
-                                    <label class="form-label fw-semibold">Notes</label>
-                                    <textarea class="form-control" id="vetNotes" rows="2" placeholder="Additional notes about the veterinarian..."></textarea>
-                                </div>
-                            </div>
-                            <div class="mt-3 d-flex gap-2">
-                                <button type="button" class="btn btn-success btn-sm" id="sickSaveNewVetBtn">
-                                    <i class="bi bi-check-circle"></i> Save Veterinarian
-                                </button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="sickCancelNewVetBtn">
-                                    Cancel
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -311,9 +371,10 @@
                     <div class="row g-3 mt-1">
                         <div class="col-md-10">
                             <label class="form-label fw-semibold small">Treatment Notes</label>
-                            <input type="text" class="form-control form-control-sm" th:field="*{treatmentNotes}" placeholder="Medication given, dosage...">
+                            <textarea class="form-control form-control-sm" th:field="*{treatmentNotes}" rows="2" placeholder="Medication given, dosage..."></textarea>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label fw-semibold small d-block">&nbsp;</label>
                             <button type="submit" class="btn btn-warning w-100 btn-sm">Add Record</button>
                         </div>
                     </div>
@@ -343,39 +404,44 @@
                     <option value="SEVERE">Severe</option>
                     <option value="LIFE_THREATENING">Life-Threatening</option>
                 </select>
-                <!-- ✅ ADDED: rows-per-page control for pagination -->
-                <select class="form-select form-select-sm w-auto" id="pageSizeSelect">
-                    <option value="10">10 / page</option>
-                    <option value="15" selected>15 / page</option>
-                    <option value="25">25 / page</option>
-                    <option value="50">50 / page</option>
-                </select>
             </div>
         </div>
 
         <div class="table-responsive">
             <table class="table table-hover" id="sickTable">
                 <thead class="table-light">
-                <tr><th>#</th><th>Animal</th><th>Reported</th><th>Symptoms</th><th>Diagnosis</th><th>Temp</th><th>Severity</th><th>Status</th><th>Vet</th><th>Actions</th></tr>
+                <tr><th>#</th><th>Animal</th><th>Beneficiary</th><th>Location</th><th>Reported</th><th>Symptoms</th><th>Status</th><th>Vet</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                 <tr th:if="${sickRecords == null or sickRecords.empty}">
-                    <td colspan="10" class="text-center py-5">No sick animals recorded.</td>
+                    <td colspan="9" class="text-center py-5">No sick animals recorded.</td>
                 </tr>
                 <th:block th:each="s, i : ${sickRecords}">
                     <tr class="sick-data-row">
                         <td th:text="${i.count}"></td>
-                        <td><strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></strong></td>
+                        <td>
+                            <strong th:text="${s.livestock != null ? s.livestock.tagNumber : 'N/A'}"></strong>
+                            <span th:if="${s.livestock?.livestockCategory != null}" class="badge bg-info text-dark ms-1" th:text="${s.livestock.livestockCategory.name}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${s.livestock?.beneficiary != null}" style="font-size:.8rem; color:#4b5563;">
+                                <i class="bi bi-person-fill me-1" style="color:#7c3aed;"></i><span th:text="${s.livestock.beneficiary.fullName}"></span><br>
+                                <i class="bi bi-telephone-fill me-1" style="color:#7c3aed;"></i><span th:text="${s.livestock.beneficiary.phone}"></span>
+                            </span>
+                            <span th:if="${s.livestock?.beneficiary == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${s.livestock?.location != null}" style="font-size:.75rem; color:#6b7280;">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i><span th:text="${s.livestock.location.name}"></span>
+                                <span th:if="${s.livestock.location.parent != null}" th:text="' › ' + ${s.livestock.location.parent.name}"></span>
+                                <span th:if="${s.livestock.location.parent.parent != null}" th:text="' › ' + ${s.livestock.location.parent.parent.name}"></span>
+                                <span th:if="${s.livestock.location.parent.parent.parent != null}" th:text="' › ' + ${s.livestock.location.parent.parent.parent.name}"></span>
+                                <span th:if="${s.livestock.location.parent.parent.parent.parent != null}" th:text="' › ' + ${s.livestock.location.parent.parent.parent.parent.name}"></span>
+                            </span>
+                            <span th:if="${s.livestock?.location == null}" class="text-muted">—</span>
+                        </td>
                         <td th:text="${s.reportedDate != null ? #temporals.format(s.reportedDate,'dd-MM-yyyy') : '—'}"></td>
                         <td><span th:if="${s.symptoms != null and s.symptoms != ''}" th:text="${s.symptoms}" class="symptom-chip"></span><span th:if="${s.symptoms == null or s.symptoms == ''}" class="text-muted">—</span></td>
-                        <td><span th:if="${s.diagnosis != null and s.diagnosis != ''}" th:text="${s.diagnosis}" style="font-size:.75rem;color:#7c3aed;"></span><span th:if="${s.diagnosis == null or s.diagnosis == ''}" class="text-muted">—</span></td>
-                        <td><span th:if="${s.temperature != null}" class="temp-chip" th:text="${s.temperature + '°C'}"></span><span th:if="${s.temperature == null}" class="text-muted">—</span></td>
-                        <td>
-                            <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'MILD'}" class="sev-mild">Mild</span>
-                            <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'MODERATE'}" class="sev-moderate">Moderate</span>
-                            <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'SEVERE'}" class="sev-severe">Severe</span>
-                            <span th:if="${s.severityLevel != null and s.severityLevel.name() == 'LIFE_THREATENING'}" class="sev-lifethreat">Life-Threat</span>
-                        </td>
                         <td>
                             <span th:if="${s.status != null and s.status.name() == 'SICK'}" class="badge-sick">Sick</span>
                             <span th:if="${s.status != null and s.status.name() == 'CRITICAL'}" class="badge-critical">Critical</span>
@@ -408,7 +474,7 @@
                         </td>
                     </tr>
                     <tr class="history-row" th:id="'hist-row-' + ${s.id}">
-                        <td colspan="10">
+                        <td colspan="9">
                             <div class="history-panel" th:id="'hist-panel-' + ${s.id}">
                                 <div class="history-panel-inner">
                                     <strong>Status History</strong>
@@ -422,7 +488,7 @@
                                                 <span th:if="${h.status != null and h.status.name() == 'RECOVERED'}" class="badge-recovered">Recovered</span>
                                                 <span class="tl-time" th:text="${#temporals.format(h.changedAt,'dd-MM-yyyy HH:mm')}"></span>
                                             </div>
-                                            <div th:if="${h.notes != null and h.notes != ''}" class="tl-notes" th:text="${h.notes}"></div>
+                                            <div th:if="${h.notes != null and h.notes != ''}" class="tl-notes mt-1" style="font-size:.8rem; color:#475569;" th:text="${h.notes}"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -434,15 +500,32 @@
             </table>
         </div>
 
-        <!-- ✅ ADDED: pagination bar. Works client-side, on top of whatever the
-             search box / status / severity filters currently show — so
-             filtering + pagination compose correctly instead of fighting
-             each other. -->
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION BAR
+             [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             ═════════════════════════════════════════════════════════════ -->
         <div class="pager-bar">
-            <div class="pager-info" id="pagerInfo">Showing 0–0 of 0</div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0 pager-btns" id="pagerButtons"></ul>
-            </nav>
+            <div class="pager-meta">
+                <span class="pager-info" id="pagerInfo">Showing 0 of 0</span>
+                <div class="pager-pagesize">
+                    <label for="pageSizeSelect">Rows per page:</label>
+                    <select id="pageSizeSelect">
+                        <option value="10">10</option>
+                        <option value="15" selected>15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <ul class="pager-list" id="pagerButtons"></ul>
+
+            <div class="pager-goto">
+                <label for="pagerGoto">Go to page:</label>
+                <input type="number" id="pagerGoto" min="1" value="1">
+                <span id="pagerGotoTotal">/ 1</span>
+            </div>
         </div>
     </div>
 </div>
@@ -450,89 +533,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     // ============================================================
-    // LOCATION CASCADING FUNCTIONS FOR VETERINARIAN FORM
-    // ============================================================
-
-    function loadVetProvinces() {
-        fetch('/api/locations/provinces')
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('vetProvince');
-                select.innerHTML = '<option value="">Select province...</option>';
-                data.forEach(item => {
-                    select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            })
-            .catch(error => console.error('Error loading provinces:', error));
-    }
-
-    function loadVetDistricts() {
-        const provinceId = document.getElementById('vetProvince').value;
-        const districtSelect = document.getElementById('vetDistrict');
-        if (!provinceId) { districtSelect.disabled = true; resetVetSelects(['district','sector','cell','village']); return; }
-        fetch(`/api/locations/districts/${provinceId}`)
-            .then(response => response.json())
-            .then(data => {
-                districtSelect.innerHTML = '<option value="">Select district...</option>';
-                data.forEach(item => { districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
-                districtSelect.disabled = false;
-                resetVetSelects(['sector', 'cell', 'village']);
-            }).catch(error => console.error('Error loading districts:', error));
-    }
-
-    function loadVetSectors() {
-        const districtId = document.getElementById('vetDistrict').value;
-        const sectorSelect = document.getElementById('vetSector');
-        if (!districtId) { sectorSelect.disabled = true; resetVetSelects(['sector','cell','village']); return; }
-        fetch(`/api/locations/sectors/${districtId}`)
-            .then(response => response.json())
-            .then(data => {
-                sectorSelect.innerHTML = '<option value="">Select sector...</option>';
-                data.forEach(item => { sectorSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
-                sectorSelect.disabled = false;
-                resetVetSelects(['cell', 'village']);
-            }).catch(error => console.error('Error loading sectors:', error));
-    }
-
-    function loadVetCells() {
-        const sectorId = document.getElementById('vetSector').value;
-        const cellSelect = document.getElementById('vetCell');
-        if (!sectorId) { cellSelect.disabled = true; resetVetSelects(['cell','village']); return; }
-        fetch(`/api/locations/cells/${sectorId}`)
-            .then(response => response.json())
-            .then(data => {
-                cellSelect.innerHTML = '<option value="">Select cell...</option>';
-                data.forEach(item => { cellSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
-                cellSelect.disabled = false;
-                resetVetSelects(['village']);
-            }).catch(error => console.error('Error loading cells:', error));
-    }
-
-    function loadVetVillages() {
-        const cellId = document.getElementById('vetCell').value;
-        const villageSelect = document.getElementById('vetVillage');
-        if (!cellId) { villageSelect.disabled = true; return; }
-        fetch(`/api/locations/villages/${cellId}`)
-            .then(response => response.json())
-            .then(data => {
-                villageSelect.innerHTML = '<option value="">Select village...</option>';
-                data.forEach(item => { villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`; });
-                villageSelect.disabled = false;
-            }).catch(error => console.error('Error loading villages:', error));
-    }
-
-    function resetVetSelects(selectIds) {
-        selectIds.forEach(id => {
-            const select = document.getElementById(`vet${id.charAt(0).toUpperCase() + id.slice(1)}`);
-            if (select) {
-                select.innerHTML = `<option value="">Select ${id}...</option>`;
-                select.disabled = true;
-            }
-        });
-    }
-
-    // ============================================================
-    // TOGGLE HISTORY
+    // HISTORY TOGGLE
     // ============================================================
     function toggleHistory(sickId) {
         var panel = document.getElementById('hist-panel-'+sickId);
@@ -540,234 +541,285 @@
     }
 
     // ============================================================
-    // ✅ ANIMAL LIVE-SEARCH (mirrors the vet search pattern below)
+    // LIVE-SEARCH WIDGETS (unchanged)
     // ============================================================
-    (function() {
-        const animalSearchInput = document.getElementById('sickAnimalSearch');
-        const animalSearchResults = document.getElementById('sickAnimalSearchResults');
-        const animalIdField = document.getElementById('sickAnimalIdField');
-        const selectedAnimalDisplay = document.getElementById('sickSelectedAnimalDisplay');
-        const selectedAnimalName = document.getElementById('sickSelectedAnimalName');
-        const selectedAnimalDetails = document.getElementById('sickSelectedAnimalDetails');
-        const clearAnimalBtn = document.getElementById('sickClearAnimalBtn');
-        let animalSearchTimeout;
-
-        if (animalSearchInput) {
-            animalSearchInput.addEventListener('input', function() {
-                clearTimeout(animalSearchTimeout);
-                const q = this.value.trim();
-                if (q.length < 1) { if (animalSearchResults) animalSearchResults.classList.remove('show'); return; }
-                if (animalSearchResults) {
-                    animalSearchResults.innerHTML = '<div class="loading-spinner">Searching...</div>';
-                    animalSearchResults.classList.add('show');
+    (function initLiveSearch() {
+        function el(tag, attrs) {
+            var e = document.createElement(tag);
+            if (attrs) {
+                for (var k in attrs) {
+                    if (k === 'class') e.className = attrs[k];
+                    else if (k === 'text') e.textContent = attrs[k];
+                    else if (k.startsWith('data-') || k.startsWith('aria-')) e.setAttribute(k, attrs[k]);
+                    else e[k] = attrs[k];
                 }
-                // 250ms debounce — keeps the form snappy instead of firing a
-                // request on every keystroke while still feeling instant.
-                animalSearchTimeout = setTimeout(() => {
-                    fetch('/livestock/search?q=' + encodeURIComponent(q))
-                        .then(r => r.json())
-                        .then(animals => {
-                            if (!animalSearchResults) return;
-                            animalSearchResults.innerHTML = '';
-                            if (animals.length === 0) {
-                                animalSearchResults.innerHTML = '<div class="no-results">No matching animals found</div>';
-                                return;
-                            }
-                            animals.forEach(a => {
-                                const item = document.createElement('div');
-                                item.className = 'entity-search-item';
-                                item.innerHTML = '<div class="entity-search-name">' + a.tagNumber + '</div>'
-                                    + '<div class="entity-search-details">' + (a.category ? a.category : '') + (a.gender ? ' · ' + a.gender : '') + '</div>';
-                                item.addEventListener('click', () => selectAnimal(a));
-                                animalSearchResults.appendChild(item);
-                            });
-                        })
-                        .catch(() => { if (animalSearchResults) animalSearchResults.innerHTML = '<div class="no-results">Error searching</div>'; });
-                }, 250);
-            });
-
-            animalSearchInput.addEventListener('focus', function() {
-                if (this.value.trim()) this.dispatchEvent(new Event('input'));
-            });
+            }
+            return e;
         }
 
-        function selectAnimal(a) {
-            if (animalIdField) animalIdField.value = a.id;
-            if (animalSearchInput) { animalSearchInput.value = a.tagNumber; animalSearchInput.removeAttribute('required'); }
-            if (selectedAnimalName) selectedAnimalName.textContent = a.tagNumber;
-            if (selectedAnimalDetails) selectedAnimalDetails.textContent = (a.category ? a.category : '') + (a.gender ? ' · ' + a.gender : '');
-            if (selectedAnimalDisplay) selectedAnimalDisplay.classList.add('show');
-            if (animalSearchResults) animalSearchResults.classList.remove('show');
-        }
+        function wire(opts) {
+            var root      = document.getElementById(opts.rootId);
+            var input     = document.getElementById(opts.inputId);
+            var dropdown  = document.getElementById(opts.dropdownId);
+            var hidden    = document.getElementById(opts.hiddenId);
+            var chip      = document.getElementById(opts.chipId);
+            var chipText  = document.getElementById(opts.chipTextId);
+            var chipSub   = document.getElementById(opts.chipSubId);
+            var clearBtn  = document.getElementById(opts.clearId);
 
-        if (clearAnimalBtn) {
-            clearAnimalBtn.addEventListener('click', function() {
-                if (animalIdField) animalIdField.value = '';
-                if (animalSearchInput) { animalSearchInput.value = ''; animalSearchInput.setAttribute('required', 'required'); }
-                if (selectedAnimalDisplay) selectedAnimalDisplay.classList.remove('show');
-            });
-        }
+            if (!root || !input || !dropdown || !hidden) return;
 
-        document.addEventListener('click', function(e) {
-            if (animalSearchResults && !e.target.closest('.entity-search-container')) animalSearchResults.classList.remove('show');
-        });
-    })();
+            var timer = null;
+            var activeIdx = -1;
+            var currentItems = [];
+            var currentQuery = '';
 
-    // ============================================================
-    // VETERINARIAN LIVE SEARCH AND QUICK ADD (unchanged)
-    // ============================================================
-    (function() {
-        const csrfToken = document.querySelector('meta[name="_csrf"]')?.getAttribute('content');
-        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.getAttribute('content');
-        const vetSearchInput = document.getElementById('sickVetSearch');
-        const vetSearchResults = document.getElementById('sickVetSearchResults');
-        const vetIdField = document.getElementById('sickVetIdField');
-        const selectedVetDisplay = document.getElementById('sickSelectedVetDisplay');
-        const selectedVetName = document.getElementById('sickSelectedVetName');
-        const selectedVetDetails = document.getElementById('sickSelectedVetDetails');
-        const clearVetBtn = document.getElementById('sickClearVetBtn');
-        const newVetFields = document.getElementById('sickNewVetFields');
-        const saveNewVetBtn = document.getElementById('sickSaveNewVetBtn');
-        const cancelNewVetBtn = document.getElementById('sickCancelNewVetBtn');
-        let searchTimeout;
-
-        function initLocationSelects() { loadVetProvinces(); }
-
-        if (vetSearchInput) {
-            vetSearchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const q = this.value.trim();
-                if (q.length < 2) { if (vetSearchResults) vetSearchResults.classList.remove('show'); return; }
-                if (vetSearchResults) {
-                    vetSearchResults.innerHTML = '<div class="loading-spinner">Searching...</div>';
-                    vetSearchResults.classList.add('show');
+            input.addEventListener('input', function () {
+                clearTimeout(timer);
+                var q = input.value.trim();
+                currentQuery = q;
+                if (q.length < opts.minChars) {
+                    closeDropdown();
+                    return;
                 }
-                searchTimeout = setTimeout(() => {
-                    fetch('/veterinarians/search?q=' + encodeURIComponent(q))
-                        .then(r => r.json())
-                        .then(vets => {
-                            if (!vetSearchResults) return;
-                            vetSearchResults.innerHTML = '';
-                            if (vets.length === 0) {
-                                vetSearchResults.innerHTML = '<div class="no-results">No veterinarians found</div>';
-                            } else {
-                                vets.forEach(vet => {
-                                    const item = document.createElement('div');
-                                    item.className = 'vet-search-item';
-                                    item.innerHTML = '<div class="vet-search-name">' + (vet.fullName || vet.firstName + ' ' + vet.lastName) + '</div><div class="vet-search-details">' + (vet.licenseNumber ? 'Lic: ' + vet.licenseNumber : '') + (vet.specialization ? ' | ' + vet.specialization : '') + '</div>';
-                                    item.addEventListener('click', () => selectVeterinarian(vet));
-                                    vetSearchResults.appendChild(item);
-                                });
-                            }
-                            const addNew = document.createElement('div');
-                            addNew.className = 'vet-search-item vet-add-new';
-                            addNew.innerHTML = '<i class="bi bi-plus-circle"></i> Register New Veterinarian';
-                            addNew.addEventListener('click', function() {
-                                if (vetSearchResults) vetSearchResults.classList.remove('show');
-                                if (newVetFields) { newVetFields.style.display = 'block'; initLocationSelects(); }
-                            });
-                            vetSearchResults.appendChild(addNew);
-                        }).catch(() => { if (vetSearchResults) vetSearchResults.innerHTML = '<div class="no-results">Error</div>'; });
-                }, 300);
+                root.classList.add('is-loading');
+                dropdown.innerHTML = '';
+                timer = setTimeout(function () { fetchResults(q); }, 220);
             });
-        }
 
-        function selectVeterinarian(vet) {
-            if (vetIdField) vetIdField.value = vet.id;
-            if (selectedVetName) selectedVetName.textContent = vet.fullName || (vet.firstName + ' ' + vet.lastName);
-            if (selectedVetDetails) selectedVetDetails.innerHTML = (vet.licenseNumber ? 'Lic: ' + vet.licenseNumber : '') + (vet.specialization ? ' | ' + vet.specialization : '');
-            if (vetSearchInput) vetSearchInput.value = vet.fullName || (vet.firstName + ' ' + vet.lastName);
-            if (selectedVetDisplay) selectedVetDisplay.classList.add('show');
-            if (vetSearchResults) vetSearchResults.classList.remove('show');
-            if (newVetFields) newVetFields.style.display = 'none';
-        }
-
-        if (clearVetBtn) {
-            clearVetBtn.addEventListener('click', function() {
-                if (vetIdField) vetIdField.value = '';
-                if (vetSearchInput) vetSearchInput.value = '';
-                if (selectedVetDisplay) selectedVetDisplay.classList.remove('show');
-                if (newVetFields) newVetFields.style.display = 'none';
+            input.addEventListener('focus', function () {
+                if (input.value.trim().length >= opts.minChars) {
+                    input.dispatchEvent(new Event('input'));
+                }
             });
-        }
 
-        if (cancelNewVetBtn) {
-            cancelNewVetBtn.addEventListener('click', function() {
-                if (newVetFields) newVetFields.style.display = 'none';
-                ['vetFirstName','vetLastName','vetPhone','vetEmail','vetNationalId','vetLicenseNumber','vetSpecialization','vetClinicName','vetNotes'].forEach(id => {
-                    var el = document.getElementById(id); if (el) el.value = '';
+            input.addEventListener('keydown', function (e) {
+                if (!dropdown.classList.contains('open')) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIdx = Math.min(activeIdx + 1, currentItems.length - 1);
+                    highlight();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIdx = Math.max(activeIdx - 1, 0);
+                    highlight();
+                } else if (e.key === 'Enter') {
+                    if (activeIdx >= 0 && currentItems[activeIdx]) {
+                        e.preventDefault();
+                        selectItem(currentItems[activeIdx].raw);
+                    }
+                } else if (e.key === 'Escape') {
+                    closeDropdown();
+                }
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!root.contains(e.target)) closeDropdown();
+            });
+
+            clearBtn && clearBtn.addEventListener('click', function () {
+                hidden.value = '';
+                input.value = '';
+                chip.classList.remove('show');
+                input.focus();
+            });
+
+            function fetchResults(q) {
+                var url = opts.endpoint + '?q=' + encodeURIComponent(q);
+                if (opts.limit) url += '&limit=' + opts.limit;
+                fetch(url, { headers: { 'Accept': 'application/json' } })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        return r.json();
+                    })
+                    .then(function (data) {
+                        root.classList.remove('is-loading');
+                        renderDropdown(data || []);
+                    })
+                    .catch(function (err) {
+                        root.classList.remove('is-loading');
+                        dropdown.innerHTML = '';
+                        var empty = el('div', { class: 'ls-empty' });
+                        empty.innerHTML = '<i class="bi bi-exclamation-triangle"></i>'
+                            + 'Could not load results ('
+                            + (err && err.message ? err.message : 'error') + ')';
+                        dropdown.appendChild(empty);
+                        dropdown.classList.add('open');
+                    });
+            }
+
+            function renderDropdown(data) {
+                dropdown.innerHTML = '';
+                currentItems = data.map(function (raw) {
+                    var item = opts.buildItem(raw);
+                    return { raw: raw, item: item };
                 });
-                ['vetProvince','vetDistrict','vetSector','vetCell','vetVillage'].forEach(id => {
-                    var el = document.getElementById(id);
-                    if (el) { el.innerHTML = '<option value="">Select ' + id.replace('vet','').toLowerCase() + '...</option>'; el.disabled = true; }
+                activeIdx = -1;
+
+                if (currentItems.length === 0) {
+                    var empty = el('div', { class: 'ls-empty' });
+                    var textHtml = '<i class="bi bi-search"></i>'
+                        + '<div style="margin-top:6px;">'
+                        + 'No matches for "<strong>'
+                        + escapeHtml(currentQuery) + '</strong>"';
+                    if (opts.emptyActionUrl) {
+                        textHtml += '<a href="' + opts.emptyActionUrl + '" class="ls-add-inline" title="' + (opts.emptyActionLabel || 'Register new') + '">'
+                                  + '<i class="bi bi-plus-lg"></i>'
+                                  + '</a>';
+                    }
+                    textHtml += '</div>';
+                    empty.innerHTML = textHtml;
+                    dropdown.appendChild(empty);
+                } else {
+                    currentItems.forEach(function (entry, idx) {
+                        var row = el('div', {
+                            class: 'ls-item' + (opts.vetItem ? ' vet-item' : ''),
+                            'data-idx': String(idx)
+                        });
+                        var ic = el('div', { class: 'ls-item-icon' });
+                        ic.innerHTML = '<i class="bi '
+                            + (opts.vetItem ? 'bi-person-badge-fill' : 'bi-tag-fill')
+                            + '"></i>';
+                        row.appendChild(ic);
+                        var body = el('div', { class: 'ls-item-body' });
+                        var name = el('div', { class: 'ls-item-name', text: entry.item.label });
+                        body.appendChild(name);
+                        if (entry.item.meta) {
+                            var meta = el('div', { class: 'ls-item-meta' });
+                            meta.innerHTML = entry.item.meta;
+                            body.appendChild(meta);
+                        }
+                        row.appendChild(body);
+                        row.addEventListener('click', function () {
+                            selectItem(entry.raw);
+                        });
+                        dropdown.appendChild(row);
+                    });
+                }
+                dropdown.classList.add('open');
+            }
+
+            function highlight() {
+                Array.prototype.forEach.call(
+                    dropdown.querySelectorAll('.ls-item'),
+                    function (n, i) { n.classList.toggle('active', i === activeIdx); }
+                );
+                var active = dropdown.querySelector('.ls-item.active');
+                if (active) active.scrollIntoView({ block: 'nearest' });
+            }
+
+            function selectItem(raw) {
+                var id = raw.id || raw.livestockId || raw.value;
+                hidden.value = id || '';
+                var chipData = opts.renderChip(raw);
+                chipText.textContent = chipData.text;
+                chipSub.textContent  = chipData.sub || '';
+                chip.classList.add('show');
+                input.value = '';
+                closeDropdown();
+            }
+
+            function closeDropdown() {
+                dropdown.classList.remove('open');
+                dropdown.innerHTML = '';
+                currentItems = [];
+                activeIdx = -1;
+                root.classList.remove('is-loading');
+            }
+
+            function escapeHtml(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
                 });
-                document.getElementById('vetProvince').disabled = false;
-                loadVetProvinces();
-            });
+            }
         }
 
-        if (saveNewVetBtn) {
-            saveNewVetBtn.addEventListener('click', function() {
-                var firstName = document.getElementById('vetFirstName').value.trim();
-                var lastName = document.getElementById('vetLastName').value.trim();
-                var phone = document.getElementById('vetPhone').value.trim();
-                var licenseNumber = document.getElementById('vetLicenseNumber').value.trim();
-                if (!firstName || !lastName) { alert('First name and last name are required!'); return; }
-                if (!phone) { alert('Phone number is required!'); return; }
-                if (!licenseNumber) { alert('License number is required!'); return; }
-                var locationId = document.getElementById('vetVillage').value;
-                saveNewVetBtn.disabled = true;
-                saveNewVetBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Saving...';
-                var vetData = {
-                    firstName: firstName, lastName: lastName, phone: phone,
-                    email: document.getElementById('vetEmail').value.trim(),
-                    nationalId: document.getElementById('vetNationalId').value.trim(),
-                    licenseNumber: licenseNumber,
-                    specialization: document.getElementById('vetSpecialization').value.trim(),
-                    clinicName: document.getElementById('vetClinicName').value.trim(),
-                    notes: document.getElementById('vetNotes').value.trim()
+        // ANIMAL
+        wire({
+            rootId:     'lsAnimal',
+            inputId:    'lsAnimalSearch',
+            dropdownId: 'lsAnimalDropdown',
+            hiddenId:   'lsAnimalId',
+            chipId:     'lsAnimalChip',
+            chipTextId: 'lsAnimalChipText',
+            chipSubId:  'lsAnimalChipSub',
+            clearId:    'lsAnimalClear',
+            endpoint:   '/livestock/treatments/api/animals/search',
+            limit:      20,
+            minChars:   1,
+            vetItem:    false,
+            buildItem: function (a) {
+                var metaParts = [];
+                if (a.category)     metaParts.push(a.category);
+                if (a.gender)       metaParts.push(a.gender);
+                if (a.healthStatus) metaParts.push(a.healthStatus);
+                return {
+                    label: a.tagNumber || '(no tag)',
+                    meta:  metaParts.join('<span class="sep">·</span>')
                 };
-                if (locationId) vetData.locationId = locationId;
-                var headers = { 'Content-Type': 'application/json' };
-                if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
-                fetch('/veterinarians/quick-add', { method: 'POST', headers: headers, body: JSON.stringify(vetData) })
-                    .then(r => r.json()).then(data => {
-                        if (data.success) {
-                            selectVeterinarian(data.vet);
-                            if (newVetFields) newVetFields.style.display = 'none';
-                            ['vetFirstName','vetLastName','vetPhone','vetEmail','vetNationalId','vetLicenseNumber','vetSpecialization','vetClinicName','vetNotes'].forEach(id => {
-                                var el = document.getElementById(id); if (el) el.value = '';
-                            });
-                            ['vetProvince','vetDistrict','vetSector','vetCell','vetVillage'].forEach(id => {
-                                var el = document.getElementById(id);
-                                if (el) { el.innerHTML = '<option value="">Select ' + id.replace('vet','').toLowerCase() + '...</option>'; el.disabled = true; }
-                            });
-                            document.getElementById('vetProvince').disabled = false;
-                            loadVetProvinces();
-                        } else { alert('Error: ' + (data.error || 'Failed to save veterinarian')); }
-                    }).catch(err => { console.error('Save error:', err); alert('Error saving veterinarian: ' + err.message); })
-                    .finally(() => { saveNewVetBtn.disabled = false; saveNewVetBtn.innerHTML = '<i class="bi bi-check-circle"></i> Save Veterinarian'; });
-            });
-        }
+            },
+            renderChip: function (a) {
+                return {
+                    text: a.tagNumber || '—',
+                    sub:  a.category ? '(' + a.category + ')' : ''
+                };
+            }
+        });
 
-        document.addEventListener('click', function(e) {
-            if (vetSearchResults && !e.target.closest('.vet-search-container')) vetSearchResults.classList.remove('show');
+        // VETERINARIAN
+        wire({
+            rootId:     'lsVet',
+            inputId:    'lsVetSearch',
+            dropdownId: 'lsVetDropdown',
+            hiddenId:   'lsVetId',
+            chipId:     'lsVetChip',
+            chipTextId: 'lsVetChipText',
+            chipSubId:  'lsVetChipSub',
+            clearId:    'lsVetClear',
+            endpoint:   '/livestock/births/api/veterinarians/search',
+            minChars:   2,
+            vetItem:    true,
+            buildItem: function (v) {
+                var metaParts = [];
+                if (v.license)    metaParts.push('Lic: ' + v.license);
+                if (v.clinicName) metaParts.push(v.clinicName);
+                if (v.phone)      metaParts.push(v.phone);
+                return {
+                    label: v.displayName || '(unnamed vet)',
+                    meta:  metaParts.join('<span class="sep">·</span>')
+                };
+            },
+            renderChip: function (v) {
+                return {
+                    text: v.displayName || '—',
+                    sub:  v.license ? '(Lic: ' + v.license + ')' : ''
+                };
+            },
+            emptyActionUrl:   '/veterinarians',
+            emptyActionLabel: 'Register new veterinarian'
         });
     })();
 
     // ============================================================
-    // ✅ SEARCH + FILTER + PAGINATION (combined)
+    // PROFESSIONAL SEARCH + FILTER + PAGINATION
     // ============================================================
     (function() {
-        const searchInput   = document.getElementById('searchInput');
-        const filterStatus  = document.getElementById('filterStatus');
-        const filterSeverity= document.getElementById('filterSeverity');
-        const pageSizeSelect= document.getElementById('pageSizeSelect');
-        const pagerInfo     = document.getElementById('pagerInfo');
-        const pagerButtons  = document.getElementById('pagerButtons');
+        const EDGE_ICONS = {
+            first: 'bi-chevron-bar-left',
+            prev:  'bi-chevron-left',
+            next:  'bi-chevron-right',
+            last:  'bi-chevron-bar-right'
+        };
 
-        // Each "item" pairs a data row with its hidden history row so they
-        // page and filter together.
+        const searchInput    = document.getElementById('searchInput');
+        const filterStatus   = document.getElementById('filterStatus');
+        const filterSeverity = document.getElementById('filterSeverity');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        const pagerInfo      = document.getElementById('pagerInfo');
+        const pagerButtons   = document.getElementById('pagerButtons');
+        const pagerGoto      = document.getElementById('pagerGoto');
+        const pagerGotoTotal = document.getElementById('pagerGotoTotal');
+
         const items = Array.from(document.querySelectorAll('#sickTable tbody tr.sick-data-row')).map(row => ({
             row: row,
             historyRow: row.nextElementSibling && row.nextElementSibling.classList.contains('history-row')
@@ -775,46 +827,44 @@
             text: row.textContent.toLowerCase()
         }));
 
-        // Live counts for the summary strip use ALL rows (not just the
-        // current filter/page) — restore original per-status counting.
+        // Summary pills
         (function initSummaryCounts() {
             let sick = 0, critical = 0, recovering = 0, recovered = 0;
             items.forEach(it => {
-                const t = it.row.textContent;
-                if (t.includes('Sick') && it.row.querySelector('.badge-sick')) sick++;
-                if (it.row.querySelector('.badge-critical')) critical++;
+                if (it.row.querySelector('.badge-sick'))       sick++;
+                if (it.row.querySelector('.badge-critical'))   critical++;
                 if (it.row.querySelector('.badge-recovering')) recovering++;
-                if (it.row.querySelector('.badge-recovered')) recovered++;
+                if (it.row.querySelector('.badge-recovered'))  recovered++;
             });
-            document.getElementById('countSick').textContent = sick;
-            document.getElementById('countCritical').textContent = critical;
+            document.getElementById('countSick').textContent       = sick;
+            document.getElementById('countCritical').textContent   = critical;
             document.getElementById('countRecovering').textContent = recovering;
-            document.getElementById('countRecovered').textContent = recovered;
+            document.getElementById('countRecovered').textContent  = recovered;
         })();
 
         let currentPage = 1;
+        let pageSize    = parseInt(pageSizeSelect.value, 10) || 15;
 
         function matchesFilters(item) {
-            const search = (searchInput.value || '').toLowerCase();
-            const status = (filterStatus.value || '').toLowerCase();
+            const search   = (searchInput.value || '').toLowerCase();
+            const status   = (filterStatus.value || '').toLowerCase();
             const severity = (filterSeverity.value || '').toLowerCase();
             if (search && !item.text.includes(search)) return false;
             if (status && !item.text.includes(status)) return false;
-            if (severity && !item.text.includes(severity.replace('_', '-')) && !item.text.includes(severity.replace('_', ' '))) return false;
+            if (severity && !item.text.includes(severity.replace('_', '-'))
+                         && !item.text.includes(severity.replace('_', ' '))) return false;
             return true;
         }
 
         function render() {
-            const pageSize = parseInt(pageSizeSelect.value, 10) || 15;
-            const filtered = items.filter(matchesFilters);
+            const filtered   = items.filter(matchesFilters);
             const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
 
             const start = (currentPage - 1) * pageSize;
-            const end = start + pageSize;
+            const end   = start + pageSize;
 
-            // Hide everything first, including history rows.
             items.forEach(it => {
                 it.row.style.display = 'none';
                 if (it.historyRow) it.historyRow.style.display = 'none';
@@ -822,48 +872,96 @@
 
             filtered.slice(start, end).forEach(it => {
                 it.row.style.display = '';
-                // history row stays hidden by default (toggled by the History
-                // button) — we only need to make sure it's back in the flow
-                // for CSS purposes; toggleHistory() controls .open via
-                // max-height, not display, so this is safe either way.
                 if (it.historyRow) it.historyRow.style.display = '';
             });
 
-            pagerInfo.textContent = filtered.length === 0
-                ? 'Showing 0–0 of 0'
-                : `Showing ${start + 1}–${Math.min(end, filtered.length)} of ${filtered.length}`;
+            pagerInfo.innerHTML = filtered.length === 0
+                ? 'Showing <strong>0</strong> of <strong>0</strong>'
+                : 'Showing <strong>' + (start + 1) + '</strong>–<strong>' +
+                  Math.min(end, filtered.length) + '</strong> of <strong>' + filtered.length + '</strong>';
 
-            renderPagerButtons(totalPages);
+            pagerGoto.max   = totalPages;
+            pagerGoto.value = currentPage;
+            pagerGotoTotal.textContent = '/ ' + totalPages;
+
+            renderPager(totalPages);
         }
 
-        function renderPagerButtons(totalPages) {
+        function renderPager(totalPages) {
             pagerButtons.innerHTML = '';
 
-            const addBtn = (label, page, disabled, active) => {
-                const li = document.createElement('li');
-                li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.textContent = label;
-                if (!disabled && !active) {
-                    a.addEventListener('click', () => { currentPage = page; render(); });
-                }
-                li.appendChild(a);
-                pagerButtons.appendChild(li);
-            };
-
-            addBtn('«', currentPage - 1, currentPage === 1, false);
-
-            // Show a max of 5 page numbers, centred on the current page.
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            startPage = Math.max(1, endPage - 4);
-
-            for (let p = startPage; p <= endPage; p++) {
-                addBtn(String(p), p, false, p === currentPage);
+            if (totalPages <= 1) {
+                pagerButtons.appendChild(makeEdge('first', EDGE_ICONS.first, 'First', true, false));
+                pagerButtons.appendChild(makeEdge('prev',  EDGE_ICONS.prev,  'Prev',  true, false));
+                pagerButtons.appendChild(makePage(1, true));
+                pagerButtons.appendChild(makeEdge('next',  EDGE_ICONS.next,  'Next',  true, true));
+                pagerButtons.appendChild(makeEdge('last',  EDGE_ICONS.last,  'Last',  true, true));
+                return;
             }
 
-            addBtn('»', currentPage + 1, currentPage === totalPages, false);
+            const current  = currentPage;
+            const showFrom = Math.max(1, current - 2);
+            const showTo   = Math.min(totalPages, current + 2);
+
+            pagerButtons.appendChild(makeEdge('first', EDGE_ICONS.first, 'First', current === 1, false, () => {
+                currentPage = 1; render();
+            }));
+            pagerButtons.appendChild(makeEdge('prev', EDGE_ICONS.prev, 'Prev', current === 1, false, () => {
+                currentPage = Math.max(1, current - 1); render();
+            }));
+
+            if (showFrom > 1) {
+                pagerButtons.appendChild(makePage(1));
+                if (showFrom > 2) pagerButtons.appendChild(makeEllipsis());
+            }
+
+            for (let p = showFrom; p <= showTo; p++) {
+                pagerButtons.appendChild(p === current ? makePage(p, true) : makePage(p));
+            }
+
+            if (showTo < totalPages) {
+                if (showTo < totalPages - 1) pagerButtons.appendChild(makeEllipsis());
+                pagerButtons.appendChild(makePage(totalPages));
+            }
+
+            pagerButtons.appendChild(makeEdge('next', EDGE_ICONS.next, 'Next', current === totalPages, true, () => {
+                currentPage = Math.min(totalPages, current + 1); render();
+            }));
+            pagerButtons.appendChild(makeEdge('last', EDGE_ICONS.last, 'Last', current === totalPages, true, () => {
+                currentPage = totalPages; render();
+            }));
+        }
+
+        function makePage(page, active = false) {
+            const li = document.createElement('li');
+            const b  = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn' + (active ? ' active' : '');
+            b.textContent = String(page);
+            if (!active) b.addEventListener('click', () => { currentPage = page; render(); });
+            li.appendChild(b);
+            return li;
+        }
+
+        function makeEdge(kind, icon, label, disabled, iconAfter, onClick) {
+            const li = document.createElement('li');
+            const b  = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn pg-edge';
+            if (disabled) b.disabled = true;
+            const iconHtml  = '<i class="bi ' + icon + '"></i>';
+            const labelHtml = '<span class="pg-label">' + label + '</span>';
+            b.innerHTML = iconAfter ? labelHtml + iconHtml : iconHtml + labelHtml;
+            if (!disabled && onClick) b.addEventListener('click', onClick);
+            li.appendChild(b);
+            return li;
+        }
+
+        function makeEllipsis() {
+            const li = document.createElement('li');
+            li.className = 'pg-ellipsis';
+            li.textContent = '…';
+            return li;
         }
 
         function onFilterChange() { currentPage = 1; render(); }
@@ -871,12 +969,29 @@
         searchInput.addEventListener('keyup', onFilterChange);
         filterStatus.addEventListener('change', onFilterChange);
         filterSeverity.addEventListener('change', onFilterChange);
-        pageSizeSelect.addEventListener('change', onFilterChange);
+        pageSizeSelect.addEventListener('change', () => {
+            pageSize = parseInt(pageSizeSelect.value, 10) || 15;
+            currentPage = 1;
+            render();
+        });
+
+        // Go-to-page: Enter or blur
+        const jumpTo = () => {
+            const total = parseInt(pagerGoto.max, 10) || 1;
+            let p = parseInt(pagerGoto.value, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > total) p = total;
+            currentPage = p;
+            render();
+        };
+        pagerGoto.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); jumpTo(); }
+        });
+        pagerGoto.addEventListener('blur', jumpTo);
 
         render();
     })();
 
-    // Initialize collapse button arrow
     document.querySelectorAll('.form-collapse-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             var arrow = this.querySelector('.arrow');

@@ -61,8 +61,8 @@ public class LivestockWithAgeService {
     // ══════════════════════════════════════════════════════════════════════════
 
     public List<LivestockWithAgeDTO> getAll() {
+        // ✅ FIXED: removed isDeleted filter (column no longer exists)
         return livestockRepository.findAll().stream()
-                .filter(ls -> !Boolean.TRUE.equals(ls.getIsDeleted()))
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
@@ -148,8 +148,8 @@ public class LivestockWithAgeService {
     }
 
     public Optional<LivestockWithAgeDTO> getById(UUID id) {
+        // ✅ FIXED: removed isDeleted filter (column no longer exists)
         return livestockRepository.findById(id)
-                .filter(ls -> !Boolean.TRUE.equals(ls.getIsDeleted()))
                 .map(this::toDTO);
     }
 

@@ -2,7 +2,6 @@ package rw.animalproduct.animal.production.services;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import rw.animalproduct.animal.production.dto.FemaleReadyToBreedDTO;
 import rw.animalproduct.animal.production.dto.IneligibleFemaleDTO;
@@ -23,14 +22,14 @@ public class FemalesReadyToBreedService {
 
     private final FemalesReadyToBreedRepository repo;
     private final LivestockRepository livestockRepository;
-    private final LivestockBreedingService breedingService;
+    private final BreedingEligibilityService eligibilityService;
 
     public FemalesReadyToBreedService(FemalesReadyToBreedRepository repo,
                                       LivestockRepository livestockRepository,
-                                      @Lazy LivestockBreedingService breedingService) {
+                                      BreedingEligibilityService eligibilityService) {
         this.repo = repo;
         this.livestockRepository = livestockRepository;
-        this.breedingService = breedingService;
+        this.eligibilityService = eligibilityService;
     }
 
     public List<FemaleReadyToBreedDTO> getAllReadyToBreed() {
@@ -60,9 +59,8 @@ public class FemalesReadyToBreedService {
     // ── "Not Yet Eligible" list ─────────────────────────────────────────
     // Every active female not already in the (view-backed) ready list,
     // paired with her specific blocking reason from
-    // LivestockBreedingService.getIneligibilityReason() — so Management,
-    // the breeding form dropdown, and the readiness panel can never
-    // disagree about who's eligible or why someone isn't.
+    // BreedingEligibilityService — the single source of truth shared with
+    // the breeding form and readiness panel, so they can never disagree.
     public List<IneligibleFemaleDTO> getNotYetEligible() {
         Set<UUID> eligibleIds = getAllReadyToBreed().stream()
                 .map(FemaleReadyToBreedDTO::getId)
@@ -70,7 +68,6 @@ public class FemalesReadyToBreedService {
 
         return livestockRepository.findAll().stream()
                 .filter(l -> "FEMALE".equalsIgnoreCase(l.getGender()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> Livestock.STATUS_ACTIVE.equals(l.getStatus()))
                 .filter(l -> !eligibleIds.contains(l.getId()))
@@ -78,8 +75,8 @@ public class FemalesReadyToBreedService {
                         l.getId(),
                         l.getTagNumber(),
                         l.getLivestockCategory() != null ? l.getLivestockCategory().getName() : "Uncategorized",
-                        breedingService.getIneligibilityReason(l),
-                        breedingService.getPostpartumReadyDate(l).orElse(null)))
+                        eligibilityService.getIneligibilityReason(l),
+                        eligibilityService.getPostpartumReadyDate(l).orElse(null)))
                 .filter(dto -> dto.getReason() != null)
                 .sorted(Comparator.comparing(IneligibleFemaleDTO::getCategoryName,
                         Comparator.nullsLast(Comparator.naturalOrder())))

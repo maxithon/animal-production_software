@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,8 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- html2pdf library for PDF generation -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         :root {
             --bg: #f4f7f6;
@@ -43,7 +41,6 @@
         }
         .container-fluid { max-width: 1440px; padding: 24px 32px; }
 
-        /* HEADER */
         .report-header {
             display: flex;
             justify-content: space-between;
@@ -74,7 +71,6 @@
             border-radius: var(--radius-sm);
         }
 
-        /* KPI GRID - ICON + NUMBER ON SAME ROW */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -98,30 +94,25 @@
         .kpi-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 3px;
         }
         .kpi-card:hover {
             transform: translateY(-3px);
             box-shadow: var(--shadow-hover);
         }
-
         .kpi-card.accent-purple::before { background: var(--purple); }
         .kpi-card.accent-amber::before { background: var(--amber); }
         .kpi-card.accent-green::before { background: var(--green); }
         .kpi-card.accent-red::before { background: var(--red); }
 
-        /* Icon + Number row */
         .kpi-card .kpi-row {
             display: flex;
             align-items: center;
             gap: 12px;
         }
         .kpi-card .icon {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
@@ -164,11 +155,11 @@
             font-weight: 600;
         }
         .kpi-card .category-breakdown .cat-item .dot {
-            width: 7px;
-            height: 7px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             display: inline-block;
             flex-shrink: 0;
+            background: #94a3b8;
         }
         .kpi-card .category-breakdown .cat-item .dot.cow { background: #65a30d; }
         .kpi-card .category-breakdown .cat-item .dot.goat { background: #0891b2; }
@@ -205,7 +196,6 @@
         }
         .scope-note i { color: var(--purple); }
 
-        /* TABLE CARD */
         .table-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -243,9 +233,7 @@
             border-bottom: 1px solid var(--border);
         }
         .breakdown-table thead th.text-end,
-        .breakdown-table tbody td.text-end {
-            text-align: right;
-        }
+        .breakdown-table tbody td.text-end { text-align: right; }
         .breakdown-table tbody td {
             padding: 8px 14px;
             border-top: 1px solid var(--border);
@@ -276,7 +264,6 @@
         .breakdown-table .total-row td.num { text-align: right; }
         .breakdown-table .has-overdue { color: var(--red); font-weight: 700; }
 
-        /* FILTER BAR */
         .filter-bar {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -314,11 +301,7 @@
             font-size: 0.85rem;
             height: 36px;
         }
-        .btn-apply:hover {
-            background: #5b21b6;
-            border-color: #5b21b6;
-            color: #fff;
-        }
+        .btn-apply:hover { background: #5b21b6; border-color: #5b21b6; color: #fff; }
         .btn-clear {
             border-radius: var(--radius-sm);
             padding: 5px 12px;
@@ -334,7 +317,6 @@
             gap: 6px;
         }
 
-        /* DETAIL TABLE */
         .report-table-wrap {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -351,14 +333,8 @@
             flex-wrap: wrap;
             gap: 8px;
         }
-        .table-toolbar .count {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .table-toolbar .count span {
-            font-weight: 400;
-            color: var(--text-muted);
-        }
+        .table-toolbar .count { font-weight: 600; font-size: 0.9rem; }
+        .table-toolbar .count span { font-weight: 400; color: var(--text-muted); }
 
         .report-table {
             width: 100%;
@@ -382,15 +358,11 @@
             border-top: 1px solid var(--border);
             vertical-align: middle;
         }
-        .report-table tbody tr.overdue-row {
-            background: var(--red-bg);
-        }
+        .report-table tbody tr.overdue-row { background: var(--red-bg); }
         .report-table tbody tr.overdue-row td:first-child {
             border-left: 3px solid var(--red);
         }
-        .report-table tbody tr:hover {
-            background: #f8faf9;
-        }
+        .report-table tbody tr:hover { background: #f8faf9; }
 
         .tag-link {
             display: inline-flex;
@@ -452,11 +424,7 @@
             font-size: 0.76rem;
         }
 
-        .action-cell {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
+        .action-cell { display: flex; gap: 4px; flex-wrap: wrap; }
         .action-cell .btn {
             padding: 3px 7px;
             font-size: 0.68rem;
@@ -484,47 +452,6 @@
             padding: 3px 12px;
         }
 
-        /* PDF loading overlay */
-        .pdf-loading {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-        .pdf-loading.show {
-            display: flex;
-        }
-        .pdf-loading .spinner-box {
-            background: white;
-            padding: 30px 40px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        }
-        .pdf-loading .spinner-box .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e2e8e5;
-            border-top: 4px solid var(--purple);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 12px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .pdf-loading .spinner-box p {
-            margin: 0;
-            font-weight: 600;
-            color: var(--text);
-        }
-
         @media (max-width: 768px) {
             .container-fluid { padding: 16px; }
             .report-header h1 { font-size: 1.3rem; }
@@ -544,15 +471,7 @@
 </head>
 <body>
 
-<!-- PDF Loading Overlay -->
-<div class="pdf-loading" id="pdfLoading">
-    <div class="spinner-box">
-        <div class="spinner"></div>
-        <p>Generating PDF...</p>
-    </div>
-</div>
-
-<div class="container-fluid" id="reportContent">
+<div class="container-fluid">
 
     <!-- HEADER -->
     <div class="report-header">
@@ -561,89 +480,105 @@
             <div class="subtitle">Pregnant animals — plan pens, staff, and vet visits ahead.</div>
         </div>
         <div class="header-actions">
-            <button class="btn btn-outline-secondary btn-sm" onclick="exportCSV()">
+            <a class="btn btn-outline-secondary btn-sm"
+               th:href="@{/livestock/upcoming-births-report/export(
+                   categoryId=${categoryIdFilter},
+                   search=${searchFilter},
+                   windowDays=${windowDaysFilter})}">
                 <i class="bi bi-filetype-csv me-1"></i>CSV
-            </button>
-            <button class="btn btn-outline-primary btn-sm" onclick="exportPDF()">
+            </a>
+            <a class="btn btn-outline-primary btn-sm"
+               th:href="@{/livestock/upcoming-births-report/export/pdf(
+                   categoryId=${categoryIdFilter},
+                   search=${searchFilter},
+                   windowDays=${windowDaysFilter})}">
                 <i class="bi bi-filetype-pdf me-1"></i>PDF
-            </button>
+            </a>
         </div>
     </div>
 
-    <!-- KPI CARDS - Icon + Number on same row -->
+    <!-- KPI CARDS -->
     <div class="kpi-grid">
-        <!-- 1. TOTAL PREGNANT ANIMALS -->
+
         <div class="kpi-card accent-purple">
             <div class="kpi-row">
                 <div class="icon icon--purple"><i class="bi bi-heart-fill"></i></div>
-                <div class="number">4</div>
+                <div class="number" th:text="${kpis.totalPregnant}">0</div>
             </div>
             <div class="label">Total Pregnant Animals</div>
             <div class="sub">Across all categories</div>
-            <div class="category-breakdown">
-                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">2</span></span>
-                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">2</span></span>
+            <div class="category-breakdown" th:if="${not #lists.isEmpty(categoryBreakdown)}">
+                <span class="cat-item" th:each="c : ${categoryBreakdown}">
+                    <span class="dot" th:classappend="${#strings.toLowerCase(c.categoryName)}"></span>
+                    <span th:text="${c.categoryName}">Category</span>
+                    <span class="count" th:text="${c.totalPregnant}">0</span>
+                </span>
             </div>
         </div>
 
-        <!-- 2. DUE WITHIN 3 DAYS -->
         <div class="kpi-card accent-amber">
             <div class="kpi-row">
                 <div class="icon icon--amber"><i class="bi bi-hourglass-split"></i></div>
-                <div class="number">0</div>
+                <div class="number" th:text="${kpis.dueWithin3Days}">0</div>
             </div>
             <div class="label">Due Within 3 Days</div>
             <div class="sub">Prep pens &amp; staff now</div>
-            <div class="category-breakdown">
-                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            <div class="category-breakdown" th:if="${not #lists.isEmpty(categoryBreakdown)}">
+                <span class="cat-item" th:each="c : ${categoryBreakdown}">
+                    <span class="dot" th:classappend="${#strings.toLowerCase(c.categoryName)}"></span>
+                    <span th:text="${c.categoryName}">Category</span>
+                    <span class="count" th:text="${c.dueWithin3Days}">0</span>
+                </span>
             </div>
         </div>
 
-        <!-- 3. DUE THIS WEEK -->
         <div class="kpi-card accent-green">
             <div class="kpi-row">
                 <div class="icon icon--green"><i class="bi bi-alarm-fill"></i></div>
-                <div class="number">0</div>
+                <div class="number" th:text="${kpis.dueThisWeek}">0</div>
             </div>
             <div class="label">Due This Week</div>
             <div class="sub">Next 7 days</div>
-            <div class="category-breakdown">
-                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            <div class="category-breakdown" th:if="${not #lists.isEmpty(categoryBreakdown)}">
+                <span class="cat-item" th:each="c : ${categoryBreakdown}">
+                    <span class="dot" th:classappend="${#strings.toLowerCase(c.categoryName)}"></span>
+                    <span th:text="${c.categoryName}">Category</span>
+                    <span class="count" th:text="${c.dueThisWeek}">0</span>
+                </span>
             </div>
         </div>
 
-        <!-- 4. DUE THIS MONTH -->
         <div class="kpi-card accent-green">
             <div class="kpi-row">
                 <div class="icon icon--green"><i class="bi bi-calendar3"></i></div>
-                <div class="number">0</div>
+                <div class="number" th:text="${kpis.dueThisMonth}">0</div>
             </div>
             <div class="label">Due This Month</div>
             <div class="sub">Next 30 days</div>
-            <div class="category-breakdown">
-                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            <div class="category-breakdown" th:if="${not #lists.isEmpty(categoryBreakdown)}">
+                <span class="cat-item" th:each="c : ${categoryBreakdown}">
+                    <span class="dot" th:classappend="${#strings.toLowerCase(c.categoryName)}"></span>
+                    <span th:text="${c.categoryName}">Category</span>
+                    <span class="count" th:text="${c.dueThisMonth}">0</span>
+                </span>
             </div>
         </div>
 
-        <!-- 5. OVERDUE PREGNANCIES -->
         <div class="kpi-card alert accent-red">
             <div class="kpi-row">
                 <div class="icon icon--red"><i class="bi bi-exclamation-triangle-fill"></i></div>
-                <div class="number">1</div>
+                <div class="number" th:text="${kpis.overduePregnancies}">0</div>
             </div>
             <div class="label">Overdue Pregnancies</div>
             <div class="sub">Expected birth date has passed</div>
-            <div class="category-breakdown">
-                <span class="cat-item"><span class="dot cow"></span>Cow <span class="count">0</span></span>
-                <span class="cat-item"><span class="dot goat"></span>Goat <span class="count overdue">1</span></span>
-                <span class="cat-item"><span class="dot pig"></span>Pig <span class="count">0</span></span>
+            <div class="category-breakdown" th:if="${not #lists.isEmpty(categoryBreakdown)}">
+                <span class="cat-item" th:each="c : ${categoryBreakdown}">
+                    <span class="dot" th:classappend="${#strings.toLowerCase(c.categoryName)}"></span>
+                    <span th:text="${c.categoryName}">Category</span>
+                    <span class="count"
+                          th:classappend="${c.overduePregnancies > 0 ? 'overdue' : ''}"
+                          th:text="${c.overduePregnancies}">0</span>
+                </span>
             </div>
         </div>
     </div>
@@ -673,39 +608,34 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr>
-                    <td><span class="cat-tag cow">Cow</span></td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
+                <tr th:each="c : ${categoryBreakdown}">
+                    <td>
+                        <span class="cat-tag"
+                              th:classappend="${#strings.toLowerCase(c.categoryName)}"
+                              th:text="${c.categoryName}">Category</span>
+                    </td>
+                    <td class="num" th:text="${c.totalPregnant}">0</td>
+                    <td class="num" th:text="${c.dueWithin3Days}">0</td>
+                    <td class="num" th:text="${c.dueThisWeek}">0</td>
+                    <td class="num" th:text="${c.dueThisMonth}">0</td>
+                    <td class="num"
+                        th:classappend="${c.overduePregnancies > 0 ? 'has-overdue' : ''}"
+                        th:text="${c.overduePregnancies}">0</td>
                 </tr>
-                <tr>
-                    <td><span class="cat-tag goat">Goat</span></td>
-                    <td class="num">2</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num has-overdue">1</td>
-                </tr>
-                <tr>
-                    <td><span class="cat-tag pig">Pig</span></td>
-                    <td class="num">2</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
-                    <td class="num">0</td>
+                <tr th:if="${#lists.isEmpty(categoryBreakdown)}">
+                    <td colspan="6" class="text-center text-muted py-3">
+                        <i class="bi bi-inbox me-2"></i>No categories with pregnant animals.
+                    </td>
                 </tr>
                 </tbody>
                 <tfoot>
                 <tr class="total-row">
                     <td><strong>Total</strong></td>
-                    <td class="num"><strong>4</strong></td>
-                    <td class="num"><strong>0</strong></td>
-                    <td class="num"><strong>0</strong></td>
-                    <td class="num"><strong>0</strong></td>
-                    <td class="num has-overdue"><strong>1</strong></td>
+                    <td class="num" th:text="${kpis.totalPregnant}">0</td>
+                    <td class="num" th:text="${kpis.dueWithin3Days}">0</td>
+                    <td class="num" th:text="${kpis.dueThisWeek}">0</td>
+                    <td class="num" th:text="${kpis.dueThisMonth}">0</td>
+                    <td class="num has-overdue" th:text="${kpis.overduePregnancies}">0</td>
                 </tr>
                 </tfoot>
             </table>
@@ -713,34 +643,46 @@
     </div>
 
     <!-- FILTERS -->
-    <form class="filter-bar" method="get">
+    <form class="filter-bar" method="get"
+          th:action="@{/livestock/upcoming-births-report}">
         <div class="row g-3 align-items-end">
             <div class="col-md-3 col-sm-6">
                 <label class="form-label"><i class="bi bi-tag me-1"></i>Category</label>
                 <select name="categoryId" class="form-select form-select-sm">
                     <option value="">All Categories</option>
-                    <option value="1">Cow</option>
-                    <option value="2" selected>Goat</option>
-                    <option value="3">Pig</option>
+                    <option th:each="cat : ${categories}"
+                            th:value="${cat.id}"
+                            th:text="${cat.name}"
+                            th:selected="${categoryIdFilter != null and cat.id == categoryIdFilter}">
+                        Category
+                    </option>
                 </select>
             </div>
             <div class="col-md-3 col-sm-6">
                 <label class="form-label"><i class="bi bi-calendar-range me-1"></i>Window</label>
                 <select name="windowDays" class="form-select form-select-sm">
-                    <option value="3">Next 3 days</option>
-                    <option value="7">Next 7 days</option>
-                    <option value="30" selected>Next 30 days</option>
+                    <option th:each="opt : ${windowOptions}"
+                            th:value="${opt}"
+                            th:text="'Next ' + ${opt} + ' days'"
+                            th:selected="${opt == windowDaysFilter}">
+                        Next 30 days
+                    </option>
                 </select>
             </div>
             <div class="col-md-4 col-sm-8">
                 <label class="form-label"><i class="bi bi-search me-1"></i>Search Tag</label>
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="e.g. GOAT-009" value="GOAT-007" />
+                <input type="text" name="search"
+                       class="form-control form-control-sm"
+                       placeholder="e.g. GOAT-009"
+                       th:value="${searchFilter}" />
             </div>
             <div class="col-md-2 col-sm-4 d-flex gap-2">
                 <button type="submit" class="btn btn-apply btn-sm flex-grow-1">
                     <i class="bi bi-funnel-fill me-1"></i>Apply
                 </button>
-                <a href="#" class="btn btn-outline-secondary btn-sm btn-clear">
+                <a th:href="@{/livestock/upcoming-births-report}"
+                   class="btn btn-outline-secondary btn-sm btn-clear"
+                   title="Clear filters">
                     <i class="bi bi-x-lg"></i>
                 </a>
             </div>
@@ -755,8 +697,16 @@
     <!-- DETAIL TABLE -->
     <div class="report-table-wrap">
         <div class="table-toolbar">
-            <div class="count">1 <span>record matching your filters</span></div>
-            <div class="text-muted small">Page 1 of 1</div>
+            <div class="count">
+                <span th:text="${totalItems}">0</span>
+                <span th:text="${totalItems == 1 ? 'record matching your filters' : 'records matching your filters'}">
+                    records matching your filters
+                </span>
+            </div>
+            <div class="text-muted small">
+                Page <span th:text="${totalPages == 0 ? 1 : (currentPage + 1)}">1</span>
+                of <span th:text="${totalPages == 0 ? 1 : totalPages}">1</span>
+            </div>
         </div>
 
         <div class="table-responsive">
@@ -786,40 +736,91 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr class="overdue-row">
+                <tr th:each="r : ${rows}"
+                    th:classappend="${r.status == 'OVERDUE'} ? 'overdue-row' : ''">
+
                     <td>
-                        <a href="#" class="tag-link">
-                            <i class="bi bi-tag-fill"></i>GOAT-007
+                        <a th:href="@{'/livestock/' + ${r.livestockId}}" class="tag-link">
+                            <i class="bi bi-tag-fill"></i>
+                            <span th:text="${r.tagNumber}">TAG</span>
                         </a>
                     </td>
-                    <td><span class="cat-badge goat">Goat</span></td>
-                    <td>27 Apr 26</td>
-                    <td>19 Aug 26</td>
-                    <td><span class="days-remaining overdue">10d overdue</span></td>
+
                     <td>
-                                <span class="status-pill status-pill--overdue">
-                                    <i class="bi bi-exclamation-circle-fill"></i>Overdue
-                                </span>
+                        <span class="cat-badge"
+                              th:classappend="${#strings.toLowerCase(r.categoryName)}"
+                              th:text="${r.categoryName}">Cat</span>
                     </td>
-                    <td>2 <span class="text-muted small">(est.)</span></td>
+
+                    <td th:text="${r.breedingDate != null
+                                  ? #temporals.format(r.breedingDate, 'dd MMM yy')
+                                  : '-'}">-</td>
+
+                    <td th:text="${r.expectedDueDate != null
+                                  ? #temporals.format(r.expectedDueDate, 'dd MMM yy')
+                                  : '-'}">-</td>
+
                     <td>
-                        <span class="loc-text"><i class="bi bi-geo-alt"></i>Bigega</span>
+                        <span class="days-remaining"
+                              th:classappend="${r.daysUntilDue != null and r.daysUntilDue < 0} ? 'overdue' : ''"
+                              th:text="${r.daysUntilDue == null
+                                        ? '-'
+                                        : (r.daysUntilDue < 0
+                                            ? (-r.daysUntilDue) + 'd overdue'
+                                            : r.daysUntilDue + 'd')}">-</span>
                     </td>
+
+                    <td>
+                        <span class="status-pill"
+                              th:classappend="${r.status == 'OVERDUE'} ? 'status-pill--overdue'
+                                              : (${r.status == 'DUE_SOON' or r.status == 'DUE_THIS_WEEK'} ? 'status-pill--soon'
+                                              : 'status-pill--planned')">
+                            <i class="bi bi-exclamation-circle-fill"
+                               th:if="${r.status == 'OVERDUE'}"></i>
+                            <span th:text="${r.statusLabel}">Status</span>
+                        </span>
+                    </td>
+
+                    <td>
+                        <span th:text="${r.expectedOffspring != null ? r.expectedOffspring : '-'}">-</span>
+                        <span class="text-muted small" th:if="${r.expectedOffspring != null}">(est.)</span>
+                    </td>
+
+                    <td>
+                        <span class="loc-text" th:if="${r.location != null}">
+                            <i class="bi bi-geo-alt"></i>
+                            <span th:text="${r.location}">Loc</span>
+                        </span>
+                        <span th:unless="${r.location != null}">-</span>
+                    </td>
+
                     <td>
                         <div class="action-cell">
-                            <button class="btn btn-outline-secondary btn-sm" title="View Animal">
+                            <a th:href="@{'/livestock/' + ${r.livestockId}}"
+                               class="btn btn-outline-secondary btn-sm" title="View Animal">
                                 <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-outline-primary btn-sm" title="View Pregnancy">
+                            </a>
+                            <a th:if="${r.breedingId != null}"
+                               th:href="@{'/livestock/breeding/' + ${r.breedingId}}"
+                               class="btn btn-outline-primary btn-sm" title="View Pregnancy">
                                 <i class="bi bi-clipboard2-heart"></i>
-                            </button>
-                            <button class="btn btn-success btn-sm" title="Record Birth">
+                            </a>
+                            <a th:href="@{'/livestock/births/record?animalId=' + ${r.livestockId}}"
+                               class="btn btn-success btn-sm" title="Record Birth">
                                 <i class="bi bi-clipboard2-pulse"></i>
-                            </button>
-                            <button class="btn btn-warning btn-sm" title="Pregnancy Check">
+                            </a>
+                            <a th:href="@{'/livestock/pregnancy-check?animalId=' + ${r.livestockId}}"
+                               class="btn btn-warning btn-sm" title="Pregnancy Check">
                                 <i class="bi bi-clipboard2-x"></i>
-                            </button>
+                            </a>
                         </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(rows)}">
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox me-2"></i>
+                        No upcoming births match the selected filters.
                     </td>
                 </tr>
                 </tbody>
@@ -827,12 +828,38 @@
         </div>
 
         <div class="pagination-bar">
-            <div>Showing page 1 of 1 · 10 rows/page</div>
+            <div>
+                Showing page
+                <span th:text="${totalPages == 0 ? 1 : (currentPage + 1)}">1</span>
+                of <span th:text="${totalPages == 0 ? 1 : totalPages}">1</span>
+                · <span th:text="${pageSize}">25</span> rows/page
+            </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-secondary btn-sm disabled">
+                <a th:if="${currentPage > 0}"
+                   th:href="@{/livestock/upcoming-births-report(
+                       page=${currentPage - 1},
+                       categoryId=${categoryIdFilter},
+                       search=${searchFilter},
+                       windowDays=${windowDaysFilter})}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-chevron-left"></i> Prev
+                </a>
+                <button th:unless="${currentPage > 0}"
+                        class="btn btn-outline-secondary btn-sm disabled" disabled>
                     <i class="bi bi-chevron-left"></i> Prev
                 </button>
-                <button class="btn btn-outline-secondary btn-sm disabled">
+
+                <a th:if="${currentPage + 1 < totalPages}"
+                   th:href="@{/livestock/upcoming-births-report(
+                       page=${currentPage + 1},
+                       categoryId=${categoryIdFilter},
+                       search=${searchFilter},
+                       windowDays=${windowDaysFilter})}"
+                   class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-chevron-right"></i>
+                </a>
+                <button th:unless="${currentPage + 1 < totalPages}"
+                        class="btn btn-outline-secondary btn-sm disabled" disabled>
                     Next <i class="bi bi-chevron-right"></i>
                 </button>
             </div>
@@ -840,68 +867,6 @@
     </div>
 
 </div>
-
-<script>
-    /**
-     * Export report as PDF using html2pdf library
-     */
-    function exportPDF() {
-        const loading = document.getElementById('pdfLoading');
-        loading.classList.add('show');
-
-        const element = document.getElementById('reportContent');
-
-        const opt = {
-            margin:        [10, 10, 10, 10],
-            filename:      'upcoming-births-report.pdf',
-            image:         { type: 'jpeg', quality: 0.98 },
-            html2canvas:   { scale: 2, useCORS: true, letterRendering: true },
-            jsPDF:         { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak:     { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(element).save().then(function() {
-            loading.classList.remove('show');
-        }).catch(function(err) {
-            console.error('PDF generation error:', err);
-            loading.classList.remove('show');
-            alert('Error generating PDF. Please try again.');
-        });
-    }
-
-    /**
-     * Export report as CSV
-     */
-    function exportCSV() {
-        const rows = document.querySelectorAll('.report-table tbody tr');
-        const headers = ['Tag Number', 'Category', 'Breeding Date', 'Expected Birth Date', 'Days Remaining', 'Status', 'Expected Offspring', 'Location'];
-
-        let csvContent = headers.join(',') + '\n';
-
-        rows.forEach(row => {
-            const cells = row.querySelectorAll('td');
-            const data = [];
-            for (let i = 0; i < cells.length - 1; i++) {
-                let text = cells[i].textContent.trim();
-                text = text.replace(/\s+/g, ' ').trim();
-                if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-                    text = '"' + text.replace(/"/g, '""') + '"';
-                }
-                data.push(text);
-            }
-            csvContent += data.join(',') + '\n';
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'upcoming-births-report.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-    }
-</script>
 
 </body>
 </html>

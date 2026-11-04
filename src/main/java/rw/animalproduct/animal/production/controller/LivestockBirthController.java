@@ -75,9 +75,9 @@ public class LivestockBirthController {
                 .map(b -> b.getLivestock().getId())
                 .collect(Collectors.toSet());
 
+        // ✅ FIXED: removed getIsDeleted() filter
         List<Livestock> pregnantMothers = livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
                 .filter(l -> !Livestock.STATUS_SOLD.equals(l.getStatus()))
                 .filter(l -> l.getGender() == null
@@ -89,9 +89,9 @@ public class LivestockBirthController {
                 .sorted(Comparator.comparing(Livestock::getTagNumber))
                 .collect(Collectors.toList());
 
+        // ✅ FIXED: removed getIsDeleted() filter
         List<Livestock> availableFathers = livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
                 .filter(l -> !Livestock.STATUS_SOLD.equals(l.getStatus()))
                 .filter(l -> "MALE".equalsIgnoreCase(l.getGender()))
@@ -229,13 +229,13 @@ public class LivestockBirthController {
             }
         }
 
+        // ✅ FIXED: removed getIsDeleted() filter
         return livestockRepository.findAll().stream()
                 .filter(l -> categoryId == null
                         || (l.getLivestockCategory() != null
                         && categoryId.equals(l.getLivestockCategory().getId())))
                 .filter(l -> !l.getId().equals(motherId))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> {
                     if (l.getMother() == null)                         return true;
                     if (motherId.equals(l.getMother().getId()))        return true;
@@ -270,8 +270,7 @@ public class LivestockBirthController {
     }
 
     // =========================================================================
-    // API — AUTO DATES FOR MOTHER (pre-fills Birth / Weaning / Next Breeding
-    // from EXISTING table data as soon as the mother is chosen)
+    // API — AUTO DATES FOR MOTHER
     // =========================================================================
 
     @GetMapping("/api/auto-dates")
@@ -281,7 +280,7 @@ public class LivestockBirthController {
     }
 
     // =========================================================================
-    // API — REAL DATE SUGGESTIONS (used when the user edits the Birth Date)
+    // API — REAL DATE SUGGESTIONS
     // =========================================================================
 
     @GetMapping("/api/date-suggestions")
@@ -320,7 +319,7 @@ public class LivestockBirthController {
     }
 
     // =========================================================================
-    // API: live-search registered veterinarians (Attendant field)
+    // API: live-search registered veterinarians
     // =========================================================================
 
     @GetMapping("/api/veterinarians/search")
@@ -698,6 +697,8 @@ public class LivestockBirthController {
 
         Livestock father = birthService.getCommonFatherForBirth(id);
 
+        // NOTE: these .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted())) calls
+        // on LivestockOffspring are KEPT — that entity still has its own soft-delete flag.
         List<LivestockOffspring> offspringLinks = birth.getChildren() == null
                 ? Collections.emptyList()
                 : birth.getChildren().stream()
@@ -755,9 +756,9 @@ public class LivestockBirthController {
 
         Livestock commonFather = birthService.getCommonFatherForBirth(birthId);
         model.addAttribute("selectedFatherId", commonFather != null ? commonFather.getId().toString() : "");
+        // ✅ FIXED: removed getIsDeleted() filter on Livestock
         model.addAttribute("fathersList", livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
                 .filter(l -> !Livestock.STATUS_SOLD.equals(l.getStatus()))
                 .filter(l -> "MALE".equalsIgnoreCase(l.getGender()))
@@ -791,6 +792,7 @@ public class LivestockBirthController {
                 .collect(Collectors.toSet());
 
         final UUID finalMotherId = motherId;
+        // ✅ FIXED: removed final getIsDeleted() filter on Livestock
         List<Livestock> available = livestockRepository.findAll().stream()
                 .filter(l -> !linkedIds.contains(l.getId()))
                 .filter(l -> finalMotherId == null || !l.getId().equals(finalMotherId))
@@ -811,7 +813,6 @@ public class LivestockBirthController {
                     return !l.getBirthDate().isBefore(earliestChild.minusMonths(3))
                             && !l.getBirthDate().isAfter(anchor.plusMonths(2));
                 })
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .sorted(Comparator.comparing(
                         l -> l.getBirthDate() != null ? l.getBirthDate() : LocalDate.MIN,
                         Comparator.reverseOrder()))
@@ -1006,8 +1007,8 @@ public class LivestockBirthController {
                 .sorted(Comparator.comparing(LivestockCategory::getName))
                 .collect(Collectors.toList()));
 
+        // ✅ FIXED: removed getIsDeleted() filter on Livestock
         model.addAttribute("mothers", livestockRepository.findAll().stream()
-                .filter(l -> !Boolean.TRUE.equals(l.getIsDeleted()))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> l.getOffspringCount() != null && l.getOffspringCount() > 0)
                 .sorted(Comparator.comparing(Livestock::getTagNumber))

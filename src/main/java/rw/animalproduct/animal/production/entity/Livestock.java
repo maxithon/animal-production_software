@@ -97,11 +97,6 @@ public class Livestock {
     @Column(name = "photo")
     private String photo;
 
-    /**
-     * ✅ ENHANCEMENT: free-text notes for the animal.
-     * Used by the bulk importer (stores breed + user notes)
-     * and by the manual registration form.
-     */
     @Column(name = "notes", length = 2000)
     private String notes;
 
@@ -123,25 +118,14 @@ public class Livestock {
     @Column(name = "is_draft", nullable = false)
     private Boolean isDraft = false;
 
-    @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted = false;
-
-    // ✅ Batch support. Backed by real DB columns.
     @Column(name = "is_group", nullable = false)
     private Boolean isGroup = false;
 
     @Column(name = "quantity")
     private Integer quantity;
 
-    // ✅ Tracks who registered/imported this animal.
     @Column(name = "created_by")
     private UUID createdBy;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
-    @Column(name = "deleted_by")
-    private String deletedBy;
 
     @Column(name = "breeding_ready_notified_at")
     private LocalDateTime breedingReadyNotifiedAt;
@@ -193,7 +177,6 @@ public class Livestock {
         if (createdAt == null) createdAt = LocalDateTime.now();
         if (isDraft == null) isDraft = false;
         if (isPregnant == null) isPregnant = false;
-        if (isDeleted == null) isDeleted = false;
         if (isGroup == null) isGroup = false;
         if (reproductiveStatus == null) reproductiveStatus = REPRO_OPEN;
         if (healthStatus == null) healthStatus = HEALTH_HEALTHY;
@@ -256,12 +239,11 @@ public class Livestock {
                 && REPRO_OPEN.equals(reproductiveStatus)
                 && !STATUS_DEAD.equals(status)
                 && !STATUS_SOLD.equals(status)
-                && !STATUS_TRANSFERRED.equals(status)
-                && !Boolean.TRUE.equals(isDeleted);
+                && !STATUS_TRANSFERRED.equals(status);
     }
 
     public boolean isActive() {
-        return STATUS_ACTIVE.equals(status) && !Boolean.TRUE.equals(isDeleted);
+        return STATUS_ACTIVE.equals(status);
     }
 
     public boolean isOnFarm() {
@@ -330,7 +312,6 @@ public class Livestock {
         };
     }
 
-    // ── Batch helpers ───────────────────────────────────────────────────────
     public boolean isBatch() { return Boolean.TRUE.equals(isGroup); }
 
     public int getHeadCount() {
@@ -340,7 +321,6 @@ public class Livestock {
         return 1;
     }
 
-    // ── Getters and Setters ───────────────────────────────────────────────────
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getTagNumber() { return tagNumber; }
@@ -349,9 +329,7 @@ public class Livestock {
     public void setGender(String gender) { this.gender = gender; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
-    public String getReproductiveStatus() {
-        return reproductiveStatus;
-    }
+    public String getReproductiveStatus() { return reproductiveStatus; }
     public void setReproductiveStatus(String reproductiveStatus) {
         this.reproductiveStatus = reproductiveStatus;
         if (REPRO_PREGNANT.equals(reproductiveStatus)) {
@@ -395,7 +373,6 @@ public class Livestock {
     public String getPhoto() { return photo; }
     public void setPhoto(String photo) { this.photo = photo; }
 
-    // ✅ ENHANCEMENT: notes accessors
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
@@ -426,9 +403,6 @@ public class Livestock {
     public Boolean getIsDraft() { return isDraft; }
     public void setIsDraft(Boolean isDraft) { this.isDraft = isDraft; }
 
-    public Boolean getIsDeleted() { return isDeleted; }
-    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
-
     public Boolean getIsGroup() { return isGroup; }
     public void setIsGroup(Boolean isGroup) { this.isGroup = isGroup; }
     public Integer getQuantity() { return quantity; }
@@ -437,12 +411,6 @@ public class Livestock {
     public UUID getCreatedBy() { return createdBy; }
     public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
 
-    public LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
-
-    public String getDeletedBy() { return deletedBy; }
-    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
-
     public LocalDateTime getBreedingReadyNotifiedAt() { return breedingReadyNotifiedAt; }
     public void setBreedingReadyNotifiedAt(LocalDateTime breedingReadyNotifiedAt) { this.breedingReadyNotifiedAt = breedingReadyNotifiedAt; }
 
@@ -450,9 +418,7 @@ public class Livestock {
     public void setDraftBirthEvent(LivestockBirth draftBirthEvent) { this.draftBirthEvent = draftBirthEvent; }
 
     public LivestockCategory getLivestockCategory() { return livestockCategory; }
-    public void setLivestockCategory(LivestockCategory livestockCategory) {
-        this.livestockCategory = livestockCategory;
-    }
+    public void setLivestockCategory(LivestockCategory livestockCategory) { this.livestockCategory = livestockCategory; }
 
     public Beneficiary getBeneficiary() { return beneficiary; }
     public void setBeneficiary(Beneficiary beneficiary) { this.beneficiary = beneficiary; }

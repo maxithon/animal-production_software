@@ -14,25 +14,26 @@ import java.util.UUID;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
 
-    List<AuditLog> findByEntityTypeAndEntityIdOrderByChangedAtDesc(
-            String entityType, UUID entityId);
+    List<AuditLog> findByEntityTypeAndEntityIdOrderByChangedAtDesc(String entityType, UUID entityId);
 
     Page<AuditLog> findByIsDeletedFalseOrderByChangedAtDesc(Pageable pageable);
 
-    Page<AuditLog> findByEntityTypeAndIsDeletedFalseOrderByChangedAtDesc(
-            String entityType, Pageable pageable);
-
-    // ── KPI totals ───────────────────────────────────────────────────────────
+    Page<AuditLog> findByEntityTypeAndIsDeletedFalseOrderByChangedAtDesc(String entityType, Pageable pageable);
 
     long countByIsDeletedFalse();
-
     long countByActionAndIsDeletedFalse(String action);
-
     long countByEntityTypeAndIsDeletedFalse(String entityType);
-
     long countByEntityTypeAndActionAndIsDeletedFalse(String entityType, String action);
 
-    // ── KPI breakdown by category (used on the "All Logs" view) ────────────
+    @Query("SELECT COUNT(a) FROM AuditLog a " +
+            "WHERE a.isDeleted = false AND a.entityType = :entityType " +
+            "  AND (a.action = 'DELETE' OR a.action = 'SOFT_DELETE')")
+    long countDeletesForEntityType(@Param("entityType") String entityType);
+
+    @Query("SELECT COUNT(a) FROM AuditLog a " +
+            "WHERE a.isDeleted = false " +
+            "  AND (a.action = 'DELETE' OR a.action = 'SOFT_DELETE')")
+    long countAllDeletes();
 
     @Query("SELECT a.entityType, COUNT(a) FROM AuditLog a " +
             "WHERE a.isDeleted = false GROUP BY a.entityType")
@@ -41,4 +42,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     @Query("SELECT a.entityType, COUNT(a) FROM AuditLog a " +
             "WHERE a.isDeleted = false AND a.action = :action GROUP BY a.entityType")
     List<Object[]> countGroupedByEntityTypeAndAction(@Param("action") String action);
+
+    @Query("SELECT a.entityType, COUNT(a) FROM AuditLog a " +
+            "WHERE a.isDeleted = false " +
+            "  AND (a.action = 'DELETE' OR a.action = 'SOFT_DELETE') " +
+            "GROUP BY a.entityType")
+    List<Object[]> countDeletesGroupedByEntityType();
 }

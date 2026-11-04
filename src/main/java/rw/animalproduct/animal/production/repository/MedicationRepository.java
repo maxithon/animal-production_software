@@ -2,6 +2,7 @@ package rw.animalproduct.animal.production.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.Medication;
 
@@ -11,15 +12,27 @@ import java.util.UUID;
 @Repository
 public interface MedicationRepository extends JpaRepository<Medication, UUID> {
 
-    /** Only active medications, sorted alphabetically — used for dropdowns */
-    List<Medication> findByIsActiveTrueOrderByNameAsc();
-
-    /** All medications sorted by name */
     List<Medication> findAllByOrderByNameAsc();
 
-    /** Check if a name already exists (case-insensitive) */
+    List<Medication> findByIsActiveTrueOrderByNameAsc();
+
     boolean existsByNameIgnoreCase(String name);
 
-    /** Find by category */
-    List<Medication> findByCategoryOrderByNameAsc(Medication.MedicationCategory category);
+    List<Medication> findByCategoryAndIsActiveTrueOrderByNameAsc(Medication.MedicationCategory category);
+
+    /** Count treatments for a single medication — used for the delete rule. */
+    @Query("""
+           SELECT COUNT(t) FROM LivestockTreatment t
+           WHERE t.medication.id = :medicationId
+           """)
+    long countActiveTreatmentsByMedicationId(@Param("medicationId") UUID medicationId);
+
+    /** Bulk usage for the whole list page — ONE query instead of N. */
+    @Query("""
+           SELECT t.medication.id, COUNT(t)
+           FROM LivestockTreatment t
+           WHERE t.medication IS NOT NULL
+           GROUP BY t.medication.id
+           """)
+    List<Object[]> countAllActiveTreatmentsByMedication();
 }

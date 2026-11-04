@@ -7,448 +7,478 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body {
-            background: #f8f9fa;
-            padding: 20px;
-            font-size: 13px;
-        }
-        .list-card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .list-card h3 {
-            font-size: 1.2rem;
-        }
-        .table-actions {
-            white-space: nowrap;
-        }
-        .badge-gender {
-            font-size: 0.7rem;
-        }
-        .badge-status {
-            font-size: 0.7rem;
-        }
-        .pagination {
-            margin-top: 20px;
-            font-size: 0.8rem;
+        body { background: #f8f9fa; padding: 20px; font-size: 12px; }
+        .list-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .list-card h3 { font-size: 1.1rem; margin: 0; }
+        .list-card .subtitle { font-size: 0.75rem; }
+        .table-actions { white-space: nowrap; }
+
+        #dataTable { font-size: 0.75rem; margin-bottom: 0; }
+        #dataTable th, #dataTable td { padding: 0.35rem 0.5rem; vertical-align: middle; }
+        #dataTable th { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.02em; color: #666; font-weight: 700; }
+        #dataTable .btn-sm { font-size: 0.65rem; padding: 0.15rem 0.4rem; }
+
+        .rep-photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0; display: block; }
+        .rep-photo-placeholder { width: 34px; height: 34px; border-radius: 50%; background: #eef2f7; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; border: 2px solid #e2e8f0; flex-shrink: 0; }
+        .rep-name-cell { display: flex; align-items: center; gap: 8px; }
+        .rep-name { font-weight: 600; font-size: 0.78rem; color: #0f172a; line-height: 1.2; }
+        .rep-nid { font-size: 0.68rem; color: #94a3b8; display: block; margin-top: 1px; }
+
+        .gender-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+        .gender-badge i { font-size: 0.85rem; }
+        .gender-male    { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .gender-female  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .gender-unknown { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+        .status-badge-full { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; line-height: 1.3; white-space: nowrap; }
+        .status-badge-full i { font-size: 0.85rem; }
+        .status-active   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .status-inactive { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+
+        .loc-cell { font-size: 0.7rem; line-height: 1.3; color: #475569; max-width: 220px; }
+        .loc-cell i { font-size: 0.68rem; }
+
+        .ellipsis { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+        .status-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+        .status-chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 0.7rem; text-decoration: none; border: 1px solid #dee2e6; color: #495057; background: #fff; transition: all 0.2s ease; }
+        .status-chip:hover { background: #f1f3f5; transform: translateY(-1px); }
+        .status-chip.active-chip { background: #1a5f7a; border-color: #1a5f7a; color: #fff; }
+        .status-chip .chip-count { font-weight: 600; background: rgba(0,0,0,0.08); padding: 0 5px; border-radius: 999px; min-width: 18px; text-align: center; font-size: 0.65rem; }
+        .status-chip.active-chip .chip-count { background: rgba(255,255,255,0.2); }
+
+        tr.row-inactive { opacity: 0.6; background-color: #f8f9fa; }
+        tr.row-inactive:hover { opacity: 0.85; }
+
+        @media (max-width: 992px) {
+            .ellipsis { max-width: 110px; }
+            .loc-cell { max-width: 170px; font-size: 0.68rem; }
         }
 
-        #dataTable {
-            font-size: 0.8rem;
-        }
-        #dataTable th,
-        #dataTable td {
-            padding: 0.5rem 0.6rem;
-            vertical-align: middle;
-        }
-        #dataTable th {
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            color: #666;
-        }
-        #dataTable .btn-sm {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.45rem;
-        }
-
-        /* Status filter chips */
-        .status-chips {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .status-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
-            border-radius: 999px;
-            font-size: 0.75rem;
-            text-decoration: none;
-            border: 1px solid #dee2e6;
-            color: #495057;
-            background: #fff;
-            transition: all 0.2s ease;
-        }
-        .status-chip:hover {
-            background: #f1f3f5;
-            color: #495057;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .status-chip.active-chip {
-            background: #1a5f7a;
-            border-color: #1a5f7a;
-            color: #fff;
-        }
-        .status-chip.active-chip:hover {
-            background: #154a60;
-            border-color: #154a60;
-            color: #fff;
-        }
-        .status-chip .chip-count {
-            font-weight: 600;
-            background: rgba(0,0,0,0.08);
-            padding: 0 6px;
-            border-radius: 999px;
-            min-width: 20px;
-            text-align: center;
-        }
-        .status-chip.active-chip .chip-count {
-            background: rgba(255,255,255,0.2);
-        }
-        tr.row-inactive {
-            opacity: 0.65;
-            background-color: #f8f9fa;
-        }
-        tr.row-inactive:hover {
-            opacity: 0.85;
-        }
-
-        /* Animation for status changes */
-        .status-badge {
-            transition: all 0.3s ease;
-        }
-
-        /* Tooltip improvements */
-        .btn-sm {
-            position: relative;
-        }
-        .btn-sm:hover {
-            transform: scale(1.05);
-        }
-
-        /* Stats summary */
-        .stats-summary {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            padding: 10px 0;
-        }
-        .stat-item {
-            background: #f8f9fa;
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-        }
-        .stat-item .stat-number {
-            font-weight: 600;
-            color: #1a5f7a;
-        }
-
-        /* Responsive table */
         @media (max-width: 768px) {
-            .table-actions .btn-sm {
-                padding: 0.15rem 0.35rem;
-                font-size: 0.65rem;
-            }
+            body { padding: 12px; }
+            .list-card { padding: 14px; border-radius: 10px; }
+            .d-flex.justify-content-between { flex-wrap: wrap; gap: 8px; }
+            .status-chips { width: 100%; }
+            .input-group { max-width: 100% !important; width: 100%; }
+            #dataTable thead { display: none; }
+            #dataTable, #dataTable tbody, #dataTable tr, #dataTable td { display: block; width: 100%; }
+            #dataTable tr { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+            #dataTable tr.row-inactive { background: #f8f9fa; opacity: 0.85; }
+            #dataTable td { padding: 4px 0; border: none; text-align: left !important; font-size: 0.8rem; }
+            #dataTable td::before { content: attr(data-label); display: inline-block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: #94a3b8; min-width: 90px; }
+            #dataTable td:first-child { display: none; }
+            #dataTable td:nth-child(2) { padding-bottom: 10px; border-bottom: 1px solid #f1f5f9; margin-bottom: 8px; }
+            #dataTable td:nth-child(2)::before { display: none; }
+            .loc-cell { max-width: 100%; }
+            .ellipsis { max-width: 100%; white-space: normal; text-overflow: clip; }
+            #dataTable td:last-child { padding-top: 10px; border-top: 1px solid #f1f5f9; margin-top: 8px; display: flex; gap: 6px; justify-content: flex-start; flex-wrap: wrap; }
+            #dataTable td:last-child::before { display: none; }
+            .modal-dialog { margin: 10px; }
         }
     </style>
 </head>
 <body>
 <div class="container-fluid">
     <div class="list-card">
+
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
                 <h3><i class="bi bi-people-fill"></i> Manage Representatives</h3>
-                <p class="text-muted mb-0">List of all livestock representatives</p>
+                <p class="text-muted subtitle mb-0">All livestock representatives</p>
             </div>
-            <a th:href="@{/representatives/register}" class="btn btn-primary">
+            <a th:href="@{/representatives/register}" class="btn btn-primary btn-sm">
                 <i class="bi bi-person-plus-fill"></i> Register New
             </a>
         </div>
 
-        <!-- Success / Error Message -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <!-- Flash -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show py-2 mb-3">
+            <small><i class="bi bi-check-circle"></i> <span th:text="${success}"></span></small>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-
-        <!-- Statistics Summary -->
-        <div class="stats-summary" th:if="${statistics != null}">
-            <span class="stat-item">
-                <i class="bi bi-people"></i> Total: <span class="stat-number" th:text="${statistics.total}">0</span>
-            </span>
-            <span class="stat-item">
-                <i class="bi bi-check-circle text-success"></i> Active: <span class="stat-number" th:text="${statistics.active}">0</span>
-                <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(statistics.activePercentage, 0, 1)} + '%)'">0%</span>
-            </span>
-            <span class="stat-item">
-                <i class="bi bi-pause-circle text-secondary"></i> Inactive: <span class="stat-number" th:text="${statistics.inactive}">0</span>
-                <span class="text-muted" th:text="'(' + ${#numbers.formatDecimal(statistics.inactivePercentage, 0, 1)} + '%)'">0%</span>
-            </span>
-            <span class="stat-item">
-                <i class="bi bi-gender-male text-primary"></i> Male: <span class="stat-number" th:text="${statistics.male}">0</span>
-            </span>
-            <span class="stat-item">
-                <i class="bi bi-gender-female text-danger"></i> Female: <span class="stat-number" th:text="${statistics.female}">0</span>
-            </span>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show py-2 mb-3">
+            <small><i class="bi bi-exclamation-triangle-fill"></i> <span th:text="${error}"></span></small>
+            <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="alert"></button>
         </div>
 
-        <!-- Status filter chips -->
-        <div class="status-chips mb-3">
-            <a class="status-chip" th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active-chip' : ''"
-               th:href="@{/representatives/list(keyword=${keyword})}">
-                <i class="bi bi-people"></i> All
-                <span class="chip-count" th:text="${totalCount != null ? totalCount : 0}">0</span>
-            </a>
-            <a class="status-chip" th:classappend="${selectedStatus == 'ACTIVE'} ? 'active-chip' : ''"
-               th:href="@{/representatives/list(status='ACTIVE', keyword=${keyword})}">
-                <i class="bi bi-check-circle"></i> Active
-                <span class="chip-count" th:text="${activeCount != null ? activeCount : 0}">0</span>
-            </a>
-            <a class="status-chip" th:classappend="${selectedStatus == 'INACTIVE'} ? 'active-chip' : ''"
-               th:href="@{/representatives/list(status='INACTIVE', keyword=${keyword})}">
-                <i class="bi bi-pause-circle"></i> Inactive
-                <span class="chip-count" th:text="${inactiveCount != null ? inactiveCount : 0}">0</span>
-            </a>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <form th:action="@{/representatives/list}" method="get" class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" id="searchInput" name="keyword"
-                           placeholder="Search by name, NID, or phone..."
-                           th:value="${keyword}">
-                    <input type="hidden" name="status" th:value="${selectedStatus}">
-                    <button class="btn btn-outline-secondary" type="submit">Search</button>
-                    <a th:href="@{/representatives/list(status=${selectedStatus})}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Clear
-                    </a>
-                </form>
+        <!-- Filters + search -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div class="status-chips">
+                <a class="status-chip"
+                   th:classappend="${selectedStatus == null or selectedStatus == ''} ? 'active-chip' : ''"
+                   th:href="@{/representatives/list(keyword=${keyword})}">
+                    <i class="bi bi-people"></i> All
+                    <span class="chip-count" th:text="${totalCount != null ? totalCount : 0}">0</span>
+                </a>
+                <a class="status-chip"
+                   th:classappend="${selectedStatus == 'ACTIVE'} ? 'active-chip' : ''"
+                   th:href="@{/representatives/list(status='ACTIVE', keyword=${keyword})}">
+                    <i class="bi bi-check-circle"></i> Active
+                    <span class="chip-count" th:text="${activeCount != null ? activeCount : 0}">0</span>
+                </a>
+                <a class="status-chip"
+                   th:classappend="${selectedStatus == 'INACTIVE'} ? 'active-chip' : ''"
+                   th:href="@{/representatives/list(status='INACTIVE', keyword=${keyword})}">
+                    <i class="bi bi-pause-circle"></i> Inactive
+                    <span class="chip-count" th:text="${inactiveCount != null ? inactiveCount : 0}">0</span>
+                </a>
             </div>
-            <div class="col-md-6 text-end">
-                <span class="text-muted">
-                    Showing <strong th:text="${representativesList != null ? representativesList.size() : 0}">0</strong>
-                    of <strong th:text="${totalCount != null ? totalCount : 0}">0</strong> records
-                </span>
-            </div>
+
+            <form th:action="@{/representatives/list}" method="get"
+                  class="input-group input-group-sm" style="max-width: 320px;">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="searchInput" name="keyword"
+                       placeholder="Search name, NID, phone..."
+                       th:value="${keyword}">
+                <input type="hidden" name="status" th:value="${selectedStatus}">
+                <button class="btn btn-outline-secondary" type="submit">Go</button>
+                <a th:href="@{/representatives/list(status=${selectedStatus})}"
+                   class="btn btn-outline-secondary" title="Clear">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </form>
         </div>
 
         <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle" id="dataTable">
+            <table class="table table-hover align-middle mb-0" id="dataTable">
+                <colgroup>
+                    <col style="width: 3%;">
+                    <col style="width: 20%;">
+                    <col style="width: 8%;">
+                    <col style="width: 9%;">
+                    <col style="width: 9%;">
+                    <col style="width: 11%;">
+                    <col style="width: 18%;">
+                    <col style="width: 8%;">
+                    <col style="width: 6%;">
+                    <col style="width: 8%;">
+                </colgroup>
                 <thead class="table-light">
                 <tr>
                     <th>#</th>
-                    <th>Full Name</th>
-                    <th>Gender</th>
+                    <th>Representative</th>
+                    <th class="text-center">Gender</th>
                     <th>NID</th>
                     <th>Phone</th>
                     <th>Email</th>
                     <th>Location</th>
-                    <th>Occupation</th>
-                    <th>Status</th>
-                    <th>Beneficiaries</th>
-                    <th>Actions</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Benef.</th>
+                    <th class="text-center">Actions</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${representativesList == null or representativesList.empty}">
-                    <td colspan="11" class="text-center text-muted py-4">
-                        <i class="bi bi-inbox fs-1"></i>
-                        <p class="mt-2">No representatives registered yet</p>
-                        <p th:if="${keyword}" class="small">No results found for "<strong th:text="${keyword}"></strong>"</p>
+                    <td colspan="10" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                        <small>No representatives registered yet</small>
                     </td>
                 </tr>
+
                 <tr th:each="item, iterStat : ${representativesList}"
                     th:classappend="${item.status == 'INACTIVE'} ? 'row-inactive' : ''">
-                    <td th:text="${iterStat.count}">1</td>
-                    <td>
-                        <strong th:text="${item.firstName + ' ' + item.lastName}">John Doe</strong>
-                        <br>
-                        <small class="text-muted" th:text="'ID: ' + ${item.id.toString().substring(0,8)}">ID</small>
+
+                    <td data-label="#" th:text="${iterStat.count}">1</td>
+
+                    <td data-label="Representative">
+                        <div class="rep-name-cell">
+                            <img th:if="${item.photoUrl != null}"
+                                 th:src="${item.photoUrl}"
+                                 alt="Photo"
+                                 class="rep-photo"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="rep-photo-placeholder"
+                                 th:style="${item.photoUrl != null} ? 'display:none;' : 'display:flex;'">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div>
+                                <span class="rep-name" th:text="${item.firstName + ' ' + item.lastName}">John Doe</span>
+                                <small class="rep-nid" th:text="${item.nid}">1234567890123456</small>
+                            </div>
+                        </div>
                     </td>
-                    <td>
-                        <span th:if="${item.gender == 'MALE'}" class="badge bg-primary badge-gender">
+
+                    <td data-label="Gender" class="text-center">
+                        <span th:if="${item.gender == 'MALE'}" class="gender-badge gender-male">
                             <i class="bi bi-gender-male"></i> Male
                         </span>
-                        <span th:if="${item.gender == 'FEMALE'}" class="badge bg-danger badge-gender">
+                        <span th:if="${item.gender == 'FEMALE'}" class="gender-badge gender-female">
                             <i class="bi bi-gender-female"></i> Female
                         </span>
-                        <span th:if="${item.gender == null}" class="badge bg-secondary badge-gender">N/A</span>
+                        <span th:if="${item.gender == null or item.gender == ''}"
+                              class="gender-badge gender-unknown">N/A</span>
                     </td>
-                    <td th:text="${item.nid}">1234567890123456</td>
-                    <td th:text="${item.phone}">0781234567</td>
-                    <td th:text="${item.email}">email@example.com</td>
-                    <td>
-                        <small th:text="${item.location != null ? item.location.name : 'N/A'}">Location</small>
+
+                    <td data-label="NID">
+                        <span class="ellipsis" th:text="${item.nid}" th:title="${item.nid}">NID</span>
                     </td>
-                    <td>
-                        <small th:text="${item.occupation != null ? item.occupation : 'N/A'}">Activity</small>
+
+                    <td data-label="Phone" th:text="${item.phone}">0781234567</td>
+
+                    <td data-label="Email">
+                        <span class="ellipsis" th:text="${item.email}"
+                              th:title="${item.email}">email@example.com</span>
                     </td>
-                    <td>
-                        <span th:if="${item.status == 'INACTIVE'}" class="badge bg-secondary badge-status status-badge">
+
+                    <td data-label="Location">
+                        <div th:if="${item.location != null}" class="loc-cell"
+                             th:title="${item.fullLocationPath}">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                            <span th:text="${item.fullLocationPath}">
+                                Province › District › Sector › Cell › Village
+                            </span>
+                        </div>
+                        <span th:unless="${item.location != null}" class="text-muted">—</span>
+                    </td>
+
+                    <td data-label="Status" class="text-center">
+                        <span th:if="${item.status == 'INACTIVE'}"
+                              class="status-badge-full status-inactive">
                             <i class="bi bi-pause-circle"></i> Inactive
                         </span>
-                        <span th:unless="${item.status == 'INACTIVE'}" class="badge bg-success badge-status status-badge">
+                        <span th:unless="${item.status == 'INACTIVE'}"
+                              class="status-badge-full status-active">
                             <i class="bi bi-check-circle"></i> Active
                         </span>
                     </td>
-                    <td>
+
+                    <td data-label="Beneficiaries" class="text-center">
                         <a th:href="@{/beneficiaries/list(representativeId=${item.id})}"
-                           class="btn btn-sm btn-outline-secondary" title="View Beneficiaries">
+                           class="btn btn-sm btn-outline-secondary"
+                           th:title="'View ' + ${beneficiaryCounts.get(item.id) != null ? beneficiaryCounts.get(item.id) : 0} + ' beneficiaries'">
                             <i class="bi bi-people"></i>
                             <span th:text="${beneficiaryCounts.get(item.id) != null ? beneficiaryCounts.get(item.id) : 0}">0</span>
                         </a>
                     </td>
-                    <td class="table-actions">
+
+                    <!-- ★ Actions -->
+                    <td data-label="Actions" class="table-actions text-center">
+
                         <a th:href="@{/representatives/view/{id}(id=${item.id})}"
                            class="btn btn-sm btn-info" title="View Details">
                             <i class="bi bi-eye"></i>
                         </a>
+
                         <a th:href="@{/representatives/edit/{id}(id=${item.id})}"
                            class="btn btn-sm btn-warning" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
+
+                        <!-- Activate / Deactivate -->
                         <button type="button"
                                 th:class="${item.status == 'INACTIVE'} ? 'btn btn-sm btn-outline-success' : 'btn btn-sm btn-outline-secondary'"
+                                th:attr="data-id=${item.id},
+                                         data-name=${item.firstName + ' ' + item.lastName},
+                                         data-status=${item.status},
+                                         data-active-count=${activeBeneficiaryCounts.get(item.id) != null ? activeBeneficiaryCounts.get(item.id) : 0}"
                                 data-bs-toggle="modal"
-                                th:data-bs-target="'#statusModal' + ${item.id}"
+                                data-bs-target="#statusModal"
                                 th:title="${item.status == 'INACTIVE'} ? 'Activate' : 'Deactivate'">
                             <i class="bi" th:classappend="${item.status == 'INACTIVE'} ? 'bi-play-circle' : 'bi-pause-circle'"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger"
+
+                        <!-- ★ Delete: allowed only when zero beneficiaries -->
+                        <button type="button"
+                                th:if="${beneficiaryCounts.get(item.id) == null or beneficiaryCounts.get(item.id) == 0}"
+                                class="btn btn-sm btn-danger"
+                                th:attr="data-id=${item.id},
+                                         data-name=${item.firstName + ' ' + item.lastName}"
                                 data-bs-toggle="modal"
-                                th:data-bs-target="'#deleteModal' + ${item.id}"
-                                title="Delete">
+                                data-bs-target="#deleteModal"
+                                title="Delete (no beneficiaries assigned)">
                             <i class="bi bi-trash"></i>
                         </button>
 
-                        <!-- Activate/Deactivate Confirmation Modal -->
-                        <div class="modal fade" th:id="'statusModal' + ${item.id}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" th:text="${item.status == 'INACTIVE'} ? 'Activate Representative' : 'Deactivate Representative'">Change Status</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <span th:if="${item.status == 'INACTIVE'}">
-                                            <i class="bi bi-play-circle text-success fs-4"></i>
-                                            <p class="mt-2">Reactivate <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong>?</p>
-                                            <p class="text-muted small">They'll appear as active again across the system and can be assigned to new beneficiaries.</p>
-                                        </span>
-                                        <span th:unless="${item.status == 'INACTIVE'}">
-                                            <i class="bi bi-pause-circle text-warning fs-4"></i>
-                                            <p class="mt-2">Mark <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong> as inactive?</p>
-                                            <p class="text-muted small">Their record and beneficiaries stay in the system — this can be reversed anytime.</p>
-                                        </span>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/representatives/toggle-status/{id}(id=${item.id})}" method="post" class="d-inline">
-                                            <button type="submit"
-                                                    th:class="${item.status == 'INACTIVE'} ? 'btn btn-success' : 'btn btn-secondary'">
-                                                <i class="bi" th:classappend="${item.status == 'INACTIVE'} ? 'bi-play-circle' : 'bi-pause-circle'"></i>
-                                                <span th:text="${item.status == 'INACTIVE'} ? 'Activate' : 'Deactivate'"></span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Delete Confirmation Modal -->
-                        <div class="modal fade" th:id="'deleteModal' + ${item.id}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Confirm Delete</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
-                                        <p class="mt-2">Are you sure you want to delete <strong th:text="${item.firstName + ' ' + item.lastName}">this representative</strong>?</p>
-                                        <div class="alert alert-danger">
-                                            <small><i class="bi bi-info-circle"></i> This action cannot be undone. If you just want to pause this representative temporarily, use Deactivate instead.</small>
-                                        </div>
-                                        <div class="alert alert-warning">
-                                            <small><i class="bi bi-people"></i> This will also remove all associated beneficiaries (<strong th:text="${beneficiaryCounts.get(item.id) != null ? beneficiaryCounts.get(item.id) : 0}">0</strong> beneficiaries).</small>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/representatives/delete/{id}(id=${item.id})}" method="post" class="d-inline">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="bi bi-trash"></i> Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <!-- ★ Lock: shown when beneficiaries are assigned -->
+                        <button type="button"
+                                th:if="${beneficiaryCounts.get(item.id) != null and beneficiaryCounts.get(item.id) > 0}"
+                                class="btn btn-sm btn-outline-secondary"
+                                th:title="'Cannot delete — ' + ${beneficiaryCounts.get(item.id)} + ' beneficiary(ies) still assigned. Deactivate instead.'"
+                                disabled>
+                            <i class="bi bi-lock"></i>
+                        </button>
                     </td>
                 </tr>
                 </tbody>
             </table>
         </div>
+    </div>
+</div>
 
-        <!-- No pagination needed message -->
-        <div class="text-center text-muted mt-4">
-            <small>All records shown on this page</small>
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Toggle Status Modal (with blocked warning)
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" style="font-size: 0.95rem;" id="statusModalTitle">Change Status</h5>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+
+                <div id="statusModalActivateMsg" style="display:none;">
+                    <i class="bi bi-play-circle text-success fs-4"></i>
+                    <p class="mt-2 mb-1" style="font-size: 0.85rem;">
+                        Reactivate <strong id="statusModalNameAct"></strong>?
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.72rem;">
+                        They'll appear as active again across the system.
+                    </p>
+                </div>
+
+                <div id="statusModalDeactivateMsg" style="display:none;">
+                    <i class="bi bi-pause-circle text-warning fs-4"></i>
+                    <p class="mt-2 mb-1" style="font-size: 0.85rem;">
+                        Mark <strong id="statusModalNameDeact"></strong> as inactive?
+                    </p>
+                    <p class="text-muted mb-0" style="font-size: 0.72rem;">
+                        Reversible anytime.
+                    </p>
+                </div>
+
+                <!-- ★ Blocked warning -->
+                <div id="statusBlockedWarning"
+                     class="alert alert-warning py-2 px-2 mb-0 mt-2"
+                     style="display:none; font-size: 0.75rem;">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Cannot deactivate — <strong id="statusBlockedCount">0</strong>
+                    active beneficiary(ies) are still assigned. Reassign them first.
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+
+                <form id="statusForm" method="post" style="display:inline;">
+                    <input th:if="${_csrf != null}" type="hidden"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="returnStatus" th:value="${selectedStatus}"/>
+                    <button type="submit" id="statusSubmitBtn" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-arrow-repeat"></i>
+                        <span id="statusSubmitLabel">Confirm</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     Delete Modal
+     ═══════════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" style="font-size: 0.95rem;">Confirm Delete</h5>
+                <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-3">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-4"></i>
+                <p class="mt-2 mb-2" style="font-size: 0.85rem;">
+                    Delete <strong id="deleteModalName"></strong>?
+                </p>
+                <div class="alert alert-danger py-1 px-2 mb-0" style="font-size: 0.72rem;">
+                    <i class="bi bi-info-circle"></i>
+                    This is allowed because <strong>no beneficiaries</strong> are assigned.
+                    This action cannot be undone.
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+
+                <form id="deleteForm" method="post" style="display:inline;">
+                    <input th:if="${_csrf != null}" type="hidden"
+                           th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Enhanced search functionality with debounce for client-side filtering
-    let searchTimeout;
-    document.getElementById('searchInput')?.addEventListener('keyup', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const searchValue = this.value.toLowerCase().trim();
-            const tableRows = document.querySelectorAll('#dataTable tbody tr');
-            let visibleCount = 0;
+<script th:inline="javascript">
+    const TOGGLE_URL_BASE = /*[[@{/representatives/toggle-status/}]]*/ '/representatives/toggle-status/';
+    const DELETE_URL_BASE = /*[[@{/representatives/delete/}]]*/ '/representatives/delete/';
 
-            tableRows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                const shouldShow = text.includes(searchValue);
-                row.style.display = shouldShow ? '' : 'none';
-                if (shouldShow) visibleCount++;
-            });
+    document.getElementById('statusModal').addEventListener('show.bs.modal', function (event) {
+        const btn = event.relatedTarget;
+        if (!btn) return;
 
-            // Update visible count
-            const showingElement = document.querySelector('.text-muted strong:first-child');
-            const totalElement = document.querySelector('.text-muted strong:last-child');
-            if (showingElement && totalElement) {
-                const total = document.querySelectorAll('#dataTable tbody tr:not([style*="display: none"])').length;
-                showingElement.textContent = visibleCount;
-                totalElement.textContent = total;
-            }
-        }, 300);
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const status = btn.getAttribute('data-status');
+        const activeCount = parseInt(btn.getAttribute('data-active-count') || '0', 10);
+        const isInactive = status === 'INACTIVE';
+
+        document.getElementById('statusForm').action = TOGGLE_URL_BASE + id;
+
+        document.getElementById('statusModalTitle').textContent =
+            isInactive ? 'Activate Representative' : 'Deactivate Representative';
+        document.getElementById('statusSubmitLabel').textContent =
+            isInactive ? 'Activate' : 'Deactivate';
+
+        const submitBtn = document.getElementById('statusSubmitBtn');
+        submitBtn.className = isInactive ? 'btn btn-sm btn-success' : 'btn btn-sm btn-secondary';
+
+        const warning = document.getElementById('statusBlockedWarning');
+        if (!isInactive && activeCount > 0) {
+            warning.style.display = 'block';
+            document.getElementById('statusBlockedCount').textContent = activeCount;
+            submitBtn.disabled = true;
+        } else {
+            warning.style.display = 'none';
+            submitBtn.disabled = false;
+        }
+
+        document.getElementById('statusModalActivateMsg').style.display =
+            isInactive ? 'block' : 'none';
+        document.getElementById('statusModalDeactivateMsg').style.display =
+            isInactive ? 'none' : 'block';
+
+        if (isInactive) {
+            document.getElementById('statusModalNameAct').textContent = name;
+        } else {
+            document.getElementById('statusModalNameDeact').textContent = name;
+        }
     });
 
-    // Auto-dismiss alerts after 5 seconds
-    document.addEventListener('DOMContentLoaded', function() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(alert => {
+    document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
+        const btn = event.relatedTarget;
+        if (!btn) return;
+
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+
+        document.getElementById('deleteForm').action = DELETE_URL_BASE + id;
+        document.getElementById('deleteModalName').textContent = name;
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.alert').forEach(alert => {
             setTimeout(() => {
                 const closeButton = alert.querySelector('.btn-close');
-                if (closeButton) {
-                    closeButton.click();
-                }
+                if (closeButton) closeButton.click();
             }, 5000);
         });
     });
 
-    // Tooltip initialization
-    document.addEventListener('DOMContentLoaded', function() {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
-        tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+    let searchTimeout;
+    document.getElementById('searchInput')?.addEventListener('keyup', function () {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const searchValue = this.value.toLowerCase().trim();
+            document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchValue) ? '' : 'none';
+            });
+        }, 300);
     });
 </script>
 </body>

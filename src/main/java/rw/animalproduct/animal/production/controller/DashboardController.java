@@ -59,7 +59,6 @@ public class DashboardController {
     private static final int DAYS_FOR_CALENDAR = 14;
     private static final DecimalFormat RWF_FORMAT = new DecimalFormat("#,###.00");
 
-    // ✅ Singleton Jackson mapper — thread-safe, created once.
     private static final ObjectMapper MAPPER;
     static {
         MAPPER = new ObjectMapper();
@@ -209,7 +208,7 @@ public class DashboardController {
                 safeList(deathService.getAll()),
                 safeList(treatmentService.getAll()),
                 safeList(abortionService.getAll()),
-                safeList(livestockRepository.findByIsDeletedFalse()),
+                safeList(livestockRepository.findAll()),
                 safeList(usersService.getAllUsers()),
                 safeList(breedingService.getAll()),
                 safeList(beneficiariesAmatungoService.getAll()),
@@ -257,12 +256,11 @@ public class DashboardController {
     }
 
     // ════════════════════════════════════════════════════════════════════
-    // FINANCIAL ENGINE — with N+1 fixed via batch pre-load
+    // FINANCIAL ENGINE
     // ════════════════════════════════════════════════════════════════════
     private FinancialSummary calculateFinancialSummaryCorrect(DataSnapshot snap) {
         FinancialSummary fs = new FinancialSummary();
 
-        // ✅ Pre-load ALL latest valuations in ONE query (was already OK)
         Map<UUID, BigDecimal> latestValuation = new HashMap<>();
         try {
             List<LivestockValuation> allLatest = valuationRepository.findAllLatestValuations();
@@ -279,11 +277,8 @@ public class DashboardController {
             log.warn("[FIN] findAllLatestValuations failed: {}", e.getMessage());
         }
 
-        // ✅ NEW: Pre-load ALL initial valuations in ONE query to kill N+1
         Map<UUID, BigDecimal> initialValuation = new HashMap<>();
         try {
-            // Requires repo method: List<LivestockValuation> findAllInitialValuations();
-            // If you don't have it, add: @Query("SELECT v FROM LivestockValuation v WHERE v.id IN (SELECT MIN(v2.id) FROM LivestockValuation v2 GROUP BY v2.livestock.id)")
             List<LivestockValuation> allInitial = valuationRepository.findAllInitialValuations();
             if (allInitial != null) {
                 for (LivestockValuation v : allInitial) {
@@ -293,8 +288,6 @@ public class DashboardController {
             }
             log.debug("[FIN] Loaded {} initial valuations", initialValuation.size());
         } catch (Exception e) {
-            // Fallback: if the repo method doesn't exist yet, do nothing — per-animal loop below
-            // will still work but slowly for purchase-cost calculation.
             log.warn("[FIN] findAllInitialValuations unavailable — falling back to per-animal lookups");
         }
 
@@ -304,15 +297,8 @@ public class DashboardController {
         BigDecimal receivables   = BigDecimal.ZERO;
         int confirmedSaleCount   = 0;
 
-        // ✅ Pre-load payments map in ONE query
-        Map<UUID, BigDecimal> salePaidMap = new HashMap<>();
-        try {
-            // Requires repo method: List<Object[]> sumAmountGroupedBySaleId();
-            // Or if you can't add it yet, this block quietly no-ops.
-        } catch (Exception ignore) {}
-
         for (LivestockSale s : snap.sales) {
-            if (s == null || Boolean.TRUE.equals(s.getIsDeleted())) continue;
+            if (s == null || Boolean.TRUE.equals(s.getIsDeleted())) continue;  // LivestockSale still has isDeleted
             String status = s.getSaleStatus() != null ? s.getSaleStatus().toString().toUpperCase() : "CONFIRMED";
             if (status.equals("CANCELLED") || status.equals("REFUNDED")) continue;
             BigDecimal price = parseMoney(s.getSalePrice());
@@ -340,7 +326,6 @@ public class DashboardController {
             if (!"PURCHASE".equalsIgnoreCase(l.getAcquisitionMethod())) continue;
             BigDecimal initial = initialValuation.get(l.getId());
             if (initial == null || initial.compareTo(BigDecimal.ZERO) == 0) {
-                // Fallback: per-animal query (only triggered if batch load missed it)
                 try {
                     List<LivestockValuation> initials = valuationRepository.findInitialValuations(l.getId());
                     if (initials != null && !initials.isEmpty()
@@ -375,7 +360,8 @@ public class DashboardController {
         } catch (Exception ignore) {}
 
         for (LivestockTreatment t : snap.treatments) {
-            if (t == null || Boolean.TRUE.equals(t.getIsDeleted())) continue;
+            // LivestockTreatment no longer has is_deleted (managed via audit_log)
+            if (t == null) continue;
             BigDecimal cost = parseMoney(t.getTreatmentCost());
             String type = t.getTreatmentType() != null ? t.getTreatmentType().name() : "CURATIVE";
             if (type.equalsIgnoreCase("PREVENTIVE")) preventive = preventive.add(cost);
@@ -413,7 +399,6 @@ public class DashboardController {
         BigDecimal currentHerdValue = BigDecimal.ZERO;
         long liveAnimalCount = 0;
         for (Livestock l : snap.livestock) {
-            if (Boolean.TRUE.equals(l.getIsDeleted())) continue;
             if (Livestock.STATUS_DEAD.equals(l.getStatus())
                     || Livestock.STATUS_SOLD.equals(l.getStatus())) continue;
             BigDecimal v = latestValuation.get(l.getId());
@@ -431,7 +416,6 @@ public class DashboardController {
         BigDecimal newbornValue = BigDecimal.ZERO;
         int newbornCount = 0;
         for (Livestock l : snap.livestock) {
-            if (Boolean.TRUE.equals(l.getIsDeleted())) continue;
             if (!"BIRTH".equalsIgnoreCase(l.getAcquisitionMethod())) continue;
             if (Livestock.STATUS_DEAD.equals(l.getStatus())
                     || Livestock.STATUS_SOLD.equals(l.getStatus())) continue;
@@ -446,7 +430,6 @@ public class DashboardController {
         // ---------- DEATH LOSS ----------
         BigDecimal deathLoss = BigDecimal.ZERO;
         for (LivestockDeath d : snap.deaths) {
-            if (Boolean.TRUE.equals(d.getIsDeleted())) continue;
             Livestock l = d.getLivestock();
             if (l == null) continue;
             BigDecimal v = latestValuation.get(l.getId());
@@ -655,9 +638,6 @@ public class DashboardController {
         return trends;
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // GENERATE ALERTS
-    // ════════════════════════════════════════════════════════════════════
     private List<Map<String, String>> generateAlerts(DataSnapshot snap) {
         List<Map<String, String>> alertList = new ArrayList<>();
         LocalDate today = LocalDate.now();
@@ -758,9 +738,6 @@ public class DashboardController {
         return a;
     }
 
-    // ════════════════════════════════════════════════════════════════════
-    // UPCOMING EVENTS
-    // ════════════════════════════════════════════════════════════════════
     private List<Map<String, Object>> buildUpcomingEvents(DataSnapshot snap) {
         List<Map<String, Object>> events = new ArrayList<>();
         LocalDate today = LocalDate.now();
@@ -961,7 +938,6 @@ public class DashboardController {
         return m;
     }
 
-    // MAP BUILDERS
     private List<Map<String, Object>> buildBirthMaps(List<LivestockBirth> births) {
         List<Map<String, Object>> list = new ArrayList<>();
         for (LivestockBirth b : safeList(births)) {
@@ -1201,9 +1177,6 @@ public class DashboardController {
         return out;
     }
 
-    // ========================================================================
-    // ADMIN DASHBOARD
-    // ========================================================================
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/dashboard")
     public String adminDashboard(Authentication authentication, Model model) {
@@ -1217,7 +1190,6 @@ public class DashboardController {
         model.addAttribute("userInitial", email.substring(0, 1).toUpperCase());
         model.addAttribute("isSuperAdmin", true);
 
-        // ---------- Load snapshot ONCE ----------
         long t0 = System.currentTimeMillis();
         DataSnapshot snap = loadSnapshot();
         long t1 = System.currentTimeMillis();
@@ -1585,9 +1557,6 @@ public class DashboardController {
         return "admin-dashboard";
     }
 
-    // ========================================================================
-    // USER DASHBOARD
-    // ========================================================================
     @GetMapping("/user/dashboard")
     public String userDashboard(Authentication authentication, Model model) {
         long start = System.currentTimeMillis();
@@ -1612,8 +1581,6 @@ public class DashboardController {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
             model.addAttribute("userTotalValue", userTotalValue);
 
-            // ⚠️ These loops still make one query per animal. If user has many animals,
-            //    consider adding repo methods getBirthsByMotherIds(List<UUID>).
             LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
             List<LivestockBirth> userBirths = new ArrayList<>();
             for (Livestock ls : userLivestock) userBirths.addAll(birthService.getBirthsByMother(ls.getId()));
@@ -1716,9 +1683,7 @@ public class DashboardController {
         return "user-dashboard";
     }
 
-    // ========================================================================
-    // INNER CLASSES
-    // ========================================================================
+    // Inner classes (unchanged)
     public static class FinancialSummary {
         private BigDecimal salesRevenue = BigDecimal.ZERO;
         private BigDecimal cashCollected = BigDecimal.ZERO;

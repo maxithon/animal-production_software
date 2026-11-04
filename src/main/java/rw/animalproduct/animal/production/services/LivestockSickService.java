@@ -26,7 +26,7 @@ public class LivestockSickService {
     private final LivestockSickHistoryRepository historyRepository;
     private final VeterinarianRepository         veterinarianRepository;
     private final AuditLogService                auditLogService;
-    private final SickAnimalNotificationService   notificationService;
+    private final SickAnimalNotificationService  notificationService;
 
     private static final String STATUS_SOLD      = "SOLD";
     private static final String ENTITY_TYPE      = "livestock_sick";
@@ -50,7 +50,7 @@ public class LivestockSickService {
     public List<LivestockSick> getAll() { return sickRepository.findAll(); }
 
     public List<LivestockSick> getAllActive() {
-        return sickRepository.findByIsDeletedFalseOrderByReportedDateDesc();
+        return sickRepository.findAllByOrderByReportedDateDesc();
     }
 
     public Optional<LivestockSick> getById(UUID id) { return sickRepository.findById(id); }
@@ -100,43 +100,25 @@ public class LivestockSickService {
             Livestock animal = sick.getLivestock();
 
             if (Livestock.STATUS_DEAD.equals(animal.getStatus())) {
-                throw new RuntimeException(
-                        "Animal " + animal.getTagNumber() +
-                                " is already marked as DEAD. Cannot record a sick event for a deceased animal.");
+                throw new RuntimeException("Animal " + animal.getTagNumber() + " is already marked as DEAD.");
             }
             if (STATUS_SOLD.equals(animal.getStatus())) {
-                throw new RuntimeException(
-                        "Animal " + animal.getTagNumber() +
-                                " has already been SOLD. Cannot record a sick event for a sold animal.");
+                throw new RuntimeException("Animal " + animal.getTagNumber() + " has already been SOLD.");
             }
 
-            // Sickness is tracked via healthStatus, not status — status only
-            // covers ACTIVE/SOLD/DEAD/TRANSFERRED and is independent of health.
             animal.setHealthStatus(Livestock.HEALTH_SICK);
             livestockRepository.save(animal);
         }
 
         LivestockSick saved = sickRepository.save(sick);
 
-        recordHistory(saved,
-                saved.getStatus(),
-                saved.getSeverityLevel(),
-                "Initial sick record created",
-                currentUsername());
+        recordHistory(saved, saved.getStatus(), saved.getSeverityLevel(),
+                "Initial sick record created", currentUsername());
 
-        auditLogService.log(
-                ENTITY_TYPE,
-                saved.getId(),
-                "CREATE",
-                currentUsername(),
-                null,
-                buildSnapshot(saved),
-                "Sick record created for animal: " +
-                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
-        );
+        auditLogService.log(ENTITY_TYPE, saved.getId(), "CREATE", currentUsername(),
+                null, buildSnapshot(saved),
+                "Sick record created for animal: " + (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown"));
 
-        // Fire the notification email. This is @Async on the notification
-        // service, so it does NOT block this request/response.
         notificationService.sendSickRecordedEmail(saved);
 
         return saved;
@@ -150,7 +132,6 @@ public class LivestockSickService {
         if (existingOpt.isEmpty()) return null;
 
         LivestockSick existing = existingOpt.get();
-
         String snapshotBefore = buildSnapshot(existing);
 
         LivestockSick.SickStatus    oldStatus   = existing.getStatus();
@@ -175,15 +156,13 @@ public class LivestockSickService {
 
         if (newAnimal != null) {
             if (LivestockSick.SickStatus.RECOVERED.equals(existing.getStatus())) {
-                // Recovery only affects health, not the animal's ACTIVE/SOLD/DEAD/TRANSFERRED status.
                 newAnimal.setHealthStatus(Livestock.HEALTH_HEALTHY);
             } else if (oldAnimal != null && !oldAnimal.getId().equals(newAnimal.getId())) {
                 oldAnimal.setHealthStatus(Livestock.HEALTH_HEALTHY);
                 livestockRepository.save(oldAnimal);
                 newAnimal.setHealthStatus(Livestock.HEALTH_SICK);
             } else {
-                if (!Livestock.STATUS_DEAD.equals(newAnimal.getStatus())
-                        && !STATUS_SOLD.equals(newAnimal.getStatus())) {
+                if (!Livestock.STATUS_DEAD.equals(newAnimal.getStatus()) && !STATUS_SOLD.equals(newAnimal.getStatus())) {
                     newAnimal.setHealthStatus(Livestock.HEALTH_SICK);
                 }
             }
@@ -197,23 +176,16 @@ public class LivestockSickService {
                 || (oldSeverity != null && !oldSeverity.equals(saved.getSeverityLevel()));
 
         if (statusChanged || severityChanged) {
-            String notes = buildChangeNote(oldStatus, saved.getStatus(),
-                    oldSeverity, saved.getSeverityLevel(),
-                    saved.getTreatmentNotes());
-            recordHistory(saved, saved.getStatus(), saved.getSeverityLevel(),
-                    notes, currentUsername());
+            String notes = buildChangeNote(oldStatus, saved.getStatus(), oldSeverity, saved.getSeverityLevel(), saved.getTreatmentNotes());
+            recordHistory(saved, saved.getStatus(), saved.getSeverityLevel(), notes, currentUsername());
         }
 
-        auditLogService.log(
-                ENTITY_TYPE,
-                saved.getId(),
-                "UPDATE",
-                currentUsername(),
-                snapshotBefore,
-                buildSnapshot(saved),
-                "Sick record updated for animal: " +
-                        (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown")
-        );
+        auditLogService.log(ENTITY_TYPE, saved.getId(), "UPDATE", currentUsername(),
+                snapshotBefore, buildSnapshot(saved),
+                "Sick record updated for animal: " + (saved.getLivestock() != null ? saved.getLivestock().getTagNumber() : "unknown"));
+
+        // ✅ Email on update
+        notificationService.sendSickRecordUpdatedEmail(saved);
 
         return saved;
     }
@@ -221,25 +193,18 @@ public class LivestockSickService {
     // ── Quick status update ─────────────────────────────────────────
 
     @Transactional
-    public LivestockSick quickStatusUpdate(UUID id,
-                                           LivestockSick.SickStatus newStatus,
-                                           String notes) {
+    public LivestockSick quickStatusUpdate(UUID id, LivestockSick.SickStatus newStatus, String notes) {
         LivestockSick sick = sickRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sick record not found: " + id));
 
-        LivestockSick.SickStatus    oldStatus   = sick.getStatus();
-        LivestockSick.SeverityLevel oldSeverity = sick.getSeverityLevel();
-
+        LivestockSick.SickStatus oldStatus = sick.getStatus();
         if (oldStatus.equals(newStatus)) return sick;
 
         String snapshotBefore = buildSnapshot(sick);
-
         sick.setStatus(newStatus);
 
         if (LivestockSick.SickStatus.RECOVERED.equals(newStatus)) {
-            if (sick.getRecoveryDate() == null) {
-                sick.setRecoveryDate(java.time.LocalDate.now());
-            }
+            if (sick.getRecoveryDate() == null) sick.setRecoveryDate(java.time.LocalDate.now());
             if (sick.getLivestock() != null) {
                 sick.getLivestock().setHealthStatus(Livestock.HEALTH_HEALTHY);
                 livestockRepository.save(sick.getLivestock());
@@ -248,51 +213,32 @@ public class LivestockSickService {
 
         LivestockSick saved = sickRepository.save(sick);
 
-        String changeNote = notes != null && !notes.isBlank()
-                ? notes
-                : buildChangeNote(oldStatus, newStatus, oldSeverity, oldSeverity, null);
+        String changeNote = notes != null && !notes.isBlank() ? notes : buildChangeNote(oldStatus, newStatus, sick.getSeverityLevel(), sick.getSeverityLevel(), null);
+        recordHistory(saved, newStatus, saved.getSeverityLevel(), changeNote, currentUsername());
 
-        recordHistory(saved, newStatus, saved.getSeverityLevel(),
-                changeNote, currentUsername());
+        auditLogService.log(ENTITY_TYPE, saved.getId(), "UPDATE", currentUsername(),
+                snapshotBefore, buildSnapshot(saved),
+                "Quick status update: " + oldStatus.name() + " → " + newStatus.name());
 
-        auditLogService.log(
-                ENTITY_TYPE,
-                saved.getId(),
-                "UPDATE",
-                currentUsername(),
-                snapshotBefore,
-                buildSnapshot(saved),
-                "Quick status update: " + oldStatus.name() + " → " + newStatus.name() +
-                        (notes != null && !notes.isBlank() ? " | " + notes : "")
-        );
+        // ✅ Email on quick status update
+        notificationService.sendSickRecordUpdatedEmail(saved);
 
         return saved;
     }
 
-    // ── Mark as recovered ────────────────────────────────────────────
-
-    /**
-     * ✅ ADDED — this is what LivestockEventsController.markAsRecovered(id)
-     * calls. It didn't exist before, which is why the build failed. Reuses
-     * quickStatusUpdate() so recovery gets the same recovery-date default,
-     * livestock status sync back to ACTIVE, history entry, and audit log
-     * write as every other status transition — no logic duplicated.
-     */
     @Transactional
     public LivestockSick markAsRecovered(UUID id) {
         return quickStatusUpdate(id, LivestockSick.SickStatus.RECOVERED, "Marked as recovered");
     }
 
-    // ── Delete (soft-delete) ────────────────────────────────────────
+    // ── Delete (HARD DELETE) ────────────────────────────────────────
 
     @Transactional
     public void delete(UUID id) {
         Optional<LivestockSick> sickOpt = sickRepository.findById(id);
-
         if (sickOpt.isEmpty()) return;
 
         LivestockSick sick = sickOpt.get();
-
         String snapshotBefore = buildSnapshot(sick);
 
         if (sick.getLivestock() != null) {
@@ -303,19 +249,14 @@ public class LivestockSickService {
             }
         }
 
-        sick.setIsDeleted(true);
-        sickRepository.save(sick);
+        sickRepository.delete(sick);
 
-        auditLogService.log(
-                ENTITY_TYPE,
-                sick.getId(),
-                "SOFT_DELETE",
-                currentUsername(),
-                snapshotBefore,
-                null,
-                "Sick record soft-deleted for animal: " +
-                        (sick.getLivestock() != null ? sick.getLivestock().getTagNumber() : "unknown")
-        );
+        auditLogService.log(ENTITY_TYPE, sick.getId(), "DELETE", currentUsername(),
+                snapshotBefore, null,
+                "Sick record permanently deleted for animal: " + (sick.getLivestock() != null ? sick.getLivestock().getTagNumber() : "unknown"));
+
+        // ✅ Email on delete
+        notificationService.sendSickRecordDeletedEmail(sick);
     }
 
     // ── Private helpers ───────────────────────────────────────────────
@@ -338,11 +279,7 @@ public class LivestockSickService {
         }
     }
 
-    private void recordHistory(LivestockSick sick,
-                               LivestockSick.SickStatus status,
-                               LivestockSick.SeverityLevel severity,
-                               String notes,
-                               String changedBy) {
+    private void recordHistory(LivestockSick sick, LivestockSick.SickStatus status, LivestockSick.SeverityLevel severity, String notes, String changedBy) {
         LivestockSickHistory h = new LivestockSickHistory(sick, status, severity, changedBy, notes);
         historyRepository.save(h);
     }
@@ -357,53 +294,33 @@ public class LivestockSickService {
         sb.append(", temp=").append(sick.getTemperature());
         sb.append(", symptoms=").append(sick.getSymptoms());
         sb.append(", diagnosis=").append(sick.getDiagnosis());
-        sb.append(", vet=").append(sick.getVeterinarian() != null
-                ? sick.getVeterinarian().getFirstName() + " " + sick.getVeterinarian().getLastName()
-                : "null");
-        sb.append(", isDeleted=").append(sick.getIsDeleted());
+        sb.append(", vet=").append(sick.getVeterinarian() != null ? sick.getVeterinarian().getFirstName() + " " + sick.getVeterinarian().getLastName() : "null");
         return sb.toString();
     }
 
     private String currentUsername() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth != null && auth.isAuthenticated()
-                    && !"anonymousUser".equals(auth.getPrincipal())) {
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
                 return auth.getName();
             }
         } catch (Exception ignored) {}
         return "system";
     }
 
-    private String buildChangeNote(LivestockSick.SickStatus    oldStatus,
-                                   LivestockSick.SickStatus    newStatus,
-                                   LivestockSick.SeverityLevel oldSeverity,
-                                   LivestockSick.SeverityLevel newSeverity,
-                                   String treatmentNotes) {
+    private String buildChangeNote(LivestockSick.SickStatus oldStatus, LivestockSick.SickStatus newStatus,
+                                   LivestockSick.SeverityLevel oldSeverity, LivestockSick.SeverityLevel newSeverity, String treatmentNotes) {
         StringBuilder sb = new StringBuilder();
-
-        if (!oldStatus.equals(newStatus)) {
-            sb.append("Status changed: ")
-                    .append(oldStatus.name())
-                    .append(" → ")
-                    .append(newStatus.name());
-        }
-
-        boolean severityChanged = (oldSeverity == null && newSeverity != null)
-                || (oldSeverity != null && !oldSeverity.equals(newSeverity));
+        if (!oldStatus.equals(newStatus)) sb.append("Status changed: ").append(oldStatus.name()).append(" → ").append(newStatus.name());
+        boolean severityChanged = (oldSeverity == null && newSeverity != null) || (oldSeverity != null && !oldSeverity.equals(newSeverity));
         if (severityChanged) {
             if (sb.length() > 0) sb.append(". ");
-            sb.append("Severity: ")
-                    .append(oldSeverity != null ? oldSeverity.name() : "none")
-                    .append(" → ")
-                    .append(newSeverity != null ? newSeverity.name() : "none");
+            sb.append("Severity: ").append(oldSeverity != null ? oldSeverity.name() : "none").append(" → ").append(newSeverity != null ? newSeverity.name() : "none");
         }
-
         if (treatmentNotes != null && !treatmentNotes.isBlank()) {
             if (sb.length() > 0) sb.append(". ");
             sb.append("Notes: ").append(treatmentNotes);
         }
-
         return sb.length() > 0 ? sb.toString() : "Record updated";
     }
 }

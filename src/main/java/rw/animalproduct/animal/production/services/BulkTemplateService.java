@@ -48,8 +48,8 @@ public class BulkTemplateService {
             // ── 1. Reference sheet ──────────────────────────────────────
             Sheet ref = wb.createSheet("Reference");
 
+            // ✅ FIXED: removed the isDeleted filter since categories no longer have it
             List<String> speciesCodes = categoryRepository.findAll().stream()
-                    .filter(c -> !Boolean.TRUE.equals(c.getIsDeleted()))
                     .map(LivestockCategory::getCode)
                     .filter(Objects::nonNull)
                     .sorted()

@@ -1,16 +1,18 @@
 package rw.animalproduct.animal.production.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import rw.animalproduct.animal.production.entity.Medication;
+import rw.animalproduct.animal.production.repository.MedicationRepository;
 import rw.animalproduct.animal.production.services.MedicationService;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -20,115 +22,177 @@ import java.util.UUID;
 @RequestMapping("/medications")
 public class MedicationController {
 
-    private final MedicationService medicationService;
+    private static final Logger log = LoggerFactory.getLogger(MedicationController.class);
 
-    public MedicationController(MedicationService medicationService) {
+    private final MedicationService    medicationService;
+    private final MedicationRepository medicationRepository;
 
-        this.medicationService = medicationService;
+    public MedicationController(MedicationService medicationService,
+                                MedicationRepository medicationRepository) {
+        this.medicationService    = medicationService;
+        this.medicationRepository = medicationRepository;
     }
 
     // ── List ──────────────────────────────────────────────────────────────────
-
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("medications", medicationService.getAll());
-        model.addAttribute("medication", new Medication());
-        model.addAttribute("categories", Medication.MedicationCategory.values());
-        model.addAttribute("dosageUnits", Medication.DosageUnit.values());
+        populateListModel(model);
         return "medications-list";
     }
 
     // ── Create ────────────────────────────────────────────────────────────────
-
     @PostMapping("/new")
     public String save(@Valid @ModelAttribute("medication") Medication medication,
                        BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
-            model.addAttribute("medications", medicationService.getAll());
-            model.addAttribute("categories", Medication.MedicationCategory.values());
-            model.addAttribute("dosageUnits", Medication.DosageUnit.values());
+            populateListModel(model);
+            model.addAttribute("openAddForm", true);
             return "medications-list";
         }
-        medicationService.save(medication);
-        ra.addFlashAttribute("success", "Medication \"" + medication.getName() + "\" saved successfully!");
+        try {
+            medicationService.save(medication);
+            ra.addFlashAttribute("success",
+                    "Medication \"" + medication.getName() + "\" added successfully.");
+        } catch (Exception e) {
+            log.error("Failed to save medication", e);
+            ra.addFlashAttribute("error", "Could not save: " + e.getMessage());
+        }
         return "redirect:/medications";
     }
 
-    // ── Edit form ─────────────────────────────────────────────────────────────
-
+    // ── Edit ──────────────────────────────────────────────────────────────────
     @GetMapping("/edit/{id}")
-    public String editForm(@PathVariable UUID id, Model model) {
+    public String editForm(@PathVariable UUID id, Model model, RedirectAttributes ra) {
         Optional<Medication> opt = medicationService.getById(id);
-        if (opt.isEmpty()) return "redirect:/medications";
-        model.addAttribute("medication", opt.get());
-        model.addAttribute("categories", Medication.MedicationCategory.values());
+        if (opt.isEmpty()) {
+            ra.addFlashAttribute("error", "Medication not found.");
+            return "redirect:/medications";
+        }
+        model.addAttribute("medication",  opt.get());
+        model.addAttribute("categories",  Medication.MedicationCategory.values());
         model.addAttribute("dosageUnits", Medication.DosageUnit.values());
         return "medication-edit";
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
-
     @PostMapping("/update/{id}")
     public String update(@PathVariable UUID id,
                          @Valid @ModelAttribute("medication") Medication medication,
                          BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
-            model.addAttribute("categories", Medication.MedicationCategory.values());
+            model.addAttribute("categories",  Medication.MedicationCategory.values());
             model.addAttribute("dosageUnits", Medication.DosageUnit.values());
             return "medication-edit";
         }
-        medicationService.update(id, medication);
-        ra.addFlashAttribute("success", "Medication updated successfully!");
+        try {
+            medicationService.update(id, medication);
+            ra.addFlashAttribute("success", "Medication updated successfully.");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to update medication {}", id, e);
+            ra.addFlashAttribute("error", "Could not update: " + e.getMessage());
+        }
         return "redirect:/medications";
     }
 
     // ── Delete ────────────────────────────────────────────────────────────────
-
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes ra) {
         try {
             medicationService.delete(id);
-            ra.addFlashAttribute("success", "Medication deleted.");
+            ra.addFlashAttribute("success",
+                    "Medication permanently deleted. Snapshot kept in audit log.");
+        } catch (IllegalStateException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            ra.addFlashAttribute("error", "Medication not found.");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Cannot delete: medication may be in use by treatment records.");
+            log.error("Failed to delete medication {}", id, e);
+            ra.addFlashAttribute("error", "Could not delete: " + e.getMessage());
         }
         return "redirect:/medications";
     }
 
-    // ── AJAX: medication details for auto-fill ────────────────────────────────
-    // Called by the treatment form when user selects a medication from the dropdown.
-    // Returns { defaultDosage, defaultDosageUnit } so the form can pre-fill fields.
-
-    @GetMapping("/api/{id}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> getMedicationDetails(@PathVariable UUID id) {
-        return medicationService.getById(id).map(med -> {
-            Map<String, Object> data = new LinkedHashMap<>();
-            data.put("id",               med.getId());
-            data.put("name",             med.getName());
-            data.put("genericName",      med.getGenericName());
-            data.put("category",         med.getCategory() != null ? med.getCategory().name() : null);
-            data.put("defaultDosage",    med.getDefaultDosage());
-            data.put("defaultDosageUnit",med.getDefaultDosageUnit() != null ? med.getDefaultDosageUnit().name() : null);
-            return ResponseEntity.ok(data);
-        }).orElse(ResponseEntity.notFound().build());
+    // ── Deactivate ────────────────────────────────────────────────────────────
+    @PostMapping("/deactivate/{id}")
+    public String deactivate(@PathVariable UUID id,
+                             @RequestParam(required = false) String reason,
+                             RedirectAttributes ra) {
+        try {
+            medicationService.deactivate(id, reason);
+            ra.addFlashAttribute("success", "Medication deactivated.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to deactivate medication {}", id, e);
+            ra.addFlashAttribute("error", "Could not deactivate: " + e.getMessage());
+        }
+        return "redirect:/medications";
     }
 
-    // ── AJAX: all active medications list (for dynamic dropdowns) ─────────────
+    // ── Activate ──────────────────────────────────────────────────────────────
+    @PostMapping("/activate/{id}")
+    public String activate(@PathVariable UUID id, RedirectAttributes ra) {
+        try {
+            medicationService.reactivate(id);
+            ra.addFlashAttribute("success", "Medication activated.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to activate medication {}", id, e);
+            ra.addFlashAttribute("error", "Could not activate: " + e.getMessage());
+        }
+        return "redirect:/medications";
+    }
 
+    // ── AJAX: details for auto-fill ───────────────────────────────────────────
+    @GetMapping("/api/{id}")
+    @ResponseBody
+    public Map<String, Object> getMedicationDetails(@PathVariable UUID id) {
+        return medicationService.getById(id).map(med -> {
+            Map<String, Object> data = new HashMap<>();
+            data.put("id",                med.getId());
+            data.put("name",              med.getName());
+            data.put("genericName",       med.getGenericName() != null ? med.getGenericName() : "");
+            data.put("category",          med.getCategory() != null ? med.getCategory().name() : "");
+            data.put("defaultDosage",     med.getDefaultDosage() != null ? med.getDefaultDosage() : "");
+            data.put("defaultDosageUnit", med.getDefaultDosageUnit() != null ? med.getDefaultDosageUnit().name() : "");
+            return data;
+        }).orElse(Map.of());
+    }
+
+    // ── AJAX: active medications for dropdowns ────────────────────────────────
     @GetMapping("/api/active")
     @ResponseBody
-    public ResponseEntity<List<Map<String, Object>>> getActiveMedications() {
-        List<Map<String, Object>> list = medicationService.getActive().stream().map(med -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id",          med.getId());
-            m.put("name",        med.getName());
-            m.put("genericName", med.getGenericName());
-            m.put("category",    med.getCategory() != null ? med.getCategory().name() : null);
-            m.put("defaultDosage",    med.getDefaultDosage());
-            m.put("defaultDosageUnit",med.getDefaultDosageUnit() != null ? med.getDefaultDosageUnit().name() : null);
+    public List<Map<String, Object>> getActiveMedications() {
+        return medicationService.getActive().stream().map(med -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id",                med.getId());
+            m.put("name",              med.getName());
+            m.put("genericName",       med.getGenericName());
+            m.put("category",          med.getCategory() != null ? med.getCategory().name() : null);
+            m.put("defaultDosage",     med.getDefaultDosage());
+            m.put("defaultDosageUnit", med.getDefaultDosageUnit() != null
+                    ? med.getDefaultDosageUnit().name() : null);
             return m;
         }).toList();
-        return ResponseEntity.ok(list);
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    private void populateListModel(Model model) {
+        List<Medication> meds = medicationService.getAll();
+
+        // ONE bulk query instead of N per-row counts
+        Map<UUID, Long> usageCounts = new HashMap<>();
+        for (Object[] row : medicationRepository.countAllActiveTreatmentsByMedication()) {
+            usageCounts.put((UUID) row[0], ((Number) row[1]).longValue());
+        }
+
+        model.addAttribute("medications", meds);
+        model.addAttribute("usageCounts", usageCounts);
+        model.addAttribute("medication",  new Medication());
+        model.addAttribute("categories",  Medication.MedicationCategory.values());
+        model.addAttribute("dosageUnits", Medication.DosageUnit.values());
     }
 }

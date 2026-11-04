@@ -60,9 +60,6 @@ public class LivestockSick {
     @JoinColumn(name = "created_by", referencedColumnName = "user_id")
     private Users createdBy;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
     @OneToMany(mappedBy = "livestockSick",
             cascade = CascadeType.ALL,
             orphanRemoval = true,
@@ -134,15 +131,9 @@ public class LivestockSick {
     public Users getCreatedBy() { return createdBy; }
     public void setCreatedBy(Users createdBy) { this.createdBy = createdBy; }
 
-    public Boolean getIsDeleted() { return isDeleted; }
-    public void setIsDeleted(Boolean isDeleted) { this.isDeleted = isDeleted; }
-
     public List<LivestockSickHistory> getStatusHistory() { return statusHistory; }
     public void setStatusHistory(List<LivestockSickHistory> statusHistory) { this.statusHistory = statusHistory; }
 
-    /**
-     * Alias getter for Thymeleaf compatibility
-     */
     public List<LivestockSickHistory> getHistory() { return statusHistory; }
 
     public String getLivestockIdValue() { return livestockIdValue; }
@@ -151,9 +142,6 @@ public class LivestockSick {
     public String getVeterinarianIdValue() { return veterinarianIdValue; }
     public void setVeterinarianIdValue(String veterinarianIdValue) { this.veterinarianIdValue = veterinarianIdValue; }
 
-    /**
-     * Kept for Thymeleaf/JS backward compatibility (reads veterinarian entity).
-     */
     @Deprecated
     @Transient
     public String getVetName() {
@@ -162,7 +150,5 @@ public class LivestockSick {
 
     @Deprecated
     @Transient
-    public void setVetName(String vetName) {
-        // Intentional no-op — use setVeterinarian(Veterinarian) instead.
-    }
+    public void setVetName(String vetName) { }
 }

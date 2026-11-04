@@ -117,13 +117,12 @@ public class TagAllocationService {
     }
 
     /**
-     * ✅ FIX: ignores soft-deleted animals. Previously this scanned
-     * {@code livestockRepository.findAll()} which includes rows where
-     * {@code is_deleted = true}, causing the max to be inflated by
-     * discarded/test data (e.g. GOAT-040/041/042 that were soft-deleted).
+     * Computes the highest existing numeric suffix for a given prefix.
      *
-     * <p>Now the max only reflects the LIVE herd, so if your last live goat
-     * is GOAT-039, the next suggestion is GOAT-040.</p>
+     * ✅ FIX: soft-delete has been removed from Livestock, so rows no longer
+     * carry an is_deleted flag — deleted animals are physically removed from
+     * the table. That means findAll() only ever returns live rows, and the
+     * max number is automatically correct without any extra filtering.
      */
     private int highestExistingNumber(String prefix) {
         Pattern p = patternFor(prefix);
@@ -131,9 +130,6 @@ public class TagAllocationService {
 
         List<Livestock> all = livestockRepository.findAll();
         for (Livestock a : all) {
-            // ✅ Skip soft-deleted rows
-            if (Boolean.TRUE.equals(a.getIsDeleted())) continue;
-
             String tag = a.getTagNumber();
             if (tag == null) continue;
 

@@ -19,11 +19,6 @@ public class UpcomingBirthsReportService {
 
     private final UpcomingBirthsReportRepository repository;
 
-    /**
-     * KPI + breakdown queries use a very large window so they reflect the
-     * whole pregnant population (both sources), independent of the table's
-     * currently-selected lookahead window.
-     */
     private static final int KPI_WINDOW_DAYS = 9999;
 
     public Page<UpcomingBirthsReportDTO> getReport(UUID categoryId, String search,

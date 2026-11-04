@@ -41,9 +41,11 @@ public class LivestockBirth {
 
     @Column(name = "veterinarian_id")
     private UUID veterinarianId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "veterinarian_id", insertable = false, updatable = false)
     private Veterinarian veterinarian;
+
     @Transient
     private String veterinarianIdValue;
 
@@ -77,9 +79,6 @@ public class LivestockBirth {
     @Column(name = "is_external_birth")
     private Boolean isExternalBirth;
 
-    @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
-
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -102,7 +101,7 @@ public class LivestockBirth {
     private Integer numberStillborn = 0;
 
     @Column(name = "attendant_name")
-    private String attendantName; // free-text fallback when no registered veterinarian is linked
+    private String attendantName;
 
     @OneToMany(mappedBy = "birthEvent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LivestockOffspring> children = new ArrayList<>();
@@ -114,43 +113,26 @@ public class LivestockBirth {
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if (this.isDeleted == null) {
-            this.isDeleted = false;
-        }
-        if (this.assistanceRequired == null) {
-            this.assistanceRequired = false;
-        }
-        if (this.numberStillborn == null) {
-            this.numberStillborn = 0;
-        }
+        if (this.assistanceRequired == null) this.assistanceRequired = false;
+        if (this.numberStillborn == null)    this.numberStillborn = 0;
     }
+
     @PreUpdate
-    public void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-    public boolean hasBreedingRecord() {
-        return breedingId != null;
-    }
-    public boolean isLocked() {
-        return completedAt != null;
-    }
+    public void onUpdate() { this.updatedAt = LocalDateTime.now(); }
+
+    public boolean hasBreedingRecord() { return breedingId != null; }
+    public boolean isLocked()          { return completedAt != null; }
+
     public String getAttendantDisplayName() {
         if (veterinarian != null) {
             String label = veterinarian.getFullName();
-            if (veterinarian.getLicenseNumber() != null && !veterinarian.getLicenseNumber().isBlank()) {
+            if (veterinarian.getLicenseNumber() != null && !veterinarian.getLicenseNumber().isBlank())
                 label += " (Lic: " + veterinarian.getLicenseNumber() + ")";
-            }
             return label;
         }
-        if (attendantName != null && !attendantName.isBlank()) {
-            return attendantName;
-        }
+        if (attendantName != null && !attendantName.isBlank()) return attendantName;
         return null;
     }
-
-    public UUID getBreedingId() { return breedingId; }
-    public LivestockBreeding getBreeding() { return breeding; }
-    public void setBreedingId(UUID breedingId) { this.breedingId = breedingId; }
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
@@ -161,6 +143,10 @@ public class LivestockBirth {
     public Livestock getLivestock() { return livestock; }
     public void setLivestock(Livestock livestock) { this.livestock = livestock; }
 
+    public UUID getBreedingId() { return breedingId; }
+    public void setBreedingId(UUID breedingId) { this.breedingId = breedingId; }
+
+    public LivestockBreeding getBreeding() { return breeding; }
     public void setBreeding(LivestockBreeding breeding) { this.breeding = breeding; }
 
     public UUID getVeterinarianId() { return veterinarianId; }
@@ -199,15 +185,8 @@ public class LivestockBirth {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-    public Boolean getExternalBirth() { return isExternalBirth; }
-    public void setExternalBirth(Boolean externalBirth) { isExternalBirth = externalBirth; }
     public Boolean getIsExternalBirth() { return isExternalBirth; }
-    public void setIsExternalBirth(Boolean externalBirth) { isExternalBirth = externalBirth; }
-
-    public Boolean getDeleted() { return isDeleted; }
-    public void setDeleted(Boolean deleted) { isDeleted = deleted; }
-    public Boolean getIsDeleted() { return isDeleted; }
-    public void setIsDeleted(Boolean deleted) { isDeleted = deleted; }
+    public void setIsExternalBirth(Boolean isExternalBirth) { this.isExternalBirth = isExternalBirth; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

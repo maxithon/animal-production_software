@@ -6,208 +6,1013 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f8f9fa; padding: 20px; }
-        .page-card { background: white; border-radius: 12px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .add-form-section { background: #f0fdf4; border-left: 4px solid #10b981; border-radius: 10px; padding: 20px; margin-bottom: 25px; }
-        .badge-cat-antibiotic     { background:#dbeafe;color:#1d4ed8; }
-        .badge-cat-antiparasitic  { background:#fce7f3;color:#9d174d; }
-        .badge-cat-vaccine        { background:#d1fae5;color:#065f46; }
-        .badge-cat-vitamin        { background:#fef3c7;color:#92400e; }
-        .badge-cat-hormone        { background:#ede9fe;color:#5b21b6; }
-        .badge-cat-anti_inflammatory { background:#fee2e2;color:#991b1b; }
-        .badge-cat-antifungal     { background:#fef9c3;color:#713f12; }
-        .badge-cat-dewormer       { background:#f0fdf4;color:#166534; }
-        .badge-cat-other          { background:#f1f5f9;color:#475569; }
-        .inactive-row td { opacity: 0.55; }
+        :root {
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --bg: #f5f7fa;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 14px;
+        }
+        * { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--ink);
+            padding: 24px;
+            margin: 0;
+        }
+
+        /* ── Page shell ──────────────────────────────────────────── */
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 24px rgba(0,0,0,.06);
+            overflow: hidden;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 28px;
+            border-bottom: 1px solid var(--line);
+            flex-wrap: wrap;
+        }
+        .page-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .page-header .subtitle {
+            color: var(--muted);
+            font-size: .85rem;
+            margin-top: 4px;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────────── */
+        .btn-primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+        .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+
+        /* ── Toolbar ─────────────────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--line);
+            background: #fafbfc;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .toolbar .search {
+            flex: 1 1 260px;
+            position: relative;
+        }
+        .toolbar .search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+        }
+        .toolbar .search input {
+            padding-left: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            height: 40px;
+        }
+        .toolbar select, .toolbar .form-control {
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            font-size: .875rem;
+        }
+
+        /* ── Table ───────────────────────────────────────────────── */
+        .table-wrap { padding: 0; }
+        table.med {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+        table.med thead th {
+            text-align: left;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--muted);
+            font-weight: 700;
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--line);
+            user-select: none;
+        }
+        table.med thead th.sortable { cursor: pointer; }
+        table.med thead th.sortable:hover { color: var(--ink); }
+        table.med tbody tr {
+            border-bottom: 1px solid #f1f5f9;
+            transition: background .12s;
+        }
+        table.med tbody tr:hover { background: #f8fafc; }
+        table.med tbody tr.inactive { opacity: .6; }
+        table.med tbody td {
+            padding: 14px 20px;
+            vertical-align: middle;
+            font-size: .9rem;
+        }
+        table.med .med-name {
+            font-weight: 600;
+            color: var(--ink);
+        }
+        table.med .med-generic {
+            font-size: .75rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+        table.med .med-dosage {
+            font-variant-numeric: tabular-nums;
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        /* ── Badges & pills ──────────────────────────────────────── */
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: .72rem;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .pill-active   { background: #dcfce7; color: #166534; }
+        .pill-inactive { background: #f1f5f9; color: #475569; }
+        .usage-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: .72rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .usage-chip:hover { background: #dbeafe; color: #1e3a8a; }
+        .usage-chip.none { background: #f1f5f9; color: #64748b; }
+        .cat-badge {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 8px;
+            font-size: .68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+
+        /* ── Action buttons ──────────────────────────────────────── */
+        .actions { display: flex; justify-content: flex-end; gap: 6px; }
+        .icon-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .12s;
+            text-decoration: none;
+        }
+        .icon-btn:hover { background: #f8fafc; color: var(--ink); border-color: #cbd5e1; }
+        .icon-btn.primary:hover  { color: var(--primary); border-color: var(--primary); background: #ecfdf5; }
+        .icon-btn.warning:hover  { color: var(--warning); border-color: var(--warning); background: #fffbeb; }
+        .icon-btn.danger:hover   { color: var(--danger);  border-color: var(--danger);  background: #fef2f2; }
+
+        /* ── Empty state ─────────────────────────────────────────── */
+        .empty {
+            text-align: center;
+            padding: 80px 24px;
+            color: var(--muted);
+        }
+        .empty i { font-size: 3rem; display: block; margin-bottom: 16px; color: #cbd5e1; }
+        .empty h3 { font-size: 1.1rem; color: var(--ink); font-weight: 700; margin-bottom: 6px; }
+
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION FOOTER
+           ══════════════════════════════════════════════════════════════ */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 28px;
+            border-top: 1px solid var(--line);
+            background: #fafbfc;
+            font-size: .85rem;
+            color: var(--muted);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .footer-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .showing-text { font-size: .85rem; color: var(--muted); }
+        .showing-text strong { color: var(--ink); font-weight: 700; }
+
+        .page-size-wrap { display: flex; align-items: center; gap: 6px; }
+        .page-size-label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+        .page-size-select {
+            padding: 4px 9px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--ink);
+            cursor: pointer;
+            background: #fff;
+        }
+        .page-size-select:hover { border-color: var(--primary); }
+        .page-size-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+
+        .pagination-list {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        .pg-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            min-width: 34px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 8px;
+            font-size: .82rem;
+            font-weight: 600;
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid var(--line);
+            text-decoration: none;
+            transition: all .12s ease;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .pg-btn:hover {
+            background: #ecfdf5;
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+        .pg-btn.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+            pointer-events: none;
+            cursor: default;
+            box-shadow: 0 2px 6px rgba(16,185,129,.28);
+        }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity: .35;
+            pointer-events: none;
+            cursor: not-allowed;
+            background: #fafbfc;
+        }
+
+        /* Edge buttons: First / Prev / Next / Last (icon + label) */
+        .pg-btn.pg-edge {
+            min-width: auto;
+            padding: 0 12px;
+            gap: 6px;
+            background: #f8fafc;
+            color: #334155;
+            font-weight: 700;
+        }
+        .pg-btn.pg-edge:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
+        }
+        .pg-btn.pg-edge i { font-size: 12px; line-height: 1; }
+        .pg-btn.pg-edge .pg-label {
+            display: inline-block;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .pg-ellipsis {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 34px;
+            color: #94a3b8;
+            font-size: .85rem;
+            font-weight: 700;
+            user-select: none;
+            letter-spacing: .1em;
+        }
+
+        .goto-page {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: .78rem;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .goto-page input {
+            width: 56px;
+            height: 34px;
+            padding: 0 8px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            font-size: .82rem;
+            font-weight: 600;
+            text-align: center;
+            color: var(--ink);
+            background: #fff;
+            transition: all .12s;
+            font-family: inherit;
+        }
+        .goto-page input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16,185,129,.12);
+        }
+        .goto-page input::-webkit-outer-spin-button,
+        .goto-page input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .goto-page input[type=number] { -moz-appearance: textfield; }
+
+        /* ── Flash alerts ────────────────────────────────────────── */
+        .flash {
+            padding: 12px 20px;
+            font-size: .88rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: slideDown .25s ease-out;
+        }
+        .flash.success { background: #ecfdf5; color: #065f46; border-bottom: 1px solid #a7f3d0; }
+        .flash.error   { background: #fef2f2; color: #991b1b; border-bottom: 1px solid #fecaca; }
+        @keyframes slideDown { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+        /* ── Responsive ──────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .table-footer { flex-direction: column; align-items: stretch; }
+            .footer-meta { justify-content: space-between; width: 100%; }
+            .pagination-list { justify-content: center; width: 100%; }
+            .goto-page {
+                justify-content: center; width: 100%;
+                padding-top: 6px; border-top: 1px dashed var(--line); margin-top: 4px;
+            }
+            .pg-btn.pg-edge .pg-label { display: none; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 12px; }
+            .page-header, .toolbar, .table-footer { padding-left: 16px; padding-right: 16px; }
+            table.med thead th:nth-child(3),
+            table.med tbody td:nth-child(3),
+            table.med thead th:nth-child(4),
+            table.med tbody td:nth-child(4) { display: none; }
+        }
     </style>
 </head>
 <body>
-<div class="container-fluid">
-    <div class="page-card">
 
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3><i class="bi bi-capsule text-success"></i> Medications</h3>
-                <p class="text-muted mb-0">Manage your drug and vaccine catalogue</p>
-            </div>
-            <a href="/livestock/treatments" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to Treatments
+<div class="page">
+
+    <!-- Flash messages -->
+    <div th:if="${success}" class="flash success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
+    </div>
+    <div th:if="${error}" class="flash error">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close ms-auto" onclick="this.parentElement.remove()"></button>
+    </div>
+
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1><i class="bi bi-capsule text-success"></i> Medications</h1>
+            <div class="subtitle">Drug &amp; vaccine catalogue · <span id="countLabel">0 items</span></div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMedicationModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Medication
+            </button>
+            <a href="/livestock/treatments" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Treatments
             </a>
         </div>
+    </div>
 
-        <!-- Alerts -->
-        <div th:if="${success}" class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="search">
+            <i class="bi bi-search"></i>
+            <input id="searchInput" type="text" class="form-control" placeholder="Search by name, generic, or manufacturer...">
         </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-circle"></i> <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <select id="categoryFilter" class="form-select" style="max-width:180px;">
+            <option value="">All categories</option>
+            <option th:each="c : ${categories}" th:value="${c}"
+                    th:text="${#strings.replace(c.name(),'_',' ')}"></option>
+        </select>
+        <select id="statusFilter" class="form-select" style="max-width:150px;">
+            <option value="">All statuses</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+        </select>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+        <table class="med">
+            <thead>
+            <tr>
+                <th class="sortable" data-sort="name">Medication <i class="bi bi-arrow-down-up ms-1" style="font-size:.6rem;"></i></th>
+                <th>Category</th>
+                <th>Dosage</th>
+                <th>Usage</th>
+                <th class="sortable" data-sort="status">Status <i class="bi bi-arrow-down-up ms-1" style="font-size:.6rem;"></i></th>
+                <th class="text-end">Actions</th>
+            </tr>
+            </thead>
+            <tbody id="medTableBody">
+            <tr th:each="m : ${medications}"
+                class="med-row"
+                th:classappend="${!m.isActive} ? 'inactive' : ''"
+                th:attr="data-name=${m.name},
+                         data-generic=${m.genericName},
+                         data-manufacturer=${m.manufacturer},
+                         data-category=${m.category != null ? m.category.name() : ''},
+                         data-status=${m.isActive ? 'active' : 'inactive'},
+                         data-usage=${usageCounts[m.id] != null ? usageCounts[m.id] : 0}">
+
+                <!-- Name + generic -->
+                <td>
+                    <div class="med-name" th:text="${m.name}">Medication</div>
+                    <div class="med-generic"
+                         th:if="${m.genericName != null}"
+                         th:text="${m.genericName}"></div>
+                    <div class="med-generic" th:if="${m.manufacturer != null}">
+                        <i class="bi bi-building" style="font-size:.7rem;"></i>
+                        <span th:text="${m.manufacturer}"></span>
+                    </div>
+                </td>
+
+                <!-- Category -->
+                <td>
+                    <span th:if="${m.category != null}"
+                          class="cat-badge"
+                          th:style="${'background:' + (m.category.name() == 'ANTIBIOTIC' ? '#dbeafe' : m.category.name() == 'VACCINE' ? '#d1fae5' : m.category.name() == 'VITAMIN' ? '#fef3c7' : m.category.name() == 'HORMONE' ? '#ede9fe' : m.category.name() == 'DEWORMER' ? '#f0fdf4' : '#f1f5f9') + ';color:#0f172a;'}"
+                          th:text="${#strings.replace(m.category.name(),'_',' ')}"></span>
+                    <span th:if="${m.category == null}" class="text-muted">—</span>
+                </td>
+
+                <!-- Dosage -->
+                <td>
+                    <span class="med-dosage"
+                          th:if="${m.defaultDosage != null}"
+                          th:text="${m.defaultDosage + ' ' + (m.defaultDosageUnit != null ? m.defaultDosageUnit : '')}"></span>
+                    <span th:if="${m.defaultDosage == null}" class="text-muted">—</span>
+                </td>
+
+                <!-- Usage -->
+                <td>
+                    <a th:if="${usageCounts[m.id] != null and usageCounts[m.id] > 0}"
+                       class="usage-chip"
+                       th:href="@{/livestock/treatments(medicationId=${m.id})}"
+                       th:text="${usageCounts[m.id] + ' treatments'}">
+                        0
+                    </a>
+                    <span th:if="${usageCounts[m.id] == null or usageCounts[m.id] == 0}"
+                          class="usage-chip none">Never used</span>
+                </td>
+
+                <!-- Status -->
+                <td>
+                    <span th:if="${m.isActive}" class="pill pill-active">
+                        <i class="bi bi-check-circle-fill" style="font-size:.65rem;"></i> Active
+                    </span>
+                    <span th:if="${!m.isActive}" class="pill pill-inactive">
+                        <i class="bi bi-pause-circle-fill" style="font-size:.65rem;"></i> Inactive
+                    </span>
+                </td>
+
+                <!-- Actions -->
+                <td>
+                    <div class="actions">
+                        <a th:href="@{/medications/edit/{id}(id=${m.id})}"
+                           class="icon-btn" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                        <button th:if="${m.isActive}"
+                                type="button"
+                                class="icon-btn warning"
+                                data-bs-toggle="modal"
+                                th:data-bs-target="'#deactModal-' + ${m.id}"
+                                title="Deactivate">
+                            <i class="bi bi-pause-fill"></i>
+                        </button>
+
+                        <form th:if="${!m.isActive}"
+                              th:action="@{/medications/activate/{id}(id=${m.id})}"
+                              method="post" class="d-inline m-0">
+                            <button type="submit" class="icon-btn primary" title="Activate">
+                                <i class="bi bi-play-fill"></i>
+                            </button>
+                        </form>
+
+                        <button type="button"
+                                class="icon-btn danger"
+                                data-bs-toggle="modal"
+                                th:data-bs-target="'#delModal-' + ${m.id}"
+                                title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="empty" style="display:none;">
+            <i class="bi bi-capsule"></i>
+            <h3 id="emptyTitle">No medications yet</h3>
+            <p id="emptySubtitle">Click "Add Medication" to start building your drug catalogue.</p>
         </div>
 
-        <!-- ── Add Form ──────────────────────────────────────────────── -->
-        <div class="add-form-section">
-            <h5 class="mb-3"><i class="bi bi-plus-circle text-success"></i> Add New Medication</h5>
-            <form th:action="@{/medications/new}" th:object="${medication}" method="post">
+        <!-- No matches for filter -->
+        <div id="noResults" class="empty" style="display:none;">
+            <i class="bi bi-search"></i>
+            <h3>No matches</h3>
+            <p>Try a different search term, category, or status filter.</p>
+        </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════
+         PROFESSIONAL PAGINATION FOOTER
+         [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+         Go to page: [4] / 20
+         ═════════════════════════════════════════════════════════════ -->
+    <div class="table-footer">
+        <div class="footer-meta">
+            <span class="showing-text" id="pageInfo">Showing 0 of 0</span>
+            <div class="page-size-wrap">
+                <span class="page-size-label">Rows per page:</span>
+                <select class="page-size-select" id="pageSizeSelect">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+
+        <ul class="pagination-list" id="pagination"></ul>
+
+        <div class="goto-page">
+            <label for="gotoInput">Go to page:</label>
+            <input type="number" id="gotoInput" min="1" value="1">
+            <span id="gotoTotal">/ 1</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- ADD MODAL                                                    -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="addMedicationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <form class="modal-content" th:action="@{/medications/new}" th:object="${medication}" method="post" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle text-success me-2"></i>Add Medication</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
                 <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Name *</label>
-                        <input type="text" class="form-control" th:field="*{name}"
-                               placeholder="e.g. Amoxicillin" required>
-                        <div th:if="${#fields.hasErrors('name')}" class="text-danger small"
-                             th:errors="*{name}"></div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" th:field="*{name}" required placeholder="e.g. Amoxicillin">
+                        <div th:if="${#fields.hasErrors('name')}" class="text-danger small mt-1" th:errors="*{name}"></div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Generic / Active Ingredient</label>
-                        <input type="text" class="form-control" th:field="*{genericName}"
-                               placeholder="e.g. Amoxicillin trihydrate">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Generic / Active Ingredient</label>
+                        <input type="text" class="form-control" th:field="*{genericName}">
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Category</label>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Category</label>
                         <select class="form-select" th:field="*{category}">
                             <option value="">Select...</option>
                             <option th:each="c : ${categories}" th:value="${c}"
                                     th:text="${#strings.replace(c.name(),'_',' ')}"></option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Default Dosage</label>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Default Dosage</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" th:field="*{defaultDosage}" placeholder="e.g. 10">
-                            <select class="form-select" th:field="*{defaultDosageUnit}" style="max-width:80px;">
+                            <input type="text" class="form-control" th:field="*{defaultDosage}">
+                            <select class="form-select" th:field="*{defaultDosageUnit}" style="max-width:100px;">
                                 <option value="">Unit</option>
                                 <option th:each="u : ${dosageUnits}" th:value="${u}" th:text="${u}"></option>
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Manufacturer</label>
-                        <input type="text" class="form-control" th:field="*{manufacturer}" placeholder="Brand / lab...">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Manufacturer</label>
+                        <input type="text" class="form-control" th:field="*{manufacturer}">
                     </div>
-                </div>
-                <div class="row g-3 mt-1 align-items-end">
-                    <div class="col-md-8">
-                        <label class="form-label">Notes / Description</label>
-                        <input type="text" class="form-control" th:field="*{description}"
-                               placeholder="Indications, warnings, storage...">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes / Description</label>
+                        <textarea class="form-control" th:field="*{description}" rows="2"></textarea>
                     </div>
-                    <div class="col-md-2 pt-2">
-                        <div class="form-check mt-3">
+                    <div class="col-12">
+                        <div class="form-check">
                             <input class="form-check-input" type="checkbox" th:field="*{isActive}" id="isActiveAdd" checked>
-                            <label class="form-check-label" for="isActiveAdd">Active / Available</label>
+                            <label class="form-check-label" for="isActiveAdd">Active / Available for new treatments</label>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="bi bi-plus-circle"></i> Add Medication
-                        </button>
-                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-1"></i> Add Medication
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- PER-ROW MODALS (outside table)                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div th:each="m : ${medications}">
+
+    <!-- Deactivate modal -->
+    <div class="modal fade" th:id="'deactModal-' + ${m.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content"
+                  th:action="@{/medications/deactivate/{id}(id=${m.id})}"
+                  method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pause-circle text-warning me-1"></i>
+                        Deactivate Medication
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are deactivating <strong th:text="${m.name}"></strong>.</p>
+                    <p class="text-muted small">
+                        The medication will be hidden from new treatment forms,
+                        but all existing treatment records will remain intact.
+                    </p>
+                    <label class="form-label fw-semibold">Reason <span class="text-danger">*</span></label>
+                    <select name="reason" class="form-select" required>
+                        <option value="">— Choose a reason —</option>
+                        <option>Discontinued by manufacturer</option>
+                        <option>No longer available</option>
+                        <option>Replaced by newer drug</option>
+                        <option>Expired</option>
+                        <option>Incorrect entry</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-pause-fill me-1"></i> Deactivate
+                    </button>
                 </div>
             </form>
         </div>
+    </div>
 
-        <!-- ── Medications Table ─────────────────────────────────────── -->
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                <tr>
-                    <th>#</th>
-                    <th>Name</th>
-                    <th>Generic Name</th>
-                    <th>Category</th>
-                    <th>Default Dosage</th>
-                    <th>Manufacturer</th>
-                    <th>Notes</th>
-                    <th>Used In</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr th:if="${medications == null or medications.empty}">
-                    <td colspan="10" class="text-center text-muted py-5">
-                        <i class="bi bi-capsule fs-2 d-block mb-2"></i>
-                        No medications yet. Add your first one above.
-                    </td>
-                </tr>
-                <tr th:each="m, i : ${medications}"
-                    th:classappend="${!m.isActive} ? 'inactive-row' : ''">
-                    <td th:text="${i.count}"></td>
-                    <td><strong th:text="${m.name}"></strong></td>
-                    <td>
-                        <span th:if="${m.genericName != null}" class="text-muted small" th:text="${m.genericName}"></span>
-                        <span th:if="${m.genericName == null}" class="text-muted">—</span>
-                    </td>
-                    <td>
-                        <span th:if="${m.category != null}"
-                              th:classappend="${'badge badge-cat-' + #strings.toLowerCase(m.category.name())}"
-                              class="badge"
-                              th:text="${#strings.replace(m.category.name(),'_',' ')}"></span>
-                        <span th:if="${m.category == null}" class="text-muted">—</span>
-                    </td>
-                    <td>
-                        <span th:if="${m.defaultDosage != null}" th:text="${m.defaultDosage}"></span>
-                        <span th:if="${m.defaultDosageUnit != null}" th:text="${' ' + m.defaultDosageUnit}" class="text-muted small"></span>
-                        <span th:if="${m.defaultDosage == null}" class="text-muted">—</span>
-                    </td>
-                    <td th:text="${m.manufacturer != null ? m.manufacturer : '—'}"></td>
-                    <td>
-                        <span th:if="${m.description != null}"
-                              class="text-muted small"
-                              th:text="${#strings.abbreviate(m.description, 60)}"></span>
-                        <span th:if="${m.description == null}" class="text-muted">—</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary"
-                              th:text="${m.treatments != null ? m.treatments.size() + ' treatments' : '0 treatments'}"></span>
-                    </td>
-                    <td>
-                        <span th:if="${m.isActive}" class="badge bg-success">Active</span>
-                        <span th:if="${!m.isActive}" class="badge bg-secondary">Inactive</span>
-                    </td>
-                    <td>
-                        <a th:href="@{/medications/edit/{id}(id=${m.id})}" class="btn btn-sm btn-warning">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                                th:data-bs-target="'#delMed'+${m.id}">
-                            <i class="bi bi-trash"></i>
-                        </button>
+    <!-- Delete modal -->
+    <div class="modal fade" th:id="'delModal-' + ${m.id}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content"
+                  th:action="@{/medications/delete/{id}(id=${m.id})}"
+                  method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-trash me-1"></i> Delete Medication
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">Delete <strong th:text="${m.name}"></strong>?</p>
 
-                        <!-- Delete modal -->
-                        <div class="modal fade" th:id="'delMed'+${m.id}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Confirm Delete</h5>
-                                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>Delete medication <strong th:text="${m.name}"></strong>?</p>
-                                        <p class="text-danger small">
-                                            <i class="bi bi-exclamation-triangle"></i>
-                                            This will fail if any treatment records reference this medication.
-                                            Consider marking it as <strong>Inactive</strong> instead.
-                                        </p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <form th:action="@{/medications/delete/{id}(id=${m.id})}" method="post" class="d-inline">
-                                            <button class="btn btn-danger">Delete</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                    <div th:if="${usageCounts[m.id] != null and usageCounts[m.id] > 0}"
+                         class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                        <strong>Cannot delete.</strong> Used in
+                        <strong th:text="${usageCounts[m.id]}"></strong>
+                        treatment record(s). Use <em>Deactivate</em> instead.
+                    </div>
+
+                    <div th:if="${usageCounts[m.id] == null or usageCounts[m.id] == 0}"
+                         class="alert alert-success mb-0">
+                        <i class="bi bi-check-circle-fill me-1"></i>
+                        Never used. This will permanently delete the row.
+                        A full snapshot is saved in the audit log.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button th:if="${usageCounts[m.id] == null or usageCounts[m.id] == 0}"
+                            type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Delete
+                    </button>
+                </div>
+            </form>
         </div>
-
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL CLIENT-SIDE PAGINATION
+           [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+           Go to page: [4] / 20  ·  Rows per page: 10 / 20 / 50 / 100
+           ══════════════════════════════════════════════════════════════ */
+
+        const EDGE_ICONS = {
+            first: 'bi-chevron-bar-left',
+            prev:  'bi-chevron-left',
+            next:  'bi-chevron-right',
+            last:  'bi-chevron-bar-right'
+        };
+
+        const rows       = Array.from(document.querySelectorAll('.med-row'));
+        const tbody      = document.getElementById('medTableBody');
+        const emptyEl    = document.getElementById('emptyState');
+        const noResEl    = document.getElementById('noResults');
+        const pageInfo   = document.getElementById('pageInfo');
+        const pagination = document.getElementById('pagination');
+        const countLbl   = document.getElementById('countLabel');
+
+        const search   = document.getElementById('searchInput');
+        const catSel   = document.getElementById('categoryFilter');
+        const statSel  = document.getElementById('statusFilter');
+        const pageSizeSelect = document.getElementById('pageSizeSelect');
+        const gotoInput = document.getElementById('gotoInput');
+        const gotoTotal = document.getElementById('gotoTotal');
+
+        let filtered     = rows.slice();
+        let currentPage  = 1;
+        let pageSize     = parseInt(pageSizeSelect.value, 10) || 20;
+        let sortKey      = null;
+        let sortDir      = 'asc';
+
+        countLbl.textContent = rows.length + ' item' + (rows.length === 1 ? '' : 's');
+
+        [search, catSel, statSel].forEach(el => el.addEventListener('input', applyFilters));
+        pageSizeSelect.addEventListener('change', () => {
+            pageSize = parseInt(pageSizeSelect.value, 10) || 20;
+            currentPage = 1;
+            render();
+        });
+
+        /* ── Jump-to-page: Enter or blur */
+        const jumpTo = () => {
+            const total = Math.max(1, Math.ceil(filtered.length / pageSize));
+            let p = parseInt(gotoInput.value, 10);
+            if (isNaN(p) || p < 1) p = 1;
+            if (p > total) p = total;
+            currentPage = p;
+            render();
+        };
+        gotoInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); jumpTo(); }
+        });
+        gotoInput.addEventListener('blur', jumpTo);
+
+        function applyFilters() {
+            const q    = (search.value || '').toLowerCase().trim();
+            const cat  = (catSel.value || '').toUpperCase();
+            const stat = (statSel.value || '').toLowerCase();
+
+            filtered = rows.filter(r => {
+                const hay = (
+                    (r.dataset.name || '') + ' ' +
+                    (r.dataset.generic || '') + ' ' +
+                    (r.dataset.manufacturer || '')
+                ).toLowerCase();
+                if (q && !hay.includes(q)) return false;
+                if (cat && (r.dataset.category || '') !== cat) return false;
+                if (stat && (r.dataset.status || '') !== stat) return false;
+                return true;
+            });
+
+            if (sortKey) sortFiltered();
+
+            currentPage = 1;
+            render();
+        }
+
+        /* ── Sorting */
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.dataset.sort;
+                if (sortKey === key) sortDir = (sortDir === 'asc' ? 'desc' : 'asc');
+                else { sortKey = key; sortDir = 'asc'; }
+                sortFiltered();
+                currentPage = 1;
+                render();
+            });
+        });
+
+        function sortFiltered() {
+            filtered.sort((a, b) => {
+                let va, vb;
+                if (sortKey === 'name')   { va = a.dataset.name.toLowerCase();   vb = b.dataset.name.toLowerCase(); }
+                else if (sortKey === 'status') { va = a.dataset.status; vb = b.dataset.status; }
+                else return 0;
+                if (va < vb) return sortDir === 'asc' ? -1 : 1;
+                if (va > vb) return sortDir === 'asc' ?  1 : -1;
+                return 0;
+            });
+        }
+
+        /* ── Render */
+        function render() {
+            const hasAny = rows.length > 0;
+            emptyEl.style.display = hasAny ? 'none' : 'block';
+            noResEl.style.display = (hasAny && filtered.length === 0) ? 'block' : 'none';
+
+            rows.forEach(r => r.style.display = 'none');
+
+            const total      = filtered.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * pageSize;
+            const end   = Math.min(start + pageSize, total);
+            const slice = filtered.slice(start, end);
+
+            slice.forEach(r => {
+                r.style.display = '';
+                tbody.appendChild(r);
+            });
+
+            /* Footer text: "Showing 1–20 of 87" */
+            pageInfo.innerHTML = total === 0
+                ? 'Showing <strong>0</strong> of <strong>0</strong>'
+                : 'Showing <strong>' + (start + 1) + '</strong>–<strong>' + end + '</strong> of <strong>' + total + '</strong>';
+
+            /* Go-to input */
+            gotoInput.max   = totalPages;
+            gotoInput.value = currentPage;
+            gotoTotal.textContent = '/ ' + totalPages;
+
+            renderPagination(totalPages);
+        }
+
+        /* ── Professional pager: First ⏮ | Prev ‹ | 1 … [N] … last | Next › | Last ⏭ */
+        function renderPagination(totalPages) {
+            pagination.innerHTML = '';
+            if (totalPages <= 1) {
+                /* Still render disabled edges for a consistent UI */
+                pagination.appendChild(makeEdge('first', EDGE_ICONS.first, 'First', true));
+                pagination.appendChild(makeEdge('prev',  EDGE_ICONS.prev,  'Prev',  true));
+                pagination.appendChild(makeActive(1));
+                pagination.appendChild(makeEdge('next',  EDGE_ICONS.next,  'Next',  true, true));
+                pagination.appendChild(makeEdge('last',  EDGE_ICONS.last,  'Last',  true, true));
+                return;
+            }
+
+            const current  = currentPage;
+            const showFrom = Math.max(1, current - 2);
+            const showTo   = Math.min(totalPages, current + 2);
+
+            /* First */
+            pagination.appendChild(makeEdge('first', EDGE_ICONS.first, 'First', current === 1, false, () => {
+                currentPage = 1; render();
+            }));
+
+            /* Prev */
+            pagination.appendChild(makeEdge('prev', EDGE_ICONS.prev, 'Prev', current === 1, false, () => {
+                currentPage = Math.max(1, current - 1); render();
+            }));
+
+            /* Leading 1 + ellipsis */
+            if (showFrom > 1) {
+                pagination.appendChild(makePageBtn(1));
+                if (showFrom > 2) pagination.appendChild(makeEllipsis());
+            }
+
+            /* Window */
+            for (let p = showFrom; p <= showTo; p++) {
+                pagination.appendChild(p === current ? makeActive(p) : makePageBtn(p));
+            }
+
+            /* Trailing ellipsis + last */
+            if (showTo < totalPages) {
+                if (showTo < totalPages - 1) pagination.appendChild(makeEllipsis());
+                pagination.appendChild(makePageBtn(totalPages));
+            }
+
+            /* Next */
+            pagination.appendChild(makeEdge('next', EDGE_ICONS.next, 'Next', current === totalPages, true, () => {
+                currentPage = Math.min(totalPages, current + 1); render();
+            }));
+
+            /* Last */
+            pagination.appendChild(makeEdge('last', EDGE_ICONS.last, 'Last', current === totalPages, true, () => {
+                currentPage = totalPages; render();
+            }));
+        }
+
+        function makePageBtn(page) {
+            const li = document.createElement('li');
+            const b  = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn';
+            b.textContent = String(page);
+            b.addEventListener('click', () => { currentPage = page; render(); });
+            li.appendChild(b);
+            return li;
+        }
+
+        function makeActive(page) {
+            const li = document.createElement('li');
+            const b  = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn active';
+            b.textContent = String(page);
+            li.appendChild(b);
+            return li;
+        }
+
+        function makeEdge(kind, icon, label, disabled, iconAfterLabel = false, onClick = null) {
+            const li = document.createElement('li');
+            const b  = document.createElement('button');
+            b.type = 'button';
+            b.className = 'pg-btn pg-edge';
+            if (disabled) b.disabled = true;
+            const iconHtml = '<i class="bi ' + icon + '"></i>';
+            const labelHtml = '<span class="pg-label">' + label + '</span>';
+            b.innerHTML = iconAfterLabel
+                ? labelHtml + iconHtml
+                : iconHtml + labelHtml;
+            if (!disabled && onClick) b.addEventListener('click', onClick);
+            li.appendChild(b);
+            return li;
+        }
+
+        function makeEllipsis() {
+            const li = document.createElement('li');
+            li.className = 'pg-ellipsis';
+            li.textContent = '…';
+            return li;
+        }
+
+        /* ── Auto-dismiss flash after 6 s */
+        document.querySelectorAll('.flash').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity .3s';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 350);
+            }, 6000);
+        });
+
+        /* ── First paint */
+        render();
+    })();
+</script>
 </body>
 </html>

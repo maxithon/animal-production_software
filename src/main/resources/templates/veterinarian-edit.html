@@ -2,13 +2,50 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Veterinarian</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <style>
-        body { background: #f8f9fa; }
+        body { background: #f8f9fa; font-size: 13px; }
         .page-header { background: white; border-bottom: 1px solid #dee2e6; padding: 20px 30px; margin-bottom: 24px; }
-        .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); padding: 28px; max-width: 800px; margin: 0 auto; }
+        .content-card { background: white; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+                        padding: 28px; max-width: 900px; margin: 0 auto; }
+        .form-label { font-size: 0.72rem; }
+        .form-control, .form-select { font-size: 0.78rem; padding: 0.35rem 0.55rem; }
+        .invalid-feedback { font-size: 0.7rem; }
+
+        .photo-preview {
+            width: 110px; height: 110px; border-radius: 50%;
+            border: 2px dashed #cbd5e1; background: #f8fafc;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; margin-top: 6px; color: #94a3b8;
+            font-size: 0.7rem; text-align: center;
+        }
+        .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        .location-section { background-color: #f8f9fa; padding: 16px; border-radius: 8px; }
+        .current-location-banner {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 0.78rem;
+        }
+        .current-location-banner .label {
+            font-weight: 600; color: #1e40af;
+            font-size: 0.7rem; text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .current-location-banner .path {
+            color: #1e3a8a; font-weight: 600; margin-top: 2px;
+        }
+
+        @media (max-width: 576px) {
+            .content-card { padding: 16px; }
+            .page-header { padding: 14px 16px; }
+        }
     </style>
 </head>
 <body>
@@ -25,7 +62,40 @@
 
 <div class="container-fluid px-4">
     <div class="content-card">
-        <form th:action="@{/veterinarians/update/{id}(id=${vet.id})}" th:object="${vet}" method="post">
+
+        <form th:action="@{/veterinarians/update/{id}(id=${vet.id})}" th:object="${vet}"
+              method="post" enctype="multipart/form-data">
+
+            <!-- ══════════════ PHOTO SECTION ══════════════ -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="photo-preview" id="photoPreview"
+                     th:attr="data-existing-photo=${vet.photoUrl}">
+                    <img th:if="${vet.photoUrl != null}"
+                         th:src="${vet.photoUrl}"
+                         alt="Current Photo"
+                         onerror="this.style.display='none'">
+                    <span th:if="${vet.photoUrl == null}">No photo</span>
+                </div>
+                <div>
+                    <label class="form-label fw-semibold d-block">Photo</label>
+                    <input type="file" id="editPhotoFile" name="photoFile" accept="image/*"
+                           style="display:none;" onchange="previewEditPhoto(this)">
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            onclick="document.getElementById('editPhotoFile').click()">
+                        <i class="bi bi-camera"></i> Change Photo
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                            th:if="${vet.photoUrl != null}"
+                            onclick="clearPhotoSelection()">
+                        <i class="bi bi-x-circle"></i> Cancel Selection
+                    </button>
+                    <div class="text-muted mt-1" style="font-size:0.68rem;">
+                        Leave empty to keep the current photo.
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ PERSONAL ══════════════ -->
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
@@ -39,6 +109,7 @@
                            th:classappend="${#fields.hasErrors('lastName')} ? 'is-invalid'" required>
                     <div class="invalid-feedback" th:errors="*{lastName}"></div>
                 </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Phone</label>
                     <input th:field="*{phone}" type="text" class="form-control">
@@ -49,29 +120,102 @@
                            th:classappend="${#fields.hasErrors('email')} ? 'is-invalid'">
                     <div class="invalid-feedback" th:errors="*{email}"></div>
                 </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">License Number</label>
-                    <input th:field="*{licenseNumber}" type="text" class="form-control">
+                    <input th:field="*{licenseNumber}" type="text" class="form-control"
+                           th:classappend="${#fields.hasErrors('licenseNumber')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{licenseNumber}">
+                        This license number is already in use.
+                    </div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Specialization</label>
                     <input th:field="*{specialization}" type="text" class="form-control">
                 </div>
+
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Clinic Name</label>
                     <input th:field="*{clinicName}" type="text" class="form-control">
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Location</label>
-                    <select th:field="*{locationIdValue}" class="form-select">
-                        <option value="">— Select Location —</option>
-                        <option th:each="loc : ${locations}"
-                                th:value="${loc.id}"
-                                th:text="${loc.name}"
-                                th:selected="${vet.locationIdValue != null and vet.locationIdValue == loc.id.toString()}">
-                        </option>
-                    </select>
+                    <label class="form-label fw-semibold">National ID (NID)</label>
+                    <input th:field="*{nationalId}" type="text" class="form-control"
+                           maxlength="16" th:classappend="${#fields.hasErrors('nationalId')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{nationalId}"></div>
                 </div>
+            </div>
+
+            <!-- ══════════════ LOCATION (cascading) ══════════════ -->
+            <h5 class="mb-2 mt-4"
+                style="color:#1a5f7a; font-size:0.9rem; font-weight:600;
+                       border-bottom:2px solid #2e8b9e; padding-bottom:6px;">
+                <i class="bi bi-geo-alt"></i> Location
+            </h5>
+
+            <div class="current-location-banner" th:if="${vet.location != null}">
+                <div class="label">Current Location</div>
+                <div class="path">
+                    <i class="bi bi-geo-alt-fill text-danger"></i>
+                    <span th:text="${vet.fullLocationPath}">
+                        Province › District › Sector › Cell › Village
+                    </span>
+                </div>
+                <div class="text-muted mt-1" style="font-size:0.7rem;">
+                    Dropdowns below are pre-selected. Change any level to move the vet; leave them as is to keep the location.
+                </div>
+            </div>
+
+            <div class="location-section"
+                 th:attr="data-province=${selectedProvince},
+                          data-district=${selectedDistrict},
+                          data-sector=${selectedSector},
+                          data-cell=${selectedCell},
+                          data-village=${selectedVillage}">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label small">Province</label>
+                        <select class="form-select form-select-sm" id="vetProvince"
+                                onchange="onProvinceChange()">
+                            <option value="">Select province...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">District</label>
+                        <select class="form-select form-select-sm" id="vetDistrict"
+                                onchange="onDistrictChange()">
+                            <option value="">Select district...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Sector</label>
+                        <select class="form-select form-select-sm" id="vetSector"
+                                onchange="onSectorChange()">
+                            <option value="">Select sector...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small">Cell</label>
+                        <select class="form-select form-select-sm" id="vetCell"
+                                onchange="onCellChange()">
+                            <option value="">Select cell...</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small">Village</label>
+                        <select class="form-select form-select-sm" id="vetVillage"
+                                th:field="*{locationIdValue}">
+                            <option value="">Select village...</option>
+                        </select>
+                        <div class="form-text" style="font-size:0.68rem;">
+                            Leave unchanged to keep the current location.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════ NOTES + ACTIVE ══════════════ -->
+            <div class="row g-3 mt-3">
                 <div class="col-md-12">
                     <label class="form-label fw-semibold">Notes</label>
                     <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
@@ -83,15 +227,157 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-warning">
+                <button type="submit" class="btn btn-warning btn-sm">
                     <i class="bi bi-save me-1"></i> Update Veterinarian
                 </button>
-                <a href="/veterinarians" class="btn btn-outline-secondary">Cancel</a>
+                <a href="/veterinarians" class="btn btn-outline-secondary btn-sm">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* ══════════════════════════════════════════════════════════════════
+       Photo preview
+       ══════════════════════════════════════════════════════════════════ */
+    function previewEditPhoto(input) {
+        const file = input.files && input.files[0];
+        const preview = document.getElementById('photoPreview');
+        if (!file) return;
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Photo must be smaller than 5MB');
+            input.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = e => {
+            preview.innerHTML = `<img src="${e.target.result}" alt="New Photo">`;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function clearPhotoSelection() {
+        const input = document.getElementById('editPhotoFile');
+        if (input) input.value = '';
+        const preview = document.getElementById('photoPreview');
+        const existing = preview.getAttribute('data-existing-photo');
+        if (existing && existing !== 'null' && existing.trim() !== '') {
+            preview.innerHTML = `<img src="${existing}" alt="Current Photo">`;
+        } else {
+            preview.innerHTML = '<span>No photo</span>';
+        }
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       Location cascade — reads preselected ids from the .location-section
+       data-* attributes (set by Thymeleaf), no th:inline needed.
+       ══════════════════════════════════════════════════════════════════ */
+    const locationSection = document.querySelector('.location-section');
+    const CURRENT_PROVINCE = locationSection.dataset.province || null;
+    const CURRENT_DISTRICT = locationSection.dataset.district || null;
+    const CURRENT_SECTOR   = locationSection.dataset.sector   || null;
+    const CURRENT_CELL     = locationSection.dataset.cell     || null;
+    const CURRENT_VILLAGE  = locationSection.dataset.village  || null;
+
+    function fillSelect(selectId, data, placeholder, preselectId) {
+        const sel = document.getElementById(selectId);
+        sel.innerHTML = `<option value="">${placeholder}</option>`;
+        (data || []).forEach(item => {
+            sel.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+        });
+        sel.disabled = false;
+        if (preselectId) {
+            sel.value = preselectId;
+        }
+    }
+
+    function resetBelow(level) {
+        const order = ['vetProvince', 'vetDistrict', 'vetSector', 'vetCell', 'vetVillage'];
+        const startIdx = order.indexOf(level) + 1;
+        for (let i = startIdx; i < order.length; i++) {
+            const sel = document.getElementById(order[i]);
+            const label = order[i].replace('vet', '').toLowerCase();
+            sel.innerHTML = `<option value="">Select ${label}...</option>`;
+        }
+    }
+
+    function onProvinceChange() {
+        const id = document.getElementById('vetProvince').value;
+        resetBelow('vetProvince');
+        if (!id) return;
+        fetch(`/api/locations/districts/${id}`)
+            .then(r => r.json())
+            .then(data => fillSelect('vetDistrict', data, 'Select district...', null));
+    }
+
+    function onDistrictChange() {
+        const id = document.getElementById('vetDistrict').value;
+        resetBelow('vetDistrict');
+        if (!id) return;
+        fetch(`/api/locations/sectors/${id}`)
+            .then(r => r.json())
+            .then(data => fillSelect('vetSector', data, 'Select sector...', null));
+    }
+
+    function onSectorChange() {
+        const id = document.getElementById('vetSector').value;
+        resetBelow('vetSector');
+        if (!id) return;
+        fetch(`/api/locations/cells/${id}`)
+            .then(r => r.json())
+            .then(data => fillSelect('vetCell', data, 'Select cell...', null));
+    }
+
+    function onCellChange() {
+        const id = document.getElementById('vetCell').value;
+        resetBelow('vetCell');
+        if (!id) return;
+        fetch(`/api/locations/villages/${id}`)
+            .then(r => r.json())
+            .then(data => fillSelect('vetVillage', data, 'Select village...', null));
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       On page load — rebuild each cascade level with the current chain
+       ══════════════════════════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', function () {
+        fetch('/api/locations/provinces')
+            .then(r => r.json())
+            .then(provinces => {
+                fillSelect('vetProvince', provinces, 'Select province...', CURRENT_PROVINCE);
+                if (!CURRENT_PROVINCE) return;
+
+                return fetch(`/api/locations/districts/${CURRENT_PROVINCE}`)
+                    .then(r => r.json())
+                    .then(districts => {
+                        fillSelect('vetDistrict', districts, 'Select district...', CURRENT_DISTRICT);
+                        if (!CURRENT_DISTRICT) return;
+
+                        return fetch(`/api/locations/sectors/${CURRENT_DISTRICT}`)
+                            .then(r => r.json())
+                            .then(sectors => {
+                                fillSelect('vetSector', sectors, 'Select sector...', CURRENT_SECTOR);
+                                if (!CURRENT_SECTOR) return;
+
+                                return fetch(`/api/locations/cells/${CURRENT_SECTOR}`)
+                                    .then(r => r.json())
+                                    .then(cells => {
+                                        fillSelect('vetCell', cells, 'Select cell...', CURRENT_CELL);
+                                        if (!CURRENT_CELL) return;
+
+                                        return fetch(`/api/locations/villages/${CURRENT_CELL}`)
+                                            .then(r => r.json())
+                                            .then(villages => {
+                                                fillSelect('vetVillage', villages, 'Select village...', CURRENT_VILLAGE);
+                                            });
+                                    });
+                            });
+                    });
+            })
+            .catch(err => console.error('Error loading location cascade:', err));
+    });
+</script>
 </body>
 </html>

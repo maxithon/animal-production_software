@@ -26,7 +26,6 @@
             font-size: 14px;
         }
 
-        /* ── Page header ─────────────────────────────────────────────── */
         .page-header {
             background: var(--card); border-radius: 14px; padding: 24px 30px;
             margin-bottom: 20px; box-shadow: 0 2px 10px rgba(15,23,42,.06);
@@ -36,7 +35,6 @@
         .page-title { font-size: 1.55rem; font-weight: 800; color: var(--ink-900); margin: 0; letter-spacing: -.01em; }
         .page-subtitle { color: var(--ink-500); font-size: .88rem; margin: 2px 0 0; }
 
-        /* ── KPI cards ───────────────────────────────────────────────── */
         .kpi-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px; margin-bottom: 20px;
@@ -70,7 +68,6 @@
         .kpi-value { font-size: 1.9rem; font-weight: 800; color: var(--ink-900); line-height: 1; letter-spacing: -.02em; }
         .kpi-sub   { font-size: .7rem; color: var(--ink-500); margin-top: 5px; }
 
-        /* ── Section cards ───────────────────────────────────────────── */
         .section-card {
             background: var(--card); border-radius: 14px; padding: 22px 26px;
             box-shadow: 0 1px 3px rgba(15,23,42,.05), 0 4px 12px rgba(15,23,42,.04);
@@ -94,7 +91,6 @@
         .section-badge.red   { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
         .section-badge.green { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
 
-        /* ── Table ───────────────────────────────────────────────────── */
         .preg-table { width: 100%; border-collapse: separate; border-spacing: 0; }
         .preg-table caption { caption-side: top; text-align: left; padding: 0 0 6px; font-size: .72rem; color: var(--ink-500); }
 
@@ -115,7 +111,6 @@
         .preg-table tbody tr.row-due-soon  { background: #fffbeb; }
         .preg-table tbody tr.row-due-today { background: #f0fdf4; }
 
-        /* ── Tag / badges ───────────────────────────────────────────── */
         .tag-cell strong { font-size: .9rem; color: var(--ink-900); font-weight: 700; }
         .cat-badge {
             display: inline-block; background: #e0f2fe; color: #0369a1;
@@ -132,11 +127,9 @@
         .acq-birth    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .acq-other    { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
 
-        /* ── Date values ─────────────────────────────────────────────── */
         .date-val { font-size: .82rem; font-weight: 600; color: var(--ink-900); }
         .date-sub { font-size: .68rem; color: var(--ink-500); margin-top: 2px; }
 
-        /* ── Days pills ──────────────────────────────────────────────── */
         .days-pill {
             display: inline-flex; align-items: center; gap: 4px;
             border-radius: 20px; padding: 3px 10px;
@@ -150,7 +143,6 @@
         .days-unknown  { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
         .days-since    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
 
-        /* ── Gestation progress ──────────────────────────────────────── */
         .gestation-bar-wrap { min-width: 128px; }
         .gestation-bar {
             height: 7px; border-radius: 4px; background: #e2e8f0;
@@ -173,7 +165,6 @@
         .stage-nearterm { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .stage-complete { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
 
-        /* ── Insemination method badges ──────────────────────────────── */
         .method-badge {
             display: inline-flex; align-items: center; gap: 5px;
             border-radius: 20px; padding: 4px 10px;
@@ -184,7 +175,6 @@
         .method-et      { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
         .method-unknown { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; opacity: .85; }
 
-        /* ── Reproductive status badges ──────────────────────────────── */
         .repro-badge {
             display: inline-flex; align-items: center; gap: 5px;
             border-radius: 20px; padding: 4px 10px;
@@ -193,7 +183,6 @@
         .repro-pregnant-again { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
         .repro-open            { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
 
-        /* ── Beneficiary cell ────────────────────────────────────────── */
         .beneficiary-cell { min-width: 0; max-width: 140px; }
         .beneficiary-cell .name {
             font-weight: 600; color: var(--ink-900); font-size: .8rem;
@@ -202,7 +191,6 @@
         .beneficiary-cell .phone { font-size: .7rem; color: var(--ink-500); margin-top: 2px; white-space: nowrap; }
         .beneficiary-cell .phone i { margin-right: 3px; font-size: .65rem; }
 
-        /* ── Location cell ───────────────────────────────────────────── */
         .loc-stack { font-size: .8rem; line-height: 1.25; max-width: 150px; min-width: 0; }
         .loc-stack .village {
             font-weight: 600; color: var(--ink-900);
@@ -213,7 +201,6 @@
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
 
-        /* ── Alert bars ──────────────────────────────────────────────── */
         .critical-bar {
             background: linear-gradient(135deg, #fef2f2, #fff5f5);
             border: 1.5px solid #fca5a5; border-radius: 12px;
@@ -232,7 +219,6 @@
         }
         .critical-bar .btn-high-risk:hover { background: #b91c1c; }
 
-        /* ── Purchased / given-birth informational banners ───────────── */
         .purchased-header, .given-birth-header {
             border-radius: 10px; padding: 11px 16px;
             margin-bottom: 14px; display: flex; align-items: flex-start; gap: 10px;
@@ -243,7 +229,6 @@
         .given-birth-header { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border: 1px solid #bbf7d0; color: #14532d; }
         .given-birth-header i { color: #16a34a; font-size: 1.05rem; margin-top: 1px; }
 
-        /* ── Empty state ─────────────────────────────────────────────── */
         .empty-state { text-align: center; padding: 48px 20px; color: var(--ink-500); }
         .empty-state .empty-illustration {
             width: 56px; height: 56px; margin: 0 auto 14px;
@@ -253,22 +238,90 @@
         .empty-state p { font-size: .88rem; margin: 0 0 4px; }
         .empty-state .hint { font-size: .78rem; color: var(--ink-300); }
 
-        /* ── Pagination ──────────────────────────────────────────────── */
-        .pagination-wrap {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-top: 18px; flex-wrap: wrap; gap: 10px;
-            padding-top: 14px; border-top: 1px solid var(--ink-100);
+        /* ══════════════════════════════════════════════════════════════
+           PROFESSIONAL PAGINATION
+           ══════════════════════════════════════════════════════════════ */
+        .pager-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px; margin-top: 18px;
+            padding-top: 14px; border-top: 1.5px solid var(--ink-100);
+            font-size: .82rem; color: var(--ink-500);
         }
-        .pagination-info { font-size: .78rem; color: var(--ink-500); }
-        .pagination { margin: 0; }
-        .page-link {
-            color: #0d9488; border-color: #e2e8f0;
-            font-size: .8rem; border-radius: 6px !important;
-            padding: 5px 11px; margin: 0 2px;
+        .pager-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .pager-info { font-size: .82rem; color: var(--ink-500); }
+        .pager-info strong { color: var(--ink-900); font-weight: 700; }
+
+        .pager-pagesize { display: flex; align-items: center; gap: 6px; }
+        .pager-pagesize label { font-size: .75rem; font-weight: 600; color: var(--ink-500); }
+        .pager-pagesize select {
+            padding: 4px 9px; border: 1px solid #e2e8f0; border-radius: 6px;
+            font-size: .8rem; font-weight: 600; color: var(--ink-900);
+            cursor: pointer; background: #fff;
         }
-        .page-link:hover { background: #ccfbf1; color: #0f766e; border-color: #5eead4; }
-        .page-item.active .page-link { background-color: #0d9488; border-color: #0d9488; color: #fff; }
-        .page-link:focus { box-shadow: none; }
+        .pager-pagesize select:hover { border-color: #0d9488; }
+        .pager-pagesize select:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+
+        .pager-list {
+            display: flex; align-items: center; gap: 4px;
+            list-style: none; margin: 0; padding: 0; flex-wrap: wrap;
+        }
+        .pg-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            min-width: 34px; height: 34px; padding: 0 10px;
+            border-radius: 6px; font-size: .8rem; font-weight: 600;
+            color: #0d9488; background: #fff; border: 1px solid #e2e8f0;
+            text-decoration: none; transition: all .12s ease;
+            cursor: pointer; white-space: nowrap; font-family: inherit;
+        }
+        .pg-btn:hover { background: #ccfbf1; border-color: #5eead4; color: #0f766e; }
+        .pg-btn.active {
+            background: #0d9488; color: #fff; border-color: #0d9488;
+            pointer-events: none; cursor: default;
+            box-shadow: 0 2px 6px rgba(13,148,136,.28);
+        }
+        .pg-btn:disabled, .pg-btn.disabled {
+            opacity: .35; pointer-events: none; cursor: not-allowed; background: #fafbfc;
+        }
+        .pg-btn.pg-edge {
+            min-width: auto; padding: 0 12px; gap: 6px;
+            background: #f8fafc; color: #334155; font-weight: 700;
+        }
+        .pg-btn.pg-edge:hover { background: #0d9488; border-color: #0d9488; color: #fff; }
+        .pg-btn.pg-edge i { font-size: 12px; line-height: 1; }
+        .pg-btn.pg-edge .pg-label {
+            display: inline-block; font-size: .72rem;
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        .pg-ellipsis {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 24px; height: 34px; color: #94a3b8;
+            font-size: .85rem; font-weight: 700; user-select: none; letter-spacing: .1em;
+        }
+        .pager-goto {
+            display: flex; align-items: center; gap: 5px;
+            font-size: .75rem; color: var(--ink-500); font-weight: 600;
+        }
+        .pager-goto input {
+            width: 56px; height: 34px; padding: 0 8px;
+            border: 1px solid #e2e8f0; border-radius: 6px;
+            font-size: .8rem; font-weight: 600; text-align: center;
+            color: var(--ink-900); background: #fff; transition: all .12s; font-family: inherit;
+        }
+        .pager-goto input:focus { outline: none; border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+        .pager-goto input::-webkit-outer-spin-button,
+        .pager-goto input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .pager-goto input[type=number] { -moz-appearance: textfield; }
+
+        @media (max-width: 900px) {
+            .pager-bar { flex-direction: column; align-items: stretch; }
+            .pager-meta { justify-content: space-between; width: 100%; }
+            .pager-list { justify-content: center; width: 100%; }
+            .pager-goto {
+                justify-content: center; width: 100%;
+                padding-top: 6px; border-top: 1px dashed #e2e8f0; margin-top: 4px;
+            }
+            .pg-btn.pg-edge .pg-label { display: none; }
+        }
 
         @media (max-width: 767.98px) {
             body { padding: 10px; }
@@ -854,57 +907,136 @@
             </table>
         </div>
 
-        <!-- ── Pagination ──────────────────────────────────────────────── -->
-        <div class="pagination-wrap" th:if="${givenBirthRows != null and !#lists.isEmpty(givenBirthRows)}">
-            <div class="pagination-info">
-                Showing page <strong th:text="${givenBirthCurrentPage + 1}">1</strong>
-                of <strong th:text="${givenBirthTotalPages}">1</strong>
-                (<span th:text="${givenBirthTotalItems}">0</span> total birth record(s))
+        <!-- ═════════════════════════════════════════════════════════════
+             PROFESSIONAL PAGINATION
+             [⏮ First] [‹ Prev]  1 … 3 [4] 5 … 20  [Next ›] [Last ⏭]
+             Preserves: birthSize
+             ═════════════════════════════════════════════════════════════ -->
+        <div class="pager-bar"
+             th:if="${givenBirthRows != null and !#lists.isEmpty(givenBirthRows)}"
+             th:with="
+                 total=${givenBirthTotalPages != null and givenBirthTotalPages > 0 ? givenBirthTotalPages : 1},
+                 current=${givenBirthCurrentPage != null ? givenBirthCurrentPage : 0},
+                 size=${givenBirthPageSize != null ? givenBirthPageSize : 10},
+                 items=${givenBirthTotalItems != null ? givenBirthTotalItems : 0},
+                 start=${items == 0 ? 0 : (current * size) + 1},
+                 end=${items == 0 ? 0 : ((current * size) + size > items ? items : (current * size) + size)},
+                 showFrom=${current - 2 < 0 ? 0 : current - 2},
+                 showTo=${current + 2 > total - 1 ? total - 1 : current + 2}
+             ">
+
+            <div class="pager-meta">
+                <span class="pager-info">
+                    Showing <strong th:text="${start}">1</strong>–<strong th:text="${end}">10</strong>
+                    of <strong th:text="${items}">0</strong>
+                </span>
+                <div class="pager-pagesize">
+                    <label for="birthSizeSelect">Rows per page:</label>
+                    <select id="birthSizeSelect" onchange="changeBirthPageSize(this.value)">
+                        <option value="10"  th:selected="${size == 10}">10</option>
+                        <option value="25"  th:selected="${size == 25}">25</option>
+                        <option value="50"  th:selected="${size == 50}">50</option>
+                        <option value="100" th:selected="${size == 100}">100</option>
+                    </select>
+                </div>
             </div>
 
-            <nav th:if="${givenBirthTotalPages > 1}" aria-label="Given birth pagination">
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" th:classappend="${givenBirthCurrentPage == 0} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthCurrentPage - 1}, birthSize=${givenBirthPageSize})}">
-                            <i class="bi bi-chevron-left"></i>
-                        </a>
-                    </li>
+            <ul class="pager-list">
+                <!-- First -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'First page'"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=0, birthSize=${size})}">
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-bar-left"></i>
+                        <span class="pg-label">First</span>
+                    </button>
+                </li>
 
-                    <li class="page-item" th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[0] > 0}">
-                        <a class="page-link"
-                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=0, birthSize=${givenBirthPageSize})}">1</a>
-                    </li>
-                    <li class="page-item disabled" th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[0] > 1}">
-                        <span class="page-link">…</span>
-                    </li>
+                <!-- Prev -->
+                <li th:if="${current > 0}">
+                    <a class="pg-btn pg-edge" th:title="'Previous page'"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${current - 1}, birthSize=${size})}">
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </a>
+                </li>
+                <li th:if="${current == 0}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        <span class="pg-label">Prev</span>
+                    </button>
+                </li>
 
-                    <li class="page-item" th:each="i : ${givenBirthPageNumbers}"
-                        th:classappend="${i == givenBirthCurrentPage} ? 'active'">
-                        <a class="page-link"
-                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${i}, birthSize=${givenBirthPageSize})}"
-                           th:text="${i + 1}">1</a>
-                    </li>
+                <!-- Leading 1 + ellipsis -->
+                <li th:if="${showFrom > 0}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=0, birthSize=${size})}">1</a>
+                </li>
+                <li th:if="${showFrom > 1}" class="pg-ellipsis">…</li>
 
-                    <li class="page-item disabled"
-                        th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[#lists.size(givenBirthPageNumbers) - 1] < givenBirthTotalPages - 2}">
-                        <span class="page-link">…</span>
-                    </li>
-                    <li class="page-item"
-                        th:if="${!#lists.isEmpty(givenBirthPageNumbers) and givenBirthPageNumbers[#lists.size(givenBirthPageNumbers) - 1] < givenBirthTotalPages - 1}">
-                        <a class="page-link"
-                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthTotalPages - 1}, birthSize=${givenBirthPageSize})}"
-                           th:text="${givenBirthTotalPages}">Last</a>
-                    </li>
+                <!-- Window -->
+                <li th:each="i : ${#numbers.sequence(showFrom, showTo)}">
+                    <a class="pg-btn"
+                       th:classappend="${i == current} ? 'active' : ''"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${i}, birthSize=${size})}"
+                       th:text="${i + 1}">1</a>
+                </li>
 
-                    <li class="page-item" th:classappend="${givenBirthCurrentPage == givenBirthTotalPages - 1} ? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${givenBirthCurrentPage + 1}, birthSize=${givenBirthPageSize})}">
-                            <i class="bi bi-chevron-right"></i>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
+                <!-- Trailing ellipsis + last -->
+                <li th:if="${showTo < total - 2}" class="pg-ellipsis">…</li>
+                <li th:if="${showTo < total - 1}">
+                    <a class="pg-btn"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${total - 1}, birthSize=${size})}"
+                       th:text="${total}">1</a>
+                </li>
+
+                <!-- Next -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Next page'"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${current + 1}, birthSize=${size})}">
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Next</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </li>
+
+                <!-- Last -->
+                <li th:if="${current + 1 < total}">
+                    <a class="pg-btn pg-edge" th:title="'Last page'"
+                       th:href="@{/livestock/lifecycle/pregnancy-tracking(birthPage=${total - 1}, birthSize=${size})}">
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </a>
+                </li>
+                <li th:if="${current + 1 >= total}">
+                    <button class="pg-btn pg-edge" disabled>
+                        <span class="pg-label">Last</span>
+                        <i class="bi bi-chevron-bar-right"></i>
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Go to page -->
+            <div class="pager-goto">
+                <label for="birthGotoInput">Go to page:</label>
+                <input type="number" id="birthGotoInput"
+                       min="1"
+                       th:max="${total}"
+                       th:value="${current + 1}"
+                       onkeydown="if(event.key==='Enter'){gotoBirthPage(this.value)}"
+                       onblur="gotoBirthPage(this.value)">
+                <span th:text="'/ ' + ${total}">/ 1</span>
+            </div>
         </div>
 
     </div>
@@ -912,7 +1044,26 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:inline="javascript">
+    // ── Server-side pagination helpers ────────────────────────
+    function changeBirthPageSize(size) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('birthPage', '0');
+        url.searchParams.set('birthSize', size);
+        window.location.href = url.toString();
+    }
+    function gotoBirthPage(p) {
+        var input = document.getElementById('birthGotoInput');
+        var total = parseInt(input.getAttribute('max'), 10) || 1;
+        p = parseInt(p, 10);
+        if (isNaN(p) || p < 1) p = 1;
+        if (p > total) p = total;
+        var url = new URL(window.location.href);
+        url.searchParams.set('birthPage', p - 1);
+        window.location.href = url.toString();
+    }
+
+    // ── Scroll to farm-bred section (unchanged) ──────────────
     function scrollToFarmBred() {
         var el = document.getElementById('sectionFarmBred');
         if (!el) return;

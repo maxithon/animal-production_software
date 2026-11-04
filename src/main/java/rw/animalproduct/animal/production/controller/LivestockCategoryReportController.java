@@ -27,9 +27,7 @@ import java.util.stream.Collectors;
  *     `avgAnimalsPerCategory`, plus a JSON endpoint for the paginated variant.
  *
  * UPDATED: repository method renamed from findAllByIsDeletedFalse() to
- * findAllActiveOrderByName() to match the current LivestockCategoryRepository —
- * behavior is identical (excludes soft-deleted categories), name now reflects
- * that it's also pre-sorted by name.
+ * findAllByOrderByNameAsc() to match the current LivestockCategoryRepository.
  *
  * FIX: buildStat() referenced Livestock.STATUS_SICK, which doesn't exist —
  * "sick" is tracked via the separate healthStatus field (HEALTH_SICK), not
@@ -51,7 +49,8 @@ public class LivestockCategoryReportController {
 
     @GetMapping("/livestock/categories/filter-report")
     public String filterReport(Model model) {
-        List<LivestockCategory> categories = categoryRepository.findAllActiveOrderByName();
+        // ✅ FIXED: changed findAllActiveOrderByName() to findAllByOrderByNameAsc()
+        List<LivestockCategory> categories = categoryRepository.findAllByOrderByNameAsc();
 
         List<CategoryWithCount> categoriesWithCount = categories.stream()
                 .map(c -> new CategoryWithCount(
@@ -84,7 +83,8 @@ public class LivestockCategoryReportController {
 
     @GetMapping("/livestock/categories/report")
     public String fullReport(Model model) {
-        List<LivestockCategory> categories = categoryRepository.findAllActiveOrderByName();
+        // ✅ FIXED: changed findAllActiveOrderByName() to findAllByOrderByNameAsc()
+        List<LivestockCategory> categories = categoryRepository.findAllByOrderByNameAsc();
         List<CategoryStat> statsList = categories.stream()
                 .map(this::buildStat)
                 .sorted(Comparator.comparing(CategoryStat::getCategoryName, String.CASE_INSENSITIVE_ORDER))

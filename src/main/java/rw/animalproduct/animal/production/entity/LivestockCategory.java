@@ -20,9 +20,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "livestock_categories"
-)
+@Table(name = "livestock_categories")
 public class LivestockCategory {
 
     @Id
@@ -31,61 +29,31 @@ public class LivestockCategory {
     private UUID id;
 
     @NotEmpty(message = "Category code is required")
-    @Size(
-            min = 1,
-            max = 20,
-            message = "Code must be 1–20 characters"
-    )
-    @Column(
-            name = "code",
-            unique = true,
-            nullable = false,
-            length = 20
-    )
+    @Size(min = 1, max = 20, message = "Code must be 1–20 characters")
+    @Column(name = "code", unique = true, nullable = false, length = 20)
     private String code;
 
     @NotEmpty(message = "Category name is required")
-    @Size(
-            min = 2,
-            max = 100,
-            message = "Name must be 2–100 characters"
-    )
-    @Column(
-            name = "name",
-            nullable = false,
-            length = 100
-    )
+    @Size(min = 2, max = 100, message = "Name must be 2–100 characters")
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     /**
      * Gestation period in months.
-     *
      * This is retained because it already exists in the database
      * and may be used by existing reports or legacy business logic.
-     *
      * The more precise value is gestationPeriodDays.
      */
-    @Min(
-            value = 1,
-            message = "Gestation period must be at least 1 month"
-    )
-    @Max(
-            value = 24,
-            message = "Gestation period looks too long — please check the value"
-    )
+    @Min(value = 1, message = "Gestation period must be at least 1 month")
+    @Max(value = 24, message = "Gestation period looks too long — please check the value")
     @Column(name = "gestation_period_months")
     private Integer gestationPeriodMonths;
 
     /**
      * Precise gestation period in days.
-     *
-     * Example:
-     * Cow  = 283 days
-     * Goat = 150 days
+     * Example: Cow = 283 days, Goat = 150 days
      */
-    @Positive(
-            message = "Gestation period (days) must be greater than 0"
-    )
+    @Positive(message = "Gestation period (days) must be greater than 0")
     @Column(name = "gestation_period_days")
     private Integer gestationPeriodDays;
 
@@ -93,28 +61,16 @@ public class LivestockCategory {
      * Minimum age at which animals of this category
      * are considered ready for breeding.
      */
-    @Min(
-            value = 1,
-            message = "Minimum breeding age must be at least 1 month"
-    )
-    @Max(
-            value = 120,
-            message = "Minimum breeding age looks too high — please check the value"
-    )
+    @Min(value = 1, message = "Minimum breeding age must be at least 1 month")
+    @Max(value = 120, message = "Minimum breeding age looks too high — please check the value")
     @Column(name = "min_breeding_age_months")
     private Integer minBreedingAgeMonths;
 
     /**
      * Maximum recommended breeding age.
      */
-    @Min(
-            value = 1,
-            message = "Maximum breeding age must be at least 1 month"
-    )
-    @Max(
-            value = 240,
-            message = "Maximum breeding age looks too high — please check the value"
-    )
+    @Min(value = 1, message = "Maximum breeding age must be at least 1 month")
+    @Max(value = 240, message = "Maximum breeding age looks too high — please check the value")
     @Column(name = "max_breeding_age_months")
     private Integer maxBreedingAgeMonths;
 
@@ -122,75 +78,30 @@ public class LivestockCategory {
      * Minimum number of days after giving birth before
      * the female is considered recovered enough to breed again.
      */
-    @PositiveOrZero(
-            message = "Postpartum recovery days cannot be negative"
-    )
-    @Column(
-            name = "postpartum_recovery_days",
-            nullable = false
-    )
+    @PositiveOrZero(message = "Postpartum recovery days cannot be negative")
+    @Column(name = "postpartum_recovery_days", nullable = false)
     private Integer postpartumRecoveryDays = 45;
 
     /**
      * Typical age (in days) at which offspring of this category are
-     * weaned off the mother. This is a biological/management constant
-     * per category — NOT something entered per birth record. It's used
-     * by LivestockBirthService to auto-calculate each birth's Weaning
-     * Date (birthDate + weaningPeriodDays), the same way
-     * postpartumRecoveryDays is used to suggest the Next Breeding Date.
-     *
-     * Cow  ≈ 90 days
-     * Goat ≈ 60-90 days
+     * weaned off the mother.
      */
-    @PositiveOrZero(
-            message = "Weaning period cannot be negative"
-    )
-    @Column(
-            name = "weaning_period_days",
-            nullable = false
-    )
+    @PositiveOrZero(message = "Weaning period cannot be negative")
+    @Column(name = "weaning_period_days", nullable = false)
     private Integer weaningPeriodDays = 90;
 
     /**
      * Typical number of offspring expected per birth.
-     *
-     * Cow  = 1
-     * Goat = 2
      */
-    @Min(
-            value = 1,
-            message = "Typical litter size must be at least 1"
-    )
-    @Column(
-            name = "typical_litter_size",
-            nullable = false
-    )
+    @Min(value = 1, message = "Typical litter size must be at least 1")
+    @Column(name = "typical_litter_size", nullable = false)
     private Integer typicalLitterSize = 1;
 
-    @Column(
-            name = "description",
-            columnDefinition = "TEXT"
-    )
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    /**
-     * Soft-delete flag.
-     *
-     * false = active
-     * true  = deleted
-     */
-    @Column(
-            name = "is_deleted",
-            nullable = false
-    )
-    private Boolean isDeleted = false;
-
     @CreationTimestamp
-    @Column(
-            name = "created_at",
-            nullable = false,
-            updatable = false
-    )
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
@@ -212,16 +123,11 @@ public class LivestockCategory {
      * Maximum breeding age must be greater than minimum breeding age
      * when both values are provided.
      */
-    @AssertTrue(
-            message = "Maximum breeding age must be greater than minimum breeding age"
-    )
+    @AssertTrue(message = "Maximum breeding age must be greater than minimum breeding age")
     public boolean isBreedingAgeRangeValid() {
-
-        if (minBreedingAgeMonths == null ||
-                maxBreedingAgeMonths == null) {
+        if (minBreedingAgeMonths == null || maxBreedingAgeMonths == null) {
             return true;
         }
-
         return maxBreedingAgeMonths > minBreedingAgeMonths;
     }
 
@@ -317,14 +223,6 @@ public class LivestockCategory {
         this.description = description;
     }
 
-    public Boolean getIsDeleted() {
-        return isDeleted;
-    }
-
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -349,7 +247,6 @@ public class LivestockCategory {
                 ", postpartumRecoveryDays=" + postpartumRecoveryDays +
                 ", weaningPeriodDays=" + weaningPeriodDays +
                 ", typicalLitterSize=" + typicalLitterSize +
-                ", isDeleted=" + isDeleted +
                 '}';
     }
 }
