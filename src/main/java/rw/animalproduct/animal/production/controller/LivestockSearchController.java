@@ -43,11 +43,10 @@ public class LivestockSearchController {
         // Cap results to 20 — the dropdown is a picker, not a report.
         Pageable top20 = PageRequest.of(0, 20);
 
-        // ✅ FIXED: this now calls searchByTagNumber(), the @Query method
-        // added to LivestockRepository — the previous method name
-        // (findByTagNumberContainingIgnoreCaseAndIsDeletedFalse) never
-        // existed in the repository, which is what caused the compile error.
-        List<Livestock> results = livestockRepository.searchByTagNumber(q.trim(), top20);
+        // ✅ FIXED: searchByTagNumber returns Page<Livestock>; unwrap with getContent().
+        List<Livestock> results = livestockRepository
+                .searchByTagNumber(q.trim(), top20)
+                .getContent();
 
         return results.stream().map(this::toSearchResult).collect(Collectors.toList());
     }

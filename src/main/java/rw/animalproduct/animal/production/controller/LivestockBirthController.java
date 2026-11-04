@@ -11,6 +11,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import rw.animalproduct.animal.production.dto.OffspringView;
 import rw.animalproduct.animal.production.entity.Beneficiary;
 import rw.animalproduct.animal.production.entity.Livestock;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
@@ -39,9 +40,7 @@ import java.util.stream.Collectors;
 public class LivestockBirthController {
 
     private static final ZoneId APP_ZONE = ZoneId.of("Africa/Kigali");
-
     private static final String ACQUISITION_PURCHASE_PREGNANT = "PURCHASE_PREGNANT";
-
     private static final List<Integer> ALLOWED_PAGE_SIZES = List.of(10, 20, 50, 100);
 
     private final LivestockBirthService       birthService;
@@ -75,13 +74,11 @@ public class LivestockBirthController {
                 .map(b -> b.getLivestock().getId())
                 .collect(Collectors.toSet());
 
-        // ✅ FIXED: removed getIsDeleted() filter
         List<Livestock> pregnantMothers = livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
                 .filter(l -> !Livestock.STATUS_SOLD.equals(l.getStatus()))
-                .filter(l -> l.getGender() == null
-                        || l.getGender().equalsIgnoreCase("FEMALE"))
+                .filter(l -> l.getGender() == null || l.getGender().equalsIgnoreCase("FEMALE"))
                 .filter(l -> Livestock.REPRO_PREGNANT.equals(l.getReproductiveStatus())
                         || Livestock.STATUS_PREGNANT.equals(l.getStatus())
                         || Boolean.TRUE.equals(l.getIsPregnant())
@@ -89,7 +86,6 @@ public class LivestockBirthController {
                 .sorted(Comparator.comparing(Livestock::getTagNumber))
                 .collect(Collectors.toList());
 
-        // ✅ FIXED: removed getIsDeleted() filter
         List<Livestock> availableFathers = livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
@@ -114,7 +110,6 @@ public class LivestockBirthController {
 
     private Map<String, String> resolveBirthSource(LivestockBirth birth, Livestock mother) {
         Map<String, String> info = new HashMap<>();
-
         boolean purchasedPregnant = mother != null
                 && ACQUISITION_PURCHASE_PREGNANT.equals(mother.getAcquisitionMethod());
 
@@ -135,7 +130,6 @@ public class LivestockBirthController {
             info.put("badgeClass", "bg-success");
             info.put("icon", "bi-house-heart-fill");
         }
-
         return info;
     }
 
@@ -191,10 +185,6 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/list";
     }
 
-    // =========================================================================
-    // API — children filtered by mother category
-    // =========================================================================
-
     @GetMapping("/api/children-by-mother")
     @ResponseBody
     public List<Map<String, Object>> getChildrenByMother(
@@ -213,23 +203,13 @@ public class LivestockBirthController {
             gestationMonths = mother.getLivestockCategory().getGestationPeriodMonths();
         }
 
-        LocalDate anchor           = mother.getLastBirthDate() != null
+        LocalDate anchor        = mother.getLastBirthDate() != null
                 ? mother.getLastBirthDate() : LocalDate.now(APP_ZONE);
-        LocalDate earliestChild    = anchor.minusMonths(gestationMonths);
-        LocalDate today            = LocalDate.now(APP_ZONE);
+        LocalDate earliestChild = anchor.minusMonths(gestationMonths);
+        LocalDate today         = LocalDate.now(APP_ZONE);
 
-        Set<UUID> alreadyLinked = new HashSet<>();
-        for (LivestockBirth b : birthService.getAll()) {
-            if (b.getChildren() != null) {
-                for (LivestockOffspring o : b.getChildren()) {
-                    if (o.getChildLivestock() != null) {
-                        alreadyLinked.add(o.getChildLivestock().getId());
-                    }
-                }
-            }
-        }
+        Set<UUID> alreadyLinked = birthService.getLinkedChildIds();
 
-        // ✅ FIXED: removed getIsDeleted() filter
         return livestockRepository.findAll().stream()
                 .filter(l -> categoryId == null
                         || (l.getLivestockCategory() != null
@@ -237,8 +217,8 @@ public class LivestockBirthController {
                 .filter(l -> !l.getId().equals(motherId))
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> {
-                    if (l.getMother() == null)                         return true;
-                    if (motherId.equals(l.getMother().getId()))        return true;
+                    if (l.getMother() == null)                        return true;
+                    if (motherId.equals(l.getMother().getId()))       return true;
                     return !alreadyLinked.contains(l.getId());
                 })
                 .filter(l -> {
@@ -269,19 +249,11 @@ public class LivestockBirthController {
                 .collect(Collectors.toList());
     }
 
-    // =========================================================================
-    // API — AUTO DATES FOR MOTHER
-    // =========================================================================
-
     @GetMapping("/api/auto-dates")
     @ResponseBody
     public Map<String, Object> getAutoDates(@RequestParam("motherId") UUID motherId) {
         return birthService.getAutoDatesForMother(motherId);
     }
-
-    // =========================================================================
-    // API — REAL DATE SUGGESTIONS
-    // =========================================================================
 
     @GetMapping("/api/date-suggestions")
     @ResponseBody
@@ -317,10 +289,6 @@ public class LivestockBirthController {
 
         return response;
     }
-
-    // =========================================================================
-    // API: live-search registered veterinarians
-    // =========================================================================
 
     @GetMapping("/api/veterinarians/search")
     @ResponseBody
@@ -376,10 +344,6 @@ public class LivestockBirthController {
         }
     }
 
-    // =========================================================================
-    // LIST
-    // =========================================================================
-
     @GetMapping("/list")
     public String listAll(@RequestParam(value = "page", defaultValue = "0") int page,
                           @RequestParam(value = "size", defaultValue = "10") int size,
@@ -402,6 +366,8 @@ public class LivestockBirthController {
         }
         model.addAttribute("births", births);
 
+        Map<UUID, Livestock> motherById = birthService.getMothersForBirths(births);
+
         model.addAttribute("totalLocked", birthService.countLocked());
         model.addAttribute("categoryBirthStats", birthService.getCategoryBirthStats());
         model.addAttribute("allowedPageSizes", ALLOWED_PAGE_SIZES);
@@ -413,10 +379,7 @@ public class LivestockBirthController {
         Map<String, Integer> offspringThisPageByCategory = new TreeMap<>();
 
         for (LivestockBirth b : births) {
-            Livestock mother = b.getLivestockId() != null
-                    ? livestockRepository.findById(b.getLivestockId()).orElse(null)
-                    : null;
-
+            Livestock mother = b.getLivestockId() != null ? motherById.get(b.getLivestockId()) : null;
             birthSourceMap.put(b.getId(), resolveBirthSource(b, mother));
 
             String categoryName = "Unknown";
@@ -424,18 +387,14 @@ public class LivestockBirthController {
             if (mother != null) {
                 LocalDate bd = mother.getBirthDate();
                 LivestockCategory cat = mother.getLivestockCategory();
-                if (cat != null) {
-                    categoryName = cat.getName();
-                }
+                if (cat != null) categoryName = cat.getName();
                 if (bd != null && cat != null && cat.getMinBreedingAgeMonths() != null) {
                     long ageMonths = ChronoUnit.MONTHS.between(bd, today);
                     breedingCapableMap.put(mother.getId(), ageMonths >= cat.getMinBreedingAgeMonths());
                 }
 
-                String beneficiaryName = mother.getBeneficiary() != null
-                        ? mother.getBeneficiary().getFullName() : null;
-                String beneficiaryPhone = mother.getBeneficiary() != null
-                        ? mother.getBeneficiary().getPhone() : null;
+                String beneficiaryName  = mother.getBeneficiary() != null ? mother.getBeneficiary().getFullName() : null;
+                String beneficiaryPhone = mother.getBeneficiary() != null ? mother.getBeneficiary().getPhone() : null;
                 List<Location> breadcrumb = mother.getLocation() != null
                         ? buildLocationBreadcrumb(mother.getLocation())
                         : Collections.emptyList();
@@ -475,10 +434,6 @@ public class LivestockBirthController {
 
         return "livestock-births-list";
     }
-
-    // =========================================================================
-    // REGISTER
-    // =========================================================================
 
     @GetMapping("/register")
     public String showRegisterForm(Model model) {
@@ -522,11 +477,7 @@ public class LivestockBirthController {
                             ? linkedChildIds.size() + " offspring linked. " : "")
                             + "Offspring can also be linked after the birth record is saved.");
             return "redirect:/livestock/births/" + saved.getId() + "/children";
-        } catch (IllegalStateException e) {
-            model.addAttribute("error", e.getMessage());
-            addLivestockToModel(model);
-            return "livestock-birth-register";
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             addLivestockToModel(model);
             return "livestock-birth-register";
@@ -536,10 +487,6 @@ public class LivestockBirthController {
             return "livestock-birth-register";
         }
     }
-
-    // =========================================================================
-    // EDIT
-    // =========================================================================
 
     @GetMapping("/edit/{id}")
     public String showEditForm(@PathVariable UUID id, Model model, RedirectAttributes redirectAttributes) {
@@ -609,11 +556,7 @@ public class LivestockBirthController {
             redirectAttributes.addFlashAttribute("success",
                     "Birth record updated successfully!");
             return "redirect:/livestock/births/list";
-        } catch (IllegalStateException e) {
-            model.addAttribute("error", e.getMessage());
-            addLivestockToModel(model);
-            return "livestock-birth-edit";
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalStateException | IllegalArgumentException e) {
             model.addAttribute("error", e.getMessage());
             addLivestockToModel(model);
             return "livestock-birth-edit";
@@ -623,10 +566,6 @@ public class LivestockBirthController {
             return "livestock-birth-edit";
         }
     }
-
-    // =========================================================================
-    // DELETE
-    // =========================================================================
 
     @PostMapping("/delete/{id}")
     public String delete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
@@ -640,10 +579,6 @@ public class LivestockBirthController {
         }
         return "redirect:/livestock/births/list";
     }
-
-    // =========================================================================
-    // COMPLETE / REOPEN
-    // =========================================================================
 
     @PostMapping("/complete/{id}")
     public String complete(@PathVariable UUID id, RedirectAttributes redirectAttributes) {
@@ -669,94 +604,49 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/list";
     }
 
-    // =========================================================================
-    // VIEW
-    // =========================================================================
-
     @GetMapping("/view/{id}")
     public String viewDetail(@PathVariable UUID id, Model model) {
-        Optional<LivestockBirth> opt = birthService.getById(id);
+        Optional<LivestockBirth> opt = birthService.getWithChildren(id);
         if (opt.isEmpty()) return "redirect:/livestock/births/list";
 
         LivestockBirth birth = opt.get();
-
-        String motherTag      = null;
-        String motherCategory = null;
-        Livestock mother      = null;
-        if (birth.getLivestockId() != null) {
-            mother = livestockRepository.findById(birth.getLivestockId()).orElse(null);
-            if (mother != null) {
-                motherTag      = mother.getTagNumber();
-                motherCategory = mother.getLivestockCategory() != null
-                        ? mother.getLivestockCategory().getName() : null;
-                birth.setLivestock(mother);
-            }
-        }
+        Livestock mother = birth.getLivestock();
+        String motherTag      = mother != null ? mother.getTagNumber() : null;
+        String motherCategory = mother != null && mother.getLivestockCategory() != null
+                ? mother.getLivestockCategory().getName() : null;
 
         attachVeterinarian(birth);
 
         Livestock father = birthService.getCommonFatherForBirth(id);
-
-        // NOTE: these .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted())) calls
-        // on LivestockOffspring are KEPT — that entity still has its own soft-delete flag.
-        List<LivestockOffspring> offspringLinks = birth.getChildren() == null
-                ? Collections.emptyList()
-                : birth.getChildren().stream()
-                .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
-                .filter(o -> o.getChildLivestock() != null)
-                .sorted(Comparator.comparing(
-                        o -> o.getChildLivestock().getTagNumber(),
-                        Comparator.nullsLast(Comparator.naturalOrder())))
-                .collect(Collectors.toList());
+        List<OffspringView> offspringViews = birthService.getOffspringViews(id);
 
         model.addAttribute("birth",          birth);
         model.addAttribute("motherTag",      motherTag);
         model.addAttribute("motherCategory", motherCategory);
         model.addAttribute("fatherTag",      father != null ? father.getTagNumber() : null);
-        model.addAttribute("offspringLinks", offspringLinks);
-        model.addAttribute("linkedChildren", offspringLinks.stream()
-                .map(LivestockOffspring::getChildLivestock)
-                .collect(Collectors.toList()));
-        model.addAttribute("birthSource", resolveBirthSource(birth, mother));
+        model.addAttribute("offspringViews", offspringViews);
+        model.addAttribute("birthSource",    resolveBirthSource(birth, mother));
+        model.addAttribute("draftCount",     offspringViews.stream().filter(OffspringView::isDraft).count());
         return "livestock-birth-view";
     }
 
-    // =========================================================================
-    // CHILD LINKING
-    // =========================================================================
-
     @GetMapping("/{birthId}/children")
     public String viewChildren(@PathVariable UUID birthId, Model model) {
-        Optional<LivestockBirth> opt = birthService.getById(birthId);
+        Optional<LivestockBirth> opt = birthService.getWithChildren(birthId);
         if (opt.isEmpty()) return "redirect:/livestock/births/list";
 
         LivestockBirth birth = opt.get();
-
-        Livestock mother = null;
-        if (birth.getLivestockId() != null) {
-            mother = livestockRepository.findById(birth.getLivestockId()).orElse(null);
-            if (mother != null) birth.setLivestock(mother);
-        }
+        Livestock mother = birth.getLivestock();
 
         attachVeterinarian(birth);
 
-        List<Livestock> linkedChildren = birth.getChildren().stream()
-                .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()))
-                .map(LivestockOffspring::getChildLivestock)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        Map<UUID, LivestockOffspring> offspringByChildId = birth.getChildren().stream()
-                .filter(o -> !Boolean.TRUE.equals(o.getIsDeleted()) && o.getChildLivestock() != null)
-                .collect(Collectors.toMap(
-                        o -> o.getChildLivestock().getId(),
-                        o -> o,
-                        (a, b) -> a));
-        model.addAttribute("offspringByChildId", offspringByChildId);
+        List<OffspringView> offspringViews = birthService.getOffspringViews(birthId);
+        Set<UUID> linkedIds = offspringViews.stream()
+                .map(OffspringView::getChildId)
+                .collect(Collectors.toSet());
 
         Livestock commonFather = birthService.getCommonFatherForBirth(birthId);
         model.addAttribute("selectedFatherId", commonFather != null ? commonFather.getId().toString() : "");
-        // ✅ FIXED: removed getIsDeleted() filter on Livestock
         model.addAttribute("fathersList", livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> !Livestock.STATUS_DEAD.equals(l.getStatus()))
@@ -766,10 +656,6 @@ public class LivestockBirthController {
                 .collect(Collectors.toList()));
 
         UUID motherId   = mother != null ? mother.getId() : null;
-        Set<UUID> linkedIds = linkedChildren.stream()
-                .map(Livestock::getId)
-                .collect(Collectors.toSet());
-
         UUID categoryId = (mother != null && mother.getLivestockCategory() != null)
                 ? mother.getLivestockCategory().getId() : null;
 
@@ -782,17 +668,17 @@ public class LivestockBirthController {
 
         LocalDate anchor = (mother != null && mother.getLastBirthDate() != null)
                 ? mother.getLastBirthDate()
-                : birth.getBirthDate() != null ? birth.getBirthDate() : LocalDate.now(APP_ZONE);
+                : (birth.getBirthDate() != null ? birth.getBirthDate() : LocalDate.now(APP_ZONE));
         LocalDate earliestChild = anchor.minusMonths(gestationMonths);
 
+        // ✅ FIXED: renamed with underscore — Spring Data derives from `draftBirthEvent` property.
         Set<UUID> draftIdsForThisBirth = livestockRepository
-                .findByDraftBirthEventIdAndIsDraftTrue(birthId)
+                .findByDraftBirthEvent_IdAndIsDraftTrue(birthId)
                 .stream()
                 .map(Livestock::getId)
                 .collect(Collectors.toSet());
 
         final UUID finalMotherId = motherId;
-        // ✅ FIXED: removed final getIsDeleted() filter on Livestock
         List<Livestock> available = livestockRepository.findAll().stream()
                 .filter(l -> !linkedIds.contains(l.getId()))
                 .filter(l -> finalMotherId == null || !l.getId().equals(finalMotherId))
@@ -818,12 +704,10 @@ public class LivestockBirthController {
                         Comparator.reverseOrder()))
                 .collect(Collectors.toList());
 
-        long pendingDrafts = linkedChildren.stream()
-                .filter(l -> Boolean.TRUE.equals(l.getIsDraft()))
-                .count();
+        long pendingDrafts = offspringViews.stream().filter(OffspringView::isDraft).count();
 
         model.addAttribute("birth",                    birth);
-        model.addAttribute("linkedChildren",           linkedChildren);
+        model.addAttribute("offspringViews",           offspringViews);
         model.addAttribute("availableLivestock",       available);
         model.addAttribute("pendingDraftsForThisBirth", pendingDrafts);
         return "livestock-birth-children";
@@ -862,13 +746,9 @@ public class LivestockBirthController {
         return "redirect:/livestock/births/" + birthId + "/children";
     }
 
-    // =========================================================================
-    // FAMILY TREE
-    // =========================================================================
-
     @GetMapping("/family/{livestockId}")
     public String viewFamilyTree(@PathVariable UUID livestockId, Model model) {
-        Optional<Livestock> opt = livestockRepository.findById(livestockId);
+        Optional<Livestock> opt = livestockRepository.findByIdWithDetails(livestockId);
         if (opt.isEmpty()) return "redirect:/livestock/list";
 
         Livestock animal         = opt.get();
@@ -889,10 +769,6 @@ public class LivestockBirthController {
         return "livestock-family";
     }
 
-    // =========================================================================
-    // BORN → SOLD REPORT
-    // =========================================================================
-
     @GetMapping("/report/born-and-sold")
     public String bornAndSoldReport(Model model) {
 
@@ -900,13 +776,13 @@ public class LivestockBirthController {
         List<Map<String, Object>> rows = new ArrayList<>();
         long totalSold = 0, totalOnFarm = 0, totalDead = 0;
 
+        Map<UUID, Livestock> motherById = birthService.getMothersForBirths(allBirths);
+
         for (LivestockBirth birth : allBirths) {
             if (birth.getChildren() == null || birth.getChildren().isEmpty()) continue;
 
-            Livestock birthMother = null;
-            if (birth.getLivestockId() != null) {
-                birthMother = livestockRepository.findById(birth.getLivestockId()).orElse(null);
-            }
+            Livestock birthMother = birth.getLivestockId() != null
+                    ? motherById.get(birth.getLivestockId()) : null;
 
             for (LivestockOffspring offspring : birth.getChildren()) {
                 Livestock child = offspring.getChildLivestock();
@@ -982,10 +858,6 @@ public class LivestockBirthController {
         return "livestock-born-sold-report";
     }
 
-    // =========================================================================
-    // BIRTH REPORT
-    // =========================================================================
-
     @GetMapping("/report/birth-summary")
     public String birthSummaryReport(
             @RequestParam(value = "fromDate", required = false)
@@ -1007,7 +879,6 @@ public class LivestockBirthController {
                 .sorted(Comparator.comparing(LivestockCategory::getName))
                 .collect(Collectors.toList()));
 
-        // ✅ FIXED: removed getIsDeleted() filter on Livestock
         model.addAttribute("mothers", livestockRepository.findAll().stream()
                 .filter(l -> !Boolean.TRUE.equals(l.getIsDraft()))
                 .filter(l -> l.getOffspringCount() != null && l.getOffspringCount() > 0)
@@ -1026,10 +897,6 @@ public class LivestockBirthController {
 
         return "livestock-birth-report";
     }
-
-    // =========================================================================
-    // ADMIN — repair missing mother links
-    // =========================================================================
 
     @GetMapping("/admin/repair-mother-links")
     public String repairMotherLinks(RedirectAttributes redirectAttributes) {

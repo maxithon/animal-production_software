@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import rw.animalproduct.animal.production.entity.LivestockBreeding;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,10 +48,6 @@ public interface LivestockBreedingRepository extends JpaRepository<LivestockBree
 
     // ─────────────────────────────────────────────────────────────────────
     // LEGACY COMPATIBILITY ALIASES
-    //
-    // is_deleted was dropped from livestock_breeding. These aliases keep
-    // old call sites compiling without a per-call-site rename. New code
-    // should use the modern methods above.
     // ─────────────────────────────────────────────────────────────────────
 
     default List<LivestockBreeding> findByStatusInAndIsDeletedFalse(List<String> statuses) {
@@ -346,4 +343,27 @@ public interface LivestockBreedingRepository extends JpaRepository<LivestockBree
     default List<LivestockBreeding> findAwaitingPregnancyConfirmation() {
         return findAwaitingPregnancyConfirmation(LocalDate.now().minusDays(21));
     }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ✅ BULK AGGREGATE for the abortion picker
+    //
+    // Given a list of animal IDs (typically ≤ 20), returns:
+    //   [0] UUID livestockId
+    //   [1] LocalDate minExpectedDueDate   (nullable)
+    //   [2] Long      completedCount       (0 if none)
+    //
+    // ONE round trip. No N+1. No entity hydration.
+    // ─────────────────────────────────────────────────────────────────────
+
+    @Query("""
+           SELECT b.livestock.id,
+                  MIN(CASE WHEN b.expectedDueDate IS NOT NULL
+                           AND (b.status = 'CONFIRMED_PREGNANT' OR b.pregnancyStatus = 'CONFIRMED')
+                           THEN b.expectedDueDate END),
+                  SUM(CASE WHEN b.status = 'COMPLETED' THEN 1 ELSE 0 END)
+           FROM LivestockBreeding b
+           WHERE b.livestock.id IN :ids
+           GROUP BY b.livestock.id
+           """)
+    List<Object[]> findDueAndCompletedForAnimals(@Param("ids") Collection<UUID> ids);
 }

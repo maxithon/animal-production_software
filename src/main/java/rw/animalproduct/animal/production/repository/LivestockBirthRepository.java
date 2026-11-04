@@ -2,6 +2,7 @@ package rw.animalproduct.animal.production.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,10 +18,13 @@ import java.util.UUID;
 public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, UUID> {
 
     Page<LivestockBirth> findAllByOrderByBirthDateDesc(Pageable pageable);
+
     List<LivestockBirth> findAllByOrderByBirthDateDesc();
 
     List<LivestockBirth> findByLivestockId(UUID livestockId);
+
     List<LivestockBirth> findByLivestockIdOrderByBirthDateAsc(UUID livestockId);
+
     List<LivestockBirth> findByLivestockIdIn(List<UUID> livestockIds);
 
     Optional<LivestockBirth> findFirstByLivestockIdOrderByBirthDateDesc(UUID livestockId);
@@ -32,7 +36,20 @@ public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, 
     boolean existsByBreedingId(UUID breedingId);
 
     long countByCompletedAtIsNull();
+
     long countByCompletedAtIsNotNull();
+
+    @EntityGraph(attributePaths = {
+            "livestock",
+            "livestock.livestockCategory",
+            "children",
+            "children.childLivestock",
+            "children.childLivestock.livestockCategory",
+            "children.childLivestock.mother",
+            "children.childLivestock.father"
+    })
+    @Query("SELECT b FROM LivestockBirth b WHERE b.id = :id")
+    Optional<LivestockBirth> findWithChildrenById(@Param("id") UUID id);
 
     @Query("""
            SELECT b FROM LivestockBirth b
@@ -48,4 +65,22 @@ public interface LivestockBirthRepository extends JpaRepository<LivestockBirth, 
            ORDER BY b.birthDate ASC
            """)
     List<LivestockBirth> findByLivestockIdWithBreeding(@Param("livestockId") UUID livestockId);
+
+    @Query("""
+           SELECT DISTINCT b.livestockId FROM LivestockBirth b
+           WHERE b.id IN :ids AND b.livestockId IS NOT NULL
+           """)
+    List<UUID> findMotherIdsByBirthIds(@Param("ids") List<UUID> ids);
+
+    @Query("""
+           SELECT c.name,
+                  COUNT(b.id),
+                  COUNT(b.completedAt)
+           FROM LivestockBirth b
+           JOIN b.livestock m
+           JOIN m.livestockCategory c
+           GROUP BY c.name
+           ORDER BY c.name
+           """)
+    List<Object[]> aggregateCategoryBirthStats();
 }

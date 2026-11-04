@@ -53,7 +53,6 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 
-<!-- ══ BIRTH SUMMARY ══════════════════════════════════════════════════════ -->
 <div class="card-section">
     <div class="section-title"><i class="bi bi-info-circle text-success me-2"></i>Birth Event Summary</div>
     <div class="mother-card mb-3">
@@ -74,66 +73,65 @@
             </div>
             <div class="col-md-3">
                 <div class="small text-muted">Linked Children</div>
-                <div class="fw-bold" th:text="${#lists.size(linkedChildren)}">0</div>
+                <div class="fw-bold" th:text="${#lists.size(offspringViews)}">0</div>
             </div>
         </div>
     </div>
 
-    <!-- Draft warning (legacy support only) -->
     <div th:if="${pendingDraftsForThisBirth > 0}" class="info-box info-box-amber mb-2">
         <i class="bi bi-exclamation-triangle-fill me-1"></i>
         <strong th:text="${pendingDraftsForThisBirth}">0</strong> child(ren) are still
-        <strong>DRAFT</strong> placeholders. Since all your animals are pre-registered,
-        you can <strong>unlink</strong> a draft and link the real registered animal instead.
+        <strong>DRAFT</strong> placeholders. Complete their registration to finalize the pedigree.
         <a th:href="@{/livestock/list}" class="fw-bold ms-1">View all livestock →</a>
     </div>
 </div>
 
-<!-- ══ CURRENTLY LINKED CHILDREN ════════════════════════════════════════ -->
 <div class="card-section">
     <div class="section-title">
         <i class="bi bi-diagram-2 text-success me-2"></i>Linked Children
-        <span class="badge bg-success ms-2" th:text="${#lists.size(linkedChildren)}">0</span>
+        <span class="badge bg-success ms-2" th:text="${#lists.size(offspringViews)}">0</span>
     </div>
 
-    <div th:if="${#lists.isEmpty(linkedChildren)}" class="text-muted fst-italic small py-2">
+    <div th:if="${#lists.isEmpty(offspringViews)}" class="text-muted fst-italic small py-2">
         No children linked yet. Use the section below to link registered animals.
     </div>
 
-    <div th:each="child : ${linkedChildren}" class="animal-row">
+    <div th:each="ov : ${offspringViews}" class="animal-row">
         <div class="d-flex align-items-center gap-3">
             <i class="bi bi-tag-fill text-success"></i>
             <div>
-                <div class="fw-semibold" th:text="${child.tagNumber}">—</div>
+                <div class="fw-semibold" th:text="${ov.tagNumber}">—</div>
                 <div class="small text-muted">
-                    <span th:text="${child.livestockCategory?.name ?: '—'}">—</span>
+                    <span th:text="${ov.categoryName != null ? ov.categoryName : '—'}">—</span>
                     &nbsp;·&nbsp;
-                    <span th:text="${child.gender ?: 'Unknown'}">—</span>
+                    <span th:text="${ov.gender != null ? ov.gender : 'Unknown'}">—</span>
                     &nbsp;·&nbsp;
-                    <span th:if="${child.birthDate != null}" class="age-badge">
-                        Born <span th:text="${child.birthDate}">—</span>
+                    <span th:if="${ov.birthDate != null}" class="age-badge">
+                        Born <span th:text="${ov.birthDate}">—</span>
                     </span>
                     &nbsp;·&nbsp;
-                    <span th:if="${child.isDraft != null and child.isDraft}"
-                          class="badge badge-draft">DRAFT</span>
-                    <span th:unless="${child.isDraft != null and child.isDraft}"
-                          class="badge badge-linked">Registered</span>
+                    <span th:if="${ov.outcome == 'ALIVE'}" class="badge bg-success" style="font-size:0.65rem;">Alive</span>
+                    <span th:if="${ov.outcome == 'STILLBORN'}" class="badge bg-danger" style="font-size:0.65rem;">Stillborn</span>
+                    <span th:if="${ov.outcome == 'DIED_SHORTLY_AFTER'}" class="badge bg-warning text-dark" style="font-size:0.65rem;">Died Shortly</span>
+                    &nbsp;·&nbsp;
+                    <span th:if="${ov.draft}" class="badge badge-draft">DRAFT</span>
+                    <span th:unless="${ov.draft}" class="badge badge-linked">Registered</span>
                 </div>
-                <div class="small text-success" th:if="${child.mother != null}">
+                <div class="small text-success" th:if="${ov.motherTag != null}">
                     <i class="bi bi-heart-fill"></i> Mother:
-                    <span th:text="${child.mother.tagNumber}">—</span>
+                    <span th:text="${ov.motherTag}">—</span>
                     <i class="bi bi-check-circle-fill ms-1"></i>
                 </div>
-                <div class="small text-warning" th:unless="${child.mother != null}">
+                <div class="small text-warning" th:if="${ov.motherTag == null}">
                     <i class="bi bi-exclamation-triangle"></i> Mother not yet set on this animal
                 </div>
             </div>
         </div>
         <div class="d-flex gap-2">
-            <a th:href="@{/livestock/view/{id}(id=${child.id})}" class="btn btn-sm btn-outline-primary">
+            <a th:href="@{/livestock/view/{id}(id=${ov.childId})}" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-eye"></i> View
             </a>
-            <form th:action="@{/livestock/births/unlink-child/{id}(id=${child.id})}" method="post" style="display:inline">
+            <form th:action="@{/livestock/births/unlink-child/{id}(id=${ov.childId})}" method="post" style="display:inline">
                 <input type="hidden" name="birthId" th:value="${birth.id}">
                 <button type="submit" class="btn btn-sm btn-outline-danger"
                         onclick="return confirm('Unlink this animal from this birth event?')">
@@ -144,7 +142,6 @@
     </div>
 </div>
 
-<!-- ══ LINK ALREADY-REGISTERED ANIMAL ═══════════════════════════════════ -->
 <div class="card-section">
     <div class="section-title">
         <i class="bi bi-link-45deg text-primary me-2"></i>Link an Already-Registered Offspring
@@ -159,7 +156,6 @@
         This ensures you link the correct offspring.
     </div>
 
-    <!-- Category filter badge -->
     <div th:if="${birth.livestock?.livestockCategory != null}" class="mb-3">
         <span class="filter-badge">
             <i class="bi bi-funnel-fill me-1"></i>
@@ -206,7 +202,6 @@
     </form>
 </div>
 
-<!-- ══ FAO PEDIGREE INFO ═════════════════════════════════════════════════ -->
 <div class="card-section">
     <div class="section-title"><i class="bi bi-book text-secondary me-2"></i>FAO Livestock Recording Standard</div>
     <div class="info-box info-box-green">
@@ -214,7 +209,7 @@
             <li><strong>Dam (Mother):</strong> Must be registered and marked pregnant before birth is recorded — <span class="text-success">✓ done</span></li>
             <li><strong>Offspring:</strong> Each offspring should be registered with its own livestock ID, sex, and birth date</li>
             <li><strong>Linkage:</strong> This page connects dam to offspring, creating the traceable pedigree record</li>
-            <li><strong>No drafts needed:</strong> Since all animals are pre-registered in your system, link them directly here — no placeholder drafts required</li>
+            <li><strong>Uniqueness:</strong> The database enforces one birth event per child (UNIQUE constraint) — a child can only belong to one offspring link at a time</li>
             <li><strong>Generation tracking:</strong> The system automatically calculates generation number from the pedigree chain</li>
         </ul>
     </div>

@@ -64,7 +64,10 @@ public class LivestockTreatmentController {
             @RequestParam(defaultValue = "10") int limit) {
         List<Livestock> animals;
         if (q != null && !q.trim().isEmpty()) {
-            animals = livestockRepository.searchByTagNumber(q.trim(), PageRequest.of(0, limit));
+            // ✅ FIXED: searchByTagNumber returns Page<Livestock>; unwrap with getContent().
+            animals = livestockRepository
+                    .searchByTagNumber(q.trim(), PageRequest.of(0, limit))
+                    .getContent();
         } else {
             animals = livestockRepository.findAll().stream().limit(limit).collect(Collectors.toList());
         }

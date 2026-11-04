@@ -10,12 +10,19 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "livestock_births")
+@Table(
+        name = "livestock_births",
+        indexes = {
+                @Index(name = "idx_livestock_births_birth_date", columnList = "birth_date DESC"),
+                @Index(name = "idx_livestock_births_livestock_id", columnList = "livestock_id"),
+                @Index(name = "idx_births_breeding", columnList = "breeding_id")
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = {"livestock", "breeding", "veterinarian", "children"})
 public class LivestockBirth {
 
     public static final String BIRTH_TYPE_NORMAL    = "NORMAL";
@@ -52,7 +59,7 @@ public class LivestockBirth {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    @Column(name = "birth_date_note")
+    @Column(name = "birth_date_note", length = 500)
     private String birthDateNote;
 
     @Column(name = "weaning_date")
@@ -67,19 +74,23 @@ public class LivestockBirth {
     @Column(name = "offspring_count")
     private Integer offspringCount;
 
-    @Column(name = "offspring_gender")
+    /**
+     * Stay within the DB's varchar(20) — the summary is generated as
+     * "2M, 1F, 1U" style tokens by the service. Don't widen the column.
+     */
+    @Column(name = "offspring_gender", length = 20)
     private String offspringGender;
 
-    @Column(name = "source_location")
+    @Column(name = "source_location", length = 255)
     private String sourceLocation;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "is_external_birth")
-    private Boolean isExternalBirth;
+    @Column(name = "is_external_birth", nullable = false)
+    private Boolean isExternalBirth = false;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -88,7 +99,7 @@ public class LivestockBirth {
     @Column(name = "created_by")
     private UUID createdBy;
 
-    @Column(name = "birth_type")
+    @Column(name = "birth_type", length = 20)
     private String birthType;
 
     @Column(name = "assistance_required")
@@ -100,10 +111,10 @@ public class LivestockBirth {
     @Column(name = "number_stillborn")
     private Integer numberStillborn = 0;
 
-    @Column(name = "attendant_name")
+    @Column(name = "attendant_name", length = 150)
     private String attendantName;
 
-    @OneToMany(mappedBy = "birthEvent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "birthEvent", cascade = CascadeType.ALL, orphanRemoval = false, fetch = FetchType.LAZY)
     private List<LivestockOffspring> children = new ArrayList<>();
 
     @Transient
@@ -111,14 +122,31 @@ public class LivestockBirth {
 
     @PrePersist
     public void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        if (this.createdAt == null) this.createdAt = now;
+        this.updatedAt = now;
         if (this.assistanceRequired == null) this.assistanceRequired = false;
         if (this.numberStillborn == null)    this.numberStillborn = 0;
+        if (this.isExternalBirth == null)    this.isExternalBirth = false;
+        if (this.offspringCount == null)     this.offspringCount = 0;
     }
 
     @PreUpdate
     public void onUpdate() { this.updatedAt = LocalDateTime.now(); }
+
+    public void setLivestockId(UUID id) {
+        this.livestockId = id;
+        if (this.livestock != null && !this.livestock.getId().equals(id)) {
+            this.livestock = null;
+        }
+    }
+
+    public void setVeterinarianId(UUID id) {
+        this.veterinarianId = id;
+        if (this.veterinarian != null && !this.veterinarian.getId().equals(id)) {
+            this.veterinarian = null;
+        }
+    }
 
     public boolean hasBreedingRecord() { return breedingId != null; }
     public boolean isLocked()          { return completedAt != null; }
@@ -126,95 +154,12 @@ public class LivestockBirth {
     public String getAttendantDisplayName() {
         if (veterinarian != null) {
             String label = veterinarian.getFullName();
-            if (veterinarian.getLicenseNumber() != null && !veterinarian.getLicenseNumber().isBlank())
+            if (veterinarian.getLicenseNumber() != null && !veterinarian.getLicenseNumber().isBlank()) {
                 label += " (Lic: " + veterinarian.getLicenseNumber() + ")";
+            }
             return label;
         }
         if (attendantName != null && !attendantName.isBlank()) return attendantName;
         return null;
     }
-
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-
-    public UUID getLivestockId() { return livestockId; }
-    public void setLivestockId(UUID livestockId) { this.livestockId = livestockId; }
-
-    public Livestock getLivestock() { return livestock; }
-    public void setLivestock(Livestock livestock) { this.livestock = livestock; }
-
-    public UUID getBreedingId() { return breedingId; }
-    public void setBreedingId(UUID breedingId) { this.breedingId = breedingId; }
-
-    public LivestockBreeding getBreeding() { return breeding; }
-    public void setBreeding(LivestockBreeding breeding) { this.breeding = breeding; }
-
-    public UUID getVeterinarianId() { return veterinarianId; }
-    public void setVeterinarianId(UUID veterinarianId) { this.veterinarianId = veterinarianId; }
-
-    public Veterinarian getVeterinarian() { return veterinarian; }
-    public void setVeterinarian(Veterinarian veterinarian) { this.veterinarian = veterinarian; }
-
-    public String getVeterinarianIdValue() { return veterinarianIdValue; }
-    public void setVeterinarianIdValue(String veterinarianIdValue) { this.veterinarianIdValue = veterinarianIdValue; }
-
-    public LocalDate getBirthDate() { return birthDate; }
-    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
-
-    public String getBirthDateNote() { return birthDateNote; }
-    public void setBirthDateNote(String birthDateNote) { this.birthDateNote = birthDateNote; }
-
-    public LocalDate getWeaningDate() { return weaningDate; }
-    public void setWeaningDate(LocalDate weaningDate) { this.weaningDate = weaningDate; }
-
-    public LocalDate getNextBreedingDate() { return nextBreedingDate; }
-    public void setNextBreedingDate(LocalDate nextBreedingDate) { this.nextBreedingDate = nextBreedingDate; }
-
-    public LocalDateTime getCompletedAt() { return completedAt; }
-    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
-
-    public Integer getOffspringCount() { return offspringCount; }
-    public void setOffspringCount(Integer offspringCount) { this.offspringCount = offspringCount; }
-
-    public String getOffspringGender() { return offspringGender; }
-    public void setOffspringGender(String offspringGender) { this.offspringGender = offspringGender; }
-
-    public String getSourceLocation() { return sourceLocation; }
-    public void setSourceLocation(String sourceLocation) { this.sourceLocation = sourceLocation; }
-
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
-
-    public Boolean getIsExternalBirth() { return isExternalBirth; }
-    public void setIsExternalBirth(Boolean isExternalBirth) { this.isExternalBirth = isExternalBirth; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public UUID getCreatedBy() { return createdBy; }
-    public void setCreatedBy(UUID createdBy) { this.createdBy = createdBy; }
-
-    public List<LivestockOffspring> getChildren() { return children; }
-    public void setChildren(List<LivestockOffspring> children) { this.children = children; }
-
-    public String getLivestockIdValue() { return livestockIdValue; }
-    public void setLivestockIdValue(String livestockIdValue) { this.livestockIdValue = livestockIdValue; }
-
-    public String getBirthType() { return birthType; }
-    public void setBirthType(String birthType) { this.birthType = birthType; }
-
-    public Boolean getAssistanceRequired() { return assistanceRequired; }
-    public void setAssistanceRequired(Boolean assistanceRequired) { this.assistanceRequired = assistanceRequired; }
-
-    public Integer getNumberBornAlive() { return numberBornAlive; }
-    public void setNumberBornAlive(Integer numberBornAlive) { this.numberBornAlive = numberBornAlive; }
-
-    public Integer getNumberStillborn() { return numberStillborn; }
-    public void setNumberStillborn(Integer numberStillborn) { this.numberStillborn = numberStillborn; }
-
-    public String getAttendantName() { return attendantName; }
-    public void setAttendantName(String attendantName) { this.attendantName = attendantName; }
 }
